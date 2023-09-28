@@ -1,16 +1,14 @@
-FROM registry.suse.com/bci/bci-base:15.4
+# ----- EIB Builder Image -----
+FROM golang:1.21
 
-# Prepare the OS with dependencies
-RUN zypper install -y \
-    go \
-    mkisofs
-
-# Establish the working directory
-WORKDIR /eib
-
-# Build EIB
+WORKDIR /src
 COPY . ./
 RUN go build ./cmd/eib
 
-# Run the builder
-CMD ["./eib"]
+
+# ----- Deliverable Image -----
+FROM registry.suse.com/bci/bci-base:15.4
+
+COPY --from=0 /src/eib /bin/eib
+
+CMD ["/bin/eib"]
