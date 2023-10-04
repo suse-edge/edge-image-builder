@@ -16,9 +16,7 @@ func TestParse(t *testing.T) {
 
 	// Test
 	imageConfig, err := Parse(configData)
-	if err != nil {
-		t.Error("Parsing error: ", err)
-	}
+	require.NoError(t, err)
 
 	// Verify
 	assert.Equal(t, "1.0", imageConfig.APIVersion)
