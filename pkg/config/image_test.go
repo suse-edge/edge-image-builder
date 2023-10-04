@@ -12,9 +12,6 @@ func TestParse(t *testing.T) {
 	// Setup
 	filename := "./testdata/valid_example.yaml"
 	configData, err := os.ReadFile(filename)
-	if err != nil {
-		t.Errorf("Cannot read example YAML file: %v", filename)
-	}
 	require.NoError(t, err)
 
 	// Test
