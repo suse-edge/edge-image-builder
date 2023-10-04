@@ -7,10 +7,7 @@ import (
 )
 
 type ImageConfig struct {
-	// EIB Metadata
-	ApiVersion string `yaml:"apiVersion"`
-
-	// Image Base Configuration
+	APIVersion string `yaml:"apiVersion"`
 	ImageType  string `yaml:"imageType"`
 }
 

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
 
@@ -14,6 +15,7 @@ func TestParse(t *testing.T) {
 	if err != nil {
 		t.Errorf("Cannot read example YAML file: %v", filename)
 	}
+	require.NoError(t, err)
 
 	// Test
 	imageConfig, err := Parse(configData)
@@ -22,7 +24,7 @@ func TestParse(t *testing.T) {
 	}
 
 	// Verify
-	assert.Equal(t, "1.0", imageConfig.ApiVersion)
+	assert.Equal(t, "1.0", imageConfig.APIVersion)
 	assert.Equal(t, "iso", imageConfig.ImageType)
 }
 
@@ -34,5 +36,5 @@ func TestParseBadConfig(t *testing.T) {
 	_, err := Parse(badData)
 
 	// Verify
-	assert.Error(t, err)
-}
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "could not parse the image configuration")}
