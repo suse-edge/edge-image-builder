@@ -49,13 +49,6 @@ func handleImageConfig(configFile string) (*config.ImageConfig, error) {
 		return nil, fmt.Errorf("the \"%s\" argument must be specified", argConfigFile)
 	}
 
-	_, err := os.Stat(configFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, fmt.Errorf("image configuration file \"%s\" does not exist", configFile)
-		}
-	}
-
 	configData, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, fmt.Errorf("image configuration file \"%s\" cannot be read: %s", configFile, err)
