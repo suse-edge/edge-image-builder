@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -21,7 +22,7 @@ func init() {
 	log.SetOutput(os.Stdout)
 }
 
-func processArgs() (imageConfig *config.ImageConfig) {
+func processArgs() (*config.ImageConfig, error) {
 	var (
 		configFile string
 		verbose    bool
@@ -32,9 +33,9 @@ func processArgs() (imageConfig *config.ImageConfig) {
 	flag.Parse()
 
 	handleVerbose(verbose)
-	imageConfig = handleImageConfig(configFile)
+	imageConfig, err := handleImageConfig(configFile)
 
-	return imageConfig
+	return imageConfig, err
 }
 
 func handleVerbose(verbose bool) {
@@ -43,32 +44,36 @@ func handleVerbose(verbose bool) {
 	}
 }
 
-func handleImageConfig(configFile string) *config.ImageConfig {
+func handleImageConfig(configFile string) (*config.ImageConfig, error) {
 	if configFile == "" {
-		log.Fatalf("the \"%s\" argument must be specified", argConfigFile)
+		return nil, fmt.Errorf("the \"%s\" argument must be specified", argConfigFile)
 	}
 
-	info, err := os.Stat(configFile)
-	if os.IsNotExist(err) {
-		log.Fatalf("image configuration file \"%s\" does not exist", configFile)
-	}
-	if info.IsDir() {
-		log.Fatalf("image configuration file \"%s\" cannot be a directory", configFile)
+	_, err := os.Stat(configFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("image configuration file \"%s\" does not exist", configFile)
+		}
 	}
 
 	configData, err := os.ReadFile(configFile)
 	if err != nil {
-		log.Fatalf("image configuration file \"%s\" cannot be read: %s", configFile, err)
+		return nil, fmt.Errorf("image configuration file \"%s\" cannot be read: %s", configFile, err)
 	}
 
 	imageConfig, err := config.Parse(configData)
 	if err != nil {
-		log.Fatalf("error parsing configuration file \"%s\": %s", configFile, err)
+		return nil, fmt.Errorf("error parsing configuration file \"%s\": %s", configFile, err)
 	}
 
-	return imageConfig
+	return imageConfig, nil
 }
 
 func main() {
-	processArgs()
+	_, err := processArgs()
+	if err != nil {
+		log.Error(err)
+	}
+
+	// Call to building logic when it's finished
 }
