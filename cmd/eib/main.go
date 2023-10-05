@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"flag"
-	"fmt"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -23,63 +21,54 @@ func init() {
 	log.SetOutput(os.Stdout)
 }
 
-func parseFlags(programName string, args []string) (imageConfig *config.ImageConfig, output string, err error) {
-	flags := flag.NewFlagSet(programName, flag.ContinueOnError)
-	var buf bytes.Buffer
-	flags.SetOutput(&buf)
-
+func processArgs() (imageConfig *config.ImageConfig) {
 	var (
 		configFile string
 		verbose    bool
 	)
 
-	flags.StringVar(&configFile, argConfigFile, "", "full path to the image configuration file")
-	flags.BoolVar(&verbose, argVerbose, false, "enables extra logging information")
+	flag.StringVar(&configFile, argConfigFile, "", "full path to the image configuration file")
+	flag.BoolVar(&verbose, argVerbose, false, "enables extra logging information")
+	flag.Parse()
 
-	err = flags.Parse(args)
+	handleVerbose(verbose)
+	imageConfig = handleImageConfig(configFile)
 
-	// Help
-	if err == flag.ErrHelp {
-		return nil, buf.String(), err
-	}
+	return imageConfig
+}
 
-	// Verbose
+func handleVerbose(verbose bool) {
 	if verbose {
 		log.SetLevel(log.DebugLevel)
 	}
+}
 
-	// Image Configuration File
+func handleImageConfig(configFile string) *config.ImageConfig {
 	if configFile == "" {
-		return nil, buf.String(), fmt.Errorf("the \"%s\" argument must be specified", argConfigFile)
+		log.Fatalf("the \"%s\" argument must be specified", argConfigFile)
 	}
 
 	info, err := os.Stat(configFile)
 	if os.IsNotExist(err) {
-		return nil, buf.String(), fmt.Errorf("image configuration file \"%s\" does not exist", configFile)
+		log.Fatalf("image configuration file \"%s\" does not exist", configFile)
 	}
 	if info.IsDir() {
-		return nil, buf.String(), fmt.Errorf("image configuration file \"%s\" cannot be a directory", configFile)
+		log.Fatalf("image configuration file \"%s\" cannot be a directory", configFile)
 	}
 
 	configData, err := os.ReadFile(configFile)
 	if err != nil {
-		return nil, buf.String(), fmt.Errorf("image configuration file \"%s\" cannot be read: %s", configFile, err)
+		log.Fatalf("image configuration file \"%s\" cannot be read: %s", configFile, err)
 	}
 
-	_, err = config.Parse(configData)
+	imageConfig, err := config.Parse(configData)
 	if err != nil {
-		return nil, buf.String(), fmt.Errorf("error parsing configuration file \"%s\": %s", configFile, err)
+		log.Fatalf("error parsing configuration file \"%s\": %s", configFile, err)
 	}
 
-	return imageConfig, buf.String(), nil
+	return imageConfig
 }
 
 func main() {
-	_, output, err := parseFlags(os.Args[0], os.Args[1:])
-	if err == flag.ErrHelp {
-		fmt.Println(output)
-		os.Exit(2)
-	} else if err != nil {
-		log.Fatal(err)
-	}
+	processArgs()
 }
