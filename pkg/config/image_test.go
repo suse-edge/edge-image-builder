@@ -32,4 +32,5 @@ func TestParseBadConfig(t *testing.T) {
 
 	// Verify
 	require.Error(t, err)
-	assert.ErrorContains(t, err, "could not parse the image configuration")}
+	assert.ErrorContains(t, err, "could not parse the image configuration")
+}
