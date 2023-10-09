@@ -27,13 +27,12 @@ func Build(imageConfig *config.ImageConfig, buildConfig *config.BuildConfig) err
 //go:embed scripts/script_base.sh
 var scriptBase string
 
-
 func prepareBuildDir(buildConfig *config.BuildConfig) error {
 
 	/* Combustion works by creating a volume with a subdirectory named "combustion"
 	   and a file named "script". This function builds out that structure and updates
 	   the BuildConfig so that the other functions can populate it as necessary.
-	 */
+	*/
 
 	if buildConfig.BuildTempDir == "" {
 		tmpDir, err := os.MkdirTemp("", "eib-")
