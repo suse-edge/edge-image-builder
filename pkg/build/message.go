@@ -1,23 +1,19 @@
 package build
 
 import (
-	"path/filepath"
-
-	"github.com/suse-edge/edge-image-builder/pkg/config"
+	"fmt"
 )
 
 const (
 	messageScriptName = "message.sh"
+	messageScriptsDir = "message"
 )
 
-func ConfigureMessage(buildConfig *config.BuildConfig) error {
-	// There's currently intentionally no way to disable this in the image config,
-	// but we may want to add that in the future
-	err := copyCombustionFile(filepath.Join("scripts", "message", messageScriptName), buildConfig)
+func configureMessage(b *Builder) error {
+	err := b.copyCombustionFile(messageScriptsDir, messageScriptName)
 	if err != nil {
-		return err
+		return fmt.Errorf("copying script %s: %w", messageScriptName, err)
 	}
 
-	buildConfig.AddCombustionScript(messageScriptName)
 	return nil
 }

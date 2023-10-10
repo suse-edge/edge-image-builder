@@ -13,16 +13,17 @@ import (
 func TestPrepareBuildDir(t *testing.T) {
 	// Setup
 	bc := config.BuildConfig{}
+	builder := New(nil, &bc)
 
 	// Test
-	err := prepareBuildDir(&bc)
+	err := builder.prepareBuildDir()
 	defer os.Remove(bc.BuildTempDir)
 
 	// Verify
 	require.NoError(t, err)
 	_, err = os.Stat(bc.BuildTempDir)
 	require.NoError(t, err)
-	_, err = os.Stat(bc.CombustionDir)
+	_, err = os.Stat(builder.combustionDir)
 	require.NoError(t, err)
 }
 
@@ -31,12 +32,14 @@ func TestCleanUpBuildDirWithDelete(t *testing.T) {
 	bc := config.BuildConfig{
 		DeleteArtifacts: true,
 	}
+	builder := New(nil, &bc)
+
 	testDir, err := os.MkdirTemp("", "eib-test-")
 	require.NoError(t, err)
 	bc.BuildTempDir = testDir
 
 	// Test
-	err = cleanUpBuildDir(&bc)
+	err = builder.cleanUpBuildDir()
 
 	// Verify
 	require.NoError(t, err)
@@ -50,12 +53,13 @@ func TestCleanUpBuildDirNoDelete(t *testing.T) {
 	bc := config.BuildConfig{
 		DeleteArtifacts: false,
 	}
+	builder := New(nil, &bc)
 	testDir, err := os.MkdirTemp("", "eib-test-")
 	require.NoError(t, err)
 	bc.BuildTempDir = testDir
 
 	// Test
-	err = cleanUpBuildDir(&bc)
+	err = builder.cleanUpBuildDir()
 	defer os.Remove(bc.BuildTempDir)
 
 	// Verify
@@ -67,20 +71,20 @@ func TestCleanUpBuildDirNoDelete(t *testing.T) {
 func TestGenerateCombustionScript(t *testing.T) {
 	// Setup
 	bc := config.BuildConfig{}
-	err := prepareBuildDir(&bc)
+	builder := New(nil, &bc)
+	err := builder.prepareBuildDir()
 	require.NoError(t, err)
 	defer os.Remove(bc.BuildTempDir)
 
-	bc.AddCombustionScript("foo.sh")
-	bc.AddCombustionScript("bar.sh")
+	builder.combustionScripts = append(builder.combustionScripts, "foo.sh", "bar.sh")
 
 	// Test
-	err = generateCombustionScript(&bc)
+	err = builder.generateCombustionScript()
 
 	// Verify
 	require.NoError(t, err)
 
-	scriptBytes, err := os.ReadFile(filepath.Join(bc.CombustionDir, "script"))
+	scriptBytes, err := os.ReadFile(filepath.Join(builder.combustionDir, "script"))
 	scriptData := string(scriptBytes)
 	assert.Contains(t, scriptData, "#!/bin/bash")
 	assert.Contains(t, scriptData, "foo.sh")
