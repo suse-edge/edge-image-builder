@@ -37,7 +37,7 @@ func (b *Builder) Build() error {
 		return fmt.Errorf("preparing the build directory: %w", err)
 	}
 
-	err = configureMessage(b)
+	err = b.configureMessage()
 	if err != nil {
 		return fmt.Errorf("configuring the welcome message: %w", err)
 	}

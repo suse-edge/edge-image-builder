@@ -85,6 +85,7 @@ func TestGenerateCombustionScript(t *testing.T) {
 	require.NoError(t, err)
 
 	scriptBytes, err := os.ReadFile(filepath.Join(builder.combustionDir, "script"))
+	require.NoError(t, err)
 	scriptData := string(scriptBytes)
 	assert.Contains(t, scriptData, "#!/bin/bash")
 	assert.Contains(t, scriptData, "foo.sh")

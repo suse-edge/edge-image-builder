@@ -9,7 +9,7 @@ const (
 	messageScriptsDir = "message"
 )
 
-func configureMessage(b *Builder) error {
+func (b *Builder) configureMessage() error {
 	err := b.copyCombustionFile(messageScriptsDir, messageScriptName)
 	if err != nil {
 		return fmt.Errorf("copying script %s: %w", messageScriptName, err)

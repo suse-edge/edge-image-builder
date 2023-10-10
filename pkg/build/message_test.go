@@ -19,7 +19,7 @@ func TestConfigureMessage(t *testing.T) {
 	defer os.Remove(bc.BuildTempDir)
 
 	// Test
-	err = configureMessage(builder)
+	err = builder.configureMessage()
 
 	// Verify
 	require.NoError(t, err)
