@@ -20,12 +20,13 @@ type Builder struct {
 	imageConfig *config.ImageConfig
 	buildConfig *config.BuildConfig
 
+	eibBuildDir       string
 	combustionDir     string
 	combustionScripts []string
 }
 
 func New(imageConfig *config.ImageConfig, buildConfig *config.BuildConfig) *Builder {
-	return &Builder {
+	return &Builder{
 		imageConfig: imageConfig,
 		buildConfig: buildConfig,
 	}
@@ -55,17 +56,16 @@ func (b *Builder) prepareBuildDir() error {
 	// and a file named "script". This function builds out that structure and updates
 	// the Builder so that the other functions can populate it as necessary.
 
-	if b.buildConfig.BuildTempDir == "" {
-		tmpDir, err := os.MkdirTemp("", "eib-")
-		if err != nil {
-			return fmt.Errorf("creating a temporary build directory: %w", err)
-		}
-		b.buildConfig.BuildTempDir = tmpDir
+	// Eventually we may want to let the user specify this directory, but for now
+	// it's simply going to be done in a temporary directory
+	tmpDir, err := os.MkdirTemp("", "eib-")
+	if err != nil {
+		return fmt.Errorf("creating a temporary build directory: %w", err)
 	}
+	b.eibBuildDir = tmpDir
+	b.combustionDir = filepath.Join(b.eibBuildDir, "combustion")
 
-	b.combustionDir = filepath.Join(b.buildConfig.BuildTempDir, "combustion")
-
-	err := os.MkdirAll(b.combustionDir, os.ModePerm)
+	err = os.MkdirAll(b.combustionDir, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("creating the build directory structure: %w", err)
 	}
@@ -74,11 +74,9 @@ func (b *Builder) prepareBuildDir() error {
 }
 
 func (b *Builder) cleanUpBuildDir() error {
-	if b.buildConfig.DeleteArtifacts {
-		err := os.Remove(b.buildConfig.BuildTempDir)
-		if err != nil {
-			return fmt.Errorf("deleting artifacts: %w", err)
-		}
+	err := os.Remove(b.eibBuildDir)
+	if err != nil {
+		return fmt.Errorf("deleting build directory: %w", err)
 	}
 	return nil
 }

@@ -16,7 +16,7 @@ func TestConfigureMessage(t *testing.T) {
 	builder := New(nil, &bc)
 	err := builder.prepareBuildDir()
 	require.NoError(t, err)
-	defer os.Remove(bc.BuildTempDir)
+	defer os.Remove(builder.eibBuildDir)
 
 	// Test
 	err = builder.configureMessage()
