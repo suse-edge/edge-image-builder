@@ -76,7 +76,7 @@ func parseImageConfig(configFile string) (*config.ImageConfig, error) {
 
 func validateImageConfigDir(configDir string) error {
 	if configDir == "" {
-		return errors.New(fmt.Sprintf("-%s must be specified", argConfigDir))
+		return fmt.Errorf("-%s must be specified", argConfigDir)
 	}
 
 	if _, err := os.Stat(configDir); os.IsNotExist(err) {
