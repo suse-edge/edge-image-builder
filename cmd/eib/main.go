@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -10,7 +11,8 @@ import (
 )
 
 const (
-	argConfigFile = "config"
+	argConfigFile = "config-file"
+	argConfigDir  = "config-dir"
 	argVerbose    = "verbose"
 )
 
@@ -22,20 +24,34 @@ func init() {
 	log.SetOutput(os.Stdout)
 }
 
-func processArgs() (*config.ImageConfig, error) {
+func processArgs() (*config.ImageConfig, *config.BuildConfig, error) {
 	var (
 		configFile string
+		configDir  string
 		verbose    bool
 	)
 
 	flag.StringVar(&configFile, argConfigFile, "", "full path to the image configuration file")
+	flag.StringVar(&configDir, argConfigDir, "", "full path to the image configuration directory")
 	flag.BoolVar(&verbose, argVerbose, false, "enables extra logging information")
 	flag.Parse()
 
 	handleVerbose(verbose)
-	imageConfig, err := handleImageConfig(configFile)
 
-	return imageConfig, err
+	imageConfig, err := parseImageConfig(configFile)
+	if err != nil {
+		return nil, nil, fmt.Errorf("parsing image config file %s: %w", configFile, err)
+	}
+
+	err = validateImageConfigDir(configDir)
+	if err != nil {
+		return nil, nil, fmt.Errorf("validating the config dir %s: %w", configDir, err)
+	}
+	buildConfig := config.BuildConfig{
+		ImageConfigDir: configDir,
+	}
+
+	return imageConfig, &buildConfig, err
 }
 
 func handleVerbose(verbose bool) {
@@ -44,11 +60,7 @@ func handleVerbose(verbose bool) {
 	}
 }
 
-func handleImageConfig(configFile string) (*config.ImageConfig, error) {
-	if configFile == "" {
-		return nil, fmt.Errorf("the \"%s\" argument must be specified", argConfigFile)
-	}
-
+func parseImageConfig(configFile string) (*config.ImageConfig, error) {
 	configData, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, fmt.Errorf("image configuration file \"%s\" cannot be read: %s", configFile, err)
@@ -62,8 +74,19 @@ func handleImageConfig(configFile string) (*config.ImageConfig, error) {
 	return imageConfig, nil
 }
 
+func validateImageConfigDir(configDir string) error {
+	if configDir == "" {
+		return errors.New(fmt.Sprintf("-%s must be specified", argConfigDir))
+	}
+
+	if _, err := os.Stat(configDir); os.IsNotExist(err) {
+		return err
+	}
+	return nil
+}
+
 func main() {
-	_, err := processArgs()
+	_, _, err := processArgs()
 	if err != nil {
 		log.Error(err)
 	}
