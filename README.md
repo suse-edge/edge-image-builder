@@ -30,7 +30,11 @@ Example image configuration directory:
 That directory must be attached to the container at runtime. The following command attaches the directory and runs
 EIB against the volume (replace `$IMAGE_DIR` with your local configuration directory):
 ```shell
-podman run --rm -it -v $IMAGE_DIR:/eib eib:dev /bin/eib -config-file /eib/eib-config.yaml -config-dir /eib -build-dir /eib/_build
+podman run --rm -it \
+-v $IMAGE_DIR:/eib eib:dev /bin/eib \
+-config-file /eib/eib-config.yaml \
+-config-dir /eib \
+-build-dir /eib/_build
 ```
 
 The command above will write all build artifacts (such as the combustion directory) under the image configuration
