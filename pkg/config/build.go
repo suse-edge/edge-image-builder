@@ -1,5 +1,6 @@
 package config
 
 type BuildConfig struct {
-	ImageConfigDir	string
+	ImageConfigDir string
+	BuildDir       string
 }

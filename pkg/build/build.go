@@ -56,16 +56,18 @@ func (b *Builder) prepareBuildDir() error {
 	// and a file named "script". This function builds out that structure and updates
 	// the Builder so that the other functions can populate it as necessary.
 
-	// Eventually we may want to let the user specify this directory, but for now
-	// it's simply going to be done in a temporary directory
-	tmpDir, err := os.MkdirTemp("", "eib-")
-	if err != nil {
-		return fmt.Errorf("creating a temporary build directory: %w", err)
+	if b.buildConfig.BuildDir == "" {
+		tmpDir, err := os.MkdirTemp("", "eib-")
+		if err != nil {
+			return fmt.Errorf("creating a temporary build directory: %w", err)
+		}
+		b.eibBuildDir = tmpDir
+	} else {
+		b.eibBuildDir = b.buildConfig.BuildDir
 	}
-	b.eibBuildDir = tmpDir
 	b.combustionDir = filepath.Join(b.eibBuildDir, "combustion")
 
-	err = os.MkdirAll(b.combustionDir, os.ModePerm)
+	err := os.MkdirAll(b.combustionDir, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("creating the build directory structure: %w", err)
 	}
