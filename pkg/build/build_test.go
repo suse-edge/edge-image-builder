@@ -25,6 +25,23 @@ func TestPrepareBuildDir(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestPrepareBuildDirExistingDir(t *testing.T) {
+	// Setup
+	tmpDir, err := os.MkdirTemp("", "eib-test-")
+	require.NoError(t, err)
+	bc := config.BuildConfig{BuildDir: tmpDir}
+	builder := New(nil, &bc)
+
+	// Test
+	err = builder.prepareBuildDir()
+	defer os.Remove(builder.eibBuildDir)
+
+	// Verify
+	require.NoError(t, err)
+	_, err = os.Stat(tmpDir)
+	require.NoError(t, err)
+}
+
 func TestGenerateCombustionScript(t *testing.T) {
 	// Setup
 	bc := config.BuildConfig{}
