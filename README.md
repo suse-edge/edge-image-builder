@@ -13,7 +13,7 @@ podman build -t eib:dev .
 ## Running
 
 At runtime, a volume must be mounted to the container. This serves as both the mechanism to introduce image
-configuration files and provide a way to get the built image out of the container and on to the host machine.
+configuration files and provide a way to get the built image out of the container and onto the host machine.
 
 **NOTE:** These docs are incomplete and will be fleshed out as the project matures. Below is an example that
 is being used for dev purposes. At some point when it's more mature, an example configuration directory will be
