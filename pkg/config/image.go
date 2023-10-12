@@ -9,7 +9,7 @@ import (
 type ImageConfig struct {
 	APIVersion string `yaml:"apiVersion"`
 	Image      struct {
-		ImageType       string `yaml:"imageTygipe"`
+		ImageType       string `yaml:"imageType"`
 		BaseImage       string `yaml:"baseImage"`
 		OutputImageName string `yaml:"outputImageName"`
 	}
