@@ -20,7 +20,9 @@ func TestParse(t *testing.T) {
 
 	// Verify
 	assert.Equal(t, "1.0", imageConfig.APIVersion)
-	assert.Equal(t, "iso", imageConfig.ImageType)
+	assert.Equal(t, "iso", imageConfig.Image.ImageType)
+	assert.Equal(t, "slemicro5.5.iso", imageConfig.Image.BaseImage)
+	assert.Equal(t, "eibimage.iso", imageConfig.Image.OutputImageName)
 }
 
 func TestParseBadConfig(t *testing.T) {

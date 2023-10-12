@@ -1,2 +1,5 @@
 apiVersion: 1.0
-imageType: iso
+image:
+  imageType: iso
+  baseImage: slemicro5.5.iso
+  outputImageName: eibimage.iso

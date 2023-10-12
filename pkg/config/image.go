@@ -8,7 +8,11 @@ import (
 
 type ImageConfig struct {
 	APIVersion string `yaml:"apiVersion"`
-	ImageType  string `yaml:"imageType"`
+	Image      struct {
+		ImageType       string `yaml:"imageTygipe"`
+		BaseImage       string `yaml:"baseImage"`
+		OutputImageName string `yaml:"outputImageName"`
+	}
 }
 
 func Parse(data []byte) (*ImageConfig, error) {
