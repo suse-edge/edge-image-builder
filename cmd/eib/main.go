@@ -6,6 +6,7 @@ import (
 	"os"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/config"
 )
 
@@ -89,10 +90,14 @@ func validateImageConfigDir(configDir string) error {
 }
 
 func main() {
-	_, _, err := processArgs()
+	imageConfig, buildConfig, err := processArgs()
 	if err != nil {
 		log.Error(err)
 	}
 
-	// Call to building logic when it's finished
+	builder := build.New(imageConfig, buildConfig)
+	err = builder.Build()
+	if err != nil {
+		log.Error(err)
+	}
 }
