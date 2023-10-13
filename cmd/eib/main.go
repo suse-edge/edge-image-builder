@@ -90,12 +90,12 @@ func validateImageConfigDir(configDir string) error {
 }
 
 func main() {
-	ic, bc, err := processArgs()
+	imageConfig, buildConfig, err := processArgs()
 	if err != nil {
 		log.Error(err)
 	}
 
-	builder := build.New(ic, bc)
+	builder := build.New(imageConfig, buildConfig)
 	err = builder.Build()
 	if err != nil {
 		log.Error(err)
