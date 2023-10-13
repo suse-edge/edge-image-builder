@@ -1,19 +1,23 @@
 package build
 
 import (
+	_ "embed"
 	"fmt"
 )
 
 const (
 	messageScriptName = "message.sh"
-	messageScriptsDir = "message"
 )
 
+//go:embed scripts/message/message.sh
+var messageScript string
+
 func (b *Builder) configureMessage() error {
-	err := b.copyCombustionFile(messageScriptsDir, messageScriptName)
+	err := b.writeCombustionFile(messageScript, messageScriptName)
 	if err != nil {
 		return fmt.Errorf("copying script %s: %w", messageScriptName, err)
 	}
+	b.registerCombustionScript(messageScriptName)
 
 	return nil
 }

@@ -65,3 +65,29 @@ func TestGenerateCombustionScript(t *testing.T) {
 	assert.Contains(t, scriptData, "foo.sh")
 	assert.Contains(t, scriptData, "bar.sh")
 }
+
+func TestWriteCombustionFile(t *testing.T) {
+	// Setup
+	bc := config.BuildConfig{}
+	builder := New(nil, &bc)
+	err := builder.prepareBuildDir()
+	require.NoError(t, err)
+	defer os.Remove(builder.eibBuildDir)
+
+	testData := "Edge Image Builder"
+	testFilename := "test-file.sh"
+
+	// Test
+	err = builder.writeCombustionFile(testData, testFilename)
+
+	// Verify
+	require.NoError(t, err)
+
+	expectedFilename := filepath.Join(builder.combustionDir, testFilename)
+	foundData, err := os.ReadFile(expectedFilename)
+	require.NoError(t, err)
+	assert.Equal(t, testData, string(foundData))
+
+	// Make sure the file isn't automatically added to the combustion scripts list
+	require.Equal(t, 0, len(builder.combustionScripts))
+}

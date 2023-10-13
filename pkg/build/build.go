@@ -109,6 +109,16 @@ func (b *Builder) generateCombustionScript() error {
 	return nil
 }
 
+func (b *Builder) writeCombustionFile(contents string, filename string) error {
+	destFilename := filepath.Join(b.combustionDir, filename)
+	err := os.WriteFile(destFilename, []byte(contents), os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("writing file %s: %w", destFilename, err)
+	}
+
+	return nil
+}
+
 func (b *Builder) copyCombustionFile(scriptSubDir string, scriptName string) error {
 	sourcePath := filepath.Join(embeddedScriptsBaseDir, scriptSubDir, scriptName)
 	src, err := os.ReadFile(sourcePath)
@@ -122,10 +132,13 @@ func (b *Builder) copyCombustionFile(scriptSubDir string, scriptName string) err
 		return fmt.Errorf("writing file: %w", err)
 	}
 
-	// Keep a running list of all added combustion files. When we add the combustion
+	return nil
+}
+
+func (b *Builder) registerCombustionScript(scriptName string) {
+	// Keep a running list of all added combustion scripts. When we add the combustion
 	// "script" file (the one Combustion itself looks at), we'll concatenate calls to
 	// each of these to that script.
-	b.combustionScripts = append(b.combustionScripts, scriptName)
 
-	return nil
+	b.combustionScripts = append(b.combustionScripts, scriptName)
 }
