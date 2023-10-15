@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/config"
+	"go.uber.org/zap"
 )
 
 const (
@@ -16,14 +16,6 @@ const (
 	argBuildDir   = "build-dir"
 	argVerbose    = "verbose"
 )
-
-func init() {
-	log.SetFormatter(&log.TextFormatter{
-		FullTimestamp:    true,
-		QuoteEmptyFields: true,
-	})
-	log.SetOutput(os.Stdout)
-}
 
 func processArgs() (*config.ImageConfig, *config.BuildConfig, error) {
 	var (
@@ -39,7 +31,7 @@ func processArgs() (*config.ImageConfig, *config.BuildConfig, error) {
 	flag.BoolVar(&verbose, argVerbose, false, "enables extra logging information")
 	flag.Parse()
 
-	handleVerbose(verbose)
+	setupLogging(verbose)
 
 	imageConfig, err := parseImageConfig(configFile)
 	if err != nil {
@@ -52,16 +44,26 @@ func processArgs() (*config.ImageConfig, *config.BuildConfig, error) {
 	}
 	buildConfig := config.BuildConfig{
 		ImageConfigDir: configDir,
-		BuildDir: buildDir,
+		BuildDir:       buildDir,
 	}
 
 	return imageConfig, &buildConfig, err
 }
 
-func handleVerbose(verbose bool) {
+func setupLogging(verbose bool) {
+	logLevel := zap.InfoLevel
 	if verbose {
-		log.SetLevel(log.DebugLevel)
+		logLevel = zap.DebugLevel
 	}
+
+	logConfig := zap.Config{
+		Level: zap.NewAtomicLevelAt(logLevel),
+	}
+
+	logger := zap.Must(logConfig.Build())
+
+	// Set our configured logger to be accessed globally by zap.L()
+	zap.ReplaceGlobals(logger)
 }
 
 func parseImageConfig(configFile string) (*config.ImageConfig, error) {
@@ -92,12 +94,12 @@ func validateImageConfigDir(configDir string) error {
 func main() {
 	imageConfig, buildConfig, err := processArgs()
 	if err != nil {
-		log.Error(err)
+		zap.L().Error("parsing CLI arguments", zap.Error(err))
 	}
 
 	builder := build.New(imageConfig, buildConfig)
 	err = builder.Build()
 	if err != nil {
-		log.Error(err)
+		zap.L().Error("building the image", zap.Error(err))
 	}
 }
