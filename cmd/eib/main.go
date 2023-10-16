@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/config"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -16,14 +17,6 @@ const (
 	argBuildDir   = "build-dir"
 	argVerbose    = "verbose"
 )
-
-func init() {
-	log.SetFormatter(&log.TextFormatter{
-		FullTimestamp:    true,
-		QuoteEmptyFields: true,
-	})
-	log.SetOutput(os.Stdout)
-}
 
 func processArgs() (*config.ImageConfig, *config.BuildConfig, error) {
 	var (
@@ -39,7 +32,7 @@ func processArgs() (*config.ImageConfig, *config.BuildConfig, error) {
 	flag.BoolVar(&verbose, argVerbose, false, "enables extra logging information")
 	flag.Parse()
 
-	handleVerbose(verbose)
+	setupLogging(verbose)
 
 	imageConfig, err := parseImageConfig(configFile)
 	if err != nil {
@@ -52,16 +45,37 @@ func processArgs() (*config.ImageConfig, *config.BuildConfig, error) {
 	}
 	buildConfig := config.BuildConfig{
 		ImageConfigDir: configDir,
-		BuildDir: buildDir,
+		BuildDir:       buildDir,
 	}
 
 	return imageConfig, &buildConfig, err
 }
 
-func handleVerbose(verbose bool) {
+func setupLogging(verbose bool) {
+	logLevel := zap.InfoLevel
 	if verbose {
-		log.SetLevel(log.DebugLevel)
+		logLevel = zap.DebugLevel
 	}
+
+	encoderCfg := zap.NewProductionEncoderConfig()
+	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+
+	logConfig := zap.Config{
+		Level:         zap.NewAtomicLevelAt(logLevel),
+		Encoding:      "console",
+		EncoderConfig: encoderCfg,
+		OutputPaths: []string{
+			"stdout",
+		},
+		ErrorOutputPaths: []string{
+			"stderr",
+		},
+	}
+
+	logger := zap.Must(logConfig.Build())
+
+	// Set our configured logger to be accessed globally by zap.L()
+	zap.ReplaceGlobals(logger)
 }
 
 func parseImageConfig(configFile string) (*config.ImageConfig, error) {
@@ -92,12 +106,12 @@ func validateImageConfigDir(configDir string) error {
 func main() {
 	imageConfig, buildConfig, err := processArgs()
 	if err != nil {
-		log.Error(err)
+		zap.L().Fatal("CLI arguments could not be parsed", zap.Error(err))
 	}
 
 	builder := build.New(imageConfig, buildConfig)
 	err = builder.Build()
 	if err != nil {
-		log.Error(err)
+		zap.L().Fatal("An error occurred building the image", zap.Error(err))
 	}
 }
