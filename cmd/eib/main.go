@@ -8,6 +8,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -56,8 +57,19 @@ func setupLogging(verbose bool) {
 		logLevel = zap.DebugLevel
 	}
 
+	encoderCfg := zap.NewProductionEncoderConfig()
+	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+
 	logConfig := zap.Config{
-		Level: zap.NewAtomicLevelAt(logLevel),
+		Level:         zap.NewAtomicLevelAt(logLevel),
+		Encoding:      "console",
+		EncoderConfig: encoderCfg,
+		OutputPaths: []string{
+			"stdout",
+		},
+		ErrorOutputPaths: []string{
+			"stderr",
+		},
 	}
 
 	logger := zap.Must(logConfig.Build())
@@ -94,12 +106,12 @@ func validateImageConfigDir(configDir string) error {
 func main() {
 	imageConfig, buildConfig, err := processArgs()
 	if err != nil {
-		zap.L().Error("parsing CLI arguments", zap.Error(err))
+		zap.L().Fatal("parsing CLI arguments", zap.Error(err))
 	}
 
 	builder := build.New(imageConfig, buildConfig)
 	err = builder.Build()
 	if err != nil {
-		zap.L().Error("building the image", zap.Error(err))
+		zap.L().Fatal("building the image", zap.Error(err))
 	}
 }
