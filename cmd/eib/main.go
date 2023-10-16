@@ -106,12 +106,12 @@ func validateImageConfigDir(configDir string) error {
 func main() {
 	imageConfig, buildConfig, err := processArgs()
 	if err != nil {
-		zap.L().Fatal("parsing CLI arguments", zap.Error(err))
+		zap.L().Fatal("CLI arguments could not be parsed", zap.Error(err))
 	}
 
 	builder := build.New(imageConfig, buildConfig)
 	err = builder.Build()
 	if err != nil {
-		zap.L().Fatal("building the image", zap.Error(err))
+		zap.L().Fatal("An error occurred building the image", zap.Error(err))
 	}
 }
