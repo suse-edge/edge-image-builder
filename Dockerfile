@@ -7,7 +7,9 @@ RUN go build ./cmd/eib
 
 
 # ----- Deliverable Image -----
-FROM registry.suse.com/bci/bci-micro:15.5
+FROM registry.suse.com/bci/bci-base:15.5
+
+RUN zypper install -y xorriso
 
 COPY --from=0 /src/eib /bin/eib
 
