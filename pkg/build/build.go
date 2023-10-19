@@ -43,10 +43,21 @@ func (b *Builder) Build() error {
 		return fmt.Errorf("configuring the welcome message: %w", err)
 	}
 
-	err = b.cleanUpBuildDir()
+	err = b.generateCombustionScript()
 	if err != nil {
-		return fmt.Errorf("cleaning up the build directory: %w", err)
+		return fmt.Errorf("generating combustion script: %w", err)
 	}
+
+	err = b.buildIsoImage()
+	if err != nil {
+		return fmt.Errorf("error building modified ISO: %w", err)
+	}
+
+	// Temporarily disabling; will add a flag to control this next
+	//err = b.cleanUpBuildDir()
+	//if err != nil {
+	//	return fmt.Errorf("cleaning up the build directory: %w", err)
+	//}
 
 	return nil
 }
@@ -76,7 +87,7 @@ func (b *Builder) prepareBuildDir() error {
 }
 
 func (b *Builder) cleanUpBuildDir() error {
-	err := os.Remove(b.eibBuildDir)
+	err := os.RemoveAll(b.eibBuildDir)
 	if err != nil {
 		return fmt.Errorf("deleting build directory: %w", err)
 	}
@@ -100,7 +111,7 @@ func (b *Builder) generateCombustionScript() error {
 
 	// Add a call to each script that was added to the combustion directory
 	for _, filename := range b.combustionScripts {
-		_, err = fmt.Fprintln(scriptFile, filename)
+		_, err = fmt.Fprintln(scriptFile, "./"+filename)
 		if err != nil {
 			return fmt.Errorf("modifying the combustion script to add %s: %w", filename, err)
 		}
