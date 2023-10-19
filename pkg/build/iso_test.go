@@ -1,13 +1,17 @@
 package build
 
 import (
+	"os"
+	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/config"
 )
 
-func TestGenerateXorrisoArgs(t *testing.T) {
+func TestCreateXorrisoCommand(t *testing.T) {
+
 	// Setup
 	imageConfig := config.ImageConfig{
 		Image: config.Image{
@@ -22,12 +26,23 @@ func TestGenerateXorrisoArgs(t *testing.T) {
 	builder.combustionDir = "combustion"
 
 	// Test
-	args := builder.generateXorrisoArgs()
+	cmd, err := builder.createXorrisoCommand()
 
 	// Verify
-	expected := "-indev config-dir/images/base-image " +
+	require.NoError(t, err)
+
+	defer os.Remove(builder.generateIsoLogFilename())
+
+	assert.Equal(t, xorrisoExec, cmd.Path)
+
+	expectedString := "/usr/bin/xorriso " +
+		"-indev config-dir/images/base-image " +
 		"-outdev config-dir/build-image " +
 		"-map combustion /combustion " +
 		"-boot_image any replay -changes_pending yes"
-	require.Equal(t, expected, args)
+	expected := strings.Split(expectedString, " ")
+	assert.Equal(t, expected, cmd.Args)
+
+	assert.NotEqual(t, os.Stdout, cmd.Stdout)
+	assert.NotEqual(t, os.Stderr, cmd.Stderr)
 }
