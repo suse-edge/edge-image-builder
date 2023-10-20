@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -13,40 +14,38 @@ import (
 const (
 	xorrisoArgsBase = "-indev %s -outdev %s -map %s /combustion -boot_image any replay -changes_pending yes"
 	xorrisoExec     = "/usr/bin/xorriso"
-	xorrisoLogFile  = "iso-build.log"
+	xorrisoLogFile  = "iso-build-%s.log"
 )
 
 func (b *Builder) buildIsoImage() error {
-	cmd, err := b.createXorrisoCommand()
-
+	cmd, logfile, err := b.createXorrisoCommand()
 	if err != nil {
 		return err
 	}
+	defer logfile.Close()
 
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("error running xorriso: %w", err)
-	} else {
-		zap.L().Sugar().Debugf("ISO log file created: %s", b.generateIsoLogFilename())
 	}
 
 	return err
 }
 
-func (b *Builder) createXorrisoCommand() (*exec.Cmd, error) {
-	args := b.generateXorrisoArgs()
-	cmd := exec.Command(xorrisoExec, args...)
-
+func (b *Builder) createXorrisoCommand() (*exec.Cmd, *os.File, error) {
 	logFilename := b.generateIsoLogFilename()
 	xorrisoLog, err := os.Create(logFilename)
 	if err != nil {
-		return nil, fmt.Errorf("opening ISO build logfile: %w", err)
+		return nil, nil, fmt.Errorf("opening ISO build logfile: %w", err)
 	}
-	defer xorrisoLog.Close()
+	zap.L().Sugar().Debugf("ISO log file created: %s", logFilename)
+
+	args := b.generateXorrisoArgs()
+	cmd := exec.Command(xorrisoExec, args...)
 	cmd.Stdout = xorrisoLog
 	cmd.Stderr = xorrisoLog
 
-	return cmd, nil
+	return cmd, xorrisoLog, nil
 }
 
 func (b *Builder) generateXorrisoArgs() []string {
@@ -60,6 +59,8 @@ func (b *Builder) generateXorrisoArgs() []string {
 }
 
 func (b *Builder) generateIsoLogFilename() string {
-	logFilename := filepath.Join(b.eibBuildDir, xorrisoLogFile)
+	timestamp := time.Now().Format("Jan02_15-04-05")
+	filename := fmt.Sprintf(xorrisoLogFile, timestamp)
+	logFilename := filepath.Join(b.eibBuildDir, filename)
 	return logFilename
 }

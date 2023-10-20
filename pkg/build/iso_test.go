@@ -11,7 +11,6 @@ import (
 )
 
 func TestCreateXorrisoCommand(t *testing.T) {
-
 	// Setup
 	imageConfig := config.ImageConfig{
 		Image: config.Image{
@@ -26,7 +25,7 @@ func TestCreateXorrisoCommand(t *testing.T) {
 	builder.combustionDir = "combustion"
 
 	// Test
-	cmd, err := builder.createXorrisoCommand()
+	cmd, logfile, err := builder.createXorrisoCommand()
 
 	// Verify
 	require.NoError(t, err)
@@ -43,6 +42,7 @@ func TestCreateXorrisoCommand(t *testing.T) {
 	expected := strings.Split(expectedString, " ")
 	assert.Equal(t, expected, cmd.Args)
 
+	assert.NotNil(t, logfile)
 	assert.NotEqual(t, os.Stdout, cmd.Stdout)
 	assert.NotEqual(t, os.Stderr, cmd.Stderr)
 }
