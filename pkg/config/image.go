@@ -8,7 +8,7 @@ import (
 
 type ImageConfig struct {
 	APIVersion string `yaml:"apiVersion"`
-	Image	   Image
+	Image	   Image  `yaml:"image"`
 }
 
 type Image struct {
@@ -16,7 +16,6 @@ type Image struct {
 	BaseImage       string `yaml:"baseImage"`
 	OutputImageName string `yaml:"outputImageName"`
 }
-
 
 func Parse(data []byte) (*ImageConfig, error) {
 	imageConfig := ImageConfig{}
