@@ -18,9 +18,14 @@ const (
 )
 
 func (b *Builder) buildIsoImage() error {
+	err := b.deleteExistingOutputIso()
+	if err != nil {
+		return fmt.Errorf("deleting existing ISO image: %w", err)
+	}
+
 	cmd, logfile, err := b.createXorrisoCommand()
 	if err != nil {
-		return err
+		return fmt.Errorf("configuring the ISO build command: %w", err)
 	}
 	defer logfile.Close()
 
@@ -30,6 +35,15 @@ func (b *Builder) buildIsoImage() error {
 	}
 
 	return err
+}
+
+func (b *Builder) deleteExistingOutputIso() error {
+	outputFilename := b.generateOutputIsoFilename()
+	err := os.Remove(outputFilename)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("error deleting file %s: %w", outputFilename, err)
+	}
+	return nil
 }
 
 func (b *Builder) createXorrisoCommand() (*exec.Cmd, *os.File, error) {
@@ -63,4 +77,9 @@ func (b *Builder) generateIsoLogFilename() string {
 	filename := fmt.Sprintf(xorrisoLogFile, timestamp)
 	logFilename := filepath.Join(b.eibBuildDir, filename)
 	return logFilename
+}
+
+func (b *Builder) generateOutputIsoFilename() string {
+	filename := filepath.Join(b.buildConfig.ImageConfigDir, b.imageConfig.Image.OutputImageName)
+	return filename
 }
