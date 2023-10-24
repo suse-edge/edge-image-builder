@@ -153,3 +153,8 @@ func (b *Builder) registerCombustionScript(scriptName string) {
 
 	b.combustionScripts = append(b.combustionScripts, scriptName)
 }
+
+func (b *Builder) generateOutputImageFilename() string {
+	filename := filepath.Join(b.buildConfig.ImageConfigDir, b.imageConfig.Image.OutputImageName)
+	return filename
+}
