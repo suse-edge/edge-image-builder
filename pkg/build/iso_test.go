@@ -10,6 +10,59 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/config"
 )
 
+func TestDeleteNoExistingImage(t *testing.T) {
+	// Setup
+	tmpDir, err := os.MkdirTemp("", "eib-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+
+	imageConfig := config.ImageConfig{
+		Image: config.Image{
+			OutputImageName: "not-there",
+		},
+	}
+	buildConfig := config.BuildConfig{
+		ImageConfigDir: tmpDir,
+	}
+	builder := New(&imageConfig, &buildConfig)
+
+	// Test
+	err = builder.deleteExistingOutputIso()
+
+	// Verify
+	require.NoError(t, err)
+}
+
+func TestDeleteExistingImage(t *testing.T) {
+	// Setup
+	tmpDir, err := os.MkdirTemp("", "eib-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+
+	imageConfig := config.ImageConfig{
+		Image: config.Image{
+			OutputImageName: "not-there",
+		},
+	}
+	buildConfig := config.BuildConfig{
+		ImageConfigDir: tmpDir,
+	}
+	builder := New(&imageConfig, &buildConfig)
+
+	_, err = os.Create(builder.generateOutputIsoFilename())
+	require.NoError(t, err)
+
+	// Test
+	err = builder.deleteExistingOutputIso()
+
+	// Verify
+	require.NoError(t, err)
+
+	_, err = os.Stat(builder.generateOutputIsoFilename())
+	require.Error(t, err)
+	require.True(t, os.IsNotExist(err))
+}
+
 func TestCreateXorrisoCommand(t *testing.T) {
 	// Setup
 	imageConfig := config.ImageConfig{
