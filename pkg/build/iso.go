@@ -63,8 +63,8 @@ func (b *Builder) createXorrisoCommand() (*exec.Cmd, *os.File, error) {
 }
 
 func (b *Builder) generateXorrisoArgs() []string {
-	indevPath := filepath.Join(b.buildConfig.ImageConfigDir, "images", b.imageConfig.Image.BaseImage)
-	outdevPath := filepath.Join(b.buildConfig.ImageConfigDir, b.imageConfig.Image.OutputImageName)
+	indevPath := b.generateBaseImageFilename()
+	outdevPath := b.generateOutputImageFilename()
 	mapDir := b.combustionDir
 
 	args := fmt.Sprintf(xorrisoArgsBase, indevPath, outdevPath, mapDir)
