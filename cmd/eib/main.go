@@ -12,23 +12,27 @@ import (
 )
 
 const (
-	argConfigFile = "config-file"
-	argConfigDir  = "config-dir"
-	argBuildDir   = "build-dir"
-	argVerbose    = "verbose"
+	argConfigFile  = "config-file"
+	argConfigDir   = "config-dir"
+	argBuildDir    = "build-dir"
+	argDeleteBuild = "delete-build-dir"
+	argVerbose     = "verbose"
 )
 
 func processArgs() (*config.ImageConfig, *config.BuildConfig, error) {
 	var (
-		configFile string
-		configDir  string
-		buildDir   string
-		verbose    bool
+		configFile     string
+		configDir      string
+		buildDir       string
+		deleteBuildDir bool
+		verbose        bool
 	)
 
 	flag.StringVar(&configFile, argConfigFile, "", "full path to the image configuration file")
 	flag.StringVar(&configDir, argConfigDir, "", "full path to the image configuration directory")
 	flag.StringVar(&buildDir, argBuildDir, "", "full path to the directory to store build artifacts")
+	flag.BoolVar(&deleteBuildDir, argDeleteBuild, false,
+		"if specified, the build directory will be deleted after the image is built")
 	flag.BoolVar(&verbose, argVerbose, false, "enables extra logging information")
 	flag.Parse()
 
@@ -46,6 +50,7 @@ func processArgs() (*config.ImageConfig, *config.BuildConfig, error) {
 	buildConfig := config.BuildConfig{
 		ImageConfigDir: configDir,
 		BuildDir:       buildDir,
+		DeleteBuildDir: deleteBuildDir,
 	}
 
 	return imageConfig, &buildConfig, err

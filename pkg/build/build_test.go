@@ -42,6 +42,51 @@ func TestPrepareBuildDirExistingDir(t *testing.T) {
 	require.Equal(t, tmpDir, builder.eibBuildDir)
 }
 
+func TestCleanUpBuildDirTrue(t *testing.T) {
+	// Setup
+	tmpDir, err := os.MkdirTemp("", "eib-test-")
+	require.NoError(t, err)
+	defer os.Remove(tmpDir)
+
+	bc := config.BuildConfig{
+		BuildDir: tmpDir,
+		DeleteBuildDir: true,
+	}
+	builder := New(nil, &bc)
+	builder.prepareBuildDir()
+
+	// Test
+	err = builder.cleanUpBuildDir()
+
+	// Verify
+	require.NoError(t, err)
+	_, err = os.Stat(tmpDir)
+	require.Error(t, err)
+	assert.True(t, os.IsNotExist(err))
+}
+
+func TestCleanUpBuildDirFalse(t *testing.T) {
+	// Setup
+	tmpDir, err := os.MkdirTemp("", "eib-test-")
+	require.NoError(t, err)
+	defer os.Remove(tmpDir)
+
+	bc := config.BuildConfig{
+		BuildDir: tmpDir,
+		DeleteBuildDir: false,
+	}
+	builder := New(nil, &bc)
+	builder.prepareBuildDir()
+
+	// Test
+	err = builder.cleanUpBuildDir()
+
+	// Verify
+	require.NoError(t, err)
+	_, err = os.Stat(tmpDir)
+	require.NoError(t, err)
+}
+
 func TestGenerateCombustionScript(t *testing.T) {
 	// Setup
 	bc := config.BuildConfig{}

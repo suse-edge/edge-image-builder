@@ -53,11 +53,10 @@ func (b *Builder) Build() error {
 		return fmt.Errorf("error building modified ISO: %w", err)
 	}
 
-	// Temporarily disabling; will add a flag to control this next
-	//err = b.cleanUpBuildDir()
-	//if err != nil {
-	//	return fmt.Errorf("cleaning up the build directory: %w", err)
-	//}
+	err = b.cleanUpBuildDir()
+	if err != nil {
+		return fmt.Errorf("cleaning up the build directory: %w", err)
+	}
 
 	return nil
 }
@@ -87,9 +86,11 @@ func (b *Builder) prepareBuildDir() error {
 }
 
 func (b *Builder) cleanUpBuildDir() error {
-	err := os.RemoveAll(b.eibBuildDir)
-	if err != nil {
-		return fmt.Errorf("deleting build directory: %w", err)
+	if b.buildConfig.DeleteBuildDir {
+		err := os.RemoveAll(b.eibBuildDir)
+		if err != nil {
+			return fmt.Errorf("deleting build directory: %w", err)
+		}
 	}
 	return nil
 }
