@@ -93,3 +93,7 @@ podman run --rm -it \
   `_build` will be created in the image configuration directory and will persist after EIB finished. If it already
   exists, EIB will delete this directory at the start of a build, meaning it does not need to manually be cleaned up
   between builds.
+
+## Testing Images
+
+For details on how to test the built images, see the [Testing Guide](docs/testing-guide.md).

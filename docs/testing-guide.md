@@ -3,13 +3,11 @@
 Images may be run on either bare metal or virtualization. The following sections provide examples to speed
 development and testing.
 
-## libvirt
-
 [libvirt](https://libvirt.org/) is a commonly available virtualization toolkit. Much of the development of EIB
 has been tested against libvirt running on an [openSUSE Tumbleweed](https://get.opensuse.org/tumbleweed/)
-installation.
+installation. Other hypervisors may be used, but this guide will cover the specifics of libvirt in particular.
 
-### Testing Self-installing ISOs
+## Testing Self-installing ISOs
 
 If you're already familiar with using libvirt to create images installed from ISOs, you can skip to the section
 about [resetting the VM between tests](#resetting-the-vm).
@@ -17,8 +15,7 @@ about [resetting the VM between tests](#resetting-the-vm).
 > :warning: libvirt may automatically remove the installation media after the first boot. Upon reboot, the installation
 > ISO, and more importantly it's embedded combustion configuration, will not be present and combustion won't run. If
 > the JeOS setup begins, the first step in debugging should be to ensure the installation media is still present
-> after the initall installation writes the SLE Micro raw image to disk.
-
+> after the initial installation writes the SLE Micro raw image to disk.
 
 Using Virtual Machine Manager, select the option to create a new VM. 
 
@@ -75,13 +72,13 @@ a login screen will be shown.
 
 ![images](./images/libvirt-iso-10.png)
 
-### Resetting the VM 
+### Resetting the VM for Self-install ISO Testing 
 
 To save time, the process above does not need to be redone for each installation. Instead, the storage file for the
 VM can be recreated, causing the installer ISO to act as if it is a fresh installation on a new disk. The path to
 the disk image file can be found under the "Details" section of the VM.
 
-![images](./images/libvirt-iso-X.png)
+![images](./images/libvirt-iso-11.png)
 
 The image can be recreated between ISO installs using `qemu-img` (make sure the VM is powered off):
 
@@ -90,3 +87,28 @@ qemu-img create -f qcow2 ~/.local/share/libvirt/images/eib-iso.qcow2 20G
 ```
 
 The next time the VM is powered on, it will trigger the ISO installer.
+
+## Testing RAW Images
+
+Using Virtual Machine Manager, select the option to create a new VM.
+
+Select the "Import existing disk image" option:
+
+![images](./images/libvirt-raw-1.png)
+
+Navigate to the raw image built by EIB and set the OS to "SUSE Linux Enterprise Micro 5.5"
+(or type `slem5.5` for shorthand):
+
+![images](./images/libvirt-raw-2.png)
+
+Continue through the creation wizard, adjusting the defaults as necessary.
+
+Once the VM is configured, simply start it to boot into the raw image. Similar to the self-install ISO instructions,
+the JeOS installer should not appear. Instead, combustion should take over the installation and the VM will boot
+into a login screen.
+
+### Resetting the VM for RAW Image Testing
+
+Unlike the installer ISO, there isn't anything that needs to take place when testing multiple iterations of
+a raw image. EIB can be used to overwrite the raw image attached to a VM and, when the VM is booted, it will use
+the newly built image.
