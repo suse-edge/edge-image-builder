@@ -54,7 +54,7 @@ func TestWriteModifyScript(t *testing.T) {
 		BuildDir: tmpDir,
 	}
 	builder := New(&imageConfig, &buildConfig)
-	builder.combustionDir = "combustion-dir"
+	builder.prepareBuildDir()
 
 	// Test
 	err = builder.writeModifyScript()
@@ -68,7 +68,7 @@ func TestWriteModifyScript(t *testing.T) {
 
 	foundContents := string(foundBytes)
 	assert.Contains(t, foundContents, "guestfish --rw -a config-dir/output-image")
-	assert.Contains(t, foundContents, "copy-in combustion-dir")
+	assert.Contains(t, foundContents, "copy-in " + builder.combustionDir)
 }
 
 func TestCreateModifyCommand(t *testing.T) {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"text/template"
 
 	"github.com/suse-edge/edge-image-builder/pkg/config"
 )
@@ -130,12 +131,29 @@ func (b *Builder) generateCombustionScript() error {
 	return nil
 }
 
-func (b *Builder) writeCombustionFile(contents string, filename string) error {
+func (b *Builder) writeBuildDirFile(contents string, templateData any, filename string) error {
+	destFilename := filepath.Join(b.eibBuildDir, filename)
+	return b.writeFile(contents, templateData, destFilename)
+}
+
+func (b *Builder) writeCombustionFile(contents string, templateData any, filename string) error {
 	destFilename := filepath.Join(b.combustionDir, filename)
-	err := os.WriteFile(destFilename, []byte(contents), os.ModePerm)
+	return b.writeFile(contents, templateData, destFilename)
+}
+
+func (b *Builder) writeFile(contents string, templateData any, filename string) error {
+	tmpl, err := template.New(filename).Parse(contents)
 	if err != nil {
-		return fmt.Errorf("writing file %s: %w", destFilename, err)
+		return fmt.Errorf("creating template for file %s: %w", filename, err)
 	}
+
+	file, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("writing file %s: %w", filename, err)
+	}
+	defer file.Close()
+
+	tmpl.Execute(file, templateData)
 
 	return nil
 }

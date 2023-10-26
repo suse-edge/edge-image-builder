@@ -13,7 +13,7 @@ const (
 var messageScript string
 
 func (b *Builder) configureMessage() error {
-	err := b.writeCombustionFile(messageScript, messageScriptName)
+	err := b.writeCombustionFile(messageScript, nil, messageScriptName)
 	if err != nil {
 		return fmt.Errorf("copying script %s: %w", messageScriptName, err)
 	}
