@@ -54,7 +54,7 @@ func (b *Builder) Build() error {
 	case config.ImageTypeRAW:
 		err = b.buildRawImage()
 	default:
-		fmt.Errorf("invalid imageType value specified, must be either \"%s\" or \"%s\"",
+		err = fmt.Errorf("invalid imageType value specified, must be either \"%s\" or \"%s\"",
 			config.ImageTypeISO, config.ImageTypeRAW)
 	}
 
