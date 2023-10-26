@@ -78,6 +78,15 @@ a login screen will be shown.
 ### Resetting the VM 
 
 To save time, the process above does not need to be redone for each installation. Instead, the storage file for the
-VM can be recreated, causing the installer ISO to act as if it is a fresh installation on a new disk. 
+VM can be recreated, causing the installer ISO to act as if it is a fresh installation on a new disk. The path to
+the disk image file can be found under the "Details" section of the VM.
 
 ![images](./images/libvirt-iso-X.png)
+
+The image can be recreated between ISO installs using `qemu-img` (make sure the VM is powered off):
+
+```bash
+qemu-img create -f qcow2 ~/.local/share/libvirt/images/eib-iso.qcow2 20G
+```
+
+The next time the VM is powered on, it will trigger the ISO installer.
