@@ -6,6 +6,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	ImageTypeISO = "iso"
+	ImageTypeRAW = "raw"
+)
+
 type ImageConfig struct {
 	APIVersion string `yaml:"apiVersion"`
 	Image	   Image  `yaml:"image"`

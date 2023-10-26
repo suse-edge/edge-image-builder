@@ -48,9 +48,18 @@ func (b *Builder) Build() error {
 		return fmt.Errorf("generating combustion script: %w", err)
 	}
 
-	err = b.buildIsoImage()
+	switch b.imageConfig.Image.ImageType {
+	case config.ImageTypeISO:
+		err = b.buildIsoImage()
+	case config.ImageTypeRAW:
+		err = b.buildRawImage()
+	default:
+		err = fmt.Errorf("invalid imageType value specified, must be either \"%s\" or \"%s\"",
+			config.ImageTypeISO, config.ImageTypeRAW)
+	}
+
 	if err != nil {
-		return fmt.Errorf("error building modified ISO: %w", err)
+		return err
 	}
 
 	err = b.cleanUpBuildDir()
@@ -153,4 +162,14 @@ func (b *Builder) registerCombustionScript(scriptName string) {
 	// each of these to that script.
 
 	b.combustionScripts = append(b.combustionScripts, scriptName)
+}
+
+func (b *Builder) generateOutputImageFilename() string {
+	filename := filepath.Join(b.buildConfig.ImageConfigDir, b.imageConfig.Image.OutputImageName)
+	return filename
+}
+
+func (b *Builder) generateBaseImageFilename() string {
+	filename := filepath.Join(b.buildConfig.ImageConfigDir, "images", b.imageConfig.Image.BaseImage)
+	return filename
 }

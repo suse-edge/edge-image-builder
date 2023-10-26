@@ -38,7 +38,7 @@ func (b *Builder) buildIsoImage() error {
 }
 
 func (b *Builder) deleteExistingOutputIso() error {
-	outputFilename := b.generateOutputIsoFilename()
+	outputFilename := b.generateOutputImageFilename()
 	err := os.Remove(outputFilename)
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("error deleting file %s: %w", outputFilename, err)
@@ -63,8 +63,8 @@ func (b *Builder) createXorrisoCommand() (*exec.Cmd, *os.File, error) {
 }
 
 func (b *Builder) generateXorrisoArgs() []string {
-	indevPath := filepath.Join(b.buildConfig.ImageConfigDir, "images", b.imageConfig.Image.BaseImage)
-	outdevPath := filepath.Join(b.buildConfig.ImageConfigDir, b.imageConfig.Image.OutputImageName)
+	indevPath := b.generateBaseImageFilename()
+	outdevPath := b.generateOutputImageFilename()
 	mapDir := b.combustionDir
 
 	args := fmt.Sprintf(xorrisoArgsBase, indevPath, outdevPath, mapDir)
@@ -77,9 +77,4 @@ func (b *Builder) generateIsoLogFilename() string {
 	filename := fmt.Sprintf(xorrisoLogFile, timestamp)
 	logFilename := filepath.Join(b.eibBuildDir, filename)
 	return logFilename
-}
-
-func (b *Builder) generateOutputIsoFilename() string {
-	filename := filepath.Join(b.buildConfig.ImageConfigDir, b.imageConfig.Image.OutputImageName)
-	return filename
 }
