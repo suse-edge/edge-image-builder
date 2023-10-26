@@ -48,21 +48,18 @@ func (b *Builder) Build() error {
 		return fmt.Errorf("generating combustion script: %w", err)
 	}
 
-	if b.imageConfig.Image.ImageType == config.ImageTypeISO {
+	switch b.imageConfig.Image.ImageType {
+	case config.ImageTypeISO:
 		err = b.buildIsoImage()
-		if err != nil {
-			return fmt.Errorf("error building modified ISO: %w", err)
-		}
-	} else if b.imageConfig.Image.ImageType == config.ImageTypeRAW {
+	case config.ImageTypeRAW:
 		err = b.buildRawImage()
-		if err != nil {
-			return fmt.Errorf("error building modified raw image: %w", err)
-		}
-	} else {
-		// This is temporary until we have validation in place that will ensure the config
-		// is valid well before we hit this point
-		return fmt.Errorf("invalid imageType value specified, must be either \"%s\" or \"%s\"",
+	default:
+		fmt.Errorf("invalid imageType value specified, must be either \"%s\" or \"%s\"",
 			config.ImageTypeISO, config.ImageTypeRAW)
+	}
+
+	if err != nil {
+		return err
 	}
 
 	// Temporarily disabling; will add a flag to control this next
