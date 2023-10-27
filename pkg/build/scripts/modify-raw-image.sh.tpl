@@ -10,9 +10,8 @@ set -euo pipefail
 #  sh "btrfs property set / ro false"
 #  - Enables write access to the read only filesystem
 #
-#  copy-in __.OutputImage__ /
+#  copy-in __.CombustionDir__ /
 #  - Copies the combustion directory into the root of the image
-#  - __.OutputImage__ should be populated with the full path to the built combustion directory
 #
 #  sh "btrfs filesystem label / INSTALL"
 #  - As of Oct 25, 2023, combustion only checks volumes of certain names for the

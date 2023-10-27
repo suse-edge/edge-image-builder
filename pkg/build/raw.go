@@ -54,7 +54,7 @@ func (b *Builder) writeModifyScript() error {
 		CombustionDir: b.combustionDir,
 	}
 
-	err := b.writeBuildDirFile(modifyRawImageScript, &values, modifyScriptName)
+	err := b.writeBuildDirFile(modifyScriptName, modifyRawImageScript, &values)
 	if err != nil {
 		return fmt.Errorf("writing modification script %s: %w", modifyScriptName, err)
 	}

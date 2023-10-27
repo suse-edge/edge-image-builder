@@ -122,7 +122,7 @@ func TestWriteCombustionFile(t *testing.T) {
 	testFilename := "combustion-file.sh"
 
 	// Test
-	err = builder.writeCombustionFile(testData, nil, testFilename)
+	err = builder.writeCombustionFile(testFilename, testData, nil)
 
 	// Verify
 	require.NoError(t, err)
@@ -147,7 +147,7 @@ func TestWriteBuildDirFile(t *testing.T) {
 	testFilename := "build-dir-file.sh"
 
 	// Test
-	err = builder.writeBuildDirFile(testData, nil, testFilename)
+	err = builder.writeBuildDirFile(testFilename, testData, nil)
 
 	// Verify
 	require.NoError(t, err)
@@ -177,7 +177,7 @@ func TestWriteFileWithTemplate(t *testing.T) {
 	testFilename := filepath.Join(tmpDir, "write-file-with-template.sh")
 
 	// Test
-	err = builder.writeFile(testData, &values, testFilename)
+	err = builder.writeFile(testFilename, testData, &values)
 
 	// Verify
 	require.NoError(t, err)

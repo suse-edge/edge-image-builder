@@ -131,30 +131,39 @@ func (b *Builder) generateCombustionScript() error {
 	return nil
 }
 
-func (b *Builder) writeBuildDirFile(contents string, templateData any, filename string) error {
+func (b *Builder) writeBuildDirFile(filename string, contents string, templateData any) error {
 	destFilename := filepath.Join(b.eibBuildDir, filename)
-	return b.writeFile(contents, templateData, destFilename)
+	return b.writeFile(destFilename, contents, templateData)
 }
 
-func (b *Builder) writeCombustionFile(contents string, templateData any, filename string) error {
+func (b *Builder) writeCombustionFile(filename string, contents string, templateData any) error {
 	destFilename := filepath.Join(b.combustionDir, filename)
-	return b.writeFile(contents, templateData, destFilename)
+	return b.writeFile(destFilename, contents, templateData)
 }
 
-func (b *Builder) writeFile(contents string, templateData any, filename string) error {
-	tmpl, err := template.New(filename).Parse(contents)
-	if err != nil {
-		return fmt.Errorf("creating template for file %s: %w", filename, err)
+func (b *Builder) writeFile(filename string, contents string, templateData any) error {
+	if templateData != nil {
+		tmpl, err := template.New(filename).Parse(contents)
+		if err != nil {
+			return fmt.Errorf("creating template for file %s: %w", filename, err)
+		}
+
+		file, err := os.Create(filename)
+		if err != nil {
+			return fmt.Errorf("creating file %s: %w", filename, err)
+		}
+		defer file.Close()
+
+		err = tmpl.Execute(file, templateData)
+		if err != nil {
+			return fmt.Errorf("applying the template at %s: %w", filename, err)
+		}
+	} else {
+		err := os.WriteFile(filename, []byte(contents), os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("writing file %s: %w", filename, err)
+		}
 	}
-
-	file, err := os.Create(filename)
-	if err != nil {
-		return fmt.Errorf("writing file %s: %w", filename, err)
-	}
-	defer file.Close()
-
-	tmpl.Execute(file, templateData)
-
 	return nil
 }
 
