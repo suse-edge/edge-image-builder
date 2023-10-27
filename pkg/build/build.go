@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	// nolint: unused
 	embeddedScriptsBaseDir = "scripts"
 )
 
@@ -167,7 +168,8 @@ func (b *Builder) writeFile(filename string, contents string, templateData any) 
 	return nil
 }
 
-func (b *Builder) copyCombustionFile(scriptSubDir string, scriptName string) error {
+// nolint: unused
+func (b *Builder) copyCombustionFile(scriptSubDir, scriptName string) error {
 	sourcePath := filepath.Join(embeddedScriptsBaseDir, scriptSubDir, scriptName)
 	src, err := os.ReadFile(sourcePath)
 	if err != nil {

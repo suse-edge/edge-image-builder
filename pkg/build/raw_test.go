@@ -30,7 +30,7 @@ func TestCreateRawImageCopyCommand(t *testing.T) {
 	require.NotNil(t, cmd)
 
 	assert.Equal(t, copyExec, cmd.Path)
-	expectedArgs := []string {
+	expectedArgs := []string{
 		copyExec,
 		builder.generateBaseImageFilename(),
 		builder.generateOutputImageFilename(),
@@ -51,7 +51,7 @@ func TestWriteModifyScript(t *testing.T) {
 	}
 	buildConfig := config.BuildConfig{
 		ImageConfigDir: "config-dir",
-		BuildDir: tmpDir,
+		BuildDir:       tmpDir,
 	}
 	builder := New(&imageConfig, &buildConfig)
 	builder.prepareBuildDir()

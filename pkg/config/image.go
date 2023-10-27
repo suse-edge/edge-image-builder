@@ -13,7 +13,7 @@ const (
 
 type ImageConfig struct {
 	APIVersion string `yaml:"apiVersion"`
-	Image	   Image  `yaml:"image"`
+	Image      Image  `yaml:"image"`
 }
 
 type Image struct {
