@@ -23,7 +23,7 @@ linters-settings:
           - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
 
 linters:
-  disable-all: false
+  disable-all: true
   enable:
     - errcheck
     - gosimple
