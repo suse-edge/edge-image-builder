@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/config"
@@ -28,7 +29,7 @@ func processArgs() (*config.ImageConfig, *config.BuildConfig, error) {
 		verbose        bool
 	)
 
-	flag.StringVar(&configFile, argConfigFile, "", "full path to the image configuration file")
+	flag.StringVar(&configFile, argConfigFile, "", "name of the image configuration file")
 	flag.StringVar(&configDir, argConfigDir, "", "full path to the image configuration directory")
 	flag.StringVar(&buildDir, argBuildDir, "", "full path to the directory to store build artifacts")
 	flag.BoolVar(&deleteBuildDir, argDeleteBuild, false,
@@ -38,7 +39,7 @@ func processArgs() (*config.ImageConfig, *config.BuildConfig, error) {
 
 	setupLogging(verbose)
 
-	imageConfig, err := parseImageConfig(configFile)
+	imageConfig, err := parseImageConfig(configFile, configDir)
 	if err != nil {
 		return nil, nil, fmt.Errorf("parsing image config file %s: %w", configFile, err)
 	}
@@ -83,8 +84,9 @@ func setupLogging(verbose bool) {
 	zap.ReplaceGlobals(logger)
 }
 
-func parseImageConfig(configFile string) (*config.ImageConfig, error) {
-	configData, err := os.ReadFile(configFile)
+func parseImageConfig(configFile string, configDir string) (*config.ImageConfig, error) {
+	configFilePath := filepath.Join(configDir, configFile)
+	configData, err := os.ReadFile(configFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("image configuration file \"%s\" cannot be read: %s", configFile, err)
 	}
