@@ -1,18 +1,17 @@
 #!/bin/bash
 set -euo pipefail
 
-#  Substitution Fields
-#  1. Full path to the image to modify
-#  2. Full path to the combustion directory
+#  Template Fields
+#  OutputImage   - Full path to the image to modify
+#  CombustionDir - Full path to the combustion directory
 
 #  Guestfish Commands Explanation
 #
 #  sh "btrfs property set / ro false"
 #  - Enables write access to the read only filesystem
 #
-#  copy-in _s /
+#  copy-in __.CombustionDir__ /
 #  - Copies the combustion directory into the root of the image
-#  - _s should be populated with the full path to the built combustion directory
 #
 #  sh "btrfs filesystem label / INSTALL"
 #  - As of Oct 25, 2023, combustion only checks volumes of certain names for the
@@ -24,9 +23,9 @@ set -euo pipefail
 #  sh "btrfs property set / ro true"
 #  - Resets the filesystem to read only
 
-guestfish --rw -a %s -i <<'EOF'
+guestfish --rw -a {{.OutputImage}} -i <<'EOF'
   sh "btrfs property set / ro false"
-  copy-in %s /
+  copy-in {{.CombustionDir}} /
   sh "btrfs filesystem label / INSTALL"
   sh "btrfs property set / ro true"
 EOF

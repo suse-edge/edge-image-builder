@@ -17,7 +17,7 @@ func TestPrepareBuildDir(t *testing.T) {
 
 	// Test
 	err := builder.prepareBuildDir()
-	defer os.Remove(builder.eibBuildDir)
+	defer os.RemoveAll(builder.eibBuildDir)
 
 	// Verify
 	require.NoError(t, err)
@@ -29,7 +29,7 @@ func TestPrepareBuildDirExistingDir(t *testing.T) {
 	// Setup
 	tmpDir, err := os.MkdirTemp("", "eib-test-")
 	require.NoError(t, err)
-	defer os.Remove(tmpDir)
+	defer os.RemoveAll(tmpDir)
 
 	bc := config.BuildConfig{BuildDir: tmpDir}
 	builder := New(nil, &bc)
@@ -46,7 +46,7 @@ func TestCleanUpBuildDirTrue(t *testing.T) {
 	// Setup
 	tmpDir, err := os.MkdirTemp("", "eib-test-")
 	require.NoError(t, err)
-	defer os.Remove(tmpDir)
+	defer os.RemoveAll(tmpDir)
 
 	bc := config.BuildConfig{
 		BuildDir: tmpDir,
@@ -69,7 +69,7 @@ func TestCleanUpBuildDirFalse(t *testing.T) {
 	// Setup
 	tmpDir, err := os.MkdirTemp("", "eib-test-")
 	require.NoError(t, err)
-	defer os.Remove(tmpDir)
+	defer os.RemoveAll(tmpDir)
 
 	bc := config.BuildConfig{
 		BuildDir: tmpDir,
@@ -93,7 +93,7 @@ func TestGenerateCombustionScript(t *testing.T) {
 	builder := New(nil, &bc)
 	err := builder.prepareBuildDir()
 	require.NoError(t, err)
-	defer os.Remove(builder.eibBuildDir)
+	defer os.RemoveAll(builder.eibBuildDir)
 
 	builder.combustionScripts = append(builder.combustionScripts, "foo.sh", "bar.sh")
 
@@ -113,17 +113,16 @@ func TestGenerateCombustionScript(t *testing.T) {
 
 func TestWriteCombustionFile(t *testing.T) {
 	// Setup
-	bc := config.BuildConfig{}
-	builder := New(nil, &bc)
+	builder := New(nil, &config.BuildConfig{})
 	err := builder.prepareBuildDir()
 	require.NoError(t, err)
-	defer os.Remove(builder.eibBuildDir)
+	defer os.RemoveAll(builder.eibBuildDir)
 
 	testData := "Edge Image Builder"
-	testFilename := "test-file.sh"
+	testFilename := "combustion-file.sh"
 
 	// Test
-	err = builder.writeCombustionFile(testData, testFilename)
+	err = builder.writeCombustionFile(testFilename, testData, nil)
 
 	// Verify
 	require.NoError(t, err)
@@ -135,4 +134,56 @@ func TestWriteCombustionFile(t *testing.T) {
 
 	// Make sure the file isn't automatically added to the combustion scripts list
 	require.Equal(t, 0, len(builder.combustionScripts))
+}
+
+func TestWriteBuildDirFile(t *testing.T) {
+	// Setup
+	builder := New(nil, &config.BuildConfig{})
+	err := builder.prepareBuildDir()
+	require.NoError(t, err)
+	defer os.RemoveAll(builder.eibBuildDir)
+
+	testData := "Edge Image Builder"
+	testFilename := "build-dir-file.sh"
+
+	// Test
+	err = builder.writeBuildDirFile(testFilename, testData, nil)
+
+	// Verify
+	require.NoError(t, err)
+
+	expectedFilename := filepath.Join(builder.eibBuildDir, testFilename)
+	foundData, err := os.ReadFile(expectedFilename)
+	require.NoError(t, err)
+	assert.Equal(t, testData, string(foundData))
+}
+
+func TestWriteFileWithTemplate(t *testing.T) {
+	// Setup
+	builder := New(nil, &config.BuildConfig{})
+
+	tmpDir, err := os.MkdirTemp("", "eib-test-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+
+	testData := "{{.Foo}} and {{.Bar}}"
+	values := struct {
+		Foo string
+		Bar string
+	}{
+		Foo: "ooF",
+		Bar: "raB",
+	}
+	testFilename := filepath.Join(tmpDir, "write-file-with-template.sh")
+
+	// Test
+	err = builder.writeFile(testFilename, testData, &values)
+
+	// Verify
+	require.NoError(t, err)
+
+	expectedFilename := filepath.Join(builder.eibBuildDir, testFilename)
+	foundData, err := os.ReadFile(expectedFilename)
+	require.NoError(t, err)
+	assert.Equal(t, "ooF and raB", string(foundData))
 }

@@ -3,17 +3,16 @@ package build
 import (
 	_ "embed"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 )
 
 const (
-	copyExec = "/bin/cp"
+	copyExec         = "/bin/cp"
 	modifyScriptName = "modify-raw-image.sh"
 )
 
-//go:embed scripts/modify-raw-image.sh
+//go:embed scripts/modify-raw-image.sh.tpl
 var modifyRawImageScript string
 
 func (b *Builder) buildRawImage() error {
@@ -47,13 +46,17 @@ func (b *Builder) createRawImageCopyCommand() *exec.Cmd {
 }
 
 func (b *Builder) writeModifyScript() error {
-	imageToModify := b.generateOutputImageFilename()
-	contents := fmt.Sprintf(modifyRawImageScript, imageToModify, b.combustionDir)
+	values := struct {
+		OutputImage   string
+		CombustionDir string
+	}{
+		OutputImage:   b.generateOutputImageFilename(),
+		CombustionDir: b.combustionDir,
+	}
 
-	scriptPath := filepath.Join(b.buildConfig.BuildDir, modifyScriptName)
-	err := os.WriteFile(scriptPath, []byte(contents), os.ModePerm)
+	err := b.writeBuildDirFile(modifyScriptName, modifyRawImageScript, &values)
 	if err != nil {
-		return fmt.Errorf("writing file %s: %w", scriptPath, err)
+		return fmt.Errorf("writing modification script %s: %w", modifyScriptName, err)
 	}
 
 	return nil
