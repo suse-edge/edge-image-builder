@@ -59,9 +59,9 @@ the structure of this directory will be better fleshed out. For now, the require
     └── SLE-Micro.x86_64-5.5.0-Default-GM.raw
 ```
 
-* `eib-config.yaml` - All image configuration files should be in the root of the image configuration directory.
-  Multiple configuration files may be included in a single configuration directory, with the specific configuration
-  file specified as a CLI argument as described above.
+* `eib-config-iso.yaml`, `eib-config-raw.yaml` - All image configuration files should be in the root of the image 
+  configuration directory. Multiple configuration files may be included in a single configuration directory, with 
+  the specific configuration file specified as a CLI argument as described above.
 * `images` - This directory must exist and contains the base images from which EIB will build customized images. There
   are no restrictions on the naming; the image configuration file will specify which image in this directory to use
   for a particular build.

@@ -1,6 +1,6 @@
 # Testing Built Images
 
-Images may be run on either bare metal or virtualization. The following guide provides examples to speed
+Images may be run on either bare metal or through virtualization. The following guide provides examples to speed
 development and testing.
 
 [libvirt](https://libvirt.org/) is a commonly available virtualization toolkit. Much of the development of EIB
@@ -43,7 +43,7 @@ Name the VM and select Finish:
 After pressing "Finish", the VM will boot. Depending on the version of the SLE Micro self-install ISO, it may
 prompt you to manually select the "Install SLE Micro" option before proceeding. In either case, stop the installation
 by using the "Shutdown -> Force Off" option under the "Virtual Machine" menu. See the next step for more information
-of what needs to happen before the installation can continue.
+on what needs to happen before the installation can continue.
 
 ![images](./images/libvirt-iso-6.png)
 
@@ -57,7 +57,7 @@ Select the "Boot Options" entry on the left. Ensure that the "CDROM" entry is ch
 
 ![images](./images/libvirt-iso-8.png)
 
-Once those two configuration value have been set, navigate back to the "Console" option under "View" and power on
+Once those two configuration values have been set, navigate back to the "Console" option under "View" and power on
 the VM. If prompted, select the "Install SLE Micro" menu item and press "Yes" when prompted to delete all data on
 `/dev/vda`. The installation will then copy the SLE Micro raw image to the VM disk and reboot. Upon reboot,
 combustion should trigger and the JeOS installer should *not* appear.
