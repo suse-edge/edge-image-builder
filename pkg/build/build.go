@@ -169,7 +169,7 @@ func (b *Builder) writeFile(filename string, contents string, templateData any) 
 }
 
 // nolint: unused
-func (b *Builder) copyCombustionFile(scriptSubDir, scriptName string) error {
+func (b *Builder) copyCombustionFile(scriptSubDir string, scriptName string) error {
 	sourcePath := filepath.Join(embeddedScriptsBaseDir, scriptSubDir, scriptName)
 	src, err := os.ReadFile(sourcePath)
 	if err != nil {

@@ -6,6 +6,7 @@ linters-settings:
       - performance
     disabled-checks:
       - whyNoLint
+      - paramTypeCombine
   gocyclo:
     min-complexity: 15
   gofmt:

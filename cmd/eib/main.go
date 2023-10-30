@@ -84,7 +84,7 @@ func setupLogging(verbose bool) {
 	zap.ReplaceGlobals(logger)
 }
 
-func parseImageConfig(configFile, configDir string) (*config.ImageConfig, error) {
+func parseImageConfig(configFile string, configDir string) (*config.ImageConfig, error) {
 	configFilePath := filepath.Join(configDir, configFile)
 	configData, err := os.ReadFile(configFilePath)
 	if err != nil {
