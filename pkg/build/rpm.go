@@ -36,18 +36,19 @@ func (b *Builder) copyRPMs() error {
 		if err != nil {
 			return fmt.Errorf("opening rpm source path: %w", err)
 		}
-		defer sourceFile.Close()
 
 		destFile, err := os.Create(destPath)
 		if err != nil {
 			return fmt.Errorf("opening rpm dest path: %w", err)
 		}
-		defer destFile.Close()
 
 		_, err = io.Copy(destFile, sourceFile)
 		if err != nil {
 			return fmt.Errorf("copying rpm: %w", err)
 		}
+
+		sourceFile.Close()
+		destFile.Close()
 	}
 
 	return nil
