@@ -46,9 +46,9 @@ func TestCopyRPMs(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(builder.rpmBuildDir, "rpm1.rpm"))
+	_, err = os.Stat(filepath.Join(builder.combustionDir, "rpm1.rpm"))
 	require.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(builder.rpmBuildDir, "rpm2.rpm"))
+	_, err = os.Stat(filepath.Join(builder.combustionDir, "rpm2.rpm"))
 	require.NoError(t, err)
 }

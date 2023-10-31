@@ -23,7 +23,6 @@ type Builder struct {
 	eibBuildDir       string
 	combustionDir     string
 	combustionScripts []string
-	rpmBuildDir       string
 	rpmFileNames      []string
 	rpmSourceDir      string
 }
@@ -93,16 +92,10 @@ func (b *Builder) prepareBuildDir() error {
 		b.eibBuildDir = b.buildConfig.BuildDir
 	}
 	b.combustionDir = filepath.Join(b.eibBuildDir, "combustion")
-	b.rpmBuildDir = filepath.Join(b.combustionDir, "rpms")
 
 	err := os.MkdirAll(b.combustionDir, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("creating the build directory structure for combustion: %w", err)
-	}
-
-	err = os.MkdirAll(b.rpmBuildDir, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("creating the build directory structure for rpms: %w", err)
 	}
 
 	return nil
