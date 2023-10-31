@@ -49,11 +49,11 @@ func TestCleanUpBuildDirTrue(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	bc := config.BuildConfig{
-		BuildDir: tmpDir,
+		BuildDir:       tmpDir,
 		DeleteBuildDir: true,
 	}
 	builder := New(nil, &bc)
-	builder.prepareBuildDir()
+	require.NoError(t, builder.prepareBuildDir())
 
 	// Test
 	err = builder.cleanUpBuildDir()
@@ -72,11 +72,11 @@ func TestCleanUpBuildDirFalse(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	bc := config.BuildConfig{
-		BuildDir: tmpDir,
+		BuildDir:       tmpDir,
 		DeleteBuildDir: false,
 	}
 	builder := New(nil, &bc)
-	builder.prepareBuildDir()
+	require.NoError(t, builder.prepareBuildDir())
 
 	// Test
 	err = builder.cleanUpBuildDir()

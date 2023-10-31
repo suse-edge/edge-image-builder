@@ -30,7 +30,7 @@ func TestCreateRawImageCopyCommand(t *testing.T) {
 	require.NotNil(t, cmd)
 
 	assert.Equal(t, copyExec, cmd.Path)
-	expectedArgs := []string {
+	expectedArgs := []string{
 		copyExec,
 		builder.generateBaseImageFilename(),
 		builder.generateOutputImageFilename(),
@@ -51,10 +51,10 @@ func TestWriteModifyScript(t *testing.T) {
 	}
 	buildConfig := config.BuildConfig{
 		ImageConfigDir: "config-dir",
-		BuildDir: tmpDir,
+		BuildDir:       tmpDir,
 	}
 	builder := New(&imageConfig, &buildConfig)
-	builder.prepareBuildDir()
+	require.NoError(t, builder.prepareBuildDir())
 
 	// Test
 	err = builder.writeModifyScript()
@@ -68,7 +68,7 @@ func TestWriteModifyScript(t *testing.T) {
 
 	foundContents := string(foundBytes)
 	assert.Contains(t, foundContents, "guestfish --rw -a config-dir/output-image")
-	assert.Contains(t, foundContents, "copy-in " + builder.combustionDir)
+	assert.Contains(t, foundContents, "copy-in "+builder.combustionDir)
 }
 
 func TestCreateModifyCommand(t *testing.T) {
