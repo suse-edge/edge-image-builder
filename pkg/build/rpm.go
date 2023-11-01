@@ -2,53 +2,46 @@ package build
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 )
 
-func (b *Builder) getRPMFileNames() error {
-	b.rpmSourceDir = filepath.Join(b.buildConfig.ImageConfigDir, "rpms")
+func (b *Builder) getRPMFileNames() ([]string, error) {
+	var rpmFileNames []string
+	rpmSourceDir := filepath.Join(b.buildConfig.ImageConfigDir, "rpms")
 
-	rpms, err := os.ReadDir(b.rpmSourceDir)
+	rpms, err := os.ReadDir(rpmSourceDir)
 	if err != nil {
-		return fmt.Errorf("reading rpm source dir: %w", err)
+		return nil, fmt.Errorf("reading rpm source dir: %w", err)
 	}
 
 	for _, rpmFile := range rpms {
-		b.rpmFileNames = append(b.rpmFileNames, rpmFile.Name())
+		rpmFileNames = append(rpmFileNames, rpmFile.Name())
+	}
+	
+	if len(rpmFileNames) == 0 {
+		return nil, fmt.Errorf("no rpms found")
 	}
 
-	return nil
+	return rpmFileNames, nil
 }
 
 func (b *Builder) copyRPMs() error {
-	err := b.getRPMFileNames()
+	rpmFileNames, err := b.getRPMFileNames()
 	if err != nil {
 		return fmt.Errorf("getting rpm file names: %w", err)
 	}
 
-	for _, rpm := range b.rpmFileNames {
-		sourcePath := filepath.Join(b.rpmSourceDir, rpm)
+	rpmSourceDir := filepath.Join(b.buildConfig.ImageConfigDir, "rpms")
+
+	for _, rpm := range rpmFileNames {
+		sourcePath := filepath.Join(rpmSourceDir, rpm)
 		destPath := filepath.Join(b.combustionDir, rpm)
 
-		sourceFile, err := os.Open(sourcePath)
+		err = b.copyFile(sourcePath, destPath)
 		if err != nil {
-			return fmt.Errorf("opening rpm source path: %w", err)
+			return fmt.Errorf("looping through rpms to copy: %w", err)
 		}
-
-		destFile, err := os.Create(destPath)
-		if err != nil {
-			return fmt.Errorf("opening rpm dest path: %w", err)
-		}
-
-		_, err = io.Copy(destFile, sourceFile)
-		if err != nil {
-			return fmt.Errorf("copying rpm: %w", err)
-		}
-
-		sourceFile.Close()
-		destFile.Close()
 	}
 
 	return nil

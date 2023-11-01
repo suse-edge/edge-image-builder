@@ -3,6 +3,7 @@ package build
 import (
 	_ "embed"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -23,8 +24,6 @@ type Builder struct {
 	eibBuildDir       string
 	combustionDir     string
 	combustionScripts []string
-	rpmFileNames      []string
-	rpmSourceDir      string
 }
 
 func New(imageConfig *config.ImageConfig, buildConfig *config.BuildConfig) *Builder {
@@ -95,7 +94,7 @@ func (b *Builder) prepareBuildDir() error {
 
 	err := os.MkdirAll(b.combustionDir, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("creating the build directory structure for combustion: %w", err)
+		return fmt.Errorf("creating the build directory structure: %w", err)
 	}
 
 	return nil
@@ -179,4 +178,25 @@ func (b *Builder) generateOutputImageFilename() string {
 func (b *Builder) generateBaseImageFilename() string {
 	filename := filepath.Join(b.buildConfig.ImageConfigDir, "images", b.imageConfig.Image.BaseImage)
 	return filename
+}
+
+func (b *Builder) copyFile(sourcePath string, destPath string) error {
+	sourceFile, err := os.Open(sourcePath)
+	if err != nil {
+		return fmt.Errorf("opening file from source path: %w", err)
+	}
+	defer sourceFile.Close()
+
+	destFile, err := os.Create(destPath)
+	if err != nil {
+		return fmt.Errorf("creating file at dest path: %w", err)
+	}
+	defer destFile.Close()
+
+	_, err = io.Copy(destFile, sourceFile)
+	if err != nil {
+		return fmt.Errorf("copying file from source path to dest path: %w", err)
+	}
+
+	return nil
 }
