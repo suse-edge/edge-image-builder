@@ -57,7 +57,7 @@ func TestCopyRPMs(t *testing.T) {
 	defer os.Remove(builder.eibBuildDir)
 
 	rpmSourceDir := filepath.Join(builder.buildConfig.ImageConfigDir, "rpms")
-	rpmDestDir := filepath.Join(builder.combustionDir)
+	rpmDestDir := builder.combustionDir
 
 	file1Path := filepath.Join(rpmSourceDir, "rpm1.rpm")
 	defer os.Remove(file1Path)
