@@ -29,6 +29,15 @@ func (b *Builder) getRPMFileNames(rpmSourceDir string) ([]string, error) {
 
 func (b *Builder) copyRPMs() error {
 	rpmSourceDir := filepath.Join(b.buildConfig.ImageConfigDir, "rpms")
+	// Only proceed with copying the RPMs if the directory exists
+	_, err := os.Stat(rpmSourceDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		} else {
+			return fmt.Errorf("checking for rpm directory at %s: %w", rpmSourceDir, err)
+		}
+	}
 	rpmDestDir := b.combustionDir
 
 	rpmFileNames, err := b.getRPMFileNames(rpmSourceDir)

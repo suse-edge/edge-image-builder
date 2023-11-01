@@ -106,3 +106,20 @@ func TestGetRPMFileNamesNoRPMs(t *testing.T) {
 
 	assert.Empty(t, rpmFileNames)
 }
+
+func TestCopyRPMsNoRPMDir(t *testing.T) {
+	// Setup
+	bc := config.BuildConfig{
+		ImageConfigDir: "../config/ThisDirDoesNotExist",
+	}
+	builder := New(nil, &bc)
+	err := builder.prepareBuildDir()
+	require.NoError(t, err)
+	defer os.Remove(builder.eibBuildDir)
+
+	// Test
+	err = builder.copyRPMs()
+
+	// Verify
+	require.NoError(t, err)
+}
