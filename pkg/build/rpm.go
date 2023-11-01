@@ -18,8 +18,10 @@ func (b *Builder) getRPMFileNames() ([]string, error) {
 	for _, rpmFile := range rpms {
 		rpmFileNames = append(rpmFileNames, rpmFile.Name())
 	}
-	
+
 	if len(rpmFileNames) == 0 {
+		return nil, fmt.Errorf("no rpms found")
+	} else if len(rpmFileNames) == 1 && rpmFileNames[0] == ".gitkeep" {
 		return nil, fmt.Errorf("no rpms found")
 	}
 
