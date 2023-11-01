@@ -20,17 +20,20 @@ func TestGetRPMFileNames(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(builder.eibBuildDir)
 
-	file1Path := filepath.Join(builder.buildConfig.ImageConfigDir, "rpms", "rpm1.rpm")
-	file2Path := filepath.Join(builder.buildConfig.ImageConfigDir, "rpms", "rpm2.rpm")
+	rpmSourceDir := filepath.Join(builder.buildConfig.ImageConfigDir, "rpms")
 
+	file1Path := filepath.Join(rpmSourceDir, "rpm1.rpm")
+	defer os.Remove(file1Path)
 	file1, err := os.Create(file1Path)
 	require.NoError(t, err)
 
+	file2Path := filepath.Join(rpmSourceDir, "rpm2.rpm")
+	defer os.Remove(file2Path)
 	file2, err := os.Create(file2Path)
 	require.NoError(t, err)
 
 	// Test
-	rpmFileNames, err := builder.getRPMFileNames()
+	rpmFileNames, err := builder.getRPMFileNames(rpmSourceDir)
 
 	// Verify
 	require.NoError(t, err)
@@ -39,17 +42,8 @@ func TestGetRPMFileNames(t *testing.T) {
 	assert.Contains(t, rpmFileNames, "rpm2.rpm")
 
 	// Cleanup
-	err = file1.Close()
-	require.NoError(t, err)
-
-	err = file2.Close()
-	require.NoError(t, err)
-
-	err = os.Remove(file1Path)
-	require.NoError(t, err)
-
-	err = os.Remove(file2Path)
-	require.NoError(t, err)
+	assert.NoError(t, file1.Close())
+	assert.NoError(t, file2.Close())
 }
 
 func TestCopyRPMs(t *testing.T) {
@@ -62,12 +56,16 @@ func TestCopyRPMs(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(builder.eibBuildDir)
 
-	file1Path := filepath.Join(builder.buildConfig.ImageConfigDir, "rpms", "rpm1.rpm")
-	file2Path := filepath.Join(builder.buildConfig.ImageConfigDir, "rpms", "rpm2.rpm")
+	rpmSourceDir := filepath.Join(builder.buildConfig.ImageConfigDir, "rpms")
+	rpmDestDir := filepath.Join(builder.combustionDir)
 
+	file1Path := filepath.Join(rpmSourceDir, "rpm1.rpm")
+	defer os.Remove(file1Path)
 	file1, err := os.Create(file1Path)
 	require.NoError(t, err)
 
+	file2Path := filepath.Join(rpmSourceDir, "rpm2.rpm")
+	defer os.Remove(file2Path)
 	file2, err := os.Create(file2Path)
 	require.NoError(t, err)
 
@@ -77,24 +75,15 @@ func TestCopyRPMs(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(builder.combustionDir, "rpm1.rpm"))
+	_, err = os.Stat(filepath.Join(rpmDestDir, "rpm1.rpm"))
 	require.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(builder.combustionDir, "rpm2.rpm"))
+	_, err = os.Stat(filepath.Join(rpmDestDir, "rpm2.rpm"))
 	require.NoError(t, err)
 
 	// Cleanup
-	err = file1.Close()
-	require.NoError(t, err)
-
-	err = file2.Close()
-	require.NoError(t, err)
-
-	err = os.Remove(file1Path)
-	require.NoError(t, err)
-
-	err = os.Remove(file2Path)
-	require.NoError(t, err)
+	assert.NoError(t, file1.Close())
+	assert.NoError(t, file2.Close())
 }
 
 func TestGetRPMFileNamesNoRPMs(t *testing.T) {
@@ -107,8 +96,10 @@ func TestGetRPMFileNamesNoRPMs(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(builder.eibBuildDir)
 
+	rpmSourceDir := filepath.Join(builder.buildConfig.ImageConfigDir, "rpms")
+
 	// Test
-	rpmFileNames, err := builder.getRPMFileNames()
+	rpmFileNames, err := builder.getRPMFileNames(rpmSourceDir)
 
 	// Verify
 	require.ErrorContains(t, err, "no rpms found")

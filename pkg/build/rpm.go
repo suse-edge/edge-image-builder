@@ -6,9 +6,8 @@ import (
 	"path/filepath"
 )
 
-func (b *Builder) getRPMFileNames() ([]string, error) {
+func (b *Builder) getRPMFileNames(rpmSourceDir string) ([]string, error) {
 	var rpmFileNames []string
-	rpmSourceDir := filepath.Join(b.buildConfig.ImageConfigDir, "rpms")
 
 	rpms, err := os.ReadDir(rpmSourceDir)
 	if err != nil {
@@ -16,12 +15,12 @@ func (b *Builder) getRPMFileNames() ([]string, error) {
 	}
 
 	for _, rpmFile := range rpms {
-		rpmFileNames = append(rpmFileNames, rpmFile.Name())
+		if filepath.Ext(rpmFile.Name()) == ".rpm" {
+			rpmFileNames = append(rpmFileNames, rpmFile.Name())
+		}
 	}
 
 	if len(rpmFileNames) == 0 {
-		return nil, fmt.Errorf("no rpms found")
-	} else if len(rpmFileNames) == 1 && rpmFileNames[0] == ".gitkeep" {
 		return nil, fmt.Errorf("no rpms found")
 	}
 
@@ -29,20 +28,21 @@ func (b *Builder) getRPMFileNames() ([]string, error) {
 }
 
 func (b *Builder) copyRPMs() error {
-	rpmFileNames, err := b.getRPMFileNames()
+	rpmSourceDir := filepath.Join(b.buildConfig.ImageConfigDir, "rpms")
+	rpmDestDir := b.combustionDir
+
+	rpmFileNames, err := b.getRPMFileNames(rpmSourceDir)
 	if err != nil {
 		return fmt.Errorf("getting rpm file names: %w", err)
 	}
 
-	rpmSourceDir := filepath.Join(b.buildConfig.ImageConfigDir, "rpms")
-
 	for _, rpm := range rpmFileNames {
 		sourcePath := filepath.Join(rpmSourceDir, rpm)
-		destPath := filepath.Join(b.combustionDir, rpm)
+		destPath := filepath.Join(rpmDestDir, rpm)
 
-		err = b.copyFile(sourcePath, destPath)
+		err = copyFile(sourcePath, destPath)
 		if err != nil {
-			return fmt.Errorf("looping through rpms to copy: %w", err)
+			return fmt.Errorf("copying file %s: %w", sourcePath, err)
 		}
 	}
 

@@ -180,7 +180,7 @@ func (b *Builder) generateBaseImageFilename() string {
 	return filename
 }
 
-func (b *Builder) copyFile(sourcePath string, destPath string) error {
+func copyFile(sourcePath string, destPath string) error {
 	sourceFile, err := os.Open(sourcePath)
 	if err != nil {
 		return fmt.Errorf("opening file from source path: %w", err)
