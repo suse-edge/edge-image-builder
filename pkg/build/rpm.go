@@ -34,9 +34,8 @@ func (b *Builder) copyRPMs() error {
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
-		} else {
-			return fmt.Errorf("checking for rpm directory at %s: %w", rpmSourceDir, err)
 		}
+		return fmt.Errorf("checking for rpm directory at %s: %w", rpmSourceDir, err)
 	}
 	rpmDestDir := b.combustionDir
 
