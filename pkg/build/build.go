@@ -3,6 +3,7 @@ package build
 import (
 	_ "embed"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -48,6 +49,11 @@ func (b *Builder) Build() error {
 	err = b.generateCombustionScript()
 	if err != nil {
 		return fmt.Errorf("generating combustion script: %w", err)
+	}
+
+	err = b.copyRPMs()
+	if err != nil {
+		return fmt.Errorf("copying RPMs over: %w", err)
 	}
 
 	switch b.imageConfig.Image.ImageType {
@@ -201,4 +207,25 @@ func (b *Builder) generateOutputImageFilename() string {
 func (b *Builder) generateBaseImageFilename() string {
 	filename := filepath.Join(b.buildConfig.ImageConfigDir, "images", b.imageConfig.Image.BaseImage)
 	return filename
+}
+
+func copyFile(sourcePath string, destPath string) error {
+	sourceFile, err := os.Open(sourcePath)
+	if err != nil {
+		return fmt.Errorf("opening file from source path: %w", err)
+	}
+	defer sourceFile.Close()
+
+	destFile, err := os.Create(destPath)
+	if err != nil {
+		return fmt.Errorf("creating file at dest path: %w", err)
+	}
+	defer destFile.Close()
+
+	_, err = io.Copy(destFile, sourceFile)
+	if err != nil {
+		return fmt.Errorf("copying file from source path to dest path: %w", err)
+	}
+
+	return nil
 }
