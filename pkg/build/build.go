@@ -138,14 +138,14 @@ func (b *Builder) generateCombustionScript() error {
 	return nil
 }
 
-func (b *Builder) writeBuildDirFile(filename string, contents string, templateData any) error {
+func (b *Builder) writeBuildDirFile(filename string, contents string, templateData any) (string, error) {
 	destFilename := filepath.Join(b.eibBuildDir, filename)
-	return b.writeFile(destFilename, contents, templateData)
+	return destFilename, b.writeFile(destFilename, contents, templateData)
 }
 
-func (b *Builder) writeCombustionFile(filename string, contents string, templateData any) error {
+func (b *Builder) writeCombustionFile(filename string, contents string, templateData any) (string, error) {
 	destFilename := filepath.Join(b.combustionDir, filename)
-	return b.writeFile(destFilename, contents, templateData)
+	return destFilename, b.writeFile(destFilename, contents, templateData)
 }
 
 func (b *Builder) writeFile(filename string, contents string, templateData any) error {

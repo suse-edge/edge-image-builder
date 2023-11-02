@@ -1,6 +1,7 @@
 package build
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -65,6 +66,10 @@ func TestWriteModifyScript(t *testing.T) {
 	expectedFilename := filepath.Join(tmpDir, modifyScriptName)
 	foundBytes, err := os.ReadFile(expectedFilename)
 	require.NoError(t, err)
+
+	stats, err := os.Stat(expectedFilename)
+	require.NoError(t, err)
+	assert.Equal(t, fs.FileMode(modifyScriptMode), stats.Mode())
 
 	foundContents := string(foundBytes)
 	assert.Contains(t, foundContents, "guestfish --rw -a config-dir/output-image")
