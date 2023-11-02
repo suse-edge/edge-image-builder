@@ -46,6 +46,11 @@ func (b *Builder) Build() error {
 		return fmt.Errorf("configuring the welcome message: %w", err)
 	}
 
+	err = b.configureScripts()
+	if err != nil {
+		return fmt.Errorf("configuring custom scripts: %w", err)
+	}
+
 	err = b.generateCombustionScript()
 	if err != nil {
 		return fmt.Errorf("generating combustion script: %w", err)

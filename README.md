@@ -66,6 +66,11 @@ the structure of this directory will be better fleshed out. For now, the require
   are no restrictions on the naming; the image configuration file will specify which image in this directory to use
   for a particular build.
 
+There are a number of optional directories that may be included in the image configuration directory:
+
+* `scripts` - If present, all the files in this directory will be included in the built image and automatically
+  executed during the combustion phase.
+
 ### Running EIB
 
 The image configuration directory must be attached to the container at runtime. This serves as both the mechanism
