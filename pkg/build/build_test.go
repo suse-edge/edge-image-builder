@@ -122,7 +122,7 @@ func TestWriteCombustionFile(t *testing.T) {
 	testFilename := "combustion-file.sh"
 
 	// Test
-	err = builder.writeCombustionFile(testFilename, testData, nil)
+	writtenFilename, err := builder.writeCombustionFile(testFilename, testData, nil)
 
 	// Verify
 	require.NoError(t, err)
@@ -130,6 +130,7 @@ func TestWriteCombustionFile(t *testing.T) {
 	expectedFilename := filepath.Join(builder.combustionDir, testFilename)
 	foundData, err := os.ReadFile(expectedFilename)
 	require.NoError(t, err)
+	assert.Equal(t, expectedFilename, writtenFilename)
 	assert.Equal(t, testData, string(foundData))
 
 	// Make sure the file isn't automatically added to the combustion scripts list
@@ -147,12 +148,13 @@ func TestWriteBuildDirFile(t *testing.T) {
 	testFilename := "build-dir-file.sh"
 
 	// Test
-	err = builder.writeBuildDirFile(testFilename, testData, nil)
+	writtenFilename, err := builder.writeBuildDirFile(testFilename, testData, nil)
 
 	// Verify
 	require.NoError(t, err)
 
 	expectedFilename := filepath.Join(builder.eibBuildDir, testFilename)
+	require.Equal(t, expectedFilename, writtenFilename)
 	foundData, err := os.ReadFile(expectedFilename)
 	require.NoError(t, err)
 	assert.Equal(t, testData, string(foundData))
