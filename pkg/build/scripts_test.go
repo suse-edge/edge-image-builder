@@ -1,6 +1,7 @@
 package build
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -52,8 +53,7 @@ func TestConfigureScripts(t *testing.T) {
 		fullEntryPath := filepath.Join(builder.combustionDir, entry.Name())
 		stats, err := os.Stat(fullEntryPath)
 		require.NoError(t, err)
-		foundMode := stats.Mode()
-		assert.Equal(t, "-rwxr--r--", foundMode.String())
+		assert.Equal(t, fs.FileMode(scriptMode), stats.Mode())
 	}
 
 	// - make sure entries were added to the combustion scripts list, so they are
