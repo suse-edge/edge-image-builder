@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"text/template"
 
 	"github.com/suse-edge/edge-image-builder/pkg/config"
@@ -133,6 +134,9 @@ func (b *Builder) generateCombustionScript() error {
 	}
 
 	// Add a call to each script that was added to the combustion directory
+	// We may need a better way of specifying the order, but for now use alphabetical
+	// so we have at least some determinism
+	slices.Sort(b.combustionScripts)
 	for _, filename := range b.combustionScripts {
 		_, err = fmt.Fprintln(scriptFile, "./"+filename)
 		if err != nil {

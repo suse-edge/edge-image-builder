@@ -103,12 +103,17 @@ func TestGenerateCombustionScript(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
+	// - check the script contents itself
 	scriptBytes, err := os.ReadFile(filepath.Join(builder.combustionDir, "script"))
 	require.NoError(t, err)
 	scriptData := string(scriptBytes)
 	assert.Contains(t, scriptData, "#!/bin/bash")
 	assert.Contains(t, scriptData, "foo.sh")
 	assert.Contains(t, scriptData, "bar.sh")
+
+	// - ensure the order of the scripts is alphabetical
+	assert.Equal(t, "bar.sh", builder.combustionScripts[0])
+	assert.Equal(t, "foo.sh", builder.combustionScripts[1])
 }
 
 func TestWriteCombustionFile(t *testing.T) {
