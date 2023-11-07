@@ -110,6 +110,20 @@ Unlike the installer ISO, there isn't anything specific that needs to be done wh
 a raw image. EIB can be used to overwrite the raw image attached to a VM and, when the VM is booted, it will use
 the newly built image.
 
+## Testing using virt-install (CLI)
+
+If you want to use a command line example to deploy the VM and test it with your EIB image generated, you could use the following commands:
+
+- First, we need to create a disk empty to be used by the VM:
+
+`qemu-img create -f qcow2 example.img 6G`
+
+- Then, we could use virt-install to create and define a VM using the EIB output image generated:
+
+`virt-install --name testVM --memory 4096 --vcpus 4 --disk ./example.img --install no_install=yes --cdrom ./eib-image-generated.iso --network default --osinfo detect=on,name=sle-unknown`
+
+After executing this command, the first time, you will need to install the OS following the instructions. After installing the OS a reboot will happen. The second time booting the system, you will need to choose the `Boot From Disk` option.
+
 ## General Notes
 
 The following messages do not indicate an issue with the installation ISO. Combustion will still look inside
