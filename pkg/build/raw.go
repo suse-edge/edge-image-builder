@@ -51,9 +51,11 @@ func (b *Builder) writeModifyScript() error {
 	values := struct {
 		OutputImage   string
 		CombustionDir string
+		Platform      string
 	}{
 		OutputImage:   b.generateOutputImageFilename(),
 		CombustionDir: b.combustionDir,
+		Platform:      b.imageConfig.OperatingSystem.Platform,
 	}
 
 	writtenFilename, err := b.writeBuildDirFile(modifyScriptName, modifyRawImageScript, &values)

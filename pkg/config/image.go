@@ -12,8 +12,13 @@ const (
 )
 
 type ImageConfig struct {
-	APIVersion string `yaml:"apiVersion"`
-	Image      Image  `yaml:"image"`
+	APIVersion      string          `yaml:"apiVersion"`
+	Image           Image           `yaml:"image"`
+	OperatingSystem OperatingSystem `yaml:"operatingSystem"`
+}
+
+type OperatingSystem struct {
+	Platform string `yaml:"platform"`
 }
 
 type Image struct {

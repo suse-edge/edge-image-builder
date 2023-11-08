@@ -3,3 +3,5 @@ image:
   imageType: iso
   baseImage: slemicro5.5.iso
   outputImageName: eibimage.iso
+operatingSystem:
+  platform: openstack

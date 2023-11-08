@@ -24,7 +24,10 @@ set -euo pipefail
 #  - Resets the filesystem to read only
 
 guestfish --rw -a {{.OutputImage}} -i <<'EOF'
+  download /boot/grub2/grub.cfg /tmp/grub.cfg
+  ! sed -i 's/ignition.platform.id=metal/ignition.platform.id={{.Platform}}/' /tmp/grub.cfg
   sh "btrfs property set / ro false"
+  upload /tmp/grub.cfg /boot/grub2/grub.cfg
   copy-in {{.CombustionDir}} /
   sh "btrfs filesystem label / INSTALL"
   sh "btrfs property set / ro true"
