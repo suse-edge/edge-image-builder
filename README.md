@@ -81,15 +81,15 @@ The following example command attaches the directory and runs EIB:
 ```shell
 podman run --rm -it \
 -v $IMAGE_DIR:/eib eib:dev /bin/eib \
--config-file /eib/$CONFIG_FILE.yaml \
+-config-file $CONFIG_FILE.yaml \
 -config-dir /eib \
 -build-dir /eib/_build
 ```
 
 * `-v` - Used to mount a local directory (in this example, the value of $IMAGE_DIR) into the EIB container at `/eib`.
-* `-config-file` - Specifies which image configuration file to build. **Note:** This is currently the full path to the 
-  file relative to inside the container. In this example, since the volume was mounted at `/eib`, that path information
-  needs to be included in the CLI argument.
+* `-config-file` - Specifies which image configuration file to build. The path to this file will be relative to
+  the image configuration directory. If the configuration file is in the root of the configuration directory, simply 
+  specify the name of the configuration file 
 * `-config-dir` - Specifies the image configuration directory. Keep in mind that this is relative to the running
   container, so its value must match the mounted volume.
 * `-build-dir` - (optional) If unspecified, EIB will use a temporary directory inside the container for
