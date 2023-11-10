@@ -83,6 +83,29 @@ qemu-img create -f qcow2 ~/.local/share/libvirt/images/eib-iso.qcow2 20G
 
 The next time the VM is powered on, it will trigger the ISO installer.
 
+### Testing using virt-install (CLI)
+
+If you want to use the command line to deploy the VM and test it with your EIB generated image, you could use the following process:
+
+- The first step is to create an empty disk for the VM:
+
+`qemu-img create -f qcow2 example.img 6G`
+
+- Next, use virt-install to define and run a VM using the EIB generated image:
+
+```
+virt-install --name testVM \ 
+             --memory 4096 \
+             --vcpus 4 \
+             --disk ./example.img \
+             --install no_install=yes \
+             --cdrom ./eib-image-generated.iso \
+             --network default \
+             --osinfo detect=on,name=sle-unknown
+```
+
+During the first boot, you'll need to install the OS following the instructions. After installation, a reboot will happen. Subsequent boots will use the "Boot From Disk" option to boot from the installed OS.
+
 ## Testing RAW Images
 
 Using Virtual Machine Manager, select the option to create a new VM.
