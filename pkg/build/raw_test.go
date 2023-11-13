@@ -49,6 +49,9 @@ func TestWriteModifyScript(t *testing.T) {
 		Image: config.Image{
 			OutputImageName: "output-image",
 		},
+		OperatingSystem: config.OperatingSystem{
+			KernelArgs: []string{"alpha", "beta"},
+		},
 	}
 	buildConfig := config.BuildConfig{
 		ImageConfigDir: "config-dir",
@@ -74,6 +77,7 @@ func TestWriteModifyScript(t *testing.T) {
 	foundContents := string(foundBytes)
 	assert.Contains(t, foundContents, "guestfish --rw -a config-dir/output-image")
 	assert.Contains(t, foundContents, "copy-in "+builder.combustionDir)
+	assert.Contains(t, foundContents, "download /boot/grub2/grub.cfg /tmp/grub.cfg")
 }
 
 func TestCreateModifyCommand(t *testing.T) {

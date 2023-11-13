@@ -48,12 +48,22 @@ func (b *Builder) createRawImageCopyCommand() *exec.Cmd {
 }
 
 func (b *Builder) writeModifyScript() error {
+	// There is no need to check the returned results from this call. If there is no configuration,
+	// it will be an empty string, which is safe to pass into the template.
+	grubConfiguration, err := b.generateGRUBGuestfishCommands()
+	if err != nil {
+		return fmt.Errorf("generating the GRUB configuration commands: %w", err)
+	}
+
+	// Assemble the template values
 	values := struct {
 		OutputImage   string
 		CombustionDir string
+		ConfigureGRUB string
 	}{
 		OutputImage:   b.generateOutputImageFilename(),
 		CombustionDir: b.combustionDir,
+		ConfigureGRUB: grubConfiguration,
 	}
 
 	writtenFilename, err := b.writeBuildDirFile(modifyScriptName, modifyRawImageScript, &values)
