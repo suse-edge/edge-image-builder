@@ -98,7 +98,7 @@ func (b *Builder) writeRPMScript(rpmFileNamesArray []string) error {
 	if err != nil {
 		return fmt.Errorf("changing permissions on the rpm script %s: %w", modifyRPMScriptName, err)
 	}
-
+	
 	b.registerCombustionScript(modifyRPMScriptName)
 
 	return nil
