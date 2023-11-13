@@ -44,9 +44,9 @@ func (b *Builder) Build() error {
 		return fmt.Errorf("generating combustion script: %w", err)
 	}
 
-	err = b.copyRPMs()
+	err = b.processRPMs()
 	if err != nil {
-		return fmt.Errorf("copying RPMs over: %w", err)
+		return fmt.Errorf("processing rpms: %w", err)
 	}
 
 	switch b.imageConfig.Image.ImageType {
