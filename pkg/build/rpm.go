@@ -17,6 +17,36 @@ const (
 //go:embed scripts/rpms/10_rpm_install.sh.tpl
 var modifyRPMScript string
 
+func (b *Builder) processRPMs() error {
+	rpmSourceDir := filepath.Join(b.buildConfig.ImageConfigDir, "rpms")
+	// Only proceed with processing the RPMs if the directory exists
+	_, err := os.Stat(rpmSourceDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("checking for rpm directory at %s: %w", rpmSourceDir, err)
+	}
+	rpmDestDir := b.combustionDir
+
+	rpmFileNames, err := b.getRPMFileNames(rpmSourceDir)
+	if err != nil {
+		return fmt.Errorf("getting rpm file names: %w", err)
+	}
+
+	err = b.copyRPMs(rpmSourceDir, rpmDestDir, rpmFileNames)
+	if err != nil {
+		return fmt.Errorf("copying RPMs over: %w", err)
+	}
+
+	err = b.writeRPMScript(rpmFileNames)
+	if err != nil {
+		return fmt.Errorf("writing the rpm install script: %w", err)
+	}
+
+	return nil
+}
+
 func (b *Builder) getRPMFileNames(rpmSourceDir string) ([]string, error) {
 	var rpmFileNames []string
 
@@ -52,36 +82,6 @@ func (b *Builder) copyRPMs(rpmSourceDir string, rpmDestDir string, rpmFileNames 
 	return nil
 }
 
-func (b *Builder) processRPMs() error {
-	rpmSourceDir := filepath.Join(b.buildConfig.ImageConfigDir, "rpms")
-	// Only proceed with processing the RPMs if the directory exists
-	_, err := os.Stat(rpmSourceDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return fmt.Errorf("checking for rpm directory at %s: %w", rpmSourceDir, err)
-	}
-	rpmDestDir := b.context.CombustionDir
-
-	rpmFileNames, err := b.getRPMFileNames(rpmSourceDir)
-	if err != nil {
-		return fmt.Errorf("getting rpm file names: %w", err)
-	}
-
-	err = b.copyRPMs(rpmSourceDir, rpmDestDir, rpmFileNames)
-	if err != nil {
-		return fmt.Errorf("copying RPMs over: %w", err)
-	}
-
-	err = b.writeRPMScript(rpmFileNames)
-	if err != nil {
-		return fmt.Errorf("writing the rpm install script: %w", err)
-	}
-
-	return nil
-}
-
 func (b *Builder) writeRPMScript(rpmFileNamesArray []string) error {
 	rpmFileNamesString := strings.Join(rpmFileNamesArray, " ")
 	values := struct {
@@ -98,7 +98,7 @@ func (b *Builder) writeRPMScript(rpmFileNamesArray []string) error {
 	if err != nil {
 		return fmt.Errorf("changing permissions on the rpm script %s: %w", modifyRPMScriptName, err)
 	}
-	
+
 	b.registerCombustionScript(modifyRPMScriptName)
 
 	return nil
