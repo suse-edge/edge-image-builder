@@ -26,14 +26,13 @@ func (b *Builder) processRPMs() error {
 	if RPMSourceDir == "" {
 		return nil
 	}
-	RPMDestDir := b.combustionDir
 
 	RPMFileNames, err := getRPMFileNames(RPMSourceDir)
 	if err != nil {
 		return fmt.Errorf("getting RPM file names: %w", err)
 	}
 
-	err = copyRPMs(RPMSourceDir, RPMDestDir, RPMFileNames)
+	err = copyRPMs(RPMSourceDir, b.combustionDir, RPMFileNames)
 	if err != nil {
 		return fmt.Errorf("copying RPMs over: %w", err)
 	}

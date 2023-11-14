@@ -121,12 +121,11 @@ func TestCopyRPMsNoRPMDir(t *testing.T) {
 	err = builder.prepareBuildDir()
 	require.NoError(t, err)
 
-	RPMDestDir := builder.combustionDir
 	RPMSourceDir, err := builder.generateRPMPath()
 	require.NoError(t, err)
 
 	// Test
-	err = copyRPMs(RPMSourceDir, RPMDestDir, nil)
+	err = copyRPMs(RPMSourceDir, builder.combustionDir, nil)
 
 	// Verify
 	require.NoError(t, err)
