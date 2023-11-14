@@ -2,6 +2,7 @@ package fileio
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"text/template"
 )
@@ -30,6 +31,30 @@ func WriteFile(filename string, contents string, templateData any) error {
 
 	if err = tmpl.Execute(file, templateData); err != nil {
 		return fmt.Errorf("applying template: %w", err)
+	}
+
+	return nil
+}
+
+func CopyFile(src string, dest string) error {
+	sourceFile, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("opening source file: %w", err)
+	}
+	defer func() {
+		_ = sourceFile.Close()
+	}()
+
+	destFile, err := os.Create(dest)
+	if err != nil {
+		return fmt.Errorf("creating destination file: %w", err)
+	}
+	defer func() {
+		_ = destFile.Close()
+	}()
+
+	if _, err = io.Copy(destFile, sourceFile); err != nil {
+		return fmt.Errorf("copying file: %w", err)
 	}
 
 	return nil
