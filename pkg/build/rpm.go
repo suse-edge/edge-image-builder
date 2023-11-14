@@ -22,6 +22,10 @@ func (b *Builder) processRPMs() error {
 	if err != nil {
 		return fmt.Errorf("generating rpm path: %w", err)
 	}
+	// Only proceed with processing the RPMs if the directory exists
+	if rpmSourceDir == "" {
+		return nil
+	}
 	rpmDestDir := b.combustionDir
 
 	rpmFileNames, err := getRPMFileNames(rpmSourceDir)
@@ -101,7 +105,6 @@ func (b *Builder) writeRPMScript(rpmFileNamesArray []string) error {
 
 func (b *Builder) generateRPMPath() (string, error) {
 	rpmSourceDir := filepath.Join(b.buildConfig.ImageConfigDir, "rpms")
-	// Only proceed with processing the RPMs if the directory exists
 	_, err := os.Stat(rpmSourceDir)
 	if err != nil {
 		if os.IsNotExist(err) {
