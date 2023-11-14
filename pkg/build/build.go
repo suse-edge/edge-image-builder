@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"text/template"
 
 	"github.com/suse-edge/edge-image-builder/pkg/config"
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 const (
@@ -149,38 +149,12 @@ func (b *Builder) generateCombustionScript() error {
 
 func (b *Builder) writeBuildDirFile(filename string, contents string, templateData any) (string, error) {
 	destFilename := filepath.Join(b.eibBuildDir, filename)
-	return destFilename, writeFile(destFilename, contents, templateData)
+	return destFilename, fileio.WriteFile(destFilename, contents, templateData)
 }
 
 func (b *Builder) writeCombustionFile(filename string, contents string, templateData any) (string, error) {
 	destFilename := filepath.Join(b.combustionDir, filename)
-	return destFilename, writeFile(destFilename, contents, templateData)
-}
-
-func writeFile(filename string, contents string, templateData any) error {
-	if templateData != nil {
-		tmpl, err := template.New(filename).Parse(contents)
-		if err != nil {
-			return fmt.Errorf("creating template for file %s: %w", filename, err)
-		}
-
-		file, err := os.Create(filename)
-		if err != nil {
-			return fmt.Errorf("creating file %s: %w", filename, err)
-		}
-		defer file.Close()
-
-		err = tmpl.Execute(file, templateData)
-		if err != nil {
-			return fmt.Errorf("applying the template at %s: %w", filename, err)
-		}
-	} else {
-		err := os.WriteFile(filename, []byte(contents), os.ModePerm)
-		if err != nil {
-			return fmt.Errorf("writing file %s: %w", filename, err)
-		}
-	}
-	return nil
+	return destFilename, fileio.WriteFile(destFilename, contents, templateData)
 }
 
 // nolint: unused
