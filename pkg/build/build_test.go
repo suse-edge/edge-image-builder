@@ -167,8 +167,6 @@ func TestWriteBuildDirFile(t *testing.T) {
 
 func TestWriteFileWithTemplate(t *testing.T) {
 	// Setup
-	builder := New(nil, &config.BuildConfig{})
-
 	tmpDir, err := os.MkdirTemp("", "eib-test-")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
@@ -184,13 +182,12 @@ func TestWriteFileWithTemplate(t *testing.T) {
 	testFilename := filepath.Join(tmpDir, "write-file-with-template.sh")
 
 	// Test
-	err = builder.writeFile(testFilename, testData, &values)
+	err = writeFile(testFilename, testData, &values)
 
 	// Verify
 	require.NoError(t, err)
 
-	expectedFilename := filepath.Join(builder.eibBuildDir, testFilename)
-	foundData, err := os.ReadFile(expectedFilename)
+	foundData, err := os.ReadFile(testFilename)
 	require.NoError(t, err)
 	assert.Equal(t, "ooF and raB", string(foundData))
 }
