@@ -18,59 +18,59 @@ const (
 var modifyRPMScript string
 
 func (b *Builder) processRPMs() error {
-	rpmSourceDir, err := b.generateRPMPath()
+	RPMSourceDir, err := b.generateRPMPath()
 	if err != nil {
-		return fmt.Errorf("generating rpm path: %w", err)
+		return fmt.Errorf("generating RPM path: %w", err)
 	}
 	// Only proceed with processing the RPMs if the directory exists
-	if rpmSourceDir == "" {
+	if RPMSourceDir == "" {
 		return nil
 	}
-	rpmDestDir := b.combustionDir
+	RPMDestDir := b.combustionDir
 
-	rpmFileNames, err := getRPMFileNames(rpmSourceDir)
+	RPMFileNames, err := getRPMFileNames(RPMSourceDir)
 	if err != nil {
-		return fmt.Errorf("getting rpm file names: %w", err)
+		return fmt.Errorf("getting RPM file names: %w", err)
 	}
 
-	err = copyRPMs(rpmSourceDir, rpmDestDir, rpmFileNames)
+	err = copyRPMs(RPMSourceDir, RPMDestDir, RPMFileNames)
 	if err != nil {
 		return fmt.Errorf("copying RPMs over: %w", err)
 	}
 
-	err = b.writeRPMScript(rpmFileNames)
+	err = b.writeRPMScript(RPMFileNames)
 	if err != nil {
-		return fmt.Errorf("writing the rpm install script: %w", err)
+		return fmt.Errorf("writing the RPM install script: %w", err)
 	}
 
 	return nil
 }
 
-func getRPMFileNames(rpmSourceDir string) ([]string, error) {
-	var rpmFileNames []string
+func getRPMFileNames(RPMSourceDir string) ([]string, error) {
+	var RPMFileNames []string
 
-	rpms, err := os.ReadDir(rpmSourceDir)
+	RPMs, err := os.ReadDir(RPMSourceDir)
 	if err != nil {
-		return nil, fmt.Errorf("reading rpm source dir: %w", err)
+		return nil, fmt.Errorf("reading RPM source dir: %w", err)
 	}
 
-	for _, rpmFile := range rpms {
-		if filepath.Ext(rpmFile.Name()) == ".rpm" {
-			rpmFileNames = append(rpmFileNames, rpmFile.Name())
+	for _, RPMFile := range RPMs {
+		if filepath.Ext(RPMFile.Name()) == ".rpm" {
+			RPMFileNames = append(RPMFileNames, RPMFile.Name())
 		}
 	}
 
-	if len(rpmFileNames) == 0 {
-		return nil, fmt.Errorf("no rpms found")
+	if len(RPMFileNames) == 0 {
+		return nil, fmt.Errorf("no RPMs found")
 	}
 
-	return rpmFileNames, nil
+	return RPMFileNames, nil
 }
 
-func copyRPMs(rpmSourceDir string, rpmDestDir string, rpmFileNames []string) error {
-	for _, rpm := range rpmFileNames {
-		sourcePath := filepath.Join(rpmSourceDir, rpm)
-		destPath := filepath.Join(rpmDestDir, rpm)
+func copyRPMs(RPMSourceDir string, RPMDestDir string, RPMFileNames []string) error {
+	for _, RPM := range RPMFileNames {
+		sourcePath := filepath.Join(RPMSourceDir, RPM)
+		destPath := filepath.Join(RPMDestDir, RPM)
 
 		err := fileio.CopyFile(sourcePath, destPath)
 		if err != nil {
@@ -81,21 +81,20 @@ func copyRPMs(rpmSourceDir string, rpmDestDir string, rpmFileNames []string) err
 	return nil
 }
 
-func (b *Builder) writeRPMScript(rpmFileNamesArray []string) error {
-	rpmFileNamesString := strings.Join(rpmFileNamesArray, " ")
+func (b *Builder) writeRPMScript(RPMFileNames []string) error {
 	values := struct {
 		RPMs string
 	}{
-		RPMs: rpmFileNamesString,
+		RPMs: strings.Join(RPMFileNames, " "),
 	}
 
 	writtenFilename, err := b.writeCombustionFile(modifyRPMScriptName, modifyRPMScript, &values)
 	if err != nil {
-		return fmt.Errorf("writing rpm script %s: %w", modifyRPMScriptName, err)
+		return fmt.Errorf("writing RPM script %s: %w", modifyRPMScriptName, err)
 	}
 	err = os.Chmod(writtenFilename, modifyScriptMode)
 	if err != nil {
-		return fmt.Errorf("changing permissions on the rpm script %s: %w", modifyRPMScriptName, err)
+		return fmt.Errorf("changing permissions on the RPM script %s: %w", modifyRPMScriptName, err)
 	}
 
 	b.registerCombustionScript(modifyRPMScriptName)
@@ -104,14 +103,14 @@ func (b *Builder) writeRPMScript(rpmFileNamesArray []string) error {
 }
 
 func (b *Builder) generateRPMPath() (string, error) {
-	rpmSourceDir := filepath.Join(b.buildConfig.ImageConfigDir, "rpms")
-	_, err := os.Stat(rpmSourceDir)
+	RPMSourceDir := filepath.Join(b.buildConfig.ImageConfigDir, "rpms")
+	_, err := os.Stat(RPMSourceDir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return "", nil
 		}
-		return "", fmt.Errorf("checking for rpm directory at %s: %w", rpmSourceDir, err)
+		return "", fmt.Errorf("checking for RPM directory at %s: %w", RPMSourceDir, err)
 	}
 
-	return rpmSourceDir, nil
+	return RPMSourceDir, nil
 }

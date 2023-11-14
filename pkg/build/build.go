@@ -46,7 +46,7 @@ func (b *Builder) Build() error {
 
 	err = b.processRPMs()
 	if err != nil {
-		return fmt.Errorf("processing rpms: %w", err)
+		return fmt.Errorf("processing RPMs: %w", err)
 	}
 
 	switch b.imageConfig.Image.ImageType {
