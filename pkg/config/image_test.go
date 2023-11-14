@@ -23,6 +23,12 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "iso", imageConfig.Image.ImageType)
 	assert.Equal(t, "slemicro5.5.iso", imageConfig.Image.BaseImage)
 	assert.Equal(t, "eibimage.iso", imageConfig.Image.OutputImageName)
+
+	expectedKernelArgs := []string{
+		"alpha=foo",
+		"beta=bar",
+	}
+	assert.Equal(t, expectedKernelArgs, imageConfig.OperatingSystem.KernelArgs)
 }
 
 func TestParseBadConfig(t *testing.T) {
