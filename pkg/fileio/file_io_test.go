@@ -10,6 +10,11 @@ import (
 )
 
 func TestWriteFile(t *testing.T) {
+	const tmpDir = "write-test"
+
+	require.NoError(t, os.Mkdir(tmpDir, os.ModePerm))
+	defer os.RemoveAll(tmpDir)
+
 	tests := []struct {
 		name             string
 		filename         string
@@ -60,23 +65,80 @@ func TestWriteFile(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			tmpDir := "write-test"
-			require.NoError(t, os.Mkdir(tmpDir, os.ModePerm))
-			defer os.RemoveAll(tmpDir)
-
 			filename := filepath.Join(tmpDir, test.filename)
+
 			err := WriteFile(filename, test.contents, test.templateData)
+
 			if test.expectedErr != "" {
 				assert.EqualError(t, err, test.expectedErr)
-				return
+			} else {
+				require.Nil(t, err)
+
+				contents, err := os.ReadFile(filename)
+				require.NoError(t, err)
+
+				assert.Equal(t, test.expectedContents, string(contents))
 			}
+		})
+	}
+}
 
-			require.Nil(t, err)
+func TestCopyFile(t *testing.T) {
+	const (
+		source  = "file_io.go" // use the source code file as a valid input
+		destDir = "copy-test"
+	)
 
-			contents, err := os.ReadFile(filename)
-			require.NoError(t, err)
+	require.NoError(t, os.Mkdir(destDir, os.ModePerm))
+	defer os.RemoveAll(destDir)
 
-			assert.Equal(t, test.expectedContents, string(contents))
+	tests := []struct {
+		name        string
+		source      string
+		destination string
+		expectedErr string
+	}{
+		{
+			name:        "Source file does not exist",
+			source:      "<missing>",
+			expectedErr: "opening source file: open <missing>: no such file or directory",
+		},
+		{
+			name:        "Destination is an empty file",
+			source:      source,
+			destination: "",
+			expectedErr: "creating destination file: open : no such file or directory",
+		},
+		{
+			name:        "Destination is a directory",
+			source:      source,
+			destination: "copy-test/",
+			expectedErr: "creating destination file: open copy-test/: is a directory",
+		},
+		{
+			name:        "File is successfully copied",
+			source:      source,
+			destination: "copy-test/copy.go",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := CopyFile(test.source, test.destination)
+
+			if test.expectedErr != "" {
+				assert.EqualError(t, err, test.expectedErr)
+			} else {
+				require.Nil(t, err)
+
+				src, err := os.ReadFile(test.source)
+				require.NoError(t, err)
+
+				dest, err := os.ReadFile(test.destination)
+				require.NoError(t, err)
+
+				assert.Equal(t, src, dest)
+			}
 		})
 	}
 }
