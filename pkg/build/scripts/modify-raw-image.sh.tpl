@@ -13,8 +13,10 @@ guestfish --rw -a {{.OutputImage}} -i <<'EOF'
   # Enables write access to the read only filesystem
   sh "btrfs property set / ro false"
 
-  # GRUB configuration (if specified)
-  {{.ConfigureGRUB}}
+  {{ if ne .ConfigureGRUB "" }}
+      # GRUB configuration
+      {{ .ConfigureGRUB }}
+  {{ end }}
 
   # Copies the combustion directory into the root of the image
   copy-in {{.CombustionDir}} /
