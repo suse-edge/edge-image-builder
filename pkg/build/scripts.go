@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 const (
@@ -37,7 +39,7 @@ func (b *Builder) configureScripts() error {
 		copyMe := filepath.Join(fullScriptsDir, scriptEntry.Name())
 		copyTo := filepath.Join(b.combustionDir, scriptEntry.Name())
 
-		err = copyFile(copyMe, copyTo)
+		err = fileio.CopyFile(copyMe, copyTo)
 		if err != nil {
 			return fmt.Errorf("copying script to %s: %w", copyTo, err)
 		}

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 func (b *Builder) getRPMFileNames(rpmSourceDir string) ([]string, error) {
@@ -48,7 +50,7 @@ func (b *Builder) copyRPMs() error {
 		sourcePath := filepath.Join(rpmSourceDir, rpm)
 		destPath := filepath.Join(rpmDestDir, rpm)
 
-		err = copyFile(sourcePath, destPath)
+		err = fileio.CopyFile(sourcePath, destPath)
 		if err != nil {
 			return fmt.Errorf("copying file %s: %w", sourcePath, err)
 		}

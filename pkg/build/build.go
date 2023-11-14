@@ -3,18 +3,12 @@ package build
 import (
 	_ "embed"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"slices"
-	"text/template"
 
 	"github.com/suse-edge/edge-image-builder/pkg/config"
-)
-
-const (
-	// nolint: unused
-	embeddedScriptsBaseDir = "scripts"
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 //go:embed scripts/script_base.sh
@@ -149,55 +143,12 @@ func (b *Builder) generateCombustionScript() error {
 
 func (b *Builder) writeBuildDirFile(filename string, contents string, templateData any) (string, error) {
 	destFilename := filepath.Join(b.eibBuildDir, filename)
-	return destFilename, b.writeFile(destFilename, contents, templateData)
+	return destFilename, fileio.WriteFile(destFilename, contents, templateData)
 }
 
 func (b *Builder) writeCombustionFile(filename string, contents string, templateData any) (string, error) {
 	destFilename := filepath.Join(b.combustionDir, filename)
-	return destFilename, b.writeFile(destFilename, contents, templateData)
-}
-
-func (b *Builder) writeFile(filename string, contents string, templateData any) error {
-	if templateData != nil {
-		tmpl, err := template.New(filename).Parse(contents)
-		if err != nil {
-			return fmt.Errorf("creating template for file %s: %w", filename, err)
-		}
-
-		file, err := os.Create(filename)
-		if err != nil {
-			return fmt.Errorf("creating file %s: %w", filename, err)
-		}
-		defer file.Close()
-
-		err = tmpl.Execute(file, templateData)
-		if err != nil {
-			return fmt.Errorf("applying the template at %s: %w", filename, err)
-		}
-	} else {
-		err := os.WriteFile(filename, []byte(contents), os.ModePerm)
-		if err != nil {
-			return fmt.Errorf("writing file %s: %w", filename, err)
-		}
-	}
-	return nil
-}
-
-// nolint: unused
-func (b *Builder) copyCombustionFile(scriptSubDir string, scriptName string) error {
-	sourcePath := filepath.Join(embeddedScriptsBaseDir, scriptSubDir, scriptName)
-	src, err := os.ReadFile(sourcePath)
-	if err != nil {
-		return fmt.Errorf("reading file: %w", err)
-	}
-
-	destFilename := filepath.Join(b.combustionDir, filepath.Base(sourcePath))
-	err = os.WriteFile(destFilename, src, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("writing file: %w", err)
-	}
-
-	return nil
+	return destFilename, fileio.WriteFile(destFilename, contents, templateData)
 }
 
 func (b *Builder) registerCombustionScript(scriptName string) {
@@ -216,25 +167,4 @@ func (b *Builder) generateOutputImageFilename() string {
 func (b *Builder) generateBaseImageFilename() string {
 	filename := filepath.Join(b.buildConfig.ImageConfigDir, "images", b.imageConfig.Image.BaseImage)
 	return filename
-}
-
-func copyFile(sourcePath string, destPath string) error {
-	sourceFile, err := os.Open(sourcePath)
-	if err != nil {
-		return fmt.Errorf("opening file from source path: %w", err)
-	}
-	defer sourceFile.Close()
-
-	destFile, err := os.Create(destPath)
-	if err != nil {
-		return fmt.Errorf("creating file at dest path: %w", err)
-	}
-	defer destFile.Close()
-
-	_, err = io.Copy(destFile, sourceFile)
-	if err != nil {
-		return fmt.Errorf("copying file from source path to dest path: %w", err)
-	}
-
-	return nil
 }
