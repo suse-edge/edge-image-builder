@@ -1,6 +1,7 @@
 package fileio
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,9 +11,10 @@ import (
 )
 
 func TestWriteFile(t *testing.T) {
-	const tmpDir = "write-test"
+	const tmpDirPrefix = "eib-write-file-test-"
 
-	require.NoError(t, os.Mkdir(tmpDir, os.ModePerm))
+	tmpDir, err := os.MkdirTemp("", tmpDirPrefix)
+	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
 	tests := []struct {
@@ -47,7 +49,7 @@ func TestWriteFile(t *testing.T) {
 			filename:     "invalid-syntax",
 			contents:     "{{.Foo and ",
 			templateData: struct{}{},
-			expectedErr:  "parsing template: template: write-test/invalid-syntax:1: unclosed action",
+			expectedErr:  fmt.Sprintf("parsing template: template: %s/invalid-syntax:1: unclosed action", tmpDir),
 		},
 		{
 			name:     "Templated file is not written due to missing field",
@@ -58,8 +60,8 @@ func TestWriteFile(t *testing.T) {
 			}{
 				Foo: "ooF",
 			},
-			expectedErr: "applying template: template: write-test/invalid-data:1:15: " +
-				"executing \"write-test/invalid-data\" at <.Bar>: can't evaluate field Bar in type struct { Foo string }",
+			expectedErr: fmt.Sprintf("applying template: template: %[1]s/invalid-data:1:15: "+
+				"executing \"%[1]s/invalid-data\" at <.Bar>: can't evaluate field Bar in type struct { Foo string }", tmpDir),
 		},
 	}
 
@@ -85,12 +87,13 @@ func TestWriteFile(t *testing.T) {
 
 func TestCopyFile(t *testing.T) {
 	const (
-		source  = "file_io.go" // use the source code file as a valid input
-		destDir = "copy-test"
+		source        = "file_io.go" // use the source code file as a valid input
+		destDirPrefix = "eib-copy-file-test-"
 	)
 
-	require.NoError(t, os.Mkdir(destDir, os.ModePerm))
-	defer os.RemoveAll(destDir)
+	tmpDir, err := os.MkdirTemp("", destDirPrefix)
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
 
 	tests := []struct {
 		name        string
@@ -112,13 +115,13 @@ func TestCopyFile(t *testing.T) {
 		{
 			name:        "Destination is a directory",
 			source:      source,
-			destination: "copy-test/",
-			expectedErr: "creating destination file: open copy-test/: is a directory",
+			destination: tmpDir,
+			expectedErr: fmt.Sprintf("creating destination file: open %s: is a directory", tmpDir),
 		},
 		{
 			name:        "File is successfully copied",
 			source:      source,
-			destination: "copy-test/copy.go",
+			destination: fmt.Sprintf("%s/copy.go", tmpDir),
 		},
 	}
 
