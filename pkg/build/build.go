@@ -11,11 +11,6 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
-const (
-	// nolint: unused
-	embeddedScriptsBaseDir = "scripts"
-)
-
 //go:embed scripts/script_base.sh
 var combustionScriptBaseCode string
 
@@ -154,23 +149,6 @@ func (b *Builder) writeBuildDirFile(filename string, contents string, templateDa
 func (b *Builder) writeCombustionFile(filename string, contents string, templateData any) (string, error) {
 	destFilename := filepath.Join(b.combustionDir, filename)
 	return destFilename, fileio.WriteFile(destFilename, contents, templateData)
-}
-
-// nolint: unused
-func (b *Builder) copyCombustionFile(scriptSubDir string, scriptName string) error {
-	sourcePath := filepath.Join(embeddedScriptsBaseDir, scriptSubDir, scriptName)
-	src, err := os.ReadFile(sourcePath)
-	if err != nil {
-		return fmt.Errorf("reading file: %w", err)
-	}
-
-	destFilename := filepath.Join(b.combustionDir, filepath.Base(sourcePath))
-	err = os.WriteFile(destFilename, src, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("writing file: %w", err)
-	}
-
-	return nil
 }
 
 func (b *Builder) registerCombustionScript(scriptName string) {
