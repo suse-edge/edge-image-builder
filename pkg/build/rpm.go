@@ -6,15 +6,16 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"strings"
+
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 const (
 	modifyRPMScriptName = "10_rpm_install.sh"
 )
 
-//go:embed scripts/rpms/10_rpm_install.sh.tpl
+//go:embed scripts/rpms/10-rpm-install.sh.tpl
 var modifyRPMScript string
 
 func (b *Builder) processRPMs() error {
