@@ -40,7 +40,7 @@ func (b *Builder) processRPMs() error {
 
 	err = b.writeRPMScript(RPMFileNames)
 	if err != nil {
-		return fmt.Errorf("writing the RPM install script: %w", err)
+		return fmt.Errorf("writing the RPM install script %s: %w", modifyRPMScriptName, err)
 	}
 
 	return nil
@@ -94,7 +94,7 @@ func (b *Builder) writeRPMScript(RPMFileNames []string) error {
 	}
 	err = os.Chmod(writtenFilename, modifyScriptMode)
 	if err != nil {
-		return fmt.Errorf("changing permissions on the RPM script %s: %w", modifyRPMScriptName, err)
+		return fmt.Errorf("adjusting permissions: %w", err)
 	}
 
 	b.registerCombustionScript(modifyRPMScriptName)
