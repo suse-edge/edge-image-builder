@@ -17,7 +17,7 @@ func TestGetRPMFileNames(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	RPMSourceDir := filepath.Join(tmpDir, "rpms")
-	err = os.Mkdir(RPMSourceDir, 0755)
+	err = os.Mkdir(RPMSourceDir, 0o755)
 	require.NoError(t, err)
 
 	bc := config.BuildConfig{}
@@ -52,7 +52,7 @@ func TestCopyRPMs(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	RPMSourceDir := filepath.Join(tmpDir, "rpms")
-	err = os.Mkdir(RPMSourceDir, 0755)
+	err = os.Mkdir(RPMSourceDir, 0o755)
 	require.NoError(t, err)
 
 	bc := config.BuildConfig{}
@@ -93,7 +93,7 @@ func TestGetRPMFileNamesNoRPMs(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	RPMSourceDir := filepath.Join(tmpDir, "rpms")
-	err = os.Mkdir(RPMSourceDir, 0755)
+	err = os.Mkdir(RPMSourceDir, 0o755)
 	require.NoError(t, err)
 
 	bc := config.BuildConfig{}
@@ -138,7 +138,7 @@ func TestWriteRPMScript(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	RPMSourceDir := filepath.Join(tmpDir, "rpms")
-	err = os.Mkdir(RPMSourceDir, 0755)
+	err = os.Mkdir(RPMSourceDir, 0o755)
 	require.NoError(t, err)
 
 	buildConfig := config.BuildConfig{}
@@ -184,7 +184,7 @@ func TestProcessRPMs(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	RPMSourceDir := filepath.Join(tmpDir, "rpms")
-	err = os.Mkdir(RPMSourceDir, 0755)
+	err = os.Mkdir(RPMSourceDir, 0o755)
 	require.NoError(t, err)
 
 	bc := config.BuildConfig{
@@ -232,7 +232,7 @@ func TestGenerateRPMPath(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	RPMSourceDir := filepath.Join(tmpDir, "rpms")
-	err = os.Mkdir(RPMSourceDir, 0755)
+	err = os.Mkdir(RPMSourceDir, 0o755)
 	require.NoError(t, err)
 
 	bc := config.BuildConfig{
