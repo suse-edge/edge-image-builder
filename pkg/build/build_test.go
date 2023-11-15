@@ -14,7 +14,7 @@ func TestGenerateCombustionScript(t *testing.T) {
 	context, err := NewContext("", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, context.CleanUpBuildDir())
+		assert.NoError(t, CleanUpBuildDir(context))
 	}()
 
 	builder := Builder{
@@ -47,7 +47,7 @@ func TestWriteCombustionFile(t *testing.T) {
 	context, err := NewContext("", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, context.CleanUpBuildDir())
+		assert.NoError(t, CleanUpBuildDir(context))
 	}()
 
 	builder := Builder{
@@ -78,7 +78,7 @@ func TestWriteBuildDirFile(t *testing.T) {
 	context, err := NewContext("", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, context.CleanUpBuildDir())
+		assert.NoError(t, CleanUpBuildDir(context))
 	}()
 
 	builder := Builder{

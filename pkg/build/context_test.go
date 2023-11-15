@@ -32,38 +32,38 @@ func TestContext_New_ExistingBuildDir(t *testing.T) {
 	require.Equal(t, tmpDir, context.BuildDir)
 }
 
-func TestContext_CleanUpBuildDirTrue(t *testing.T) {
+func TestCleanUpBuildDirTrue(t *testing.T) {
 	// Setup
 	tmpDir, err := os.MkdirTemp("", "eib-test-")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
-	context := Context{
+	context := &Context{
 		BuildDir:       tmpDir,
 		DeleteBuildDir: true,
 	}
 
 	// Test
-	require.NoError(t, context.CleanUpBuildDir())
+	require.NoError(t, CleanUpBuildDir(context))
 
 	// Verify
 	_, err = os.Stat(tmpDir)
 	assert.ErrorIs(t, err, fs.ErrNotExist)
 }
 
-func TestContext_CleanUpBuildDirFalse(t *testing.T) {
+func TestCleanUpBuildDirFalse(t *testing.T) {
 	// Setup
 	tmpDir, err := os.MkdirTemp("", "eib-test-")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
-	context := Context{
+	context := &Context{
 		BuildDir:       tmpDir,
 		DeleteBuildDir: false,
 	}
 
 	// Test
-	require.NoError(t, context.CleanUpBuildDir())
+	require.NoError(t, CleanUpBuildDir(context))
 
 	// Verify
 	_, err = os.Stat(tmpDir)

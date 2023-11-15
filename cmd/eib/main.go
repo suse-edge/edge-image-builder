@@ -121,7 +121,7 @@ func main() {
 		zap.L().Fatal("An error occurred building the image", zap.Error(err))
 	}
 
-	if err = context.CleanUpBuildDir(); err != nil {
+	if err = build.CleanUpBuildDir(context); err != nil {
 		zap.L().Error("Failed to clean up build directory", zap.Error(err))
 	}
 }

@@ -39,7 +39,7 @@ func NewContext(imageConfigDir, buildDir string, deleteBuildDir bool) (*Context,
 	}, nil
 }
 
-func (c *Context) CleanUpBuildDir() error {
+func CleanUpBuildDir(c *Context) error {
 	if c.DeleteBuildDir {
 		err := os.RemoveAll(c.BuildDir)
 		if err != nil {
