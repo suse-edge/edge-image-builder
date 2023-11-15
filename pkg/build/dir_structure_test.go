@@ -44,7 +44,7 @@ func TestDirStructure_CleanUpBuildDirTrue(t *testing.T) {
 	}
 
 	// Test
-	require.NoError(t, ds.cleanUpBuildDir())
+	require.NoError(t, ds.CleanUpBuildDir())
 
 	// Verify
 	_, err = os.Stat(tmpDir)
@@ -63,7 +63,7 @@ func TestDirStructure_CleanUpBuildDirFalse(t *testing.T) {
 	}
 
 	// Test
-	require.NoError(t, ds.cleanUpBuildDir())
+	require.NoError(t, ds.CleanUpBuildDir())
 
 	// Verify
 	_, err = os.Stat(tmpDir)

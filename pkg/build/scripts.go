@@ -14,7 +14,7 @@ const (
 )
 
 func (b *Builder) configureScripts() error {
-	fullScriptsDir := filepath.Join(b.buildConfig.ImageConfigDir, scriptsDir)
+	fullScriptsDir := filepath.Join(b.dirStructure.ImageConfigDir, scriptsDir)
 
 	// Nothing to do if the image config dir doesn't have the scripts directory
 	_, err := os.Stat(fullScriptsDir)
@@ -37,7 +37,7 @@ func (b *Builder) configureScripts() error {
 
 	for _, scriptEntry := range dirListing {
 		copyMe := filepath.Join(fullScriptsDir, scriptEntry.Name())
-		copyTo := filepath.Join(b.combustionDir, scriptEntry.Name())
+		copyTo := filepath.Join(b.dirStructure.CombustionDir, scriptEntry.Name())
 
 		err = fileio.CopyFile(copyMe, copyTo)
 		if err != nil {

@@ -62,7 +62,7 @@ func (b *Builder) writeModifyScript() error {
 		ConfigureGRUB string
 	}{
 		OutputImage:   b.generateOutputImageFilename(),
-		CombustionDir: b.combustionDir,
+		CombustionDir: b.dirStructure.CombustionDir,
 		ConfigureGRUB: grubConfiguration,
 	}
 
@@ -79,7 +79,7 @@ func (b *Builder) writeModifyScript() error {
 }
 
 func (b *Builder) createModifyCommand() *exec.Cmd {
-	scriptPath := filepath.Join(b.buildConfig.BuildDir, modifyScriptName)
+	scriptPath := filepath.Join(b.dirStructure.BuildDir, modifyScriptName)
 	cmd := exec.Command(scriptPath)
 	return cmd
 }

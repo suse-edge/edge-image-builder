@@ -19,10 +19,10 @@ func TestCreateRawImageCopyCommand(t *testing.T) {
 			OutputImageName: "build-image",
 		},
 	}
-	buildConfig := config.BuildConfig{
+	dirStructure := DirStructure{
 		ImageConfigDir: "config-dir",
 	}
-	builder := New(&imageConfig, &buildConfig)
+	builder := New(&imageConfig, &dirStructure)
 
 	// Test
 	cmd := builder.createRawImageCopyCommand()
@@ -53,12 +53,10 @@ func TestWriteModifyScript(t *testing.T) {
 			KernelArgs: []string{"alpha", "beta"},
 		},
 	}
-	buildConfig := config.BuildConfig{
-		ImageConfigDir: "config-dir",
-		BuildDir:       tmpDir,
-	}
-	builder := New(&imageConfig, &buildConfig)
-	require.NoError(t, builder.prepareBuildDir())
+	dirStructure, err := NewDirStructure("config-dir", tmpDir, false)
+	require.NoError(t, err)
+
+	builder := New(&imageConfig, dirStructure)
 
 	// Test
 	err = builder.writeModifyScript()
@@ -76,16 +74,17 @@ func TestWriteModifyScript(t *testing.T) {
 
 	foundContents := string(foundBytes)
 	assert.Contains(t, foundContents, "guestfish --rw -a config-dir/output-image")
-	assert.Contains(t, foundContents, "copy-in "+builder.combustionDir)
+	assert.Contains(t, foundContents, "copy-in "+builder.dirStructure.CombustionDir)
 	assert.Contains(t, foundContents, "download /boot/grub2/grub.cfg /tmp/grub.cfg")
 }
 
 func TestCreateModifyCommand(t *testing.T) {
 	// Setup
-	buildConfig := config.BuildConfig{
-		BuildDir: "build-dir",
+	builder := Builder{
+		dirStructure: &DirStructure{
+			BuildDir: "build-dir",
+		},
 	}
-	builder := New(nil, &buildConfig)
 
 	// Test
 	cmd := builder.createModifyCommand()

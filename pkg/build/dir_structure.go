@@ -39,7 +39,7 @@ func NewDirStructure(imageConfigDir, buildDir string, deleteBuildDir bool) (*Dir
 	}, nil
 }
 
-func (ds *DirStructure) cleanUpBuildDir() error {
+func (ds *DirStructure) CleanUpBuildDir() error {
 	if ds.DeleteBuildDir {
 		err := os.RemoveAll(ds.BuildDir)
 		if err != nil {

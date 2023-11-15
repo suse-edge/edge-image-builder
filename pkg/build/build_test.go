@@ -7,93 +7,19 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/config"
 )
-
-func TestPrepareBuildDir(t *testing.T) {
-	// Setup
-	bc := config.BuildConfig{}
-	builder := New(nil, &bc)
-
-	// Test
-	err := builder.prepareBuildDir()
-	defer os.RemoveAll(builder.eibBuildDir)
-
-	// Verify
-	require.NoError(t, err)
-	_, err = os.Stat(builder.eibBuildDir)
-	require.NoError(t, err)
-}
-
-func TestPrepareBuildDirExistingDir(t *testing.T) {
-	// Setup
-	tmpDir, err := os.MkdirTemp("", "eib-test-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
-
-	bc := config.BuildConfig{BuildDir: tmpDir}
-	builder := New(nil, &bc)
-
-	// Test
-	err = builder.prepareBuildDir()
-
-	// Verify
-	require.NoError(t, err)
-	require.Equal(t, tmpDir, builder.eibBuildDir)
-}
-
-func TestCleanUpBuildDirTrue(t *testing.T) {
-	// Setup
-	tmpDir, err := os.MkdirTemp("", "eib-test-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
-
-	bc := config.BuildConfig{
-		BuildDir:       tmpDir,
-		DeleteBuildDir: true,
-	}
-	builder := New(nil, &bc)
-	require.NoError(t, builder.prepareBuildDir())
-
-	// Test
-	err = builder.cleanUpBuildDir()
-
-	// Verify
-	require.NoError(t, err)
-	_, err = os.Stat(tmpDir)
-	require.Error(t, err)
-	assert.True(t, os.IsNotExist(err))
-}
-
-func TestCleanUpBuildDirFalse(t *testing.T) {
-	// Setup
-	tmpDir, err := os.MkdirTemp("", "eib-test-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
-
-	bc := config.BuildConfig{
-		BuildDir:       tmpDir,
-		DeleteBuildDir: false,
-	}
-	builder := New(nil, &bc)
-	require.NoError(t, builder.prepareBuildDir())
-
-	// Test
-	err = builder.cleanUpBuildDir()
-
-	// Verify
-	require.NoError(t, err)
-	_, err = os.Stat(tmpDir)
-	require.NoError(t, err)
-}
 
 func TestGenerateCombustionScript(t *testing.T) {
 	// Setup
-	bc := config.BuildConfig{}
-	builder := New(nil, &bc)
-	err := builder.prepareBuildDir()
+	dirStructure, err := NewDirStructure("", "", true)
 	require.NoError(t, err)
-	defer os.RemoveAll(builder.eibBuildDir)
+	defer func() {
+		assert.NoError(t, dirStructure.CleanUpBuildDir())
+	}()
+
+	builder := Builder{
+		dirStructure: dirStructure,
+	}
 
 	builder.combustionScripts = append(builder.combustionScripts, "foo.sh", "bar.sh")
 
@@ -104,7 +30,7 @@ func TestGenerateCombustionScript(t *testing.T) {
 	require.NoError(t, err)
 
 	// - check the script contents itself
-	scriptBytes, err := os.ReadFile(filepath.Join(builder.combustionDir, "script"))
+	scriptBytes, err := os.ReadFile(filepath.Join(dirStructure.CombustionDir, "script"))
 	require.NoError(t, err)
 	scriptData := string(scriptBytes)
 	assert.Contains(t, scriptData, "#!/bin/bash")
@@ -118,10 +44,15 @@ func TestGenerateCombustionScript(t *testing.T) {
 
 func TestWriteCombustionFile(t *testing.T) {
 	// Setup
-	builder := New(nil, &config.BuildConfig{})
-	err := builder.prepareBuildDir()
+	dirStructure, err := NewDirStructure("", "", true)
 	require.NoError(t, err)
-	defer os.RemoveAll(builder.eibBuildDir)
+	defer func() {
+		assert.NoError(t, dirStructure.CleanUpBuildDir())
+	}()
+
+	builder := Builder{
+		dirStructure: dirStructure,
+	}
 
 	testData := "Edge Image Builder"
 	testFilename := "combustion-file.sh"
@@ -132,7 +63,7 @@ func TestWriteCombustionFile(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	expectedFilename := filepath.Join(builder.combustionDir, testFilename)
+	expectedFilename := filepath.Join(dirStructure.CombustionDir, testFilename)
 	foundData, err := os.ReadFile(expectedFilename)
 	require.NoError(t, err)
 	assert.Equal(t, expectedFilename, writtenFilename)
@@ -144,10 +75,15 @@ func TestWriteCombustionFile(t *testing.T) {
 
 func TestWriteBuildDirFile(t *testing.T) {
 	// Setup
-	builder := New(nil, &config.BuildConfig{})
-	err := builder.prepareBuildDir()
+	dirStructure, err := NewDirStructure("", "", true)
 	require.NoError(t, err)
-	defer os.RemoveAll(builder.eibBuildDir)
+	defer func() {
+		assert.NoError(t, dirStructure.CleanUpBuildDir())
+	}()
+
+	builder := Builder{
+		dirStructure: dirStructure,
+	}
 
 	testData := "Edge Image Builder"
 	testFilename := "build-dir-file.sh"
@@ -158,7 +94,7 @@ func TestWriteBuildDirFile(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	expectedFilename := filepath.Join(builder.eibBuildDir, testFilename)
+	expectedFilename := filepath.Join(dirStructure.BuildDir, testFilename)
 	require.Equal(t, expectedFilename, writtenFilename)
 	foundData, err := os.ReadFile(expectedFilename)
 	require.NoError(t, err)
