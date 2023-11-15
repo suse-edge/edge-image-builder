@@ -21,10 +21,10 @@ func TestDeleteNoExistingImage(t *testing.T) {
 			OutputImageName: "not-there",
 		},
 	}
-	dirStructure := DirStructure{
+	context := Context{
 		ImageConfigDir: tmpDir,
 	}
-	builder := New(&imageConfig, &dirStructure)
+	builder := New(&imageConfig, &context)
 
 	// Test
 	err = builder.deleteExistingOutputIso()
@@ -44,10 +44,10 @@ func TestDeleteExistingImage(t *testing.T) {
 			OutputImageName: "not-there",
 		},
 	}
-	dirStructure := DirStructure{
+	context := Context{
 		ImageConfigDir: tmpDir,
 	}
-	builder := New(&imageConfig, &dirStructure)
+	builder := New(&imageConfig, &context)
 
 	_, err = os.Create(builder.generateOutputImageFilename())
 	require.NoError(t, err)
@@ -71,11 +71,11 @@ func TestCreateXorrisoCommand(t *testing.T) {
 			OutputImageName: "build-image",
 		},
 	}
-	dirStructure := DirStructure{
+	context := Context{
 		ImageConfigDir: "config-dir",
 		CombustionDir:  "combustion",
 	}
-	builder := New(&imageConfig, &dirStructure)
+	builder := New(&imageConfig, &context)
 
 	// Test
 	cmd, logfile, err := builder.createXorrisoCommand()

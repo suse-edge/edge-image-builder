@@ -11,17 +11,17 @@ import (
 
 func TestGetRPMFileNames(t *testing.T) {
 	// Setup
-	dirStructure, err := NewDirStructure("../config/testdata", "", true)
+	context, err := NewContext("../config/testdata", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, dirStructure.CleanUpBuildDir())
+		assert.NoError(t, context.CleanUpBuildDir())
 	}()
 
 	builder := &Builder{
-		dirStructure: dirStructure,
+		context: context,
 	}
 
-	rpmSourceDir := filepath.Join(dirStructure.ImageConfigDir, "rpms")
+	rpmSourceDir := filepath.Join(context.ImageConfigDir, "rpms")
 
 	file1Path := filepath.Join(rpmSourceDir, "rpm1.rpm")
 	defer os.Remove(file1Path)
@@ -49,17 +49,17 @@ func TestGetRPMFileNames(t *testing.T) {
 
 func TestCopyRPMs(t *testing.T) {
 	// Setup
-	dirStructure, err := NewDirStructure("../config/testdata", "", true)
+	context, err := NewContext("../config/testdata", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, dirStructure.CleanUpBuildDir())
+		assert.NoError(t, context.CleanUpBuildDir())
 	}()
 
 	builder := &Builder{
-		dirStructure: dirStructure,
+		context: context,
 	}
 
-	rpmSourceDir := filepath.Join(dirStructure.ImageConfigDir, "rpms")
+	rpmSourceDir := filepath.Join(context.ImageConfigDir, "rpms")
 
 	file1Path := filepath.Join(rpmSourceDir, "rpm1.rpm")
 	defer os.Remove(file1Path)
@@ -77,10 +77,10 @@ func TestCopyRPMs(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(builder.dirStructure.CombustionDir, "rpm1.rpm"))
+	_, err = os.Stat(filepath.Join(builder.context.CombustionDir, "rpm1.rpm"))
 	require.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(builder.dirStructure.CombustionDir, "rpm2.rpm"))
+	_, err = os.Stat(filepath.Join(builder.context.CombustionDir, "rpm2.rpm"))
 	require.NoError(t, err)
 
 	// Cleanup
@@ -90,17 +90,17 @@ func TestCopyRPMs(t *testing.T) {
 
 func TestGetRPMFileNamesNoRPMs(t *testing.T) {
 	// Setup
-	dirStructure, err := NewDirStructure("../config/testdata", "", true)
+	context, err := NewContext("../config/testdata", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, dirStructure.CleanUpBuildDir())
+		assert.NoError(t, context.CleanUpBuildDir())
 	}()
 
 	builder := &Builder{
-		dirStructure: dirStructure,
+		context: context,
 	}
 
-	rpmSourceDir := filepath.Join(dirStructure.ImageConfigDir, "rpms")
+	rpmSourceDir := filepath.Join(context.ImageConfigDir, "rpms")
 
 	// Test
 	rpmFileNames, err := builder.getRPMFileNames(rpmSourceDir)
@@ -113,14 +113,14 @@ func TestGetRPMFileNamesNoRPMs(t *testing.T) {
 
 func TestCopyRPMsNoRPMDir(t *testing.T) {
 	// Setup
-	dirStructure, err := NewDirStructure("../config/ThisDirDoesNotExist", "", true)
+	context, err := NewContext("../config/ThisDirDoesNotExist", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, dirStructure.CleanUpBuildDir())
+		assert.NoError(t, context.CleanUpBuildDir())
 	}()
 
 	builder := &Builder{
-		dirStructure: dirStructure,
+		context: context,
 	}
 
 	// Test

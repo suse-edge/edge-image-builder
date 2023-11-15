@@ -11,13 +11,13 @@ import (
 
 func TestConfigureMessage(t *testing.T) {
 	// Setup
-	dirStructure, err := NewDirStructure("", "", true)
+	context, err := NewContext("", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, dirStructure.CleanUpBuildDir())
+		assert.NoError(t, context.CleanUpBuildDir())
 	}()
 
-	builder := Builder{dirStructure: dirStructure}
+	builder := Builder{context: context}
 
 	// Test
 	err = builder.configureMessage()
@@ -25,7 +25,7 @@ func TestConfigureMessage(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(builder.dirStructure.CombustionDir, messageScriptName))
+	_, err = os.Stat(filepath.Join(builder.context.CombustionDir, messageScriptName))
 	require.NoError(t, err)
 
 	require.Equal(t, 1, len(builder.combustionScripts))

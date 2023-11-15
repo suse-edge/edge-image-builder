@@ -34,7 +34,7 @@ func TestConfigureScripts(t *testing.T) {
 	defer os.RemoveAll(tmpDestDir)
 
 	builder := &Builder{
-		dirStructure: &DirStructure{
+		context: &Context{
 			ImageConfigDir: tmpSrcDir,
 			CombustionDir:  tmpDestDir,
 		},
@@ -53,7 +53,7 @@ func TestConfigureScripts(t *testing.T) {
 
 	// - make sure the copied files have the right permissions
 	for _, entry := range foundDirListing {
-		fullEntryPath := filepath.Join(builder.dirStructure.CombustionDir, entry.Name())
+		fullEntryPath := filepath.Join(builder.context.CombustionDir, entry.Name())
 		stats, err := os.Stat(fullEntryPath)
 		require.NoError(t, err)
 		assert.Equal(t, fs.FileMode(scriptMode), stats.Mode())
@@ -71,7 +71,7 @@ func TestConfigureScriptsNoScriptsDir(t *testing.T) {
 	defer os.RemoveAll(tmpSrcDir)
 
 	builder := &Builder{
-		dirStructure: &DirStructure{
+		context: &Context{
 			ImageConfigDir: tmpSrcDir,
 		},
 	}
@@ -96,7 +96,7 @@ func TestConfigureScriptsEmptyScriptsDir(t *testing.T) {
 	require.NoError(t, err)
 
 	builder := &Builder{
-		dirStructure: &DirStructure{
+		context: &Context{
 			ImageConfigDir: tmpSrcDir,
 		},
 	}

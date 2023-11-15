@@ -9,61 +9,61 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDirStructure_New(t *testing.T) {
-	ds, err := NewDirStructure("", "", false)
+func TestContext_New(t *testing.T) {
+	context, err := NewContext("", "", false)
 	require.NoError(t, err)
-	defer os.RemoveAll(ds.BuildDir)
+	defer os.RemoveAll(context.BuildDir)
 
-	_, err = os.Stat(ds.BuildDir)
+	_, err = os.Stat(context.BuildDir)
 	require.NoError(t, err)
 }
 
-func TestDirStructure_New_ExistingBuildDir(t *testing.T) {
+func TestContext_New_ExistingBuildDir(t *testing.T) {
 	// Setup
 	tmpDir, err := os.MkdirTemp("", "eib-test-")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
 	// Test
-	ds, err := NewDirStructure("", tmpDir, false)
+	context, err := NewContext("", tmpDir, false)
 	require.NoError(t, err)
 
 	// Verify
-	require.Equal(t, tmpDir, ds.BuildDir)
+	require.Equal(t, tmpDir, context.BuildDir)
 }
 
-func TestDirStructure_CleanUpBuildDirTrue(t *testing.T) {
+func TestContext_CleanUpBuildDirTrue(t *testing.T) {
 	// Setup
 	tmpDir, err := os.MkdirTemp("", "eib-test-")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
-	ds := DirStructure{
+	context := Context{
 		BuildDir:       tmpDir,
 		DeleteBuildDir: true,
 	}
 
 	// Test
-	require.NoError(t, ds.CleanUpBuildDir())
+	require.NoError(t, context.CleanUpBuildDir())
 
 	// Verify
 	_, err = os.Stat(tmpDir)
 	assert.ErrorIs(t, err, fs.ErrNotExist)
 }
 
-func TestDirStructure_CleanUpBuildDirFalse(t *testing.T) {
+func TestContext_CleanUpBuildDirFalse(t *testing.T) {
 	// Setup
 	tmpDir, err := os.MkdirTemp("", "eib-test-")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
-	ds := DirStructure{
+	context := Context{
 		BuildDir:       tmpDir,
 		DeleteBuildDir: false,
 	}
 
 	// Test
-	require.NoError(t, ds.CleanUpBuildDir())
+	require.NoError(t, context.CleanUpBuildDir())
 
 	// Verify
 	_, err = os.Stat(tmpDir)

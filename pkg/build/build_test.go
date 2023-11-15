@@ -11,14 +11,14 @@ import (
 
 func TestGenerateCombustionScript(t *testing.T) {
 	// Setup
-	dirStructure, err := NewDirStructure("", "", true)
+	context, err := NewContext("", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, dirStructure.CleanUpBuildDir())
+		assert.NoError(t, context.CleanUpBuildDir())
 	}()
 
 	builder := Builder{
-		dirStructure: dirStructure,
+		context: context,
 	}
 
 	builder.combustionScripts = append(builder.combustionScripts, "foo.sh", "bar.sh")
@@ -30,7 +30,7 @@ func TestGenerateCombustionScript(t *testing.T) {
 	require.NoError(t, err)
 
 	// - check the script contents itself
-	scriptBytes, err := os.ReadFile(filepath.Join(dirStructure.CombustionDir, "script"))
+	scriptBytes, err := os.ReadFile(filepath.Join(context.CombustionDir, "script"))
 	require.NoError(t, err)
 	scriptData := string(scriptBytes)
 	assert.Contains(t, scriptData, "#!/bin/bash")
@@ -44,14 +44,14 @@ func TestGenerateCombustionScript(t *testing.T) {
 
 func TestWriteCombustionFile(t *testing.T) {
 	// Setup
-	dirStructure, err := NewDirStructure("", "", true)
+	context, err := NewContext("", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, dirStructure.CleanUpBuildDir())
+		assert.NoError(t, context.CleanUpBuildDir())
 	}()
 
 	builder := Builder{
-		dirStructure: dirStructure,
+		context: context,
 	}
 
 	testData := "Edge Image Builder"
@@ -63,7 +63,7 @@ func TestWriteCombustionFile(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	expectedFilename := filepath.Join(dirStructure.CombustionDir, testFilename)
+	expectedFilename := filepath.Join(context.CombustionDir, testFilename)
 	foundData, err := os.ReadFile(expectedFilename)
 	require.NoError(t, err)
 	assert.Equal(t, expectedFilename, writtenFilename)
@@ -75,14 +75,14 @@ func TestWriteCombustionFile(t *testing.T) {
 
 func TestWriteBuildDirFile(t *testing.T) {
 	// Setup
-	dirStructure, err := NewDirStructure("", "", true)
+	context, err := NewContext("", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, dirStructure.CleanUpBuildDir())
+		assert.NoError(t, context.CleanUpBuildDir())
 	}()
 
 	builder := Builder{
-		dirStructure: dirStructure,
+		context: context,
 	}
 
 	testData := "Edge Image Builder"
@@ -94,7 +94,7 @@ func TestWriteBuildDirFile(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	expectedFilename := filepath.Join(dirStructure.BuildDir, testFilename)
+	expectedFilename := filepath.Join(context.BuildDir, testFilename)
 	require.Equal(t, expectedFilename, writtenFilename)
 	foundData, err := os.ReadFile(expectedFilename)
 	require.NoError(t, err)

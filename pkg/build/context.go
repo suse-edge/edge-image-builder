@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 )
 
-type DirStructure struct {
+type Context struct {
 	// ImageConfigDir is the root directory storing all configuration files.
 	ImageConfigDir string
 	// BuildDir is the directory used for assembling the different components used in a build.
@@ -17,7 +17,7 @@ type DirStructure struct {
 	DeleteBuildDir bool
 }
 
-func NewDirStructure(imageConfigDir, buildDir string, deleteBuildDir bool) (*DirStructure, error) {
+func NewContext(imageConfigDir, buildDir string, deleteBuildDir bool) (*Context, error) {
 	if buildDir == "" {
 		tmpDir, err := os.MkdirTemp("", "eib-")
 		if err != nil {
@@ -31,7 +31,7 @@ func NewDirStructure(imageConfigDir, buildDir string, deleteBuildDir bool) (*Dir
 		return nil, fmt.Errorf("creating the combustion directory: %w", err)
 	}
 
-	return &DirStructure{
+	return &Context{
 		ImageConfigDir: imageConfigDir,
 		BuildDir:       buildDir,
 		CombustionDir:  combustionDir,
@@ -39,9 +39,9 @@ func NewDirStructure(imageConfigDir, buildDir string, deleteBuildDir bool) (*Dir
 	}, nil
 }
 
-func (ds *DirStructure) CleanUpBuildDir() error {
-	if ds.DeleteBuildDir {
-		err := os.RemoveAll(ds.BuildDir)
+func (c *Context) CleanUpBuildDir() error {
+	if c.DeleteBuildDir {
+		err := os.RemoveAll(c.BuildDir)
 		if err != nil {
 			return fmt.Errorf("deleting build directory: %w", err)
 		}

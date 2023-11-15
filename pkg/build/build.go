@@ -15,16 +15,16 @@ import (
 var combustionScriptBaseCode string
 
 type Builder struct {
-	imageConfig  *config.ImageConfig
-	dirStructure *DirStructure
+	imageConfig *config.ImageConfig
+	context     *Context
 
 	combustionScripts []string
 }
 
-func New(imageConfig *config.ImageConfig, dirStructure *DirStructure) *Builder {
+func New(imageConfig *config.ImageConfig, context *Context) *Builder {
 	return &Builder{
-		imageConfig:  imageConfig,
-		dirStructure: dirStructure,
+		imageConfig: imageConfig,
+		context:     context,
 	}
 }
 
@@ -62,7 +62,7 @@ func (b *Builder) Build() error {
 
 func (b *Builder) generateCombustionScript() error {
 	// The file must be located at "combustion/script"
-	scriptFilename := filepath.Join(b.dirStructure.CombustionDir, "script")
+	scriptFilename := filepath.Join(b.context.CombustionDir, "script")
 	scriptFile, err := os.Create(scriptFilename)
 	if err != nil {
 		return fmt.Errorf("creating the combustion \"script\" file: %w", err)
@@ -90,12 +90,12 @@ func (b *Builder) generateCombustionScript() error {
 }
 
 func (b *Builder) writeBuildDirFile(filename string, contents string, templateData any) (string, error) {
-	destFilename := filepath.Join(b.dirStructure.BuildDir, filename)
+	destFilename := filepath.Join(b.context.BuildDir, filename)
 	return destFilename, fileio.WriteFile(destFilename, contents, templateData)
 }
 
 func (b *Builder) writeCombustionFile(filename string, contents string, templateData any) (string, error) {
-	destFilename := filepath.Join(b.dirStructure.CombustionDir, filename)
+	destFilename := filepath.Join(b.context.CombustionDir, filename)
 	return destFilename, fileio.WriteFile(destFilename, contents, templateData)
 }
 
@@ -108,11 +108,11 @@ func (b *Builder) registerCombustionScript(scriptName string) {
 }
 
 func (b *Builder) generateOutputImageFilename() string {
-	filename := filepath.Join(b.dirStructure.ImageConfigDir, b.imageConfig.Image.OutputImageName)
+	filename := filepath.Join(b.context.ImageConfigDir, b.imageConfig.Image.OutputImageName)
 	return filename
 }
 
 func (b *Builder) generateBaseImageFilename() string {
-	filename := filepath.Join(b.dirStructure.ImageConfigDir, "images", b.imageConfig.Image.BaseImage)
+	filename := filepath.Join(b.context.ImageConfigDir, "images", b.imageConfig.Image.BaseImage)
 	return filename
 }
