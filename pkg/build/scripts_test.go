@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/config"
 )
 
 func TestConfigureScripts(t *testing.T) {
@@ -34,8 +33,12 @@ func TestConfigureScripts(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDestDir)
 
-	builder := New(nil, &config.BuildConfig{ImageConfigDir: tmpSrcDir})
-	builder.combustionDir = tmpDestDir
+	builder := &Builder{
+		context: &Context{
+			ImageConfigDir: tmpSrcDir,
+			CombustionDir:  tmpDestDir,
+		},
+	}
 
 	// Test
 	err = builder.configureScripts()
@@ -50,7 +53,7 @@ func TestConfigureScripts(t *testing.T) {
 
 	// - make sure the copied files have the right permissions
 	for _, entry := range foundDirListing {
-		fullEntryPath := filepath.Join(builder.combustionDir, entry.Name())
+		fullEntryPath := filepath.Join(builder.context.CombustionDir, entry.Name())
 		stats, err := os.Stat(fullEntryPath)
 		require.NoError(t, err)
 		assert.Equal(t, fs.FileMode(scriptMode), stats.Mode())
@@ -67,7 +70,11 @@ func TestConfigureScriptsNoScriptsDir(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpSrcDir)
 
-	builder := New(nil, &config.BuildConfig{ImageConfigDir: tmpSrcDir})
+	builder := &Builder{
+		context: &Context{
+			ImageConfigDir: tmpSrcDir,
+		},
+	}
 
 	// Test
 	err = builder.configureScripts()
@@ -88,7 +95,11 @@ func TestConfigureScriptsEmptyScriptsDir(t *testing.T) {
 	err = os.MkdirAll(fullScriptsDir, os.ModePerm)
 	require.NoError(t, err)
 
-	builder := New(nil, &config.BuildConfig{ImageConfigDir: tmpSrcDir})
+	builder := &Builder{
+		context: &Context{
+			ImageConfigDir: tmpSrcDir,
+		},
+	}
 
 	// Test
 	err = builder.configureScripts()

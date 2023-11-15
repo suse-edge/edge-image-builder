@@ -7,20 +7,21 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/config"
 )
 
 func TestGetRPMFileNames(t *testing.T) {
 	// Setup
-	bc := config.BuildConfig{
-		ImageConfigDir: "../config/testdata",
-	}
-	builder := New(nil, &bc)
-	err := builder.prepareBuildDir()
+	context, err := NewContext("../config/testdata", "", true)
 	require.NoError(t, err)
-	defer os.Remove(builder.eibBuildDir)
+	defer func() {
+		assert.NoError(t, CleanUpBuildDir(context))
+	}()
 
-	rpmSourceDir := filepath.Join(builder.buildConfig.ImageConfigDir, "rpms")
+	builder := &Builder{
+		context: context,
+	}
+
+	rpmSourceDir := filepath.Join(context.ImageConfigDir, "rpms")
 
 	file1Path := filepath.Join(rpmSourceDir, "rpm1.rpm")
 	defer os.Remove(file1Path)
@@ -48,16 +49,17 @@ func TestGetRPMFileNames(t *testing.T) {
 
 func TestCopyRPMs(t *testing.T) {
 	// Setup
-	bc := config.BuildConfig{
-		ImageConfigDir: "../config/testdata",
-	}
-	builder := New(nil, &bc)
-	err := builder.prepareBuildDir()
+	context, err := NewContext("../config/testdata", "", true)
 	require.NoError(t, err)
-	defer os.Remove(builder.eibBuildDir)
+	defer func() {
+		assert.NoError(t, CleanUpBuildDir(context))
+	}()
 
-	rpmSourceDir := filepath.Join(builder.buildConfig.ImageConfigDir, "rpms")
-	rpmDestDir := builder.combustionDir
+	builder := &Builder{
+		context: context,
+	}
+
+	rpmSourceDir := filepath.Join(context.ImageConfigDir, "rpms")
 
 	file1Path := filepath.Join(rpmSourceDir, "rpm1.rpm")
 	defer os.Remove(file1Path)
@@ -75,10 +77,10 @@ func TestCopyRPMs(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(rpmDestDir, "rpm1.rpm"))
+	_, err = os.Stat(filepath.Join(builder.context.CombustionDir, "rpm1.rpm"))
 	require.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(rpmDestDir, "rpm2.rpm"))
+	_, err = os.Stat(filepath.Join(builder.context.CombustionDir, "rpm2.rpm"))
 	require.NoError(t, err)
 
 	// Cleanup
@@ -88,15 +90,17 @@ func TestCopyRPMs(t *testing.T) {
 
 func TestGetRPMFileNamesNoRPMs(t *testing.T) {
 	// Setup
-	bc := config.BuildConfig{
-		ImageConfigDir: "../config/testdata",
-	}
-	builder := New(nil, &bc)
-	err := builder.prepareBuildDir()
+	context, err := NewContext("../config/testdata", "", true)
 	require.NoError(t, err)
-	defer os.Remove(builder.eibBuildDir)
+	defer func() {
+		assert.NoError(t, CleanUpBuildDir(context))
+	}()
 
-	rpmSourceDir := filepath.Join(builder.buildConfig.ImageConfigDir, "rpms")
+	builder := &Builder{
+		context: context,
+	}
+
+	rpmSourceDir := filepath.Join(context.ImageConfigDir, "rpms")
 
 	// Test
 	rpmFileNames, err := builder.getRPMFileNames(rpmSourceDir)
@@ -109,13 +113,15 @@ func TestGetRPMFileNamesNoRPMs(t *testing.T) {
 
 func TestCopyRPMsNoRPMDir(t *testing.T) {
 	// Setup
-	bc := config.BuildConfig{
-		ImageConfigDir: "../config/ThisDirDoesNotExist",
-	}
-	builder := New(nil, &bc)
-	err := builder.prepareBuildDir()
+	context, err := NewContext("../config/ThisDirDoesNotExist", "", true)
 	require.NoError(t, err)
-	defer os.Remove(builder.eibBuildDir)
+	defer func() {
+		assert.NoError(t, CleanUpBuildDir(context))
+	}()
+
+	builder := &Builder{
+		context: context,
+	}
 
 	// Test
 	err = builder.copyRPMs()

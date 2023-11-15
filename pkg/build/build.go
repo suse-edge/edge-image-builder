@@ -16,27 +16,20 @@ var combustionScriptBaseCode string
 
 type Builder struct {
 	imageConfig *config.ImageConfig
-	buildConfig *config.BuildConfig
+	context     *Context
 
-	eibBuildDir       string
-	combustionDir     string
 	combustionScripts []string
 }
 
-func New(imageConfig *config.ImageConfig, buildConfig *config.BuildConfig) *Builder {
+func New(imageConfig *config.ImageConfig, context *Context) *Builder {
 	return &Builder{
 		imageConfig: imageConfig,
-		buildConfig: buildConfig,
+		context:     context,
 	}
 }
 
 func (b *Builder) Build() error {
-	err := b.prepareBuildDir()
-	if err != nil {
-		return fmt.Errorf("preparing the build directory: %w", err)
-	}
-
-	err = b.configureMessage()
+	err := b.configureMessage()
 	if err != nil {
 		return fmt.Errorf("configuring the welcome message: %w", err)
 	}
@@ -58,63 +51,18 @@ func (b *Builder) Build() error {
 
 	switch b.imageConfig.Image.ImageType {
 	case config.ImageTypeISO:
-		err = b.buildIsoImage()
+		return b.buildIsoImage()
 	case config.ImageTypeRAW:
-		err = b.buildRawImage()
+		return b.buildRawImage()
 	default:
-		err = fmt.Errorf("invalid imageType value specified, must be either \"%s\" or \"%s\"",
+		return fmt.Errorf("invalid imageType value specified, must be either \"%s\" or \"%s\"",
 			config.ImageTypeISO, config.ImageTypeRAW)
 	}
-
-	if err != nil {
-		return err
-	}
-
-	err = b.cleanUpBuildDir()
-	if err != nil {
-		return fmt.Errorf("cleaning up the build directory: %w", err)
-	}
-
-	return nil
-}
-
-func (b *Builder) prepareBuildDir() error {
-	// Combustion works by creating a volume with a subdirectory named "combustion"
-	// and a file named "script". This function builds out that structure and updates
-	// the Builder so that the other functions can populate it as necessary.
-
-	if b.buildConfig.BuildDir == "" {
-		tmpDir, err := os.MkdirTemp("", "eib-")
-		if err != nil {
-			return fmt.Errorf("creating a temporary build directory: %w", err)
-		}
-		b.eibBuildDir = tmpDir
-	} else {
-		b.eibBuildDir = b.buildConfig.BuildDir
-	}
-	b.combustionDir = filepath.Join(b.eibBuildDir, "combustion")
-
-	err := os.MkdirAll(b.combustionDir, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("creating the build directory structure: %w", err)
-	}
-
-	return nil
-}
-
-func (b *Builder) cleanUpBuildDir() error {
-	if b.buildConfig.DeleteBuildDir {
-		err := os.RemoveAll(b.eibBuildDir)
-		if err != nil {
-			return fmt.Errorf("deleting build directory: %w", err)
-		}
-	}
-	return nil
 }
 
 func (b *Builder) generateCombustionScript() error {
 	// The file must be located at "combustion/script"
-	scriptFilename := filepath.Join(b.combustionDir, "script")
+	scriptFilename := filepath.Join(b.context.CombustionDir, "script")
 	scriptFile, err := os.Create(scriptFilename)
 	if err != nil {
 		return fmt.Errorf("creating the combustion \"script\" file: %w", err)
@@ -142,12 +90,12 @@ func (b *Builder) generateCombustionScript() error {
 }
 
 func (b *Builder) writeBuildDirFile(filename string, contents string, templateData any) (string, error) {
-	destFilename := filepath.Join(b.eibBuildDir, filename)
+	destFilename := filepath.Join(b.context.BuildDir, filename)
 	return destFilename, fileio.WriteFile(destFilename, contents, templateData)
 }
 
 func (b *Builder) writeCombustionFile(filename string, contents string, templateData any) (string, error) {
-	destFilename := filepath.Join(b.combustionDir, filename)
+	destFilename := filepath.Join(b.context.CombustionDir, filename)
 	return destFilename, fileio.WriteFile(destFilename, contents, templateData)
 }
 
@@ -160,11 +108,11 @@ func (b *Builder) registerCombustionScript(scriptName string) {
 }
 
 func (b *Builder) generateOutputImageFilename() string {
-	filename := filepath.Join(b.buildConfig.ImageConfigDir, b.imageConfig.Image.OutputImageName)
+	filename := filepath.Join(b.context.ImageConfigDir, b.imageConfig.Image.OutputImageName)
 	return filename
 }
 
 func (b *Builder) generateBaseImageFilename() string {
-	filename := filepath.Join(b.buildConfig.ImageConfigDir, "images", b.imageConfig.Image.BaseImage)
+	filename := filepath.Join(b.context.ImageConfigDir, "images", b.imageConfig.Image.BaseImage)
 	return filename
 }

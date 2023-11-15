@@ -7,16 +7,17 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/config"
 )
 
 func TestConfigureMessage(t *testing.T) {
 	// Setup
-	bc := config.BuildConfig{}
-	builder := New(nil, &bc)
-	err := builder.prepareBuildDir()
+	context, err := NewContext("", "", true)
 	require.NoError(t, err)
-	defer os.Remove(builder.eibBuildDir)
+	defer func() {
+		assert.NoError(t, CleanUpBuildDir(context))
+	}()
+
+	builder := Builder{context: context}
 
 	// Test
 	err = builder.configureMessage()
@@ -24,7 +25,7 @@ func TestConfigureMessage(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(builder.combustionDir, messageScriptName))
+	_, err = os.Stat(filepath.Join(builder.context.CombustionDir, messageScriptName))
 	require.NoError(t, err)
 
 	require.Equal(t, 1, len(builder.combustionScripts))

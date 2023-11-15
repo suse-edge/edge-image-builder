@@ -20,7 +20,7 @@ const (
 	argVerbose     = "verbose"
 )
 
-func processArgs() (*config.ImageConfig, *config.BuildConfig, error) {
+func processArgs() (*config.ImageConfig, *build.Context, error) {
 	var (
 		configFile     string
 		configDir      string
@@ -48,13 +48,13 @@ func processArgs() (*config.ImageConfig, *config.BuildConfig, error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("validating the config dir %s: %w", configDir, err)
 	}
-	buildConfig := config.BuildConfig{
-		ImageConfigDir: configDir,
-		BuildDir:       buildDir,
-		DeleteBuildDir: deleteBuildDir,
+
+	context, err := build.NewContext(configDir, buildDir, deleteBuildDir)
+	if err != nil {
+		return nil, nil, fmt.Errorf("building dir structure: %w", err)
 	}
 
-	return imageConfig, &buildConfig, err
+	return imageConfig, context, err
 }
 
 func setupLogging(verbose bool) {
@@ -111,14 +111,17 @@ func validateImageConfigDir(configDir string) error {
 }
 
 func main() {
-	imageConfig, buildConfig, err := processArgs()
+	imageConfig, context, err := processArgs()
 	if err != nil {
 		zap.L().Fatal("CLI arguments could not be parsed", zap.Error(err))
 	}
 
-	builder := build.New(imageConfig, buildConfig)
-	err = builder.Build()
-	if err != nil {
+	builder := build.New(imageConfig, context)
+	if err = builder.Build(); err != nil {
 		zap.L().Fatal("An error occurred building the image", zap.Error(err))
+	}
+
+	if err = build.CleanUpBuildDir(context); err != nil {
+		zap.L().Error("Failed to clean up build directory", zap.Error(err))
 	}
 }

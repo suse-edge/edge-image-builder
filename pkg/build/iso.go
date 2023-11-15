@@ -65,7 +65,7 @@ func (b *Builder) createXorrisoCommand() (*exec.Cmd, *os.File, error) {
 func (b *Builder) generateXorrisoArgs() []string {
 	indevPath := b.generateBaseImageFilename()
 	outdevPath := b.generateOutputImageFilename()
-	mapDir := b.combustionDir
+	mapDir := b.context.CombustionDir
 
 	args := fmt.Sprintf(xorrisoArgsBase, indevPath, outdevPath, mapDir)
 	splitArgs := strings.Split(args, " ")
@@ -75,6 +75,6 @@ func (b *Builder) generateXorrisoArgs() []string {
 func (b *Builder) generateIsoLogFilename() string {
 	timestamp := time.Now().Format("Jan02_15-04-05")
 	filename := fmt.Sprintf(xorrisoLogFile, timestamp)
-	logFilename := filepath.Join(b.eibBuildDir, filename)
+	logFilename := filepath.Join(b.context.BuildDir, filename)
 	return logFilename
 }
