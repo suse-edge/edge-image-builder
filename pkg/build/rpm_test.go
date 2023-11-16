@@ -50,9 +50,13 @@ func TestCopyRPMs(t *testing.T) {
 	err = os.Mkdir(rpmSourceDir, 0o755)
 	require.NoError(t, err)
 
-	tmpDestDir := filepath.Join(tmpDir, "dest-dir")
-	err = os.Mkdir(tmpDestDir, 0o755)
+	context, err := NewContext("", "", true)
 	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, CleanUpBuildDir(context))
+	}()
+
+	builder := Builder{context: context}
 
 	file1Path := filepath.Join(rpmSourceDir, "rpm1.rpm")
 	file1, err := os.Create(file1Path)
@@ -65,15 +69,15 @@ func TestCopyRPMs(t *testing.T) {
 	defer file2.Close()
 
 	// Test
-	err = copyRPMs(rpmSourceDir, tmpDestDir, []string{"rpm1.rpm", "rpm2.rpm"})
+	err = copyRPMs(rpmSourceDir, builder.context.CombustionDir, []string{"rpm1.rpm", "rpm2.rpm"})
 
 	// Verify
 	require.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(tmpDestDir, "rpm1.rpm"))
+	_, err = os.Stat(filepath.Join(builder.context.CombustionDir, "rpm1.rpm"))
 	require.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(tmpDestDir, "rpm2.rpm"))
+	_, err = os.Stat(filepath.Join(builder.context.CombustionDir, "rpm2.rpm"))
 	require.NoError(t, err)
 }
 
@@ -146,9 +150,13 @@ func TestWriteRPMScript(t *testing.T) {
 	err = os.Mkdir(rpmSourceDir, 0o755)
 	require.NoError(t, err)
 
-	buildConfig := config.BuildConfig{}
-	builder := New(nil, &buildConfig)
-	require.NoError(t, builder.prepareBuildDir())
+	context, err := NewContext("", "", true)
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, CleanUpBuildDir(context))
+	}()
+
+	builder := Builder{context: context}
 
 	file1Path := filepath.Join(rpmSourceDir, "rpm1.rpm")
 	file1, err := os.Create(file1Path)
@@ -166,7 +174,7 @@ func TestWriteRPMScript(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	expectedFilename := filepath.Join(builder.combustionDir, modifyRPMScriptName)
+	expectedFilename := filepath.Join(builder.context.CombustionDir, modifyRPMScriptName)
 	foundBytes, err := os.ReadFile(expectedFilename)
 	require.NoError(t, err)
 
@@ -199,12 +207,13 @@ func TestProcessRPMs(t *testing.T) {
 	require.NoError(t, err)
 	defer file2.Close()
 
-	bc := config.BuildConfig{
-		ImageConfigDir: tmpDir,
-	}
-	builder := New(nil, &bc)
-	err = builder.prepareBuildDir()
+	context, err := NewContext(tmpDir, "", true)
 	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, CleanUpBuildDir(context))
+	}()
+
+	builder := Builder{context: context}
 
 	// Test
 	err = builder.processRPMs()
@@ -212,13 +221,13 @@ func TestProcessRPMs(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(builder.combustionDir, "rpm1.rpm"))
+	_, err = os.Stat(filepath.Join(builder.context.CombustionDir, "rpm1.rpm"))
 	require.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(builder.combustionDir, "rpm2.rpm"))
+	_, err = os.Stat(filepath.Join(builder.context.CombustionDir, "rpm2.rpm"))
 	require.NoError(t, err)
 
-	expectedFilename := filepath.Join(builder.combustionDir, modifyRPMScriptName)
+	expectedFilename := filepath.Join(builder.context.CombustionDir, modifyRPMScriptName)
 	foundBytes, err := os.ReadFile(expectedFilename)
 	require.NoError(t, err)
 
@@ -237,10 +246,13 @@ func TestGenerateRPMPath(t *testing.T) {
 	err = os.Mkdir(expectedPath, 0o755)
 	require.NoError(t, err)
 
-	bc := config.BuildConfig{
-		ImageConfigDir: tmpDir,
-	}
-	builder := New(nil, &bc)
+	context, err := NewContext(tmpDir, "", true)
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, CleanUpBuildDir(context))
+	}()
+
+	builder := Builder{context: context}
 
 	// Test
 	generatedPath, err := builder.generateRPMPath()
@@ -253,11 +265,16 @@ func TestGenerateRPMPath(t *testing.T) {
 
 func TestGenerateRPMPathNoRPMDir(t *testing.T) {
 	// Setup
-	bc := config.BuildConfig{}
-	builder := New(nil, &bc)
+	context, err := NewContext("", "", true)
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, CleanUpBuildDir(context))
+	}()
+
+	builder := Builder{context: context}
 
 	// Test
-	_, err := builder.generateRPMPath()
+	_, err = builder.generateRPMPath()
 
 	// Verify
 	require.NoError(t, err)

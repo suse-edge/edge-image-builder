@@ -33,7 +33,7 @@ func (b *Builder) processRPMs() error {
 		return fmt.Errorf("getting RPM file names: %w", err)
 	}
 
-	err = copyRPMs(rpmSourceDir, b.combustionDir, rpmFileNames)
+	err = copyRPMs(rpmSourceDir, b.context.CombustionDir, rpmFileNames)
 	if err != nil {
 		return fmt.Errorf("copying RPMs over: %w", err)
 	}
@@ -106,7 +106,7 @@ func (b *Builder) writeRPMScript(rpmFileNames []string) error {
 }
 
 func (b *Builder) generateRPMPath() (string, error) {
-	rpmSourceDir := filepath.Join(b.buildConfig.ImageConfigDir, "rpms")
+	rpmSourceDir := filepath.Join(b.context.ImageConfigDir, "rpms")
 	_, err := os.Stat(rpmSourceDir)
 	if err != nil {
 		if os.IsNotExist(err) {
