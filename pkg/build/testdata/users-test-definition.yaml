@@ -1,0 +1,12 @@
+operatingSystem:
+  users:
+    - username: alpha
+      password: alpha123
+      sshKey: alphakey
+    - username: beta
+      password: beta123
+    - username: gamma
+      sshKey: gammakey
+    - username: root
+      password: root123
+      sshKey: rootkey
