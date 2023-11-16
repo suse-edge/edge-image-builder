@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	modifyRPMScriptName = "10_rpm_install.sh"
+	modifyRPMScriptName = "10-rpm-install.sh"
 )
 
 //go:embed scripts/rpms/10-rpm-install.sh.tpl
