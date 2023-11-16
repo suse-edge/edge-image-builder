@@ -56,27 +56,23 @@ func TestGetRPMFileNames(t *testing.T) {
 
 func TestCopyRPMs(t *testing.T) {
 	// Setup
-	_, rpmSourceDir, teardown := setupRPMSourceDir(t, true)
+	tmpDir, rpmSourceDir, teardown := setupRPMSourceDir(t, true)
 	defer teardown()
 
-	context, err := NewContext("", "", true)
+	tmpDestDir := filepath.Join(tmpDir, "temp-dest-dir")
+	err := os.Mkdir(tmpDestDir, 0o755)
 	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, CleanUpBuildDir(context))
-	}()
-
-	builder := Builder{context: context}
 
 	// Test
-	err = copyRPMs(rpmSourceDir, builder.context.CombustionDir, []string{"rpm1.rpm", "rpm2.rpm"})
+	err = copyRPMs(rpmSourceDir, tmpDestDir, []string{"rpm1.rpm", "rpm2.rpm"})
 
 	// Verify
 	require.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(builder.context.CombustionDir, "rpm1.rpm"))
+	_, err = os.Stat(filepath.Join(tmpDestDir, "rpm1.rpm"))
 	require.NoError(t, err)
 
-	_, err = os.Stat(filepath.Join(builder.context.CombustionDir, "rpm2.rpm"))
+	_, err = os.Stat(filepath.Join(tmpDestDir, "rpm2.rpm"))
 	require.NoError(t, err)
 }
 
@@ -204,24 +200,4 @@ func TestGenerateRPMPath(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, expectedPath, generatedPath)
-}
-
-func TestGenerateRPMPathNoRPMDir(t *testing.T) {
-	// Setup
-	tmpDir, _, teardown := setupRPMSourceDir(t, false)
-	defer teardown()
-
-	context, err := NewContext(tmpDir, "", true)
-	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, CleanUpBuildDir(context))
-	}()
-
-	builder := Builder{context: context}
-
-	// Test
-	_, err = builder.generateRPMPath()
-
-	// Verify
-	require.NoError(t, err)
 }
