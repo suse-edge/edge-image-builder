@@ -116,9 +116,6 @@ func TestCopyRPMsNoRPMSrcDir(t *testing.T) {
 
 func TestWriteRPMScript(t *testing.T) {
 	// Setup
-	_, _, teardown := setupRPMSourceDir(t, true)
-	defer teardown()
-
 	context, err := NewContext("", "", true)
 	require.NoError(t, err)
 	defer func() {
