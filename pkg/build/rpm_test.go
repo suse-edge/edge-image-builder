@@ -10,25 +10,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetRPMFileNames(t *testing.T) {
-	// Setup
-	tmpDir, err := os.MkdirTemp("", "eib-get-RPM-file-names-test-")
+func setupRPMSourceDir(t *testing.T, addFiles bool) (tmpDir string, rpmSourceDir string, teardown func()) {
+	tmpDir, err := os.MkdirTemp("", "eib-RPM-")
 	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
 
-	rpmSourceDir := filepath.Join(tmpDir, "rpms")
+	rpmSourceDir = filepath.Join(tmpDir, "rpms")
 	err = os.Mkdir(rpmSourceDir, 0o755)
 	require.NoError(t, err)
 
-	file1Path := filepath.Join(rpmSourceDir, "rpm1.rpm")
-	file1, err := os.Create(file1Path)
-	require.NoError(t, err)
-	defer file1.Close()
+	var file1 *os.File
+	var file2 *os.File
+	if addFiles {
+		file1Path := filepath.Join(rpmSourceDir, "rpm1.rpm")
+		file1, err = os.Create(file1Path)
+		require.NoError(t, err)
 
-	file2Path := filepath.Join(rpmSourceDir, "rpm2.rpm")
-	file2, err := os.Create(file2Path)
-	require.NoError(t, err)
-	defer file2.Close()
+		file2Path := filepath.Join(rpmSourceDir, "rpm2.rpm")
+		file2, err = os.Create(file2Path)
+		require.NoError(t, err)
+	}
+
+	return tmpDir, rpmSourceDir, func() {
+		if addFiles {
+			assert.NoError(t, file1.Close())
+			assert.NoError(t, file2.Close())
+		}
+		assert.NoError(t, os.RemoveAll(tmpDir))
+	}
+}
+
+func TestGetRPMFileNames(t *testing.T) {
+	// Setup
+	_, rpmSourceDir, teardown := setupRPMSourceDir(t, true)
+	defer teardown()
 
 	// Test
 	rpmFileNames, err := getRPMFileNames(rpmSourceDir)
@@ -42,13 +56,8 @@ func TestGetRPMFileNames(t *testing.T) {
 
 func TestCopyRPMs(t *testing.T) {
 	// Setup
-	tmpDir, err := os.MkdirTemp("", "eib-copy-RPMs-test-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
-
-	rpmSourceDir := filepath.Join(tmpDir, "rpms")
-	err = os.Mkdir(rpmSourceDir, 0o755)
-	require.NoError(t, err)
+	_, rpmSourceDir, teardown := setupRPMSourceDir(t, true)
+	defer teardown()
 
 	context, err := NewContext("", "", true)
 	require.NoError(t, err)
@@ -57,16 +66,6 @@ func TestCopyRPMs(t *testing.T) {
 	}()
 
 	builder := Builder{context: context}
-
-	file1Path := filepath.Join(rpmSourceDir, "rpm1.rpm")
-	file1, err := os.Create(file1Path)
-	require.NoError(t, err)
-	defer file1.Close()
-
-	file2Path := filepath.Join(rpmSourceDir, "rpm2.rpm")
-	file2, err := os.Create(file2Path)
-	require.NoError(t, err)
-	defer file2.Close()
 
 	// Test
 	err = copyRPMs(rpmSourceDir, builder.context.CombustionDir, []string{"rpm1.rpm", "rpm2.rpm"})
@@ -83,13 +82,8 @@ func TestCopyRPMs(t *testing.T) {
 
 func TestGetRPMFileNamesNoRPMs(t *testing.T) {
 	// Setup
-	tmpDir, err := os.MkdirTemp("", "eib-copy-RPMs-test-no-RPMs")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
-
-	rpmSourceDir := filepath.Join(tmpDir, "rpms")
-	err = os.Mkdir(rpmSourceDir, 0o755)
-	require.NoError(t, err)
+	_, rpmSourceDir, teardown := setupRPMSourceDir(t, false)
+	defer teardown()
 
 	// Test
 	rpmFileNames, err := getRPMFileNames(rpmSourceDir)
@@ -102,26 +96,11 @@ func TestGetRPMFileNamesNoRPMs(t *testing.T) {
 
 func TestCopyRPMsNoRPMDestDir(t *testing.T) {
 	// Setup
-	tmpSrcDir, err := os.MkdirTemp("", "eib-copy-RPMs-test-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpSrcDir)
-
-	rpmSourceDir := filepath.Join(tmpSrcDir, "rpms")
-	err = os.Mkdir(rpmSourceDir, 0o755)
-	require.NoError(t, err)
-
-	file1Path := filepath.Join(rpmSourceDir, "rpm1.rpm")
-	file1, err := os.Create(file1Path)
-	require.NoError(t, err)
-	defer file1.Close()
-
-	file2Path := filepath.Join(rpmSourceDir, "rpm2.rpm")
-	file2, err := os.Create(file2Path)
-	require.NoError(t, err)
-	defer file2.Close()
+	_, rpmSourceDir, teardown := setupRPMSourceDir(t, true)
+	defer teardown()
 
 	// Test
-	err = copyRPMs(rpmSourceDir, "", []string{"rpm1.rpm", "rpm2.rpm"})
+	err := copyRPMs(rpmSourceDir, "", []string{"rpm1.rpm", "rpm2.rpm"})
 
 	// Verify
 	require.ErrorContains(t, err, "RPM destination directory cannot be empty")
@@ -129,12 +108,11 @@ func TestCopyRPMsNoRPMDestDir(t *testing.T) {
 
 func TestCopyRPMsNoRPMSrcDir(t *testing.T) {
 	// Setup
-	tmpDestDir, err := os.MkdirTemp("", "eib-copy-RPMs-test-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpDestDir)
+	tmpDestDir, _, teardown := setupRPMSourceDir(t, true)
+	defer teardown()
 
 	// Test
-	err = copyRPMs("", tmpDestDir, []string{"rpm1.rpm", "rpm2.rpm"})
+	err := copyRPMs("", tmpDestDir, []string{"rpm1.rpm", "rpm2.rpm"})
 
 	// Verify
 	require.ErrorContains(t, err, "opening source file")
@@ -142,13 +120,8 @@ func TestCopyRPMsNoRPMSrcDir(t *testing.T) {
 
 func TestWriteRPMScript(t *testing.T) {
 	// Setup
-	tmpDir, err := os.MkdirTemp("", "eib-write-RPM-script-test-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
-
-	rpmSourceDir := filepath.Join(tmpDir, "rpms")
-	err = os.Mkdir(rpmSourceDir, 0o755)
-	require.NoError(t, err)
+	_, _, teardown := setupRPMSourceDir(t, true)
+	defer teardown()
 
 	context, err := NewContext("", "", true)
 	require.NoError(t, err)
@@ -157,16 +130,6 @@ func TestWriteRPMScript(t *testing.T) {
 	}()
 
 	builder := Builder{context: context}
-
-	file1Path := filepath.Join(rpmSourceDir, "rpm1.rpm")
-	file1, err := os.Create(file1Path)
-	require.NoError(t, err)
-	defer file1.Close()
-
-	file2Path := filepath.Join(rpmSourceDir, "rpm2.rpm")
-	file2, err := os.Create(file2Path)
-	require.NoError(t, err)
-	defer file2.Close()
 
 	// Test
 	err = builder.writeRPMScript([]string{"rpm1.rpm", "rpm2.rpm"})
@@ -189,23 +152,8 @@ func TestWriteRPMScript(t *testing.T) {
 
 func TestProcessRPMs(t *testing.T) {
 	// Setup
-	tmpDir, err := os.MkdirTemp("", "eib-process-RPMs-test-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
-
-	rpmSourceDir := filepath.Join(tmpDir, "rpms")
-	err = os.Mkdir(rpmSourceDir, 0o755)
-	require.NoError(t, err)
-
-	file1Path := filepath.Join(rpmSourceDir, "rpm1.rpm")
-	file1, err := os.Create(file1Path)
-	require.NoError(t, err)
-	defer file1.Close()
-
-	file2Path := filepath.Join(rpmSourceDir, "rpm2.rpm")
-	file2, err := os.Create(file2Path)
-	require.NoError(t, err)
-	defer file2.Close()
+	tmpDir, _, teardown := setupRPMSourceDir(t, true)
+	defer teardown()
 
 	context, err := NewContext(tmpDir, "", true)
 	require.NoError(t, err)
@@ -238,13 +186,8 @@ func TestProcessRPMs(t *testing.T) {
 
 func TestGenerateRPMPath(t *testing.T) {
 	// Setup
-	tmpDir, err := os.MkdirTemp("", "eib-generate-RPM-path-test-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
-
-	expectedPath := filepath.Join(tmpDir, "rpms")
-	err = os.Mkdir(expectedPath, 0o755)
-	require.NoError(t, err)
+	tmpDir, expectedPath, teardown := setupRPMSourceDir(t, false)
+	defer teardown()
 
 	context, err := NewContext(tmpDir, "", true)
 	require.NoError(t, err)
@@ -265,7 +208,10 @@ func TestGenerateRPMPath(t *testing.T) {
 
 func TestGenerateRPMPathNoRPMDir(t *testing.T) {
 	// Setup
-	context, err := NewContext("", "", true)
+	tmpDir, _, teardown := setupRPMSourceDir(t, false)
+	defer teardown()
+
+	context, err := NewContext(tmpDir, "", true)
 	require.NoError(t, err)
 	defer func() {
 		assert.NoError(t, CleanUpBuildDir(context))
