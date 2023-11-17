@@ -70,12 +70,12 @@ func (b *Builder) writeModifyScript() error {
 
 	data, err := template.Parse(modifyScriptName, modifyRawImageTemplate, &values)
 	if err != nil {
-		return fmt.Errorf("parsing template: %w", err)
+		return fmt.Errorf("parsing %s template: %w", modifyScriptName, err)
 	}
 
 	filename := b.generateBuildDirFilename(modifyScriptName)
 	if err = os.WriteFile(filename, []byte(data), fileio.ExecutablePerms); err != nil {
-		return fmt.Errorf("writing modification script: %w", err)
+		return fmt.Errorf("writing modification script %s: %w", modifyScriptName, err)
 	}
 
 	return nil

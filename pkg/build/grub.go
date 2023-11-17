@@ -28,7 +28,7 @@ func (b *Builder) generateGRUBGuestfishCommands() (string, error) {
 
 	snippet, err := template.Parse("guestfish-snippet", guestfishSnippet, values)
 	if err != nil {
-		return "", fmt.Errorf("parsing guestfish template: %w", err)
+		return "", fmt.Errorf("parsing GRUB guestfish snippet: %w", err)
 	}
 
 	return snippet, nil
