@@ -3,7 +3,6 @@ package build
 import (
 	_ "embed"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -13,7 +12,6 @@ import (
 const (
 	copyExec         = "/bin/cp"
 	modifyScriptName = "modify-raw-image.sh"
-	modifyScriptMode = 0o744
 )
 
 //go:embed scripts/modify-raw-image.sh.tpl
@@ -70,12 +68,8 @@ func (b *Builder) writeModifyScript() error {
 
 	filename := b.generateBuildDirFilename(modifyScriptName)
 
-	if err := fileio.WriteFile(filename, modifyRawImageScript, &values); err != nil {
+	if err := fileio.WriteTemplate(filename, modifyRawImageScript, &values); err != nil {
 		return fmt.Errorf("writing modification script %s: %w", modifyScriptName, err)
-	}
-	err = os.Chmod(filename, modifyScriptMode)
-	if err != nil {
-		return fmt.Errorf("changing permissions on the modification script %s: %w", modifyScriptName, err)
 	}
 
 	return nil

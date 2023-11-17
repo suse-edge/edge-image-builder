@@ -70,7 +70,7 @@ func TestWriteModifyScript(t *testing.T) {
 
 	stats, err := os.Stat(expectedFilename)
 	require.NoError(t, err)
-	assert.Equal(t, fs.FileMode(modifyScriptMode), stats.Mode())
+	assert.Equal(t, fs.FileMode(0o744), stats.Mode())
 
 	foundContents := string(foundBytes)
 	assert.Contains(t, foundContents, "guestfish --rw -a config-dir/output-image")

@@ -2,6 +2,7 @@ package fileio
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -31,6 +32,43 @@ func TestWriteFile(t *testing.T) {
 			contents:         "this is a non-templated file",
 			expectedContents: "this is a non-templated file",
 		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			filename := filepath.Join(tmpDir, test.filename)
+
+			err := WriteFile(filename, test.contents)
+
+			if test.expectedErr != "" {
+				assert.EqualError(t, err, test.expectedErr)
+			} else {
+				require.Nil(t, err)
+
+				contents, err := os.ReadFile(filename)
+				require.NoError(t, err)
+
+				assert.Equal(t, test.expectedContents, string(contents))
+			}
+		})
+	}
+}
+
+func TestWriteTemplate(t *testing.T) {
+	const tmpDirPrefix = "eib-write-template-test-"
+
+	tmpDir, err := os.MkdirTemp("", tmpDirPrefix)
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+
+	tests := []struct {
+		name             string
+		filename         string
+		contents         string
+		templateData     any
+		expectedContents string
+		expectedErr      string
+	}{
 		{
 			name:     "Templated file is successfully written",
 			filename: "template",
@@ -43,6 +81,12 @@ func TestWriteFile(t *testing.T) {
 				Bar: "raB",
 			},
 			expectedContents: "ooF and raB",
+		},
+		{
+			name:        "Templated file is not written due to missing data",
+			filename:    "missing-data",
+			contents:    "{{.Foo}} and {{.Bar}}",
+			expectedErr: "template data not provided",
 		},
 		{
 			name:         "Templated file is not written due to invalid syntax",
@@ -69,7 +113,7 @@ func TestWriteFile(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			filename := filepath.Join(tmpDir, test.filename)
 
-			err := WriteFile(filename, test.contents, test.templateData)
+			err := WriteTemplate(filename, test.contents, test.templateData)
 
 			if test.expectedErr != "" {
 				assert.EqualError(t, err, test.expectedErr)
@@ -78,8 +122,11 @@ func TestWriteFile(t *testing.T) {
 
 				contents, err := os.ReadFile(filename)
 				require.NoError(t, err)
-
 				assert.Equal(t, test.expectedContents, string(contents))
+
+				info, err := os.Stat(filename)
+				require.NoError(t, err)
+				assert.Equal(t, fs.FileMode(0o744), info.Mode())
 			}
 		})
 	}

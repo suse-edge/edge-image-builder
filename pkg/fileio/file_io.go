@@ -14,13 +14,17 @@ const (
 	NonExecutablePerms os.FileMode = 0o644
 )
 
-func WriteFile(filename string, contents string, templateData any) error {
-	if templateData == nil {
-		if err := os.WriteFile(filename, []byte(contents), os.ModePerm); err != nil {
-			return fmt.Errorf("writing file: %w", err)
-		}
+func WriteFile(filename string, contents string) error {
+	if err := os.WriteFile(filename, []byte(contents), os.ModePerm); err != nil {
+		return fmt.Errorf("writing file: %w", err)
+	}
 
-		return nil
+	return nil
+}
+
+func WriteTemplate(filename string, contents string, templateData any) error {
+	if templateData == nil {
+		return fmt.Errorf("template data not provided")
 	}
 
 	tmpl, err := template.New(filename).Parse(contents)
@@ -35,6 +39,10 @@ func WriteFile(filename string, contents string, templateData any) error {
 	defer func() {
 		_ = file.Close()
 	}()
+
+	if err = file.Chmod(ExecutablePerms); err != nil {
+		return fmt.Errorf("applying executable permissions: %w", err)
+	}
 
 	if err = tmpl.Execute(file, templateData); err != nil {
 		return fmt.Errorf("applying template: %w", err)
