@@ -2,92 +2,12 @@ package fileio
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestWriteTemplate(t *testing.T) {
-	const tmpDirPrefix = "eib-write-template-test-"
-
-	tmpDir, err := os.MkdirTemp("", tmpDirPrefix)
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
-
-	tests := []struct {
-		name             string
-		filename         string
-		contents         string
-		templateData     any
-		expectedContents string
-		expectedErr      string
-	}{
-		{
-			name:     "Templated file is successfully written",
-			filename: "template",
-			contents: "{{.Foo}} and {{.Bar}}",
-			templateData: struct {
-				Foo string
-				Bar string
-			}{
-				Foo: "ooF",
-				Bar: "raB",
-			},
-			expectedContents: "ooF and raB",
-		},
-		{
-			name:        "Templated file is not written due to missing data",
-			filename:    "missing-data",
-			contents:    "{{.Foo}} and {{.Bar}}",
-			expectedErr: "template data not provided",
-		},
-		{
-			name:         "Templated file is not written due to invalid syntax",
-			filename:     "invalid-syntax",
-			contents:     "{{.Foo and ",
-			templateData: struct{}{},
-			expectedErr:  fmt.Sprintf("parsing template: template: %s/invalid-syntax:1: unclosed action", tmpDir),
-		},
-		{
-			name:     "Templated file is not written due to missing field",
-			filename: "invalid-data",
-			contents: "{{.Foo}} and {{.Bar}}",
-			templateData: struct {
-				Foo string
-			}{
-				Foo: "ooF",
-			},
-			expectedErr: fmt.Sprintf("applying template: template: %[1]s/invalid-data:1:15: "+
-				"executing \"%[1]s/invalid-data\" at <.Bar>: can't evaluate field Bar in type struct { Foo string }", tmpDir),
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			filename := filepath.Join(tmpDir, test.filename)
-
-			err := WriteTemplate(filename, test.contents, test.templateData)
-
-			if test.expectedErr != "" {
-				assert.EqualError(t, err, test.expectedErr)
-			} else {
-				require.Nil(t, err)
-
-				contents, err := os.ReadFile(filename)
-				require.NoError(t, err)
-				assert.Equal(t, test.expectedContents, string(contents))
-
-				info, err := os.Stat(filename)
-				require.NoError(t, err)
-				assert.Equal(t, fs.FileMode(0o744), info.Mode())
-			}
-		})
-	}
-}
 
 func TestCopyFile(t *testing.T) {
 	const (

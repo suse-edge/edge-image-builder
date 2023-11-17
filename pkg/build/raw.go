@@ -3,10 +3,12 @@ package build
 import (
 	_ "embed"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/template"
 )
 
 const (
@@ -15,7 +17,7 @@ const (
 )
 
 //go:embed scripts/modify-raw-image.sh.tpl
-var modifyRawImageScript string
+var modifyRawImageTemplate string
 
 func (b *Builder) buildRawImage() error {
 	cmd := b.createRawImageCopyCommand()
@@ -66,10 +68,14 @@ func (b *Builder) writeModifyScript() error {
 		ConfigureGRUB: grubConfiguration,
 	}
 
-	filename := b.generateBuildDirFilename(modifyScriptName)
+	data, err := template.Parse(modifyScriptName, modifyRawImageTemplate, &values)
+	if err != nil {
+		return fmt.Errorf("parsing template: %w", err)
+	}
 
-	if err := fileio.WriteTemplate(filename, modifyRawImageScript, &values); err != nil {
-		return fmt.Errorf("writing modification script %s: %w", modifyScriptName, err)
+	filename := b.generateBuildDirFilename(modifyScriptName)
+	if err = os.WriteFile(filename, []byte(data), fileio.ExecutablePerms); err != nil {
+		return fmt.Errorf("writing modification script: %w", err)
 	}
 
 	return nil

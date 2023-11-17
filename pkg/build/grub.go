@@ -1,11 +1,11 @@
 package build
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
 	"strings"
-	"text/template"
+
+	"github.com/suse-edge/edge-image-builder/pkg/template"
 )
 
 //go:embed scripts/grub/guestfish-snippet.tpl
@@ -19,11 +19,6 @@ func (b *Builder) generateGRUBGuestfishCommands() (string, error) {
 		return "", nil
 	}
 
-	tmpl, err := template.New("guestfish-snippet").Parse(guestfishSnippet)
-	if err != nil {
-		return "", fmt.Errorf("building template for GRUB guestfish snippet: %w", err)
-	}
-
 	argLine := strings.Join(b.imageConfig.OperatingSystem.KernelArgs, " ")
 	values := struct {
 		KernelArgs string
@@ -31,12 +26,10 @@ func (b *Builder) generateGRUBGuestfishCommands() (string, error) {
 		KernelArgs: argLine,
 	}
 
-	var buff bytes.Buffer
-	err = tmpl.Execute(&buff, values)
+	snippet, err := template.Parse("guestfish-snippet", guestfishSnippet, values)
 	if err != nil {
-		return "", fmt.Errorf("applying GRUB guestfish snippet: %w", err)
+		return "", fmt.Errorf("parsing guestfish template: %w", err)
 	}
 
-	snippet := buff.String()
 	return snippet, nil
 }
