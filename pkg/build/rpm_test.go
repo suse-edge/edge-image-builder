@@ -1,13 +1,13 @@
 package build
 
 import (
-	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 func setupRPMSourceDir(t *testing.T, addFiles bool) (tmpDir string, rpmSourceDir string, teardown func()) {
@@ -136,7 +136,7 @@ func TestWriteRPMScript(t *testing.T) {
 
 	stats, err := os.Stat(expectedFilename)
 	require.NoError(t, err)
-	assert.Equal(t, fs.FileMode(modifyScriptMode), stats.Mode())
+	assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
 
 	foundContents := string(foundBytes)
 	assert.Contains(t, foundContents, "rpm1.rpm")

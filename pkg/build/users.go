@@ -4,11 +4,13 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
+
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/template"
 )
 
 const (
 	usersScriptName = "add-users.sh"
-	userScriptMode  = 0o744
 )
 
 //go:embed scripts/users/add-users.sh.tpl
@@ -20,13 +22,15 @@ func (b *Builder) configureUsers() error {
 		return nil
 	}
 
-	filename, err := b.writeCombustionFile(usersScriptName, usersScript, b.imageConfig.OperatingSystem.Users)
+	data, err := template.Parse(usersScriptName, usersScript, b.imageConfig.OperatingSystem.Users)
+	if err != nil {
+		return fmt.Errorf("parsing users script template: %w", err)
+	}
+
+	filename := b.generateCombustionDirFilename(usersScriptName)
+	err = os.WriteFile(filename, []byte(data), fileio.ExecutablePerms)
 	if err != nil {
 		return fmt.Errorf("writing %s to the combustion directory: %w", usersScriptName, err)
-	}
-	err = os.Chmod(filename, userScriptMode)
-	if err != nil {
-		return fmt.Errorf("modifying permissions for script %s: %w", filename, err)
 	}
 
 	b.registerCombustionScript(usersScriptName)

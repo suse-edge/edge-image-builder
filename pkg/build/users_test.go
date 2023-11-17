@@ -1,7 +1,6 @@
 package build
 
 import (
-	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/config"
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 func TestConfigureUsers(t *testing.T) {
@@ -61,7 +61,7 @@ func TestConfigureUsers(t *testing.T) {
 
 	stats, err := os.Stat(expectedFilename)
 	require.NoError(t, err)
-	assert.Equal(t, fs.FileMode(userScriptMode), stats.Mode())
+	assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
 
 	foundContents := string(foundBytes)
 
