@@ -31,7 +31,7 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, expectedKernelArgs, imageConfig.OperatingSystem.KernelArgs)
 
 	userConfigs := imageConfig.OperatingSystem.Users
-	assert.Len(t, userConfigs, 3)
+	require.Len(t, userConfigs, 3)
 	assert.Equal(t, "alpha", userConfigs[0].Username)
 	assert.Equal(t, "$6$bZfTI3Wj05fdxQcB$W1HJQTKw/MaGTCwK75ic9putEquJvYO7vMnDBVAfuAMFW58/79abky4mx9.8znK0UZwSKng9dVosnYQR1toH71", userConfigs[0].Password)
 	assert.Contains(t, userConfigs[0].SSHKey, "ssh-rsa AAAAB3")

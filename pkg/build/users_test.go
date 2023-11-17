@@ -13,10 +13,30 @@ import (
 
 func TestConfigureUsers(t *testing.T) {
 	// Setup
-	configData, err := os.ReadFile("./testdata/users-test-definition.yaml")
-	require.NoError(t, err)
-	imageConfig, err := config.Parse(configData)
-	require.NoError(t, err)
+	imageConfig := &config.ImageConfig{
+		OperatingSystem: config.OperatingSystem{
+			Users: []config.OperatingSystemUser{
+				{
+					Username: "alpha",
+					Password: "alpha123",
+					SSHKey:   "alphakey",
+				},
+				{
+					Username: "beta",
+					Password: "beta123",
+				},
+				{
+					Username: "gamma",
+					SSHKey:   "gammakey",
+				},
+				{
+					Username: "root",
+					Password: "root123",
+					SSHKey:   "rootkey",
+				},
+			},
+		},
+	}
 
 	context, err := NewContext("", "", true)
 	require.NoError(t, err)
@@ -76,11 +96,6 @@ func TestConfigureUsers(t *testing.T) {
 
 func TestConfigureUsers_NoUsers(t *testing.T) {
 	// Setup
-	configData, err := os.ReadFile("./testdata/minimal-test-definition.yaml")
-	require.NoError(t, err)
-	imageConfig, err := config.Parse(configData)
-	require.NoError(t, err)
-
 	context, err := NewContext("", "", true)
 	require.NoError(t, err)
 	defer func() {
@@ -88,7 +103,7 @@ func TestConfigureUsers_NoUsers(t *testing.T) {
 	}()
 
 	builder := &Builder{
-		imageConfig: imageConfig,
+		imageConfig: &config.ImageConfig{},
 		context:     context,
 	}
 
