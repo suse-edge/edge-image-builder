@@ -75,7 +75,7 @@ func copyRPMs(rpmSourceDir string, rpmDestDir string, rpmFileNames []string) err
 		sourcePath := filepath.Join(rpmSourceDir, rpm)
 		destPath := filepath.Join(rpmDestDir, rpm)
 
-		err := fileio.CopyFile(sourcePath, destPath)
+		err := fileio.CopyFile(sourcePath, destPath, fileio.NonExecutablePerms))
 		if err != nil {
 			return fmt.Errorf("copying file %s: %w", sourcePath, err)
 		}

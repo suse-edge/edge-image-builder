@@ -103,6 +103,7 @@ func TestCopyFile(t *testing.T) {
 		name        string
 		source      string
 		destination string
+		perms       os.FileMode
 		expectedErr string
 	}{
 		{
@@ -126,12 +127,13 @@ func TestCopyFile(t *testing.T) {
 			name:        "File is successfully copied",
 			source:      source,
 			destination: fmt.Sprintf("%s/copy.go", tmpDir),
+			perms:       NonExecutablePerms,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := CopyFile(test.source, test.destination)
+			err := CopyFile(test.source, test.destination, test.perms)
 
 			if test.expectedErr != "" {
 				assert.EqualError(t, err, test.expectedErr)
@@ -143,8 +145,11 @@ func TestCopyFile(t *testing.T) {
 
 				dest, err := os.ReadFile(test.destination)
 				require.NoError(t, err)
-
 				assert.Equal(t, src, dest)
+
+				info, err := os.Stat(test.destination)
+				require.NoError(t, err)
+				assert.Equal(t, test.perms, info.Mode())
 			}
 		})
 	}

@@ -43,7 +43,7 @@ func WriteTemplate(filename string, contents string, templateData any) error {
 	return nil
 }
 
-func CopyFile(src string, dest string) error {
+func CopyFile(src string, dest string, perms os.FileMode) error {
 	sourceFile, err := os.Open(src)
 	if err != nil {
 		return fmt.Errorf("opening source file: %w", err)
@@ -59,6 +59,10 @@ func CopyFile(src string, dest string) error {
 	defer func() {
 		_ = destFile.Close()
 	}()
+
+	if err = destFile.Chmod(perms); err != nil {
+		return fmt.Errorf("adjusting permissions: %w", err)
+	}
 
 	if _, err = io.Copy(destFile, sourceFile); err != nil {
 		return fmt.Errorf("copying file: %w", err)
