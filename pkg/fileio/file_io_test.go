@@ -11,49 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestWriteFile(t *testing.T) {
-	const tmpDirPrefix = "eib-write-file-test-"
-
-	tmpDir, err := os.MkdirTemp("", tmpDirPrefix)
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
-
-	tests := []struct {
-		name             string
-		filename         string
-		contents         string
-		templateData     any
-		expectedContents string
-		expectedErr      string
-	}{
-		{
-			name:             "Standard file is successfully written",
-			filename:         "standard",
-			contents:         "this is a non-templated file",
-			expectedContents: "this is a non-templated file",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			filename := filepath.Join(tmpDir, test.filename)
-
-			err := WriteFile(filename, test.contents)
-
-			if test.expectedErr != "" {
-				assert.EqualError(t, err, test.expectedErr)
-			} else {
-				require.Nil(t, err)
-
-				contents, err := os.ReadFile(filename)
-				require.NoError(t, err)
-
-				assert.Equal(t, test.expectedContents, string(contents))
-			}
-		})
-	}
-}
-
 func TestWriteTemplate(t *testing.T) {
 	const tmpDirPrefix = "eib-write-template-test-"
 

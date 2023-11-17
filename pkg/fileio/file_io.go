@@ -14,14 +14,6 @@ const (
 	NonExecutablePerms os.FileMode = 0o644
 )
 
-func WriteFile(filename string, contents string) error {
-	if err := os.WriteFile(filename, []byte(contents), os.ModePerm); err != nil {
-		return fmt.Errorf("writing file: %w", err)
-	}
-
-	return nil
-}
-
 func WriteTemplate(filename string, contents string, templateData any) error {
 	if templateData == nil {
 		return fmt.Errorf("template data not provided")
