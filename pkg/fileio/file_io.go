@@ -7,6 +7,13 @@ import (
 	"text/template"
 )
 
+const (
+	// ExecutablePerms are Linux permissions (rwxr--r--) for executable files (scripts, binaries, etc.)
+	ExecutablePerms os.FileMode = 0o744
+	// NonExecutablePerms are Linux permissions (rw-r--r--) for non-executable files (configs, RPMs, etc.):
+	NonExecutablePerms os.FileMode = 0o644
+)
+
 func WriteFile(filename string, contents string, templateData any) error {
 	if templateData == nil {
 		if err := os.WriteFile(filename, []byte(contents), os.ModePerm); err != nil {
