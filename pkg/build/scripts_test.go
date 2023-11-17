@@ -1,13 +1,13 @@
 package build
 
 import (
-	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 func TestConfigureScripts(t *testing.T) {
@@ -56,7 +56,7 @@ func TestConfigureScripts(t *testing.T) {
 		fullEntryPath := filepath.Join(builder.context.CombustionDir, entry.Name())
 		stats, err := os.Stat(fullEntryPath)
 		require.NoError(t, err)
-		assert.Equal(t, fs.FileMode(0o744), stats.Mode())
+		assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
 	}
 
 	// - make sure entries were added to the combustion scripts list, so they are

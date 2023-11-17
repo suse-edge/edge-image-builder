@@ -1,7 +1,6 @@
 package build
 
 import (
-	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/config"
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 func TestCreateRawImageCopyCommand(t *testing.T) {
@@ -70,7 +70,7 @@ func TestWriteModifyScript(t *testing.T) {
 
 	stats, err := os.Stat(expectedFilename)
 	require.NoError(t, err)
-	assert.Equal(t, fs.FileMode(0o744), stats.Mode())
+	assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
 
 	foundContents := string(foundBytes)
 	assert.Contains(t, foundContents, "guestfish --rw -a config-dir/output-image")
