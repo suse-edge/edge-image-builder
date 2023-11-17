@@ -39,14 +39,14 @@ func (b *Builder) Build() error {
 		return fmt.Errorf("configuring custom scripts: %w", err)
 	}
 
-	err = b.generateCombustionScript()
-	if err != nil {
-		return fmt.Errorf("generating combustion script: %w", err)
-	}
-
 	err = b.processRPMs()
 	if err != nil {
 		return fmt.Errorf("processing RPMs: %w", err)
+	}
+
+	err = b.generateCombustionScript()
+	if err != nil {
+		return fmt.Errorf("generating combustion script: %w", err)
 	}
 
 	switch b.imageConfig.Image.ImageType {
