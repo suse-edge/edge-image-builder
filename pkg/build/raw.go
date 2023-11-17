@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 const (
@@ -66,11 +68,12 @@ func (b *Builder) writeModifyScript() error {
 		ConfigureGRUB: grubConfiguration,
 	}
 
-	writtenFilename, err := b.writeBuildDirFile(modifyScriptName, modifyRawImageScript, &values)
-	if err != nil {
+	filename := b.generateBuildDirFilename(modifyScriptName)
+
+	if err := fileio.WriteFile(filename, modifyRawImageScript, &values); err != nil {
 		return fmt.Errorf("writing modification script %s: %w", modifyScriptName, err)
 	}
-	err = os.Chmod(writtenFilename, modifyScriptMode)
+	err = os.Chmod(filename, modifyScriptMode)
 	if err != nil {
 		return fmt.Errorf("changing permissions on the modification script %s: %w", modifyScriptName, err)
 	}
