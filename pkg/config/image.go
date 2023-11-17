@@ -24,7 +24,14 @@ type Image struct {
 }
 
 type OperatingSystem struct {
-	KernelArgs []string `yaml:"kernelArgs"`
+	KernelArgs []string              `yaml:"kernelArgs"`
+	Users      []OperatingSystemUser `yaml:"users"`
+}
+
+type OperatingSystemUser struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	SSHKey   string `yaml:"sshKey"`
 }
 
 func Parse(data []byte) (*ImageConfig, error) {
