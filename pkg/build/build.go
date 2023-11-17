@@ -39,6 +39,11 @@ func (b *Builder) Build() error {
 		return fmt.Errorf("configuring custom scripts: %w", err)
 	}
 
+	err = b.configureUsers()
+	if err != nil {
+		return fmt.Errorf("configuring users: %w", err)
+	}
+
 	err = b.processRPMs()
 	if err != nil {
 		return fmt.Errorf("processing RPMs: %w", err)
