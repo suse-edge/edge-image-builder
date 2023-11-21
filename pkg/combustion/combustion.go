@@ -1,37 +1,52 @@
 package combustion
 
 import (
-	_ "embed"
 	"fmt"
-	"slices"
-	"strings"
+	"os"
+	"path/filepath"
+
+	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
-//go:embed scripts/script_base.sh
-var combustionScriptBase string
+// configureComponent defines the combustion component contract.
+// Each component (e.g. "users") receives the necessary dir structure and
+// additional values it should be operating with through a Context object.
+//
+// configureComponent returns a slice of scripts which should be executed as part of the Combustion script.
+// Result can also be an empty slice or nil if this is not necessary.
+type configureComponent func(context *context.Context) ([]string, error)
 
-func GenerateScript(scripts []string) (string, error) {
-	b := new(strings.Builder)
+// Configure iterates over all separate Combustion components and configures them independently.
+// If all of those are successful, the Combustion script is assembled and written to the file system.
+func Configure(ctx *context.Context) error {
+	var combustionScripts []string
 
-	_, err := b.WriteString(combustionScriptBase)
-	if err != nil {
-		return "", fmt.Errorf("writing script base: %w", err)
+	combustionComponents := map[string]configureComponent{
+		"message": configureMessage,
+		"users":   configureUsers,
+		"rpm":     configureRPMs,
+		"custom":  configureCustomScripts,
 	}
 
-	// Use alphabetical ordering for determinism
-	slices.Sort(scripts)
-
-	// Add a call to each script that was added to the combustion directory
-	for _, filename := range scripts {
-		_, err = b.WriteString(scriptExecutor(filename))
+	for componentName, configureFunc := range combustionComponents {
+		scripts, err := configureFunc(ctx)
 		if err != nil {
-			return "", fmt.Errorf("appending script %s: %w", filename, err)
+			return fmt.Errorf("configuring component %q: %w", componentName, err)
 		}
+
+		combustionScripts = append(combustionScripts, scripts...)
 	}
 
-	return b.String(), nil
-}
+	script, err := assembleScript(combustionScripts)
+	if err != nil {
+		return fmt.Errorf("assembling script: %w", err)
+	}
 
-func scriptExecutor(name string) string {
-	return fmt.Sprintf("./%s\n", name)
+	filename := filepath.Join(ctx.CombustionDir, "script")
+	if err = os.WriteFile(filename, []byte(script), fileio.ExecutablePerms); err != nil {
+		return fmt.Errorf("writing script: %w", err)
+	}
+
+	return nil
 }

@@ -17,15 +17,16 @@ func TestDeleteNoExistingImage(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
-	imageConfig := config.ImageConfig{
-		Image: config.Image{
-			OutputImageName: "not-there",
+	builder := Builder{
+		imageConfig: &config.ImageConfig{
+			Image: config.Image{
+				OutputImageName: "not-there",
+			},
+		},
+		context: &context.Context{
+			ImageConfigDir: tmpDir,
 		},
 	}
-	ctx := context.Context{
-		ImageConfigDir: tmpDir,
-	}
-	builder := New(&imageConfig, &ctx)
 
 	// Test
 	err = builder.deleteExistingOutputIso()
@@ -40,15 +41,16 @@ func TestDeleteExistingImage(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
-	imageConfig := config.ImageConfig{
-		Image: config.Image{
-			OutputImageName: "not-there",
+	builder := Builder{
+		imageConfig: &config.ImageConfig{
+			Image: config.Image{
+				OutputImageName: "not-there",
+			},
+		},
+		context: &context.Context{
+			ImageConfigDir: tmpDir,
 		},
 	}
-	ctx := context.Context{
-		ImageConfigDir: tmpDir,
-	}
-	builder := New(&imageConfig, &ctx)
 
 	_, err = os.Create(builder.generateOutputImageFilename())
 	require.NoError(t, err)
@@ -66,17 +68,18 @@ func TestDeleteExistingImage(t *testing.T) {
 
 func TestCreateXorrisoCommand(t *testing.T) {
 	// Setup
-	imageConfig := config.ImageConfig{
-		Image: config.Image{
-			BaseImage:       "base-image",
-			OutputImageName: "build-image",
+	builder := Builder{
+		imageConfig: &config.ImageConfig{
+			Image: config.Image{
+				BaseImage:       "base-image",
+				OutputImageName: "build-image",
+			},
+		},
+		context: &context.Context{
+			ImageConfigDir: "config-dir",
+			CombustionDir:  "combustion",
 		},
 	}
-	ctx := context.Context{
-		ImageConfigDir: "config-dir",
-		CombustionDir:  "combustion",
-	}
-	builder := New(&imageConfig, &ctx)
 
 	// Test
 	cmd, logfile, err := builder.createXorrisoCommand()

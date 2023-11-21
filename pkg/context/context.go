@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/suse-edge/edge-image-builder/pkg/config"
 )
 
 type Context struct {
@@ -15,9 +17,11 @@ type Context struct {
 	CombustionDir string
 	// DeleteBuildDir indicates whether the BuildDir should be cleaned up after the image is built.
 	DeleteBuildDir bool
+	// ImageConfig contains the image definition properties.
+	*config.ImageConfig
 }
 
-func NewContext(imageConfigDir, buildDir string, deleteBuildDir bool) (*Context, error) {
+func NewContext(imageConfigDir, buildDir string, deleteBuildDir bool, imageConfig *config.ImageConfig) (*Context, error) {
 	if buildDir == "" {
 		tmpDir, err := os.MkdirTemp("", "eib-")
 		if err != nil {
@@ -36,6 +40,7 @@ func NewContext(imageConfigDir, buildDir string, deleteBuildDir bool) (*Context,
 		BuildDir:       buildDir,
 		CombustionDir:  combustionDir,
 		DeleteBuildDir: deleteBuildDir,
+		ImageConfig:    imageConfig,
 	}, nil
 }
 

@@ -1,4 +1,4 @@
-package build
+package combustion
 
 import (
 	"os"
@@ -34,15 +34,13 @@ func TestConfigureScripts(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDestDir)
 
-	builder := &Builder{
-		context: &context.Context{
-			ImageConfigDir: tmpSrcDir,
-			CombustionDir:  tmpDestDir,
-		},
+	ctx := &context.Context{
+		ImageConfigDir: tmpSrcDir,
+		CombustionDir:  tmpDestDir,
 	}
 
 	// Test
-	scripts, err := builder.configureCustomScripts()
+	scripts, err := configureCustomScripts(ctx)
 
 	// Verify
 	require.NoError(t, err)
@@ -54,7 +52,7 @@ func TestConfigureScripts(t *testing.T) {
 
 	// - make sure the copied files have the right permissions
 	for _, entry := range foundDirListing {
-		fullEntryPath := filepath.Join(builder.context.CombustionDir, entry.Name())
+		fullEntryPath := filepath.Join(ctx.CombustionDir, entry.Name())
 		stats, err := os.Stat(fullEntryPath)
 		require.NoError(t, err)
 		assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
@@ -71,14 +69,12 @@ func TestConfigureScriptsNoScriptsDir(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpSrcDir)
 
-	builder := &Builder{
-		context: &context.Context{
-			ImageConfigDir: tmpSrcDir,
-		},
+	ctx := &context.Context{
+		ImageConfigDir: tmpSrcDir,
 	}
 
 	// Test
-	scripts, err := builder.configureCustomScripts()
+	scripts, err := configureCustomScripts(ctx)
 
 	// Verify
 	require.NoError(t, err)
@@ -97,14 +93,12 @@ func TestConfigureScriptsEmptyScriptsDir(t *testing.T) {
 	err = os.MkdirAll(fullScriptsDir, os.ModePerm)
 	require.NoError(t, err)
 
-	builder := &Builder{
-		context: &context.Context{
-			ImageConfigDir: tmpSrcDir,
-		},
+	ctx := &context.Context{
+		ImageConfigDir: tmpSrcDir,
 	}
 
 	// Test
-	scripts, err := builder.configureCustomScripts()
+	scripts, err := configureCustomScripts(ctx)
 
 	// Verify
 	require.Error(t, err)

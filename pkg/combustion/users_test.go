@@ -1,4 +1,4 @@
-package build
+package combustion
 
 import (
 	"os"
@@ -8,13 +8,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/config"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 func TestConfigureUsers(t *testing.T) {
 	// Setup
-	imageConfig := &config.ImageConfig{
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageConfig = &config.ImageConfig{
 		OperatingSystem: config.OperatingSystem{
 			Users: []config.OperatingSystemUser{
 				{
@@ -39,24 +41,14 @@ func TestConfigureUsers(t *testing.T) {
 		},
 	}
 
-	ctx, err := context.NewContext("", "", true)
-	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, context.CleanUpBuildDir(ctx))
-	}()
-
-	builder := &Builder{
-		imageConfig: imageConfig,
-		context:     ctx,
-	}
-
 	// Test
-	script, err := builder.configureUsers()
+	scripts, err := configureUsers(ctx)
 
 	// Verify
 	require.NoError(t, err)
 
-	assert.Equal(t, usersScriptName, script)
+	require.Len(t, scripts, 1)
+	assert.Equal(t, usersScriptName, scripts[0])
 
 	expectedFilename := filepath.Join(ctx.CombustionDir, usersScriptName)
 	foundBytes, err := os.ReadFile(expectedFilename)
@@ -99,24 +91,16 @@ func TestConfigureUsers(t *testing.T) {
 
 func TestConfigureUsers_NoUsers(t *testing.T) {
 	// Setup
-	ctx, err := context.NewContext("", "", true)
-	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, context.CleanUpBuildDir(ctx))
-	}()
-
-	builder := &Builder{
-		imageConfig: &config.ImageConfig{},
-		context:     ctx,
-	}
+	ctx, teardown := setupContext(t)
+	defer teardown()
 
 	// Test
-	script, err := builder.configureUsers()
+	scripts, err := configureUsers(ctx)
 
 	// Verify
 	require.NoError(t, err)
 
-	assert.Equal(t, "", script)
+	assert.Len(t, scripts, 0)
 
 	expectedFilename := filepath.Join(ctx.CombustionDir, usersScriptName)
 	_, err = os.ReadFile(expectedFilename)

@@ -14,16 +14,17 @@ import (
 
 func TestCreateRawImageCopyCommand(t *testing.T) {
 	// Setup
-	imageConfig := config.ImageConfig{
-		Image: config.Image{
-			BaseImage:       "base-image",
-			OutputImageName: "build-image",
+	builder := Builder{
+		imageConfig: &config.ImageConfig{
+			Image: config.Image{
+				BaseImage:       "base-image",
+				OutputImageName: "build-image",
+			},
+		},
+		context: &context.Context{
+			ImageConfigDir: "config-dir",
 		},
 	}
-	ctx := context.Context{
-		ImageConfigDir: "config-dir",
-	}
-	builder := New(&imageConfig, &ctx)
 
 	// Test
 	cmd := builder.createRawImageCopyCommand()
@@ -46,18 +47,20 @@ func TestWriteModifyScript(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
-	imageConfig := config.ImageConfig{
-		Image: config.Image{
-			OutputImageName: "output-image",
+	builder := Builder{
+		imageConfig: &config.ImageConfig{
+			Image: config.Image{
+				OutputImageName: "output-image",
+			},
+			OperatingSystem: config.OperatingSystem{
+				KernelArgs: []string{"alpha", "beta"},
+			},
 		},
-		OperatingSystem: config.OperatingSystem{
-			KernelArgs: []string{"alpha", "beta"},
+		context: &context.Context{
+			ImageConfigDir: "config-dir",
+			BuildDir:       tmpDir,
 		},
 	}
-	ctx, err := context.NewContext("config-dir", tmpDir, false)
-	require.NoError(t, err)
-
-	builder := New(&imageConfig, ctx)
 
 	// Test
 	err = builder.writeModifyScript()

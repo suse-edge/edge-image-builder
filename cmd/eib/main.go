@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
+	"github.com/suse-edge/edge-image-builder/pkg/combustion"
 	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"go.uber.org/zap"
@@ -50,7 +51,7 @@ func processArgs() (*config.ImageConfig, *context.Context, error) {
 		return nil, nil, fmt.Errorf("validating the config dir %s: %w", configDir, err)
 	}
 
-	ctx, err := context.NewContext(configDir, buildDir, deleteBuildDir)
+	ctx, err := context.NewContext(configDir, buildDir, deleteBuildDir, imageConfig)
 	if err != nil {
 		return nil, nil, fmt.Errorf("building dir structure: %w", err)
 	}
@@ -117,7 +118,7 @@ func main() {
 		zap.L().Fatal("CLI arguments could not be parsed", zap.Error(err))
 	}
 
-	builder := build.New(imageConfig, ctx)
+	builder := build.New(imageConfig, ctx, combustion.Configure)
 	if err = builder.Build(); err != nil {
 		zap.L().Fatal("An error occurred building the image", zap.Error(err))
 	}

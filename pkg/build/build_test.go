@@ -1,6 +1,7 @@
 package build
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -9,38 +10,18 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/context"
 )
 
-func TestGenerateCombustionDirFilename(t *testing.T) {
-	// Setup
-	ctx, err := context.NewContext("", "", true)
-	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, context.CleanUpBuildDir(ctx))
-	}()
-
-	builder := Builder{
-		context: ctx,
-	}
-
-	testFilename := "combustion-file.sh"
-
-	// Test
-	filename := builder.generateCombustionDirFilename(testFilename)
-
-	// Verify
-	expectedFilename := filepath.Join(ctx.CombustionDir, testFilename)
-	assert.Equal(t, expectedFilename, filename)
-}
-
 func TestGenerateBuildDirFilename(t *testing.T) {
 	// Setup
-	ctx, err := context.NewContext("", "", true)
+	tmpDir, err := os.MkdirTemp("", "eib-")
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, context.CleanUpBuildDir(ctx))
+		assert.NoError(t, os.RemoveAll(tmpDir))
 	}()
 
 	builder := Builder{
-		context: ctx,
+		context: &context.Context{
+			BuildDir: tmpDir,
+		},
 	}
 
 	testFilename := "build-dir-file.sh"
@@ -49,6 +30,6 @@ func TestGenerateBuildDirFilename(t *testing.T) {
 	filename := builder.generateBuildDirFilename(testFilename)
 
 	// Verify
-	expectedFilename := filepath.Join(ctx.BuildDir, testFilename)
+	expectedFilename := filepath.Join(builder.context.BuildDir, testFilename)
 	require.Equal(t, expectedFilename, filename)
 }

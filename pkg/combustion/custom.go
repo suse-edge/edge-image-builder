@@ -1,10 +1,11 @@
-package build
+package combustion
 
 import (
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
@@ -12,8 +13,8 @@ const (
 	scriptsDir = "scripts"
 )
 
-func (b *Builder) configureCustomScripts() ([]string, error) {
-	fullScriptsDir := filepath.Join(b.context.ImageConfigDir, scriptsDir)
+func configureCustomScripts(ctx *context.Context) ([]string, error) {
+	fullScriptsDir := filepath.Join(ctx.ImageConfigDir, scriptsDir)
 
 	// Nothing to do if the image config dir doesn't have the scripts directory
 	_, err := os.Stat(fullScriptsDir)
@@ -38,7 +39,7 @@ func (b *Builder) configureCustomScripts() ([]string, error) {
 
 	for _, scriptEntry := range dirListing {
 		copyMe := filepath.Join(fullScriptsDir, scriptEntry.Name())
-		copyTo := filepath.Join(b.context.CombustionDir, scriptEntry.Name())
+		copyTo := filepath.Join(ctx.CombustionDir, scriptEntry.Name())
 
 		err = fileio.CopyFile(copyMe, copyTo, fileio.ExecutablePerms)
 		if err != nil {
