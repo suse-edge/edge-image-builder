@@ -42,7 +42,7 @@ func TestGenerateCombustionScript(t *testing.T) {
 	assert.Equal(t, "foo.sh", builder.combustionScripts[1])
 }
 
-func TestWriteCombustionFile(t *testing.T) {
+func TestGenerateCombustionDirFilename(t *testing.T) {
 	// Setup
 	context, err := NewContext("", "", true)
 	require.NoError(t, err)
@@ -54,26 +54,17 @@ func TestWriteCombustionFile(t *testing.T) {
 		context: context,
 	}
 
-	testData := "Edge Image Builder"
 	testFilename := "combustion-file.sh"
 
 	// Test
-	writtenFilename, err := builder.writeCombustionFile(testFilename, testData, nil)
+	filename := builder.generateCombustionDirFilename(testFilename)
 
 	// Verify
-	require.NoError(t, err)
-
 	expectedFilename := filepath.Join(context.CombustionDir, testFilename)
-	foundData, err := os.ReadFile(expectedFilename)
-	require.NoError(t, err)
-	assert.Equal(t, expectedFilename, writtenFilename)
-	assert.Equal(t, testData, string(foundData))
-
-	// Make sure the file isn't automatically added to the combustion scripts list
-	require.Equal(t, 0, len(builder.combustionScripts))
+	assert.Equal(t, expectedFilename, filename)
 }
 
-func TestWriteBuildDirFile(t *testing.T) {
+func TestGenerateBuildDirFilename(t *testing.T) {
 	// Setup
 	context, err := NewContext("", "", true)
 	require.NoError(t, err)
@@ -85,18 +76,12 @@ func TestWriteBuildDirFile(t *testing.T) {
 		context: context,
 	}
 
-	testData := "Edge Image Builder"
 	testFilename := "build-dir-file.sh"
 
 	// Test
-	writtenFilename, err := builder.writeBuildDirFile(testFilename, testData, nil)
+	filename := builder.generateBuildDirFilename(testFilename)
 
 	// Verify
-	require.NoError(t, err)
-
 	expectedFilename := filepath.Join(context.BuildDir, testFilename)
-	require.Equal(t, expectedFilename, writtenFilename)
-	foundData, err := os.ReadFile(expectedFilename)
-	require.NoError(t, err)
-	assert.Equal(t, testData, string(foundData))
+	require.Equal(t, expectedFilename, filename)
 }

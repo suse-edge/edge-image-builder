@@ -8,7 +8,6 @@ import (
 	"slices"
 
 	"github.com/suse-edge/edge-image-builder/pkg/config"
-	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 //go:embed scripts/script_base.sh
@@ -94,14 +93,12 @@ func (b *Builder) generateCombustionScript() error {
 	return nil
 }
 
-func (b *Builder) writeBuildDirFile(filename string, contents string, templateData any) (string, error) {
-	destFilename := filepath.Join(b.context.BuildDir, filename)
-	return destFilename, fileio.WriteFile(destFilename, contents, templateData)
+func (b *Builder) generateBuildDirFilename(filename string) string {
+	return filepath.Join(b.context.BuildDir, filename)
 }
 
-func (b *Builder) writeCombustionFile(filename string, contents string, templateData any) (string, error) {
-	destFilename := filepath.Join(b.context.CombustionDir, filename)
-	return destFilename, fileio.WriteFile(destFilename, contents, templateData)
+func (b *Builder) generateCombustionDirFilename(filename string) string {
+	return filepath.Join(b.context.CombustionDir, filename)
 }
 
 func (b *Builder) registerCombustionScript(scriptName string) {

@@ -10,7 +10,6 @@ import (
 
 const (
 	scriptsDir = "scripts"
-	scriptMode = 0o744
 )
 
 func (b *Builder) configureScripts() error {
@@ -39,13 +38,9 @@ func (b *Builder) configureScripts() error {
 		copyMe := filepath.Join(fullScriptsDir, scriptEntry.Name())
 		copyTo := filepath.Join(b.context.CombustionDir, scriptEntry.Name())
 
-		err = fileio.CopyFile(copyMe, copyTo)
+		err = fileio.CopyFile(copyMe, copyTo, fileio.ExecutablePerms)
 		if err != nil {
 			return fmt.Errorf("copying script to %s: %w", copyTo, err)
-		}
-		err = os.Chmod(copyTo, scriptMode)
-		if err != nil {
-			return fmt.Errorf("modifying permissions for script %s: %w", copyTo, err)
 		}
 
 		// Make sure the combustion main script will execute the newly copied script

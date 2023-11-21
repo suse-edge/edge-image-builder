@@ -6,16 +6,18 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/template"
 )
 
 const (
 	copyExec         = "/bin/cp"
 	modifyScriptName = "modify-raw-image.sh"
-	modifyScriptMode = 0o744
 )
 
 //go:embed scripts/modify-raw-image.sh.tpl
-var modifyRawImageScript string
+var modifyRawImageTemplate string
 
 func (b *Builder) buildRawImage() error {
 	cmd := b.createRawImageCopyCommand()
@@ -66,13 +68,14 @@ func (b *Builder) writeModifyScript() error {
 		ConfigureGRUB: grubConfiguration,
 	}
 
-	writtenFilename, err := b.writeBuildDirFile(modifyScriptName, modifyRawImageScript, &values)
+	data, err := template.Parse(modifyScriptName, modifyRawImageTemplate, &values)
 	if err != nil {
-		return fmt.Errorf("writing modification script %s: %w", modifyScriptName, err)
+		return fmt.Errorf("parsing %s template: %w", modifyScriptName, err)
 	}
-	err = os.Chmod(writtenFilename, modifyScriptMode)
-	if err != nil {
-		return fmt.Errorf("changing permissions on the modification script %s: %w", modifyScriptName, err)
+
+	filename := b.generateBuildDirFilename(modifyScriptName)
+	if err = os.WriteFile(filename, []byte(data), fileio.ExecutablePerms); err != nil {
+		return fmt.Errorf("writing modification script %s: %w", modifyScriptName, err)
 	}
 
 	return nil

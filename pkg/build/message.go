@@ -3,6 +3,9 @@ package build
 import (
 	_ "embed"
 	"fmt"
+	"os"
+
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 const (
@@ -13,8 +16,9 @@ const (
 var messageScript string
 
 func (b *Builder) configureMessage() error {
-	_, err := b.writeCombustionFile(messageScriptName, messageScript, nil)
-	if err != nil {
+	filename := b.generateCombustionDirFilename(messageScriptName)
+
+	if err := os.WriteFile(filename, []byte(messageScript), fileio.ExecutablePerms); err != nil {
 		return fmt.Errorf("copying script %s: %w", messageScriptName, err)
 	}
 	b.registerCombustionScript(messageScriptName)

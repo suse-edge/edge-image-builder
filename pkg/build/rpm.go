@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/template"
 )
 
 const (
@@ -75,7 +75,7 @@ func copyRPMs(rpmSourceDir string, rpmDestDir string, rpmFileNames []string) err
 		sourcePath := filepath.Join(rpmSourceDir, rpm)
 		destPath := filepath.Join(rpmDestDir, rpm)
 
-		err := fileio.CopyFile(sourcePath, destPath)
+		err := fileio.CopyFile(sourcePath, destPath, fileio.NonExecutablePerms)
 		if err != nil {
 			return fmt.Errorf("copying file %s: %w", sourcePath, err)
 		}
@@ -91,13 +91,15 @@ func (b *Builder) writeRPMScript(rpmFileNames []string) error {
 		RPMs: strings.Join(rpmFileNames, " "),
 	}
 
-	writtenFilename, err := b.writeCombustionFile(modifyRPMScriptName, modifyRPMScript, &values)
+	data, err := template.Parse(modifyRPMScriptName, modifyRPMScript, &values)
+	if err != nil {
+		return fmt.Errorf("parsing RPM script template: %w", err)
+	}
+
+	filename := b.generateCombustionDirFilename(modifyRPMScriptName)
+	err = os.WriteFile(filename, []byte(data), fileio.ExecutablePerms)
 	if err != nil {
 		return fmt.Errorf("writing RPM script: %w", err)
-	}
-	err = os.Chmod(writtenFilename, modifyScriptMode)
-	if err != nil {
-		return fmt.Errorf("adjusting permissions: %w", err)
 	}
 
 	b.registerCombustionScript(modifyRPMScriptName)
