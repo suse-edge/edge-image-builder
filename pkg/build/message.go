@@ -15,13 +15,12 @@ const (
 //go:embed scripts/message/message.sh
 var messageScript string
 
-func (b *Builder) configureMessage() error {
+func (b *Builder) configureMessage() (string, error) {
 	filename := b.generateCombustionDirFilename(messageScriptName)
 
 	if err := os.WriteFile(filename, []byte(messageScript), fileio.ExecutablePerms); err != nil {
-		return fmt.Errorf("copying script %s: %w", messageScriptName, err)
+		return "", fmt.Errorf("copying script %s: %w", messageScriptName, err)
 	}
-	b.registerCombustionScript(messageScriptName)
 
-	return nil
+	return messageScriptName, nil
 }

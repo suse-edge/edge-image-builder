@@ -41,7 +41,7 @@ func TestConfigureScripts(t *testing.T) {
 	}
 
 	// Test
-	err = builder.configureScripts()
+	scripts, err := builder.configureCustomScripts()
 
 	// Verify
 	require.NoError(t, err)
@@ -61,7 +61,7 @@ func TestConfigureScripts(t *testing.T) {
 
 	// - make sure entries were added to the combustion scripts list, so they are
 	//   present in the script file that is generated
-	assert.Equal(t, 2, len(builder.combustionScripts))
+	assert.Equal(t, 2, len(scripts))
 }
 
 func TestConfigureScriptsNoScriptsDir(t *testing.T) {
@@ -77,10 +77,11 @@ func TestConfigureScriptsNoScriptsDir(t *testing.T) {
 	}
 
 	// Test
-	err = builder.configureScripts()
+	scripts, err := builder.configureCustomScripts()
 
 	// Verify
 	require.NoError(t, err)
+	assert.Nil(t, scripts)
 }
 
 func TestConfigureScriptsEmptyScriptsDir(t *testing.T) {
@@ -102,9 +103,10 @@ func TestConfigureScriptsEmptyScriptsDir(t *testing.T) {
 	}
 
 	// Test
-	err = builder.configureScripts()
+	scripts, err := builder.configureCustomScripts()
 
 	// Verify
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "no scripts found in directory")
+	assert.ErrorContains(t, err, "no scripts found in directory")
+	assert.Nil(t, scripts)
 }

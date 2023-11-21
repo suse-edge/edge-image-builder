@@ -125,10 +125,12 @@ func TestWriteRPMScript(t *testing.T) {
 	builder := Builder{context: context}
 
 	// Test
-	err = builder.writeRPMScript([]string{"rpm1.rpm", "rpm2.rpm"})
+	script, err := builder.writeRPMScript([]string{"rpm1.rpm", "rpm2.rpm"})
 
 	// Verify
 	require.NoError(t, err)
+
+	assert.Equal(t, modifyRPMScriptName, script)
 
 	expectedFilename := filepath.Join(builder.context.CombustionDir, modifyRPMScriptName)
 	foundBytes, err := os.ReadFile(expectedFilename)
@@ -157,10 +159,12 @@ func TestProcessRPMs(t *testing.T) {
 	builder := Builder{context: context}
 
 	// Test
-	err = builder.processRPMs()
+	script, err := builder.processRPMs()
 
 	// Verify
 	require.NoError(t, err)
+
+	assert.Equal(t, modifyRPMScriptName, script)
 
 	_, err = os.Stat(filepath.Join(builder.context.CombustionDir, "rpm1.rpm"))
 	require.NoError(t, err)

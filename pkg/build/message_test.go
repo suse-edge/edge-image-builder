@@ -20,7 +20,7 @@ func TestConfigureMessage(t *testing.T) {
 	builder := Builder{context: context}
 
 	// Test
-	err = builder.configureMessage()
+	script, err := builder.configureMessage()
 
 	// Verify
 	require.NoError(t, err)
@@ -28,6 +28,5 @@ func TestConfigureMessage(t *testing.T) {
 	_, err = os.Stat(filepath.Join(builder.context.CombustionDir, messageScriptName))
 	require.NoError(t, err)
 
-	require.Equal(t, 1, len(builder.combustionScripts))
-	assert.Equal(t, messageScriptName, builder.combustionScripts[0])
+	assert.Equal(t, messageScriptName, script)
 }

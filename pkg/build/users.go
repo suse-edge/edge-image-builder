@@ -16,24 +16,22 @@ const (
 //go:embed scripts/users/add-users.sh.tpl
 var usersScript string
 
-func (b *Builder) configureUsers() error {
+func (b *Builder) configureUsers() (string, error) {
 	// Punch out early if there are no users
 	if len(b.imageConfig.OperatingSystem.Users) == 0 {
-		return nil
+		return "", nil
 	}
 
 	data, err := template.Parse(usersScriptName, usersScript, b.imageConfig.OperatingSystem.Users)
 	if err != nil {
-		return fmt.Errorf("parsing users script template: %w", err)
+		return "", fmt.Errorf("parsing users script template: %w", err)
 	}
 
 	filename := b.generateCombustionDirFilename(usersScriptName)
 	err = os.WriteFile(filename, []byte(data), fileio.ExecutablePerms)
 	if err != nil {
-		return fmt.Errorf("writing %s to the combustion directory: %w", usersScriptName, err)
+		return "", fmt.Errorf("writing %s to the combustion directory: %w", usersScriptName, err)
 	}
 
-	b.registerCombustionScript(usersScriptName)
-
-	return nil
+	return usersScriptName, nil
 }

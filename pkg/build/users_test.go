@@ -50,10 +50,12 @@ func TestConfigureUsers(t *testing.T) {
 	}
 
 	// Test
-	err = builder.configureUsers()
+	script, err := builder.configureUsers()
 
 	// Verify
 	require.NoError(t, err)
+
+	assert.Equal(t, usersScriptName, script)
 
 	expectedFilename := filepath.Join(context.CombustionDir, usersScriptName)
 	foundBytes, err := os.ReadFile(expectedFilename)
@@ -108,10 +110,12 @@ func TestConfigureUsers_NoUsers(t *testing.T) {
 	}
 
 	// Test
-	err = builder.configureUsers()
+	script, err := builder.configureUsers()
 
 	// Verify
 	require.NoError(t, err)
+
+	assert.Equal(t, "", script)
 
 	expectedFilename := filepath.Join(context.CombustionDir, usersScriptName)
 	_, err = os.ReadFile(expectedFilename)

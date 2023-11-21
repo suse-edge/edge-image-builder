@@ -18,32 +18,32 @@ const (
 //go:embed scripts/rpms/10-rpm-install.sh.tpl
 var modifyRPMScript string
 
-func (b *Builder) processRPMs() error {
+func (b *Builder) processRPMs() (string, error) {
 	rpmSourceDir, err := b.generateRPMPath()
 	if err != nil {
-		return fmt.Errorf("generating RPM path: %w", err)
+		return "", fmt.Errorf("generating RPM path: %w", err)
 	}
 	// Only proceed with processing the RPMs if the directory exists
 	if rpmSourceDir == "" {
-		return nil
+		return "", nil
 	}
 
 	rpmFileNames, err := getRPMFileNames(rpmSourceDir)
 	if err != nil {
-		return fmt.Errorf("getting RPM file names: %w", err)
+		return "", fmt.Errorf("getting RPM file names: %w", err)
 	}
 
 	err = copyRPMs(rpmSourceDir, b.context.CombustionDir, rpmFileNames)
 	if err != nil {
-		return fmt.Errorf("copying RPMs over: %w", err)
+		return "", fmt.Errorf("copying RPMs over: %w", err)
 	}
 
-	err = b.writeRPMScript(rpmFileNames)
+	script, err := b.writeRPMScript(rpmFileNames)
 	if err != nil {
-		return fmt.Errorf("writing the RPM install script %s: %w", modifyRPMScriptName, err)
+		return "", fmt.Errorf("writing the RPM install script %s: %w", modifyRPMScriptName, err)
 	}
 
-	return nil
+	return script, nil
 }
 
 func getRPMFileNames(rpmSourceDir string) ([]string, error) {
@@ -84,7 +84,7 @@ func copyRPMs(rpmSourceDir string, rpmDestDir string, rpmFileNames []string) err
 	return nil
 }
 
-func (b *Builder) writeRPMScript(rpmFileNames []string) error {
+func (b *Builder) writeRPMScript(rpmFileNames []string) (string, error) {
 	values := struct {
 		RPMs string
 	}{
@@ -93,18 +93,16 @@ func (b *Builder) writeRPMScript(rpmFileNames []string) error {
 
 	data, err := template.Parse(modifyRPMScriptName, modifyRPMScript, &values)
 	if err != nil {
-		return fmt.Errorf("parsing RPM script template: %w", err)
+		return "", fmt.Errorf("parsing RPM script template: %w", err)
 	}
 
 	filename := b.generateCombustionDirFilename(modifyRPMScriptName)
 	err = os.WriteFile(filename, []byte(data), fileio.ExecutablePerms)
 	if err != nil {
-		return fmt.Errorf("writing RPM script: %w", err)
+		return "", fmt.Errorf("writing RPM script: %w", err)
 	}
 
-	b.registerCombustionScript(modifyRPMScriptName)
-
-	return nil
+	return modifyRPMScriptName, nil
 }
 
 func (b *Builder) generateRPMPath() (string, error) {
