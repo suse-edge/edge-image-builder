@@ -8,6 +8,7 @@ import (
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/config"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -20,7 +21,7 @@ const (
 	argVerbose     = "verbose"
 )
 
-func processArgs() (*config.ImageConfig, *build.Context, error) {
+func processArgs() (*config.ImageConfig, *context.Context, error) {
 	var (
 		configFile     string
 		configDir      string
@@ -49,12 +50,12 @@ func processArgs() (*config.ImageConfig, *build.Context, error) {
 		return nil, nil, fmt.Errorf("validating the config dir %s: %w", configDir, err)
 	}
 
-	context, err := build.NewContext(configDir, buildDir, deleteBuildDir)
+	ctx, err := context.NewContext(configDir, buildDir, deleteBuildDir)
 	if err != nil {
 		return nil, nil, fmt.Errorf("building dir structure: %w", err)
 	}
 
-	return imageConfig, context, err
+	return imageConfig, ctx, err
 }
 
 func setupLogging(verbose bool) {
@@ -111,17 +112,17 @@ func validateImageConfigDir(configDir string) error {
 }
 
 func main() {
-	imageConfig, context, err := processArgs()
+	imageConfig, ctx, err := processArgs()
 	if err != nil {
 		zap.L().Fatal("CLI arguments could not be parsed", zap.Error(err))
 	}
 
-	builder := build.New(imageConfig, context)
+	builder := build.New(imageConfig, ctx)
 	if err = builder.Build(); err != nil {
 		zap.L().Fatal("An error occurred building the image", zap.Error(err))
 	}
 
-	if err = build.CleanUpBuildDir(context); err != nil {
+	if err = context.CleanUpBuildDir(ctx); err != nil {
 		zap.L().Error("Failed to clean up build directory", zap.Error(err))
 	}
 }

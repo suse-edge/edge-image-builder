@@ -7,15 +7,16 @@ import (
 
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
 	"github.com/suse-edge/edge-image-builder/pkg/config"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 type Builder struct {
 	imageConfig *config.ImageConfig
-	context     *Context
+	context     *context.Context
 }
 
-func New(imageConfig *config.ImageConfig, context *Context) *Builder {
+func New(imageConfig *config.ImageConfig, context *context.Context) *Builder {
 	return &Builder{
 		imageConfig: imageConfig,
 		context:     context,

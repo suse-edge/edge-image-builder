@@ -7,17 +7,18 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 )
 
 func TestConfigureMessage(t *testing.T) {
 	// Setup
-	context, err := NewContext("", "", true)
+	ctx, err := context.NewContext("", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, CleanUpBuildDir(context))
+		assert.NoError(t, context.CleanUpBuildDir(ctx))
 	}()
 
-	builder := Builder{context: context}
+	builder := Builder{context: ctx}
 
 	// Test
 	script, err := builder.configureMessage()

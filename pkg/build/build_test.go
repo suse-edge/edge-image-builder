@@ -6,18 +6,19 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 )
 
 func TestGenerateCombustionDirFilename(t *testing.T) {
 	// Setup
-	context, err := NewContext("", "", true)
+	ctx, err := context.NewContext("", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, CleanUpBuildDir(context))
+		assert.NoError(t, context.CleanUpBuildDir(ctx))
 	}()
 
 	builder := Builder{
-		context: context,
+		context: ctx,
 	}
 
 	testFilename := "combustion-file.sh"
@@ -26,20 +27,20 @@ func TestGenerateCombustionDirFilename(t *testing.T) {
 	filename := builder.generateCombustionDirFilename(testFilename)
 
 	// Verify
-	expectedFilename := filepath.Join(context.CombustionDir, testFilename)
+	expectedFilename := filepath.Join(ctx.CombustionDir, testFilename)
 	assert.Equal(t, expectedFilename, filename)
 }
 
 func TestGenerateBuildDirFilename(t *testing.T) {
 	// Setup
-	context, err := NewContext("", "", true)
+	ctx, err := context.NewContext("", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, CleanUpBuildDir(context))
+		assert.NoError(t, context.CleanUpBuildDir(ctx))
 	}()
 
 	builder := Builder{
-		context: context,
+		context: ctx,
 	}
 
 	testFilename := "build-dir-file.sh"
@@ -48,6 +49,6 @@ func TestGenerateBuildDirFilename(t *testing.T) {
 	filename := builder.generateBuildDirFilename(testFilename)
 
 	// Verify
-	expectedFilename := filepath.Join(context.BuildDir, testFilename)
+	expectedFilename := filepath.Join(ctx.BuildDir, testFilename)
 	require.Equal(t, expectedFilename, filename)
 }

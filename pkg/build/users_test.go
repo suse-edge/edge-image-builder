@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/config"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
@@ -38,15 +39,15 @@ func TestConfigureUsers(t *testing.T) {
 		},
 	}
 
-	context, err := NewContext("", "", true)
+	ctx, err := context.NewContext("", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, CleanUpBuildDir(context))
+		assert.NoError(t, context.CleanUpBuildDir(ctx))
 	}()
 
 	builder := &Builder{
 		imageConfig: imageConfig,
-		context:     context,
+		context:     ctx,
 	}
 
 	// Test
@@ -57,7 +58,7 @@ func TestConfigureUsers(t *testing.T) {
 
 	assert.Equal(t, usersScriptName, script)
 
-	expectedFilename := filepath.Join(context.CombustionDir, usersScriptName)
+	expectedFilename := filepath.Join(ctx.CombustionDir, usersScriptName)
 	foundBytes, err := os.ReadFile(expectedFilename)
 	require.NoError(t, err)
 
@@ -98,15 +99,15 @@ func TestConfigureUsers(t *testing.T) {
 
 func TestConfigureUsers_NoUsers(t *testing.T) {
 	// Setup
-	context, err := NewContext("", "", true)
+	ctx, err := context.NewContext("", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, CleanUpBuildDir(context))
+		assert.NoError(t, context.CleanUpBuildDir(ctx))
 	}()
 
 	builder := &Builder{
 		imageConfig: &config.ImageConfig{},
-		context:     context,
+		context:     ctx,
 	}
 
 	// Test
@@ -117,7 +118,7 @@ func TestConfigureUsers_NoUsers(t *testing.T) {
 
 	assert.Equal(t, "", script)
 
-	expectedFilename := filepath.Join(context.CombustionDir, usersScriptName)
+	expectedFilename := filepath.Join(ctx.CombustionDir, usersScriptName)
 	_, err = os.ReadFile(expectedFilename)
 	require.ErrorIs(t, err, os.ErrNotExist)
 }

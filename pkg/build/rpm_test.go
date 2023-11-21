@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
@@ -116,13 +117,13 @@ func TestCopyRPMsNoRPMSrcDir(t *testing.T) {
 
 func TestWriteRPMScript(t *testing.T) {
 	// Setup
-	context, err := NewContext("", "", true)
+	ctx, err := context.NewContext("", "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, CleanUpBuildDir(context))
+		assert.NoError(t, context.CleanUpBuildDir(ctx))
 	}()
 
-	builder := Builder{context: context}
+	builder := Builder{context: ctx}
 
 	// Test
 	script, err := builder.writeRPMScript([]string{"rpm1.rpm", "rpm2.rpm"})
@@ -150,13 +151,13 @@ func TestProcessRPMs(t *testing.T) {
 	tmpDir, _, teardown := setupRPMSourceDir(t, true)
 	defer teardown()
 
-	context, err := NewContext(tmpDir, "", true)
+	ctx, err := context.NewContext(tmpDir, "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, CleanUpBuildDir(context))
+		assert.NoError(t, context.CleanUpBuildDir(ctx))
 	}()
 
-	builder := Builder{context: context}
+	builder := Builder{context: ctx}
 
 	// Test
 	script, err := builder.processRPMs()
@@ -186,13 +187,13 @@ func TestGenerateRPMPath(t *testing.T) {
 	tmpDir, expectedPath, teardown := setupRPMSourceDir(t, false)
 	defer teardown()
 
-	context, err := NewContext(tmpDir, "", true)
+	ctx, err := context.NewContext(tmpDir, "", true)
 	require.NoError(t, err)
 	defer func() {
-		assert.NoError(t, CleanUpBuildDir(context))
+		assert.NoError(t, context.CleanUpBuildDir(ctx))
 	}()
 
-	builder := Builder{context: context}
+	builder := Builder{context: ctx}
 
 	// Test
 	generatedPath, err := builder.generateRPMPath()

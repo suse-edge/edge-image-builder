@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/config"
+	"github.com/suse-edge/edge-image-builder/pkg/context"
 )
 
 func TestDeleteNoExistingImage(t *testing.T) {
@@ -21,10 +22,10 @@ func TestDeleteNoExistingImage(t *testing.T) {
 			OutputImageName: "not-there",
 		},
 	}
-	context := Context{
+	ctx := context.Context{
 		ImageConfigDir: tmpDir,
 	}
-	builder := New(&imageConfig, &context)
+	builder := New(&imageConfig, &ctx)
 
 	// Test
 	err = builder.deleteExistingOutputIso()
@@ -44,10 +45,10 @@ func TestDeleteExistingImage(t *testing.T) {
 			OutputImageName: "not-there",
 		},
 	}
-	context := Context{
+	ctx := context.Context{
 		ImageConfigDir: tmpDir,
 	}
-	builder := New(&imageConfig, &context)
+	builder := New(&imageConfig, &ctx)
 
 	_, err = os.Create(builder.generateOutputImageFilename())
 	require.NoError(t, err)
@@ -71,11 +72,11 @@ func TestCreateXorrisoCommand(t *testing.T) {
 			OutputImageName: "build-image",
 		},
 	}
-	context := Context{
+	ctx := context.Context{
 		ImageConfigDir: "config-dir",
 		CombustionDir:  "combustion",
 	}
-	builder := New(&imageConfig, &context)
+	builder := New(&imageConfig, &ctx)
 
 	// Test
 	cmd, logfile, err := builder.createXorrisoCommand()
