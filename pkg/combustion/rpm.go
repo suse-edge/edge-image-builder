@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 )
 
@@ -19,7 +19,7 @@ const (
 //go:embed scripts/10-rpm-install.sh.tpl
 var modifyRPMScript string
 
-func configureRPMs(ctx *context.Context) ([]string, error) {
+func configureRPMs(ctx *image.Context) ([]string, error) {
 	rpmSourceDir, err := generateRPMPath(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("generating RPM path: %w", err)
@@ -85,7 +85,7 @@ func copyRPMs(rpmSourceDir string, rpmDestDir string, rpmFileNames []string) err
 	return nil
 }
 
-func writeRPMScript(ctx *context.Context, rpmFileNames []string) (string, error) {
+func writeRPMScript(ctx *image.Context, rpmFileNames []string) (string, error) {
 	values := struct {
 		RPMs string
 	}{
@@ -106,7 +106,7 @@ func writeRPMScript(ctx *context.Context, rpmFileNames []string) (string, error)
 	return modifyRPMScriptName, nil
 }
 
-func generateRPMPath(ctx *context.Context) (string, error) {
+func generateRPMPath(ctx *image.Context) (string, error) {
 	rpmSourceDir := filepath.Join(ctx.ImageConfigDir, "rpms")
 	_, err := os.Stat(rpmSourceDir)
 	if err != nil {

@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/config"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestCreateRawImageCopyCommand(t *testing.T) {
@@ -21,7 +21,7 @@ func TestCreateRawImageCopyCommand(t *testing.T) {
 				OutputImageName: "build-image",
 			},
 		},
-		context: &context.Context{
+		context: &image.Context{
 			ImageConfigDir: "config-dir",
 		},
 	}
@@ -56,7 +56,7 @@ func TestWriteModifyScript(t *testing.T) {
 				KernelArgs: []string{"alpha", "beta"},
 			},
 		},
-		context: &context.Context{
+		context: &image.Context{
 			ImageConfigDir: "config-dir",
 			BuildDir:       tmpDir,
 		},
@@ -85,7 +85,7 @@ func TestWriteModifyScript(t *testing.T) {
 func TestCreateModifyCommand(t *testing.T) {
 	// Setup
 	builder := Builder{
-		context: &context.Context{
+		context: &image.Context{
 			BuildDir: "build-dir",
 		},
 	}

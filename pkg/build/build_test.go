@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestGenerateBuildDirFilename(t *testing.T) {
@@ -19,7 +19,7 @@ func TestGenerateBuildDirFilename(t *testing.T) {
 	}()
 
 	builder := Builder{
-		context: &context.Context{
+		context: &image.Context{
 			BuildDir: tmpDir,
 		},
 	}

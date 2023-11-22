@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 )
 
@@ -18,7 +18,7 @@ const (
 //go:embed scripts/add-users.sh.tpl
 var usersScript string
 
-func configureUsers(ctx *context.Context) ([]string, error) {
+func configureUsers(ctx *image.Context) ([]string, error) {
 	// Punch out early if there are no users
 	if len(ctx.ImageConfig.OperatingSystem.Users) == 0 {
 		return nil, nil

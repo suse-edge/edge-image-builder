@@ -5,15 +5,15 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 const (
 	customScriptsDir = "scripts"
 )
 
-func configureCustomScripts(ctx *context.Context) ([]string, error) {
+func configureCustomScripts(ctx *image.Context) ([]string, error) {
 	fullScriptsDir := filepath.Join(ctx.ImageConfigDir, customScriptsDir)
 
 	// Nothing to do if the image config dir doesn't have the scripts directory

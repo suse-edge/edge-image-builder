@@ -5,18 +5,18 @@ import (
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/config"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-type configureCombustion func(ctx *context.Context) error
+type configureCombustion func(ctx *image.Context) error
 
 type Builder struct {
 	imageConfig         *config.ImageConfig
-	context             *context.Context
+	context             *image.Context
 	configureCombustion configureCombustion
 }
 
-func New(imageConfig *config.ImageConfig, ctx *context.Context, configureCombustionFunc configureCombustion) *Builder {
+func New(imageConfig *config.ImageConfig, ctx *image.Context, configureCombustionFunc configureCombustion) *Builder {
 	return &Builder{
 		imageConfig:         imageConfig,
 		context:             ctx,

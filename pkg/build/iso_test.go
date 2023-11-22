@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/config"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestDeleteNoExistingImage(t *testing.T) {
@@ -23,7 +23,7 @@ func TestDeleteNoExistingImage(t *testing.T) {
 				OutputImageName: "not-there",
 			},
 		},
-		context: &context.Context{
+		context: &image.Context{
 			ImageConfigDir: tmpDir,
 		},
 	}
@@ -47,7 +47,7 @@ func TestDeleteExistingImage(t *testing.T) {
 				OutputImageName: "not-there",
 			},
 		},
-		context: &context.Context{
+		context: &image.Context{
 			ImageConfigDir: tmpDir,
 		},
 	}
@@ -75,7 +75,7 @@ func TestCreateXorrisoCommand(t *testing.T) {
 				OutputImageName: "build-image",
 			},
 		},
-		context: &context.Context{
+		context: &image.Context{
 			ImageConfigDir: "config-dir",
 			CombustionDir:  "combustion",
 		},

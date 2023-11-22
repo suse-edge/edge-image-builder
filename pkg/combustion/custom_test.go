@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestConfigureScripts(t *testing.T) {
@@ -34,7 +34,7 @@ func TestConfigureScripts(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDestDir)
 
-	ctx := &context.Context{
+	ctx := &image.Context{
 		ImageConfigDir: tmpSrcDir,
 		CombustionDir:  tmpDestDir,
 	}
@@ -69,7 +69,7 @@ func TestConfigureScriptsNoScriptsDir(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpSrcDir)
 
-	ctx := &context.Context{
+	ctx := &image.Context{
 		ImageConfigDir: tmpSrcDir,
 	}
 
@@ -93,7 +93,7 @@ func TestConfigureScriptsEmptyScriptsDir(t *testing.T) {
 	err = os.MkdirAll(fullScriptsDir, os.ModePerm)
 	require.NoError(t, err)
 
-	ctx := &context.Context{
+	ctx := &image.Context{
 		ImageConfigDir: tmpSrcDir,
 	}
 

@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 //go:embed scripts/message.sh
 var messageScript string
 
-func configureMessage(ctx *context.Context) ([]string, error) {
+func configureMessage(ctx *image.Context) ([]string, error) {
 	filename := filepath.Join(ctx.CombustionDir, messageScriptName)
 
 	if err := os.WriteFile(filename, []byte(messageScript), fileio.ExecutablePerms); err != nil {

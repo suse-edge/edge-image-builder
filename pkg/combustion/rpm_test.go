@@ -7,11 +7,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/context"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func setupRPMSourceDir(t *testing.T) (ctx *context.Context, rpmSourceDir string, teardown func()) {
+func setupRPMSourceDir(t *testing.T) (ctx *image.Context, rpmSourceDir string, teardown func()) {
 	ctx, teardownCtx := setupContext(t)
 
 	rpmSourceDir = filepath.Join(ctx.ImageConfigDir, "rpms")
