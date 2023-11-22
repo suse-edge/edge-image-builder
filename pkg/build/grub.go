@@ -15,11 +15,11 @@ func (b *Builder) generateGRUBGuestfishCommands() (string, error) {
 	// Nothing to do if there aren't any args. Return an empty string that will be injected
 	// into the raw image guestfish modification, effectively doing nothing but not breaking
 	// the guestfish command
-	if b.imageDefinition.OperatingSystem.KernelArgs == nil {
+	if b.context.ImageDefinition.OperatingSystem.KernelArgs == nil {
 		return "", nil
 	}
 
-	argLine := strings.Join(b.imageDefinition.OperatingSystem.KernelArgs, " ")
+	argLine := strings.Join(b.context.ImageDefinition.OperatingSystem.KernelArgs, " ")
 	values := struct {
 		KernelArgs string
 	}{

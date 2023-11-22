@@ -21,7 +21,7 @@ const (
 	argVerbose     = "verbose"
 )
 
-func processArgs() (*image.Definition, *image.Context, error) {
+func processArgs() (*image.Context, error) {
 	var (
 		configFile     string
 		configDir      string
@@ -42,20 +42,20 @@ func processArgs() (*image.Definition, *image.Context, error) {
 
 	imageDefinition, err := parseImageDefinition(configFile, configDir)
 	if err != nil {
-		return nil, nil, fmt.Errorf("parsing image config file %s: %w", configFile, err)
+		return nil, fmt.Errorf("parsing image config file %s: %w", configFile, err)
 	}
 
 	err = validateImageConfigDir(configDir)
 	if err != nil {
-		return nil, nil, fmt.Errorf("validating the config dir %s: %w", configDir, err)
+		return nil, fmt.Errorf("validating the config dir %s: %w", configDir, err)
 	}
 
 	ctx, err := image.NewContext(configDir, buildDir, deleteBuildDir, imageDefinition)
 	if err != nil {
-		return nil, nil, fmt.Errorf("building dir structure: %w", err)
+		return nil, fmt.Errorf("building dir structure: %w", err)
 	}
 
-	return imageDefinition, ctx, err
+	return ctx, err
 }
 
 func setupLogging(verbose bool) {
@@ -112,12 +112,12 @@ func validateImageConfigDir(configDir string) error {
 }
 
 func main() {
-	imageConfig, ctx, err := processArgs()
+	ctx, err := processArgs()
 	if err != nil {
 		zap.L().Fatal("CLI arguments could not be parsed", zap.Error(err))
 	}
 
-	builder := build.New(imageConfig, ctx, combustion.Configure)
+	builder := build.New(ctx, combustion.Configure)
 	if err = builder.Build(); err != nil {
 		zap.L().Fatal("An error occurred building the image", zap.Error(err))
 	}

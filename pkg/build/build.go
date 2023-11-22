@@ -10,14 +10,12 @@ import (
 type configureCombustion func(ctx *image.Context) error
 
 type Builder struct {
-	imageDefinition     *image.Definition
 	context             *image.Context
 	configureCombustion configureCombustion
 }
 
-func New(imageDefinition *image.Definition, ctx *image.Context, configureCombustionFunc configureCombustion) *Builder {
+func New(ctx *image.Context, configureCombustionFunc configureCombustion) *Builder {
 	return &Builder{
-		imageDefinition:     imageDefinition,
 		context:             ctx,
 		configureCombustion: configureCombustionFunc,
 	}
@@ -28,7 +26,7 @@ func (b *Builder) Build() error {
 		return fmt.Errorf("configuring combustion: %w", err)
 	}
 
-	switch b.imageDefinition.Image.ImageType {
+	switch b.context.ImageDefinition.Image.ImageType {
 	case image.TypeISO:
 		return b.buildIsoImage()
 	case image.TypeRAW:
@@ -44,11 +42,11 @@ func (b *Builder) generateBuildDirFilename(filename string) string {
 }
 
 func (b *Builder) generateOutputImageFilename() string {
-	filename := filepath.Join(b.context.ImageConfigDir, b.imageDefinition.Image.OutputImageName)
+	filename := filepath.Join(b.context.ImageConfigDir, b.context.ImageDefinition.Image.OutputImageName)
 	return filename
 }
 
 func (b *Builder) generateBaseImageFilename() string {
-	filename := filepath.Join(b.context.ImageConfigDir, "images", b.imageDefinition.Image.BaseImage)
+	filename := filepath.Join(b.context.ImageConfigDir, "images", b.context.ImageDefinition.Image.BaseImage)
 	return filename
 }

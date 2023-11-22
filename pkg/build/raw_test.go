@@ -14,14 +14,14 @@ import (
 func TestCreateRawImageCopyCommand(t *testing.T) {
 	// Setup
 	builder := Builder{
-		imageDefinition: &image.Definition{
-			Image: image.Image{
-				BaseImage:       "base-image",
-				OutputImageName: "build-image",
-			},
-		},
 		context: &image.Context{
 			ImageConfigDir: "config-dir",
+			ImageDefinition: &image.Definition{
+				Image: image.Image{
+					BaseImage:       "base-image",
+					OutputImageName: "build-image",
+				},
+			},
 		},
 	}
 
@@ -47,17 +47,17 @@ func TestWriteModifyScript(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	builder := Builder{
-		imageDefinition: &image.Definition{
-			Image: image.Image{
-				OutputImageName: "output-image",
-			},
-			OperatingSystem: image.OperatingSystem{
-				KernelArgs: []string{"alpha", "beta"},
-			},
-		},
 		context: &image.Context{
 			ImageConfigDir: "config-dir",
 			BuildDir:       tmpDir,
+			ImageDefinition: &image.Definition{
+				Image: image.Image{
+					OutputImageName: "output-image",
+				},
+				OperatingSystem: image.OperatingSystem{
+					KernelArgs: []string{"alpha", "beta"},
+				},
+			},
 		},
 	}
 

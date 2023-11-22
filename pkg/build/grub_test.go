@@ -11,9 +11,11 @@ import (
 func TestGenerateGRUBGuestfishCommands(t *testing.T) {
 	// Setup
 	builder := Builder{
-		imageDefinition: &image.Definition{
-			OperatingSystem: image.OperatingSystem{
-				KernelArgs: []string{"alpha", "beta"},
+		context: &image.Context{
+			ImageDefinition: &image.Definition{
+				OperatingSystem: image.OperatingSystem{
+					KernelArgs: []string{"alpha", "beta"},
+				},
 			},
 		},
 	}
@@ -35,8 +37,10 @@ func TestGenerateGRUBGuestfishCommands(t *testing.T) {
 func TestGenerateGRUBGuestfishCommandsNoArgs(t *testing.T) {
 	// Setup
 	builder := Builder{
-		imageDefinition: &image.Definition{
-			OperatingSystem: image.OperatingSystem{},
+		context: &image.Context{
+			ImageDefinition: &image.Definition{
+				OperatingSystem: image.OperatingSystem{},
+			},
 		},
 	}
 
