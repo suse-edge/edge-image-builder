@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestConfigureUsers(t *testing.T) {
@@ -16,9 +16,9 @@ func TestConfigureUsers(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
-	ctx.ImageConfig = &config.ImageConfig{
-		OperatingSystem: config.OperatingSystem{
-			Users: []config.OperatingSystemUser{
+	ctx.ImageConfig = &image.ImageConfig{
+		OperatingSystem: image.OperatingSystem{
+			Users: []image.OperatingSystemUser{
 				{
 					Username: "alpha",
 					Password: "alpha123",

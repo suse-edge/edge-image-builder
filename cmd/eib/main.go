@@ -8,7 +8,6 @@ import (
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
-	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -22,7 +21,7 @@ const (
 	argVerbose     = "verbose"
 )
 
-func processArgs() (*config.ImageConfig, *image.Context, error) {
+func processArgs() (*image.ImageConfig, *image.Context, error) {
 	var (
 		configFile     string
 		configDir      string
@@ -86,14 +85,14 @@ func setupLogging(verbose bool) {
 	zap.ReplaceGlobals(logger)
 }
 
-func parseImageConfig(configFile string, configDir string) (*config.ImageConfig, error) {
+func parseImageConfig(configFile string, configDir string) (*image.ImageConfig, error) {
 	configFilePath := filepath.Join(configDir, configFile)
 	configData, err := os.ReadFile(configFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("image configuration file \"%s\" cannot be read: %w", configFile, err)
 	}
 
-	imageConfig, err := config.Parse(configData)
+	imageConfig, err := image.Parse(configData)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing configuration file \"%s\": %w", configFile, err)
 	}

@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
@@ -15,8 +14,8 @@ import (
 func TestCreateRawImageCopyCommand(t *testing.T) {
 	// Setup
 	builder := Builder{
-		imageConfig: &config.ImageConfig{
-			Image: config.Image{
+		imageConfig: &image.ImageConfig{
+			Image: image.Image{
 				BaseImage:       "base-image",
 				OutputImageName: "build-image",
 			},
@@ -48,11 +47,11 @@ func TestWriteModifyScript(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	builder := Builder{
-		imageConfig: &config.ImageConfig{
-			Image: config.Image{
+		imageConfig: &image.ImageConfig{
+			Image: image.Image{
 				OutputImageName: "output-image",
 			},
-			OperatingSystem: config.OperatingSystem{
+			OperatingSystem: image.OperatingSystem{
 				KernelArgs: []string{"alpha", "beta"},
 			},
 		},

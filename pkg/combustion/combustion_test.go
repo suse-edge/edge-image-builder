@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
@@ -24,7 +23,7 @@ func setupContext(t *testing.T) (ctx *image.Context, teardown func()) {
 		ImageConfigDir: configDir,
 		BuildDir:       buildDir,
 		CombustionDir:  combustionDir,
-		ImageConfig:    &config.ImageConfig{},
+		ImageConfig:    &image.ImageConfig{},
 	}
 
 	return ctx, func() {

@@ -4,19 +4,18 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 type configureCombustion func(ctx *image.Context) error
 
 type Builder struct {
-	imageConfig         *config.ImageConfig
+	imageConfig         *image.ImageConfig
 	context             *image.Context
 	configureCombustion configureCombustion
 }
 
-func New(imageConfig *config.ImageConfig, ctx *image.Context, configureCombustionFunc configureCombustion) *Builder {
+func New(imageConfig *image.ImageConfig, ctx *image.Context, configureCombustionFunc configureCombustion) *Builder {
 	return &Builder{
 		imageConfig:         imageConfig,
 		context:             ctx,
@@ -30,13 +29,13 @@ func (b *Builder) Build() error {
 	}
 
 	switch b.imageConfig.Image.ImageType {
-	case config.ImageTypeISO:
+	case image.ImageTypeISO:
 		return b.buildIsoImage()
-	case config.ImageTypeRAW:
+	case image.ImageTypeRAW:
 		return b.buildRawImage()
 	default:
 		return fmt.Errorf("invalid imageType value specified, must be either \"%s\" or \"%s\"",
-			config.ImageTypeISO, config.ImageTypeRAW)
+			image.ImageTypeISO, image.ImageTypeRAW)
 	}
 }
 
