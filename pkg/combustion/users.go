@@ -20,11 +20,11 @@ var usersScript string
 
 func configureUsers(ctx *image.Context) ([]string, error) {
 	// Punch out early if there are no users
-	if len(ctx.ImageConfig.OperatingSystem.Users) == 0 {
+	if len(ctx.ImageDefinition.OperatingSystem.Users) == 0 {
 		return nil, nil
 	}
 
-	data, err := template.Parse(usersScriptName, usersScript, ctx.ImageConfig.OperatingSystem.Users)
+	data, err := template.Parse(usersScriptName, usersScript, ctx.ImageDefinition.OperatingSystem.Users)
 	if err != nil {
 		return nil, fmt.Errorf("parsing users script template: %w", err)
 	}

@@ -7,11 +7,11 @@ import (
 )
 
 const (
-	ImageTypeISO = "iso"
-	ImageTypeRAW = "raw"
+	TypeISO = "iso"
+	TypeRAW = "raw"
 )
 
-type ImageConfig struct {
+type Definition struct {
 	APIVersion      string          `yaml:"apiVersion"`
 	Image           Image           `yaml:"image"`
 	OperatingSystem OperatingSystem `yaml:"operatingSystem"`
@@ -34,13 +34,12 @@ type OperatingSystemUser struct {
 	SSHKey   string `yaml:"sshKey"`
 }
 
-func Parse(data []byte) (*ImageConfig, error) {
-	imageConfig := ImageConfig{}
+func ParseDefinition(data []byte) (*Definition, error) {
+	var definition Definition
 
-	err := yaml.Unmarshal(data, &imageConfig)
-	if err != nil {
-		return nil, fmt.Errorf("could not parse the image configuration: %w", err)
+	if err := yaml.Unmarshal(data, &definition); err != nil {
+		return nil, fmt.Errorf("could not parse the image definition: %w", err)
 	}
 
-	return &imageConfig, nil
+	return &definition, nil
 }

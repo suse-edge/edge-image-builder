@@ -16,7 +16,7 @@ func TestConfigureUsers(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
-	ctx.ImageConfig = &image.ImageConfig{
+	ctx.ImageDefinition = &image.Definition{
 		OperatingSystem: image.OperatingSystem{
 			Users: []image.OperatingSystemUser{
 				{

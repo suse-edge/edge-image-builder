@@ -20,10 +20,10 @@ func setupContext(t *testing.T) (ctx *image.Context, teardown func()) {
 	require.NoError(t, err)
 
 	ctx = &image.Context{
-		ImageConfigDir: configDir,
-		BuildDir:       buildDir,
-		CombustionDir:  combustionDir,
-		ImageConfig:    &image.ImageConfig{},
+		ImageConfigDir:  configDir,
+		BuildDir:        buildDir,
+		CombustionDir:   combustionDir,
+		ImageDefinition: &image.Definition{},
 	}
 
 	return ctx, func() {

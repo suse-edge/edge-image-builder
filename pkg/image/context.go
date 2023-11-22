@@ -15,11 +15,11 @@ type Context struct {
 	CombustionDir string
 	// DeleteBuildDir indicates whether the BuildDir should be cleaned up after the image is built.
 	DeleteBuildDir bool
-	// ImageConfig contains the image definition properties.
-	ImageConfig *ImageConfig
+	// ImageDefinition contains the image definition properties.
+	ImageDefinition *Definition
 }
 
-func NewContext(imageConfigDir, buildDir string, deleteBuildDir bool, imageConfig *ImageConfig) (*Context, error) {
+func NewContext(imageConfigDir, buildDir string, deleteBuildDir bool, definition *Definition) (*Context, error) {
 	if buildDir == "" {
 		tmpDir, err := os.MkdirTemp("", "eib-")
 		if err != nil {
@@ -34,11 +34,11 @@ func NewContext(imageConfigDir, buildDir string, deleteBuildDir bool, imageConfi
 	}
 
 	return &Context{
-		ImageConfigDir: imageConfigDir,
-		BuildDir:       buildDir,
-		CombustionDir:  combustionDir,
-		DeleteBuildDir: deleteBuildDir,
-		ImageConfig:    imageConfig,
+		ImageConfigDir:  imageConfigDir,
+		BuildDir:        buildDir,
+		CombustionDir:   combustionDir,
+		DeleteBuildDir:  deleteBuildDir,
+		ImageDefinition: definition,
 	}, nil
 }
 

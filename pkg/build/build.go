@@ -10,14 +10,14 @@ import (
 type configureCombustion func(ctx *image.Context) error
 
 type Builder struct {
-	imageConfig         *image.ImageConfig
+	imageDefinition     *image.Definition
 	context             *image.Context
 	configureCombustion configureCombustion
 }
 
-func New(imageConfig *image.ImageConfig, ctx *image.Context, configureCombustionFunc configureCombustion) *Builder {
+func New(imageDefinition *image.Definition, ctx *image.Context, configureCombustionFunc configureCombustion) *Builder {
 	return &Builder{
-		imageConfig:         imageConfig,
+		imageDefinition:     imageDefinition,
 		context:             ctx,
 		configureCombustion: configureCombustionFunc,
 	}
@@ -28,14 +28,14 @@ func (b *Builder) Build() error {
 		return fmt.Errorf("configuring combustion: %w", err)
 	}
 
-	switch b.imageConfig.Image.ImageType {
-	case image.ImageTypeISO:
+	switch b.imageDefinition.Image.ImageType {
+	case image.TypeISO:
 		return b.buildIsoImage()
-	case image.ImageTypeRAW:
+	case image.TypeRAW:
 		return b.buildRawImage()
 	default:
 		return fmt.Errorf("invalid imageType value specified, must be either \"%s\" or \"%s\"",
-			image.ImageTypeISO, image.ImageTypeRAW)
+			image.TypeISO, image.TypeRAW)
 	}
 }
 
@@ -44,11 +44,11 @@ func (b *Builder) generateBuildDirFilename(filename string) string {
 }
 
 func (b *Builder) generateOutputImageFilename() string {
-	filename := filepath.Join(b.context.ImageConfigDir, b.imageConfig.Image.OutputImageName)
+	filename := filepath.Join(b.context.ImageConfigDir, b.imageDefinition.Image.OutputImageName)
 	return filename
 }
 
 func (b *Builder) generateBaseImageFilename() string {
-	filename := filepath.Join(b.context.ImageConfigDir, "images", b.imageConfig.Image.BaseImage)
+	filename := filepath.Join(b.context.ImageConfigDir, "images", b.imageDefinition.Image.BaseImage)
 	return filename
 }

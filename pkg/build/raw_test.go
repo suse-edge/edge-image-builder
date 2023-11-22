@@ -14,7 +14,7 @@ import (
 func TestCreateRawImageCopyCommand(t *testing.T) {
 	// Setup
 	builder := Builder{
-		imageConfig: &image.ImageConfig{
+		imageDefinition: &image.Definition{
 			Image: image.Image{
 				BaseImage:       "base-image",
 				OutputImageName: "build-image",
@@ -47,7 +47,7 @@ func TestWriteModifyScript(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	builder := Builder{
-		imageConfig: &image.ImageConfig{
+		imageDefinition: &image.Definition{
 			Image: image.Image{
 				OutputImageName: "output-image",
 			},

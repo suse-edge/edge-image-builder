@@ -17,7 +17,7 @@ func TestDeleteNoExistingImage(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	builder := Builder{
-		imageConfig: &image.ImageConfig{
+		imageDefinition: &image.Definition{
 			Image: image.Image{
 				OutputImageName: "not-there",
 			},
@@ -41,7 +41,7 @@ func TestDeleteExistingImage(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	builder := Builder{
-		imageConfig: &image.ImageConfig{
+		imageDefinition: &image.Definition{
 			Image: image.Image{
 				OutputImageName: "not-there",
 			},
@@ -68,7 +68,7 @@ func TestDeleteExistingImage(t *testing.T) {
 func TestCreateXorrisoCommand(t *testing.T) {
 	// Setup
 	builder := Builder{
-		imageConfig: &image.ImageConfig{
+		imageDefinition: &image.Definition{
 			Image: image.Image{
 				BaseImage:       "base-image",
 				OutputImageName: "build-image",

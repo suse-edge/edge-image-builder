@@ -21,7 +21,7 @@ const (
 	argVerbose     = "verbose"
 )
 
-func processArgs() (*image.ImageConfig, *image.Context, error) {
+func processArgs() (*image.Definition, *image.Context, error) {
 	var (
 		configFile     string
 		configDir      string
@@ -40,7 +40,7 @@ func processArgs() (*image.ImageConfig, *image.Context, error) {
 
 	setupLogging(verbose)
 
-	imageConfig, err := parseImageConfig(configFile, configDir)
+	imageDefinition, err := parseImageDefinition(configFile, configDir)
 	if err != nil {
 		return nil, nil, fmt.Errorf("parsing image config file %s: %w", configFile, err)
 	}
@@ -50,12 +50,12 @@ func processArgs() (*image.ImageConfig, *image.Context, error) {
 		return nil, nil, fmt.Errorf("validating the config dir %s: %w", configDir, err)
 	}
 
-	ctx, err := image.NewContext(configDir, buildDir, deleteBuildDir, imageConfig)
+	ctx, err := image.NewContext(configDir, buildDir, deleteBuildDir, imageDefinition)
 	if err != nil {
 		return nil, nil, fmt.Errorf("building dir structure: %w", err)
 	}
 
-	return imageConfig, ctx, err
+	return imageDefinition, ctx, err
 }
 
 func setupLogging(verbose bool) {
@@ -85,14 +85,14 @@ func setupLogging(verbose bool) {
 	zap.ReplaceGlobals(logger)
 }
 
-func parseImageConfig(configFile string, configDir string) (*image.ImageConfig, error) {
+func parseImageDefinition(configFile string, configDir string) (*image.Definition, error) {
 	configFilePath := filepath.Join(configDir, configFile)
 	configData, err := os.ReadFile(configFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("image configuration file \"%s\" cannot be read: %w", configFile, err)
 	}
 
-	imageConfig, err := image.Parse(configData)
+	imageConfig, err := image.ParseDefinition(configData)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing configuration file \"%s\": %w", configFile, err)
 	}
