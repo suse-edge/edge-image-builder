@@ -19,7 +19,7 @@ func TestConfigureScripts(t *testing.T) {
 	defer os.RemoveAll(tmpSrcDir)
 
 	// - scripts directory to look in
-	fullScriptsDir := filepath.Join(tmpSrcDir, scriptsDir)
+	fullScriptsDir := filepath.Join(tmpSrcDir, customScriptsDir)
 	err = os.MkdirAll(fullScriptsDir, os.ModePerm)
 	require.NoError(t, err)
 
@@ -89,7 +89,7 @@ func TestConfigureScriptsEmptyScriptsDir(t *testing.T) {
 	defer os.RemoveAll(tmpSrcDir)
 
 	// - scripts directory to look in
-	fullScriptsDir := filepath.Join(tmpSrcDir, scriptsDir)
+	fullScriptsDir := filepath.Join(tmpSrcDir, customScriptsDir)
 	err = os.MkdirAll(fullScriptsDir, os.ModePerm)
 	require.NoError(t, err)
 

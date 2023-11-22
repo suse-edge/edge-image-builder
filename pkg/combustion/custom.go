@@ -10,11 +10,11 @@ import (
 )
 
 const (
-	scriptsDir = "scripts"
+	customScriptsDir = "scripts"
 )
 
 func configureCustomScripts(ctx *context.Context) ([]string, error) {
-	fullScriptsDir := filepath.Join(ctx.ImageConfigDir, scriptsDir)
+	fullScriptsDir := filepath.Join(ctx.ImageConfigDir, customScriptsDir)
 
 	// Nothing to do if the image config dir doesn't have the scripts directory
 	_, err := os.Stat(fullScriptsDir)
