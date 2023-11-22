@@ -18,7 +18,7 @@ type Context struct {
 	// DeleteBuildDir indicates whether the BuildDir should be cleaned up after the image is built.
 	DeleteBuildDir bool
 	// ImageConfig contains the image definition properties.
-	*config.ImageConfig
+	ImageConfig *config.ImageConfig
 }
 
 func NewContext(imageConfigDir, buildDir string, deleteBuildDir bool, imageConfig *config.ImageConfig) (*Context, error) {
