@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
-	"github.com/suse-edge/edge-image-builder/pkg/combustion"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -117,7 +116,7 @@ func main() {
 		zap.L().Fatal("CLI arguments could not be parsed", zap.Error(err))
 	}
 
-	builder := build.New(ctx, combustion.Configure)
+	builder := build.New(ctx)
 	if err = builder.Build(); err != nil {
 		zap.L().Fatal("An error occurred building the image", zap.Error(err))
 	}

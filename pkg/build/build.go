@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/suse-edge/edge-image-builder/pkg/combustion"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
@@ -14,10 +15,10 @@ type Builder struct {
 	configureCombustion configureCombustion
 }
 
-func New(ctx *image.Context, configureCombustionFunc configureCombustion) *Builder {
+func New(ctx *image.Context) *Builder {
 	return &Builder{
 		context:             ctx,
-		configureCombustion: configureCombustionFunc,
+		configureCombustion: combustion.Configure,
 	}
 }
 
