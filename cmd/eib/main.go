@@ -41,7 +41,7 @@ func processArgs() (*image.Context, error) {
 
 	imageDefinition, err := parseImageDefinition(configFile, configDir)
 	if err != nil {
-		return nil, fmt.Errorf("parsing image config file %s: %w", configFile, err)
+		return nil, fmt.Errorf("parsing image definition file %s: %w", configFile, err)
 	}
 
 	err = validateImageConfigDir(configDir)
@@ -88,15 +88,15 @@ func parseImageDefinition(configFile string, configDir string) (*image.Definitio
 	configFilePath := filepath.Join(configDir, configFile)
 	configData, err := os.ReadFile(configFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("image configuration file \"%s\" cannot be read: %w", configFile, err)
+		return nil, fmt.Errorf("image definition file \"%s\" cannot be read: %w", configFile, err)
 	}
 
-	imageConfig, err := image.ParseDefinition(configData)
+	imageDefinition, err := image.ParseDefinition(configData)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing configuration file \"%s\": %w", configFile, err)
+		return nil, fmt.Errorf("error parsing definition file \"%s\": %w", configFile, err)
 	}
 
-	return imageConfig, nil
+	return imageDefinition, nil
 }
 
 func validateImageConfigDir(configDir string) error {
