@@ -2,6 +2,7 @@ package combustion
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,4 +32,24 @@ func setupContext(t *testing.T) (ctx *image.Context, teardown func()) {
 		assert.NoError(t, os.RemoveAll(buildDir))
 		assert.NoError(t, os.RemoveAll(configDir))
 	}
+}
+
+func TestGenerateComponentPath(t *testing.T) {
+	// Setup
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	componentDir := filepath.Join(ctx.ImageConfigDir, "some-component")
+	require.NoError(t, os.Mkdir(componentDir, 0o755))
+	defer func() {
+		assert.NoError(t, os.RemoveAll(componentDir))
+	}()
+
+	// Test
+	generatedPath, err := generateComponentPath(ctx, "some-component")
+
+	// Verify
+	require.NoError(t, err)
+
+	assert.Equal(t, componentDir, generatedPath)
 }

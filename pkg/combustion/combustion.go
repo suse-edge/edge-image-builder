@@ -1,7 +1,9 @@
 package combustion
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -49,4 +51,20 @@ func Configure(ctx *image.Context) error {
 	}
 
 	return nil
+}
+
+// generateComponentPath verifies whether a component directory exists under the root config directory.
+// Returns the full path to it if it exists e.g. `/config/rpms` or an empty string if not.
+func generateComponentPath(ctx *image.Context, componentDir string) (string, error) {
+	componentPath := filepath.Join(ctx.ImageConfigDir, componentDir)
+
+	_, err := os.Stat(componentPath)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return "", nil
+		}
+		return "", fmt.Errorf("checking for component directory %s: %w", componentPath, err)
+	}
+
+	return componentPath, nil
 }
