@@ -1,4 +1,4 @@
-package config
+package image
 
 import (
 	"os"
@@ -15,22 +15,22 @@ func TestParse(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test
-	imageConfig, err := Parse(configData)
+	definition, err := ParseDefinition(configData)
 	require.NoError(t, err)
 
 	// Verify
-	assert.Equal(t, "1.0", imageConfig.APIVersion)
-	assert.Equal(t, "iso", imageConfig.Image.ImageType)
-	assert.Equal(t, "slemicro5.5.iso", imageConfig.Image.BaseImage)
-	assert.Equal(t, "eibimage.iso", imageConfig.Image.OutputImageName)
+	assert.Equal(t, "1.0", definition.APIVersion)
+	assert.Equal(t, "iso", definition.Image.ImageType)
+	assert.Equal(t, "slemicro5.5.iso", definition.Image.BaseImage)
+	assert.Equal(t, "eibimage.iso", definition.Image.OutputImageName)
 
 	expectedKernelArgs := []string{
 		"alpha=foo",
 		"beta=bar",
 	}
-	assert.Equal(t, expectedKernelArgs, imageConfig.OperatingSystem.KernelArgs)
+	assert.Equal(t, expectedKernelArgs, definition.OperatingSystem.KernelArgs)
 
-	userConfigs := imageConfig.OperatingSystem.Users
+	userConfigs := definition.OperatingSystem.Users
 	require.Len(t, userConfigs, 3)
 	assert.Equal(t, "alpha", userConfigs[0].Username)
 	assert.Equal(t, "$6$bZfTI3Wj05fdxQcB$W1HJQTKw/MaGTCwK75ic9putEquJvYO7vMnDBVAfuAMFW58/79abky4mx9.8znK0UZwSKng9dVosnYQR1toH71", userConfigs[0].Password)
@@ -48,9 +48,9 @@ func TestParseBadConfig(t *testing.T) {
 	badData := []byte("Not actually YAML")
 
 	// Test
-	_, err := Parse(badData)
+	_, err := ParseDefinition(badData)
 
 	// Verify
 	require.Error(t, err)
-	assert.ErrorContains(t, err, "could not parse the image configuration")
+	assert.ErrorContains(t, err, "could not parse the image definition")
 }

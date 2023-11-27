@@ -1,4 +1,4 @@
-package build
+package combustion
 
 import (
 	_ "embed"
@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 )
 
@@ -15,35 +16,35 @@ const (
 	modifyRPMScriptName = "10-rpm-install.sh"
 )
 
-//go:embed scripts/rpms/10-rpm-install.sh.tpl
+//go:embed scripts/10-rpm-install.sh.tpl
 var modifyRPMScript string
 
-func (b *Builder) processRPMs() error {
-	rpmSourceDir, err := b.generateRPMPath()
+func configureRPMs(ctx *image.Context) ([]string, error) {
+	rpmSourceDir, err := generateRPMPath(ctx)
 	if err != nil {
-		return fmt.Errorf("generating RPM path: %w", err)
+		return nil, fmt.Errorf("generating RPM path: %w", err)
 	}
 	// Only proceed with processing the RPMs if the directory exists
 	if rpmSourceDir == "" {
-		return nil
+		return nil, nil
 	}
 
 	rpmFileNames, err := getRPMFileNames(rpmSourceDir)
 	if err != nil {
-		return fmt.Errorf("getting RPM file names: %w", err)
+		return nil, fmt.Errorf("getting RPM file names: %w", err)
 	}
 
-	err = copyRPMs(rpmSourceDir, b.context.CombustionDir, rpmFileNames)
+	err = copyRPMs(rpmSourceDir, ctx.CombustionDir, rpmFileNames)
 	if err != nil {
-		return fmt.Errorf("copying RPMs over: %w", err)
+		return nil, fmt.Errorf("copying RPMs over: %w", err)
 	}
 
-	err = b.writeRPMScript(rpmFileNames)
+	script, err := writeRPMScript(ctx, rpmFileNames)
 	if err != nil {
-		return fmt.Errorf("writing the RPM install script %s: %w", modifyRPMScriptName, err)
+		return nil, fmt.Errorf("writing the RPM install script %s: %w", modifyRPMScriptName, err)
 	}
 
-	return nil
+	return []string{script}, nil
 }
 
 func getRPMFileNames(rpmSourceDir string) ([]string, error) {
@@ -84,7 +85,7 @@ func copyRPMs(rpmSourceDir string, rpmDestDir string, rpmFileNames []string) err
 	return nil
 }
 
-func (b *Builder) writeRPMScript(rpmFileNames []string) error {
+func writeRPMScript(ctx *image.Context, rpmFileNames []string) (string, error) {
 	values := struct {
 		RPMs string
 	}{
@@ -93,22 +94,20 @@ func (b *Builder) writeRPMScript(rpmFileNames []string) error {
 
 	data, err := template.Parse(modifyRPMScriptName, modifyRPMScript, &values)
 	if err != nil {
-		return fmt.Errorf("parsing RPM script template: %w", err)
+		return "", fmt.Errorf("parsing RPM script template: %w", err)
 	}
 
-	filename := b.generateCombustionDirFilename(modifyRPMScriptName)
+	filename := filepath.Join(ctx.CombustionDir, modifyRPMScriptName)
 	err = os.WriteFile(filename, []byte(data), fileio.ExecutablePerms)
 	if err != nil {
-		return fmt.Errorf("writing RPM script: %w", err)
+		return "", fmt.Errorf("writing RPM script: %w", err)
 	}
 
-	b.registerCombustionScript(modifyRPMScriptName)
-
-	return nil
+	return modifyRPMScriptName, nil
 }
 
-func (b *Builder) generateRPMPath() (string, error) {
-	rpmSourceDir := filepath.Join(b.context.ImageConfigDir, "rpms")
+func generateRPMPath(ctx *image.Context) (string, error) {
+	rpmSourceDir := filepath.Join(ctx.ImageConfigDir, "rpms")
 	_, err := os.Stat(rpmSourceDir)
 	if err != nil {
 		if os.IsNotExist(err) {

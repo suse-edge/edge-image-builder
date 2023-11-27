@@ -1,4 +1,4 @@
-package build
+package combustion
 
 import (
 	"os"
@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestConfigureScripts(t *testing.T) {
@@ -18,7 +19,7 @@ func TestConfigureScripts(t *testing.T) {
 	defer os.RemoveAll(tmpSrcDir)
 
 	// - scripts directory to look in
-	fullScriptsDir := filepath.Join(tmpSrcDir, scriptsDir)
+	fullScriptsDir := filepath.Join(tmpSrcDir, customScriptsDir)
 	err = os.MkdirAll(fullScriptsDir, os.ModePerm)
 	require.NoError(t, err)
 
@@ -33,15 +34,13 @@ func TestConfigureScripts(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDestDir)
 
-	builder := &Builder{
-		context: &Context{
-			ImageConfigDir: tmpSrcDir,
-			CombustionDir:  tmpDestDir,
-		},
+	ctx := &image.Context{
+		ImageConfigDir: tmpSrcDir,
+		CombustionDir:  tmpDestDir,
 	}
 
 	// Test
-	err = builder.configureScripts()
+	scripts, err := configureCustomScripts(ctx)
 
 	// Verify
 	require.NoError(t, err)
@@ -53,7 +52,7 @@ func TestConfigureScripts(t *testing.T) {
 
 	// - make sure the copied files have the right permissions
 	for _, entry := range foundDirListing {
-		fullEntryPath := filepath.Join(builder.context.CombustionDir, entry.Name())
+		fullEntryPath := filepath.Join(ctx.CombustionDir, entry.Name())
 		stats, err := os.Stat(fullEntryPath)
 		require.NoError(t, err)
 		assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
@@ -61,7 +60,7 @@ func TestConfigureScripts(t *testing.T) {
 
 	// - make sure entries were added to the combustion scripts list, so they are
 	//   present in the script file that is generated
-	assert.Equal(t, 2, len(builder.combustionScripts))
+	assert.Equal(t, 2, len(scripts))
 }
 
 func TestConfigureScriptsNoScriptsDir(t *testing.T) {
@@ -70,17 +69,16 @@ func TestConfigureScriptsNoScriptsDir(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpSrcDir)
 
-	builder := &Builder{
-		context: &Context{
-			ImageConfigDir: tmpSrcDir,
-		},
+	ctx := &image.Context{
+		ImageConfigDir: tmpSrcDir,
 	}
 
 	// Test
-	err = builder.configureScripts()
+	scripts, err := configureCustomScripts(ctx)
 
 	// Verify
 	require.NoError(t, err)
+	assert.Nil(t, scripts)
 }
 
 func TestConfigureScriptsEmptyScriptsDir(t *testing.T) {
@@ -91,20 +89,19 @@ func TestConfigureScriptsEmptyScriptsDir(t *testing.T) {
 	defer os.RemoveAll(tmpSrcDir)
 
 	// - scripts directory to look in
-	fullScriptsDir := filepath.Join(tmpSrcDir, scriptsDir)
+	fullScriptsDir := filepath.Join(tmpSrcDir, customScriptsDir)
 	err = os.MkdirAll(fullScriptsDir, os.ModePerm)
 	require.NoError(t, err)
 
-	builder := &Builder{
-		context: &Context{
-			ImageConfigDir: tmpSrcDir,
-		},
+	ctx := &image.Context{
+		ImageConfigDir: tmpSrcDir,
 	}
 
 	// Test
-	err = builder.configureScripts()
+	scripts, err := configureCustomScripts(ctx)
 
 	// Verify
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "no scripts found in directory")
+	assert.ErrorContains(t, err, "no scripts found in directory")
+	assert.Nil(t, scripts)
 }

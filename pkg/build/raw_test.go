@@ -7,22 +7,23 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestCreateRawImageCopyCommand(t *testing.T) {
 	// Setup
-	imageConfig := config.ImageConfig{
-		Image: config.Image{
-			BaseImage:       "base-image",
-			OutputImageName: "build-image",
+	builder := Builder{
+		context: &image.Context{
+			ImageConfigDir: "config-dir",
+			ImageDefinition: &image.Definition{
+				Image: image.Image{
+					BaseImage:       "base-image",
+					OutputImageName: "build-image",
+				},
+			},
 		},
 	}
-	context := Context{
-		ImageConfigDir: "config-dir",
-	}
-	builder := New(&imageConfig, &context)
 
 	// Test
 	cmd := builder.createRawImageCopyCommand()
@@ -45,18 +46,20 @@ func TestWriteModifyScript(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
-	imageConfig := config.ImageConfig{
-		Image: config.Image{
-			OutputImageName: "output-image",
-		},
-		OperatingSystem: config.OperatingSystem{
-			KernelArgs: []string{"alpha", "beta"},
+	builder := Builder{
+		context: &image.Context{
+			ImageConfigDir: "config-dir",
+			BuildDir:       tmpDir,
+			ImageDefinition: &image.Definition{
+				Image: image.Image{
+					OutputImageName: "output-image",
+				},
+				OperatingSystem: image.OperatingSystem{
+					KernelArgs: []string{"alpha", "beta"},
+				},
+			},
 		},
 	}
-	context, err := NewContext("config-dir", tmpDir, false)
-	require.NoError(t, err)
-
-	builder := New(&imageConfig, context)
 
 	// Test
 	err = builder.writeModifyScript()
@@ -81,7 +84,7 @@ func TestWriteModifyScript(t *testing.T) {
 func TestCreateModifyCommand(t *testing.T) {
 	// Setup
 	builder := Builder{
-		context: &Context{
+		context: &image.Context{
 			BuildDir: "build-dir",
 		},
 	}

@@ -1,4 +1,4 @@
-package build
+package combustion
 
 import (
 	"os"
@@ -7,15 +7,18 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/config"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestConfigureUsers(t *testing.T) {
 	// Setup
-	imageConfig := &config.ImageConfig{
-		OperatingSystem: config.OperatingSystem{
-			Users: []config.OperatingSystemUser{
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition = &image.Definition{
+		OperatingSystem: image.OperatingSystem{
+			Users: []image.OperatingSystemUser{
 				{
 					Username: "alpha",
 					Password: "alpha123",
@@ -38,24 +41,16 @@ func TestConfigureUsers(t *testing.T) {
 		},
 	}
 
-	context, err := NewContext("", "", true)
-	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, CleanUpBuildDir(context))
-	}()
-
-	builder := &Builder{
-		imageConfig: imageConfig,
-		context:     context,
-	}
-
 	// Test
-	err = builder.configureUsers()
+	scripts, err := configureUsers(ctx)
 
 	// Verify
 	require.NoError(t, err)
 
-	expectedFilename := filepath.Join(context.CombustionDir, usersScriptName)
+	require.Len(t, scripts, 1)
+	assert.Equal(t, usersScriptName, scripts[0])
+
+	expectedFilename := filepath.Join(ctx.CombustionDir, usersScriptName)
 	foundBytes, err := os.ReadFile(expectedFilename)
 	require.NoError(t, err)
 
@@ -96,24 +91,18 @@ func TestConfigureUsers(t *testing.T) {
 
 func TestConfigureUsers_NoUsers(t *testing.T) {
 	// Setup
-	context, err := NewContext("", "", true)
-	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, CleanUpBuildDir(context))
-	}()
-
-	builder := &Builder{
-		imageConfig: &config.ImageConfig{},
-		context:     context,
-	}
+	ctx, teardown := setupContext(t)
+	defer teardown()
 
 	// Test
-	err = builder.configureUsers()
+	scripts, err := configureUsers(ctx)
 
 	// Verify
 	require.NoError(t, err)
 
-	expectedFilename := filepath.Join(context.CombustionDir, usersScriptName)
+	assert.Len(t, scripts, 0)
+
+	expectedFilename := filepath.Join(ctx.CombustionDir, usersScriptName)
 	_, err = os.ReadFile(expectedFilename)
 	require.ErrorIs(t, err, os.ErrNotExist)
 }

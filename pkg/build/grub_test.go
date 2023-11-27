@@ -5,17 +5,20 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/config"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestGenerateGRUBGuestfishCommands(t *testing.T) {
 	// Setup
-	imageConfig := config.ImageConfig{
-		OperatingSystem: config.OperatingSystem{
-			KernelArgs: []string{"alpha", "beta"},
+	builder := Builder{
+		context: &image.Context{
+			ImageDefinition: &image.Definition{
+				OperatingSystem: image.OperatingSystem{
+					KernelArgs: []string{"alpha", "beta"},
+				},
+			},
 		},
 	}
-	builder := New(&imageConfig, nil)
 
 	// Test
 	commandString, err := builder.generateGRUBGuestfishCommands()
@@ -33,10 +36,13 @@ func TestGenerateGRUBGuestfishCommands(t *testing.T) {
 
 func TestGenerateGRUBGuestfishCommandsNoArgs(t *testing.T) {
 	// Setup
-	imageConfig := config.ImageConfig{
-		OperatingSystem: config.OperatingSystem{},
+	builder := Builder{
+		context: &image.Context{
+			ImageDefinition: &image.Definition{
+				OperatingSystem: image.OperatingSystem{},
+			},
+		},
 	}
-	builder := New(&imageConfig, nil)
 
 	// Test
 	commandString, err := builder.generateGRUBGuestfishCommands()

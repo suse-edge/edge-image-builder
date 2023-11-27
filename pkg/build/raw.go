@@ -24,7 +24,7 @@ func (b *Builder) buildRawImage() error {
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("copying the base image %s to the output image location %s: %w",
-			b.imageConfig.Image.BaseImage, b.generateOutputImageFilename(), err)
+			b.context.ImageDefinition.Image.BaseImage, b.generateOutputImageFilename(), err)
 	}
 
 	err = b.writeModifyScript()
