@@ -14,7 +14,7 @@ const (
 	messageScriptName = "message.sh"
 )
 
-//go:embed scripts/message.sh
+//go:embed templates/message.sh
 var messageScript string
 
 func configureMessage(ctx *image.Context) ([]string, error) {

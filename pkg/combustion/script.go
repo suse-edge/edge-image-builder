@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-//go:embed scripts/script_base.sh
+//go:embed templates/script-base.sh
 var combustionScriptBase string
 
 func assembleScript(scripts []string) (string, error) {

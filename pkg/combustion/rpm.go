@@ -16,7 +16,7 @@ const (
 	modifyRPMScriptName = "10-rpm-install.sh"
 )
 
-//go:embed scripts/10-rpm-install.sh.tpl
+//go:embed templates/10-rpm-install.sh.tpl
 var modifyRPMScript string
 
 func configureRPMs(ctx *image.Context) ([]string, error) {

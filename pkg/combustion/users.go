@@ -15,7 +15,7 @@ const (
 	usersScriptName = "add-users.sh"
 )
 
-//go:embed scripts/add-users.sh.tpl
+//go:embed templates/add-users.sh.tpl
 var usersScript string
 
 func configureUsers(ctx *image.Context) ([]string, error) {

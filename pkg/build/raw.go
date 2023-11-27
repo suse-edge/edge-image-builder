@@ -16,7 +16,7 @@ const (
 	modifyScriptName = "modify-raw-image.sh"
 )
 
-//go:embed scripts/modify-raw-image.sh.tpl
+//go:embed templates/modify-raw-image.sh.tpl
 var modifyRawImageTemplate string
 
 func (b *Builder) buildRawImage() error {
