@@ -8,7 +8,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 )
 
-//go:embed scripts/grub/guestfish-snippet.tpl
+//go:embed templates/grub/guestfish-snippet.tpl
 var guestfishSnippet string
 
 func (b *Builder) generateGRUBGuestfishCommands() (string, error) {
