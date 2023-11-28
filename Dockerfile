@@ -16,6 +16,11 @@ RUN zypper install -y \
     xorriso  \
     libguestfs kernel-default e2fsprogs parted gptfdisk btrfsprogs
 
+# TODO: Install nmc via zypper once an RPM package is available
+RUN curl -o nmc -L https://github.com/suse-edge/nm-configurator/releases/latest/download/nmc-linux-$(uname -m) && \
+    chmod +x nmc && \
+    mv nmc /usr/local/bin
+
 COPY --from=0 /src/eib /bin/eib
 
 CMD ["/bin/eib"]
