@@ -17,19 +17,19 @@ func TestFormatComponentStatus(t *testing.T) {
 		{
 			testName:  "Success test",
 			component: "myComponent",
-			status:	messageSuccess,
+			status:    messageSuccess,
 			expected:  "Mycomponent .................. [SUCCESS]",
 		},
 		{
 			testName:  "Skipped test",
 			component: "my component",
-			status:	messageSkipped,
+			status:    messageSkipped,
 			expected:  "My Component ................. [SKIPPED]",
 		},
 		{
 			testName:  "Failed test",
 			component: "MYCOMPONENT",
-			status:	messageFailed,
+			status:    messageFailed,
 			expected:  "Mycomponent .................. [FAILED ]",
 		},
 	}

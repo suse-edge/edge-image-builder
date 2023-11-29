@@ -5,7 +5,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
+)
+
+const (
+	kernelComponentName = "kernel params"
 )
 
 //go:embed templates/grub/guestfish-snippet.tpl
@@ -16,6 +21,7 @@ func (b *Builder) generateGRUBGuestfishCommands() (string, error) {
 	// into the raw image guestfish modification, effectively doing nothing but not breaking
 	// the guestfish command
 	if b.context.ImageDefinition.OperatingSystem.KernelArgs == nil {
+		log.AuditComponentSkipped(kernelComponentName)
 		return "", nil
 	}
 
@@ -28,8 +34,10 @@ func (b *Builder) generateGRUBGuestfishCommands() (string, error) {
 
 	snippet, err := template.Parse("guestfish-snippet", guestfishSnippet, values)
 	if err != nil {
+		log.AuditComponentFailed(kernelComponentName)
 		return "", fmt.Errorf("parsing GRUB guestfish snippet: %w", err)
 	}
 
+	log.AuditComponentSuccessful(kernelComponentName)
 	return snippet, nil
 }
