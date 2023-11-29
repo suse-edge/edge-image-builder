@@ -47,23 +47,17 @@ var configureNetworkScript string
 //	│   └── nmc
 //	└── configure-network.sh
 func configureNetwork(ctx *image.Context) ([]string, error) {
-	networkDir, err := generateComponentPath(ctx, networkConfigDir)
-	if err != nil {
-		return nil, fmt.Errorf("generating network path: %w", err)
-	}
-
-	if networkDir == "" {
-		// Networking is not configured, exit early
+	if !isComponentConfigured(ctx, networkConfigDir) {
 		return nil, nil
 	}
 
 	zap.L().Info("Configuring network component...")
 
-	if err = generateNetworkConfig(ctx, networkDir); err != nil {
+	if err := generateNetworkConfig(ctx); err != nil {
 		return nil, fmt.Errorf("generating network config: %w", err)
 	}
 
-	if err = writeNMCExecutable(ctx); err != nil {
+	if err := writeNMCExecutable(ctx); err != nil {
 		return nil, fmt.Errorf("writing nmc executable: %w", err)
 	}
 
@@ -77,7 +71,7 @@ func configureNetwork(ctx *image.Context) ([]string, error) {
 	return []string{scriptName}, nil
 }
 
-func generateNetworkConfig(ctx *image.Context, configDir string) error {
+func generateNetworkConfig(ctx *image.Context) error {
 	logFilename := generateNetworkLogFilename(ctx)
 	logFile, err := os.Create(logFilename)
 	if err != nil {
@@ -90,6 +84,7 @@ func generateNetworkConfig(ctx *image.Context, configDir string) error {
 		}
 	}()
 
+	configDir := generateComponentPath(ctx, networkConfigDir)
 	combustionNetworkDir := filepath.Join(ctx.CombustionDir, networkConfigDir, nmcConfigDir)
 
 	cmd := exec.Command(nmcExecutable, "generate",

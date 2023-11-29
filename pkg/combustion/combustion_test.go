@@ -41,15 +41,22 @@ func TestGenerateComponentPath(t *testing.T) {
 
 	componentDir := filepath.Join(ctx.ImageConfigDir, "some-component")
 	require.NoError(t, os.Mkdir(componentDir, 0o755))
-	defer func() {
-		assert.NoError(t, os.RemoveAll(componentDir))
-	}()
 
 	// Test
-	generatedPath, err := generateComponentPath(ctx, "some-component")
+	generatedPath := generateComponentPath(ctx, "some-component")
 
 	// Verify
-	require.NoError(t, err)
-
 	assert.Equal(t, componentDir, generatedPath)
+}
+
+func TestIsComponentConfigured(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	componentDir := filepath.Join(ctx.ImageConfigDir, "existing-component")
+	require.NoError(t, os.Mkdir(componentDir, 0o755))
+
+	assert.True(t, isComponentConfigured(ctx, "existing-component"))
+	assert.False(t, isComponentConfigured(ctx, "missing-component"))
+	assert.False(t, isComponentConfigured(ctx, ""))
 }

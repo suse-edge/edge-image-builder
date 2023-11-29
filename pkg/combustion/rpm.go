@@ -21,14 +21,11 @@ const (
 var modifyRPMScript string
 
 func configureRPMs(ctx *image.Context) ([]string, error) {
-	rpmSourceDir, err := generateComponentPath(ctx, userRPMsDir)
-	if err != nil {
-		return nil, fmt.Errorf("generating RPM path: %w", err)
-	}
-	// Only proceed with processing the RPMs if the directory exists
-	if rpmSourceDir == "" {
+	if !isComponentConfigured(ctx, userRPMsDir) {
 		return nil, nil
 	}
+
+	rpmSourceDir := generateComponentPath(ctx, userRPMsDir)
 
 	rpmFileNames, err := getRPMFileNames(rpmSourceDir)
 	if err != nil {

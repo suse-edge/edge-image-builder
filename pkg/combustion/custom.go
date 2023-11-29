@@ -14,15 +14,11 @@ const (
 )
 
 func configureCustomScripts(ctx *image.Context) ([]string, error) {
-	fullScriptsDir, err := generateComponentPath(ctx, customScriptsDir)
-	if err != nil {
-		return nil, fmt.Errorf("generating custom scripts path: %w", err)
-	}
-
-	if fullScriptsDir == "" {
-		// Nothing to do if the image config dir doesn't have the scripts directory
+	if !isComponentConfigured(ctx, customScriptsDir) {
 		return nil, nil
 	}
+
+	fullScriptsDir := generateComponentPath(ctx, customScriptsDir)
 
 	dirListing, err := os.ReadDir(fullScriptsDir)
 	if err != nil {

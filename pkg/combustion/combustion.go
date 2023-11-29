@@ -9,6 +9,7 @@ import (
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"go.uber.org/zap"
 )
 
 // configureComponent defines the combustion component contract.
@@ -54,18 +55,28 @@ func Configure(ctx *image.Context) error {
 	return nil
 }
 
-// generateComponentPath verifies whether a component directory exists under the root config directory.
-// Returns the full path to it if it exists e.g. `/config/rpms` or an empty string if not.
-func generateComponentPath(ctx *image.Context, componentDir string) (string, error) {
-	componentPath := filepath.Join(ctx.ImageConfigDir, componentDir)
+func generateComponentPath(ctx *image.Context, componentDir string) string {
+	return filepath.Join(ctx.ImageConfigDir, componentDir)
+}
 
-	_, err := os.Stat(componentPath)
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return "", nil
-		}
-		return "", fmt.Errorf("checking for component directory %s: %w", componentPath, err)
+func isComponentConfigured(ctx *image.Context, componentDir string) bool {
+	if componentDir == "" {
+		zap.L().Warn("Component dir not provided")
+		return false
 	}
 
-	return componentPath, nil
+	componentPath := generateComponentPath(ctx, componentDir)
+
+	_, err := os.Stat(componentPath)
+	if err == nil {
+		return true
+	}
+
+	if !errors.Is(err, fs.ErrNotExist) {
+		zap.L().Warn("Searching for component directory failed. Component will be skipped.",
+			zap.String("component", componentDir),
+			zap.Error(err))
+	}
+
+	return false
 }
