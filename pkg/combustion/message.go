@@ -8,10 +8,12 @@ import (
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"github.com/suse-edge/edge-image-builder/pkg/log"
 )
 
 const (
-	messageScriptName = "message.sh"
+	messageScriptName    = "message.sh"
+	messageComponentName = "identifier"
 )
 
 //go:embed templates/message.sh
@@ -21,8 +23,10 @@ func configureMessage(ctx *image.Context) ([]string, error) {
 	filename := filepath.Join(ctx.CombustionDir, messageScriptName)
 
 	if err := os.WriteFile(filename, []byte(messageScript), fileio.ExecutablePerms); err != nil {
+		log.AuditComponentFailed(messageComponentName)
 		return nil, fmt.Errorf("copying script %s: %w", messageScriptName, err)
 	}
 
+	log.AuditComponentSuccessful(messageComponentName)
 	return []string{messageScriptName}, nil
 }
