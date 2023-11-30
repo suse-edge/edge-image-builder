@@ -11,6 +11,10 @@ type NetworkConfigGenerator interface {
 	GenerateNetworkConfig(configDir, outputDir string, outputWriter io.Writer) error
 }
 
+type NetworkConfiguratorInstaller interface {
+	InstallConfigurator(imageName, installPath string) error
+}
+
 type Context struct {
 	// ImageConfigDir is the root directory storing all configuration files.
 	ImageConfigDir string
@@ -21,11 +25,18 @@ type Context struct {
 	// DeleteBuildDir indicates whether the BuildDir should be cleaned up after the image is built.
 	DeleteBuildDir bool
 	// ImageDefinition contains the image definition properties.
-	ImageDefinition        *Definition
-	NetworkConfigGenerator NetworkConfigGenerator
+	ImageDefinition              *Definition
+	NetworkConfigGenerator       NetworkConfigGenerator
+	NetworkConfiguratorInstaller NetworkConfiguratorInstaller
 }
 
-func NewContext(imageConfigDir, buildDir string, deleteBuildDir bool, definition *Definition, generator NetworkConfigGenerator) (*Context, error) {
+func NewContext(
+	imageConfigDir, buildDir string,
+	deleteBuildDir bool,
+	definition *Definition,
+	generator NetworkConfigGenerator,
+	installer NetworkConfiguratorInstaller,
+) (*Context, error) {
 	if buildDir == "" {
 		tmpDir, err := os.MkdirTemp("", "eib-")
 		if err != nil {
@@ -40,12 +51,13 @@ func NewContext(imageConfigDir, buildDir string, deleteBuildDir bool, definition
 	}
 
 	return &Context{
-		ImageConfigDir:         imageConfigDir,
-		BuildDir:               buildDir,
-		CombustionDir:          combustionDir,
-		DeleteBuildDir:         deleteBuildDir,
-		ImageDefinition:        definition,
-		NetworkConfigGenerator: generator,
+		ImageConfigDir:               imageConfigDir,
+		BuildDir:                     buildDir,
+		CombustionDir:                combustionDir,
+		DeleteBuildDir:               deleteBuildDir,
+		ImageDefinition:              definition,
+		NetworkConfigGenerator:       generator,
+		NetworkConfiguratorInstaller: installer,
 	}, nil
 }
 

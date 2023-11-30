@@ -50,7 +50,7 @@ func processArgs() (*image.Context, error) {
 		return nil, fmt.Errorf("validating the config dir %s: %w", configDir, err)
 	}
 
-	ctx, err := image.NewContext(configDir, buildDir, deleteBuildDir, imageDefinition, network.ConfigGenerator{})
+	ctx, err := image.NewContext(configDir, buildDir, deleteBuildDir, imageDefinition, network.ConfigGenerator{}, network.ConfiguratorInstaller{})
 	if err != nil {
 		return nil, fmt.Errorf("building dir structure: %w", err)
 	}

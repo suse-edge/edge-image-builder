@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -58,8 +57,9 @@ func configureNetwork(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("generating network config: %w", err)
 	}
 
-	if err := writeNMCExecutable(ctx); err != nil {
-		return nil, fmt.Errorf("writing nmc executable: %w", err)
+	installPath := filepath.Join(ctx.CombustionDir, nmcExecutable)
+	if err := ctx.NetworkConfiguratorInstaller.InstallConfigurator(ctx.ImageDefinition.Image.BaseImage, installPath); err != nil {
+		return nil, fmt.Errorf("installing configurator: %w", err)
 	}
 
 	scriptName, err := writeNetworkConfigurationScript(ctx)
@@ -98,20 +98,6 @@ func generateNetworkLogFilename(ctx *image.Context) string {
 	filename := fmt.Sprintf(networkConfigLogFile, timestamp)
 
 	return filepath.Join(ctx.BuildDir, filename)
-}
-
-func writeNMCExecutable(ctx *image.Context) error {
-	nmcPath, err := exec.LookPath(nmcExecutable)
-	if err != nil {
-		return fmt.Errorf("searching for executable: %w", err)
-	}
-
-	destPath := filepath.Join(ctx.CombustionDir, nmcExecutable)
-	if err = fileio.CopyFile(nmcPath, destPath, fileio.ExecutablePerms); err != nil {
-		return fmt.Errorf("copying executable: %w", err)
-	}
-
-	return nil
 }
 
 func writeNetworkConfigurationScript(ctx *image.Context) (string, error) {

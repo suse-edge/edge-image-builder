@@ -43,7 +43,7 @@ func TestGenerateCommand(t *testing.T) {
 }
 
 // TODO: Set up working example once nmc is available as an RPM
-func TestGenerateNetworkConfig_ExecutableMissing(t *testing.T) {
+func TestConfigGenerator_GenerateNetworkConfig_MissingExecutable(t *testing.T) {
 	inputConfigDir, outputConfigDir, teardown := setup(t)
 	defer teardown()
 
