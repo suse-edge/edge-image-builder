@@ -38,7 +38,7 @@ func (ConfiguratorInstaller) InstallConfigurator(imageName, installPath string) 
 
 	downloadURL := fmt.Sprintf(nmcDownloadURL, arch)
 
-	resp, err := http.Get(downloadURL)
+	resp, err := http.Get(downloadURL) // nolint: gosec
 	if err != nil {
 		return fmt.Errorf("downloading configurator: %w", err)
 	}
