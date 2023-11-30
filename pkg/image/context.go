@@ -2,9 +2,14 @@ package image
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 )
+
+type NetworkConfigGenerator interface {
+	GenerateNetworkConfig(configDir, outputDir string, outputWriter io.Writer) error
+}
 
 type Context struct {
 	// ImageConfigDir is the root directory storing all configuration files.
@@ -16,10 +21,11 @@ type Context struct {
 	// DeleteBuildDir indicates whether the BuildDir should be cleaned up after the image is built.
 	DeleteBuildDir bool
 	// ImageDefinition contains the image definition properties.
-	ImageDefinition *Definition
+	ImageDefinition        *Definition
+	NetworkConfigGenerator NetworkConfigGenerator
 }
 
-func NewContext(imageConfigDir, buildDir string, deleteBuildDir bool, definition *Definition) (*Context, error) {
+func NewContext(imageConfigDir, buildDir string, deleteBuildDir bool, definition *Definition, generator NetworkConfigGenerator) (*Context, error) {
 	if buildDir == "" {
 		tmpDir, err := os.MkdirTemp("", "eib-")
 		if err != nil {
@@ -34,11 +40,12 @@ func NewContext(imageConfigDir, buildDir string, deleteBuildDir bool, definition
 	}
 
 	return &Context{
-		ImageConfigDir:  imageConfigDir,
-		BuildDir:        buildDir,
-		CombustionDir:   combustionDir,
-		DeleteBuildDir:  deleteBuildDir,
-		ImageDefinition: definition,
+		ImageConfigDir:         imageConfigDir,
+		BuildDir:               buildDir,
+		CombustionDir:          combustionDir,
+		DeleteBuildDir:         deleteBuildDir,
+		ImageDefinition:        definition,
+		NetworkConfigGenerator: generator,
 	}, nil
 }
 

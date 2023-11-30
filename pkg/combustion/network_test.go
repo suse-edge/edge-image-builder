@@ -2,9 +2,9 @@ package combustion
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,34 +12,65 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
-func TestGenerateNetworkConfigCommand(t *testing.T) {
-	ctx, teardown := setupContext(t)
-	defer teardown()
-
-	var sb strings.Builder
-
-	cmd := generateNetworkConfigCommand(ctx, &sb)
-
-	expectedArgs := []string{
-		"nmc",
-		"generate",
-		"--config-dir", fmt.Sprintf("%s/network", ctx.ImageConfigDir),
-		"--output-dir", fmt.Sprintf("%s/network/config", ctx.CombustionDir),
-	}
-
-	assert.Equal(t, expectedArgs, cmd.Args)
-	assert.Equal(t, &sb, cmd.Stdout)
-	assert.Equal(t, &sb, cmd.Stderr)
+type mockNetworkConfigGenerator struct {
+	generateNetworkConfigFunc func(configDir, outputDir string, outputWriter io.Writer) error
 }
 
-func TestGenerateNetworkConfig_ExecutableMissing(t *testing.T) {
+func (m mockNetworkConfigGenerator) GenerateNetworkConfig(configDir, outputDir string, outputWriter io.Writer) error {
+	if m.generateNetworkConfigFunc != nil {
+		return m.generateNetworkConfigFunc(configDir, outputDir, outputWriter)
+	}
+
+	panic("not implemented")
+}
+
+func TestConfigureNetwork_NotConfigured(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
-	err := generateNetworkConfig(ctx)
+	scripts, err := configureNetwork(ctx)
+	require.NoError(t, err)
+	assert.Nil(t, scripts)
+}
+
+func TestConfigureNetwork_GenerateConfigError(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	networkDir := filepath.Join(ctx.ImageConfigDir, networkConfigDir)
+	require.NoError(t, os.Mkdir(networkDir, 0o600))
+
+	ctx.NetworkConfigGenerator = mockNetworkConfigGenerator{
+		generateNetworkConfigFunc: func(configDir, outputDir string, outputWriter io.Writer) error {
+			return fmt.Errorf("no config for you")
+		},
+	}
+
+	scripts, err := configureNetwork(ctx)
 	require.Error(t, err)
-	assert.ErrorContains(t, err, "running generate command")
-	assert.ErrorContains(t, err, "executable file not found")
+	assert.EqualError(t, err, "generating network config: no config for you")
+
+	assert.Nil(t, scripts)
+}
+
+func TestConfigureNetwork_CopyExecutableError(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	networkDir := filepath.Join(ctx.ImageConfigDir, networkConfigDir)
+	require.NoError(t, os.Mkdir(networkDir, 0o600))
+
+	ctx.NetworkConfigGenerator = mockNetworkConfigGenerator{
+		generateNetworkConfigFunc: func(configDir, outputDir string, outputWriter io.Writer) error {
+			return nil
+		},
+	}
+
+	scripts, err := configureNetwork(ctx)
+	require.Error(t, err)
+	assert.EqualError(t, err, "writing nmc executable: searching for executable: exec: \"nmc\": executable file not found in $PATH")
+
+	assert.Nil(t, scripts)
 }
 
 func TestWriteNetworkConfigurationScript(t *testing.T) {
@@ -54,7 +85,7 @@ func TestWriteNetworkConfigurationScript(t *testing.T) {
 	data, err := os.ReadFile(scriptPath)
 	require.NoError(t, err)
 
-	assert.Contains(t, string(data), "./network/nmc apply --config-dir network/config")
+	assert.Contains(t, string(data), "./nmc apply --config-dir network")
 
 	info, err := os.Stat(scriptPath)
 	require.NoError(t, err)

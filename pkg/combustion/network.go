@@ -3,7 +3,6 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,8 +15,9 @@ import (
 )
 
 const (
-	nmcExecutable           = "nmc"
-	nmcConfigDir            = "config"
+	nmcExecutable = "nmc"
+	// Used for both input component source and
+	// output configurations subdirectory under combustion.
 	networkConfigDir        = "network"
 	networkConfigScriptName = "configure-network.sh"
 )
@@ -35,17 +35,16 @@ var configureNetworkScript string
 //
 //	combustion
 //	├── network
-//	│   ├── config
-//	│   │   ├── node1.example.com
-//	│   │   │   ├── eth0.nmconnection
-//	│   │   │   └── eth1.nmconnection
-//	│   │   ├── node2.example.com
-//	│   │   │   └── eth0.nmconnection
-//	│   │   ├── node3.example.com
-//	│   │   │   ├── bond0.nmconnection
-//	│   │   │   └── eth1.nmconnection
-//	│   │   └── host_config.yaml
-//	│   └── nmc
+//	│   ├── node1.example.com
+//	│   │   ├── eth0.nmconnection
+//	│   │   └── eth1.nmconnection
+//	│   ├── node2.example.com
+//	│   │   └── eth0.nmconnection
+//	│   ├── node3.example.com
+//	│   │   ├── bond0.nmconnection
+//	│   │   └── eth1.nmconnection
+//	│   └── host_config.yaml
+//	├── nmc
 //	└── configure-network.sh
 func configureNetwork(ctx *image.Context) ([]string, error) {
 	zap.L().Info("Configuring network component...")
@@ -86,26 +85,10 @@ func generateNetworkConfig(ctx *image.Context) error {
 		}
 	}()
 
-	cmd := generateNetworkConfigCommand(ctx, logFile)
-	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("running generate command: %w", err)
-	}
-
-	return nil
-}
-
-func generateNetworkConfigCommand(ctx *image.Context, output io.Writer) *exec.Cmd {
 	configDir := generateComponentPath(ctx, networkConfigDir)
-	combustionNetworkDir := filepath.Join(ctx.CombustionDir, networkConfigDir, nmcConfigDir)
+	outputDir := filepath.Join(ctx.CombustionDir, networkConfigDir)
 
-	cmd := exec.Command(nmcExecutable, "generate",
-		"--config-dir", configDir,
-		"--output-dir", combustionNetworkDir)
-
-	cmd.Stdout = output
-	cmd.Stderr = output
-
-	return cmd
+	return ctx.NetworkConfigGenerator.GenerateNetworkConfig(configDir, outputDir, logFile)
 }
 
 func generateNetworkLogFilename(ctx *image.Context) string {
@@ -123,7 +106,7 @@ func writeNMCExecutable(ctx *image.Context) error {
 		return fmt.Errorf("searching for executable: %w", err)
 	}
 
-	destPath := filepath.Join(ctx.CombustionDir, networkConfigDir, nmcExecutable)
+	destPath := filepath.Join(ctx.CombustionDir, nmcExecutable)
 	if err = fileio.CopyFile(nmcPath, destPath, fileio.ExecutablePerms); err != nil {
 		return fmt.Errorf("copying executable: %w", err)
 	}
@@ -133,11 +116,9 @@ func writeNMCExecutable(ctx *image.Context) error {
 
 func writeNetworkConfigurationScript(ctx *image.Context) (string, error) {
 	values := struct {
-		NMCExecutablePath string
-		ConfigDir         string
+		ConfigDir string
 	}{
-		ConfigDir:         filepath.Join(networkConfigDir, nmcConfigDir),
-		NMCExecutablePath: filepath.Join(networkConfigDir, nmcExecutable),
+		ConfigDir: networkConfigDir,
 	}
 
 	data, err := template.Parse(networkConfigScriptName, configureNetworkScript, &values)
