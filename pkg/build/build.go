@@ -34,13 +34,13 @@ func (b *Builder) Build() error {
 	case image.TypeISO:
 		log.Audit("Building ISO image...")
 		if err := b.buildIsoImage(); err != nil {
-			log.Audit("Error building ISO image")
+			log.Audit("Error building ISO image, check the logs under the build directory for more information.")
 			return err
 		}
 	case image.TypeRAW:
 		log.Audit("Building RAW image...")
 		if err := b.buildRawImage(); err != nil {
-			log.Audit("Error building RAW image")
+			log.Audit("Error building RAW image, check the logs under the build directory for more information.")
 			return err
 		}
 	default:
