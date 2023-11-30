@@ -47,11 +47,12 @@ var configureNetworkScript string
 //	│   └── nmc
 //	└── configure-network.sh
 func configureNetwork(ctx *image.Context) ([]string, error) {
+	zap.L().Info("Configuring network component...")
+
 	if !isComponentConfigured(ctx, networkConfigDir) {
+		zap.L().Info("Skipping network component. Configuration is not provided")
 		return nil, nil
 	}
-
-	zap.L().Info("Configuring network component...")
 
 	if err := generateNetworkConfig(ctx); err != nil {
 		return nil, fmt.Errorf("generating network config: %w", err)
