@@ -3,6 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -85,20 +86,26 @@ func generateNetworkConfig(ctx *image.Context) error {
 		}
 	}()
 
+	cmd := generateNetworkConfigCommand(ctx, logFile)
+	if err = cmd.Run(); err != nil {
+		return fmt.Errorf("running generate command: %w", err)
+	}
+
+	return nil
+}
+
+func generateNetworkConfigCommand(ctx *image.Context, output io.Writer) *exec.Cmd {
 	configDir := generateComponentPath(ctx, networkConfigDir)
 	combustionNetworkDir := filepath.Join(ctx.CombustionDir, networkConfigDir, nmcConfigDir)
 
 	cmd := exec.Command(nmcExecutable, "generate",
 		"--config-dir", configDir,
 		"--output-dir", combustionNetworkDir)
-	cmd.Stdout = logFile
-	cmd.Stderr = logFile
 
-	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("running nmc generate: %w", err)
-	}
+	cmd.Stdout = output
+	cmd.Stderr = output
 
-	return nil
+	return cmd
 }
 
 func generateNetworkLogFilename(ctx *image.Context) string {
