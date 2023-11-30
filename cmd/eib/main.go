@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -37,8 +39,6 @@ func processArgs() (*image.Context, error) {
 	flag.BoolVar(&verbose, argVerbose, false, "enables extra logging information")
 	flag.Parse()
 
-	setupLogging(verbose)
-
 	imageDefinition, err := parseImageDefinition(configFile, configDir)
 	if err != nil {
 		return nil, fmt.Errorf("parsing image definition file %s: %w", configFile, err)
@@ -54,29 +54,34 @@ func processArgs() (*image.Context, error) {
 		return nil, fmt.Errorf("building dir structure: %w", err)
 	}
 
-	return ctx, err
+	setupLogging(ctx, verbose)
+
+	return ctx, nil
 }
 
-func setupLogging(verbose bool) {
+func generateBuildLogFilename(ctx *image.Context) string {
+	const buildLogFile = "eib-build-%s.log"
+
+	timestamp := time.Now().Format("Jan02_15-04-05")
+	filename := fmt.Sprintf(buildLogFile, timestamp)
+
+	return filepath.Join(ctx.BuildDir, filename)
+}
+
+func setupLogging(ctx *image.Context, verbose bool) {
+	logFilename := generateBuildLogFilename(ctx)
+
 	logLevel := zap.InfoLevel
 	if verbose {
 		logLevel = zap.DebugLevel
 	}
 
-	encoderCfg := zap.NewProductionEncoderConfig()
-	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
-
-	logConfig := zap.Config{
-		Level:         zap.NewAtomicLevelAt(logLevel),
-		Encoding:      "console",
-		EncoderConfig: encoderCfg,
-		OutputPaths: []string{
-			"stdout",
-		},
-		ErrorOutputPaths: []string{
-			"stderr",
-		},
-	}
+	logConfig := zap.NewProductionConfig()
+	logConfig.Level = zap.NewAtomicLevelAt(logLevel)
+	logConfig.Encoding = "console"
+	logConfig.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	logConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	logConfig.OutputPaths = []string{logFilename}
 
 	logger := zap.Must(logConfig.Build())
 
@@ -113,7 +118,8 @@ func validateImageConfigDir(configDir string) error {
 func main() {
 	ctx, err := processArgs()
 	if err != nil {
-		zap.L().Fatal("CLI arguments could not be parsed", zap.Error(err))
+		// use standard logger, zap is not yet configured
+		log.Fatalf("CLI arguments could not be parsed: %s", err)
 	}
 
 	builder := build.New(ctx)
