@@ -32,6 +32,16 @@ func TestGenerateNetworkConfigCommand(t *testing.T) {
 	assert.Equal(t, &sb, cmd.Stderr)
 }
 
+func TestGenerateNetworkConfig_ExecutableMissing(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	err := generateNetworkConfig(ctx)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "running generate command")
+	assert.ErrorContains(t, err, "executable file not found")
+}
+
 func TestWriteNetworkConfigurationScript(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
