@@ -26,11 +26,11 @@ func Configure(ctx *image.Context) error {
 	var combustionScripts []string
 
 	combustionComponents := map[string]configureComponent{
-		"network": configureNetwork,
-		"message": configureMessage,
-		"users":   configureUsers,
-		"rpm":     configureRPMs,
-		"custom":  configureCustomScripts,
+		"network":            configureNetwork,
+		messageComponentName: configureMessage,
+		usersComponentName:   configureUsers,
+		rpmComponentName:     configureRPMs,
+		customComponentName:  configureCustomScripts,
 	}
 
 	for componentName, configureFunc := range combustionComponents {
