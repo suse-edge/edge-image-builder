@@ -9,12 +9,14 @@ import (
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
 )
 
 const (
-	nmcExecutable = "nmc"
+	networkComponentName = "network"
+	nmcExecutable        = "nmc"
 	// Used for both input component source and
 	// output configurations subdirectory under combustion.
 	networkConfigDir        = "network"
@@ -49,23 +51,28 @@ func configureNetwork(ctx *image.Context) ([]string, error) {
 	zap.L().Info("Configuring network component...")
 
 	if !isComponentConfigured(ctx, networkConfigDir) {
+		log.AuditComponentSkipped(networkComponentName)
 		zap.L().Info("Skipping network component. Configuration is not provided")
 		return nil, nil
 	}
 
 	if err := generateNetworkConfig(ctx); err != nil {
+		log.AuditComponentFailed(networkComponentName)
 		return nil, fmt.Errorf("generating network config: %w", err)
 	}
 
 	if err := installNetworkConfigurator(ctx); err != nil {
+		log.AuditComponentFailed(networkComponentName)
 		return nil, fmt.Errorf("installing configurator: %w", err)
 	}
 
 	scriptName, err := writeNetworkConfigurationScript(ctx)
 	if err != nil {
+		log.AuditComponentFailed(networkComponentName)
 		return nil, fmt.Errorf("writing network configuration script: %w", err)
 	}
 
+	log.AuditComponentSuccessful(networkComponentName)
 	zap.L().Info("Successfully configured network component")
 
 	return []string{scriptName}, nil

@@ -22,8 +22,8 @@ func TestConfiguratorInstaller_InstallConfigurator(t *testing.T) {
 		assert.NoError(t, os.RemoveAll(srcDir))
 	}()
 
-	assert.NoError(t, os.WriteFile(filepath.Join(srcDir, "nmc-x86_64"), amdBinaryContents, fileio.NonExecutablePerms))
-	assert.NoError(t, os.WriteFile(filepath.Join(srcDir, "nmc-aarch64"), armBinaryContents, fileio.NonExecutablePerms))
+	require.NoError(t, os.WriteFile(filepath.Join(srcDir, "nmc-x86_64"), amdBinaryContents, fileio.NonExecutablePerms))
+	require.NoError(t, os.WriteFile(filepath.Join(srcDir, "nmc-aarch64"), armBinaryContents, fileio.NonExecutablePerms))
 
 	destDir, err := os.MkdirTemp("", "eib-configurator-installer-dest-")
 	require.NoError(t, err)

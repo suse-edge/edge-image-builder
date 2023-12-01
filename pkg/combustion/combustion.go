@@ -26,7 +26,7 @@ func Configure(ctx *image.Context) error {
 	var combustionScripts []string
 
 	combustionComponents := map[string]configureComponent{
-		"network":            configureNetwork,
+		networkComponentName: configureNetwork,
 		messageComponentName: configureMessage,
 		usersComponentName:   configureUsers,
 		rpmComponentName:     configureRPMs,
