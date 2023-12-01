@@ -57,8 +57,7 @@ func configureNetwork(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("generating network config: %w", err)
 	}
 
-	installPath := filepath.Join(ctx.CombustionDir, nmcExecutable)
-	if err := ctx.NetworkConfiguratorInstaller.InstallConfigurator(ctx.ImageDefinition.Image.BaseImage, installPath); err != nil {
+	if err := installNetworkConfigurator(ctx); err != nil {
 		return nil, fmt.Errorf("installing configurator: %w", err)
 	}
 
@@ -98,6 +97,13 @@ func generateNetworkLogFilename(ctx *image.Context) string {
 	filename := fmt.Sprintf(networkConfigLogFile, timestamp)
 
 	return filepath.Join(ctx.BuildDir, filename)
+}
+
+func installNetworkConfigurator(ctx *image.Context) error {
+	sourcePath := "/" // root level of the container image
+	installPath := filepath.Join(ctx.CombustionDir, nmcExecutable)
+
+	return ctx.NetworkConfiguratorInstaller.InstallConfigurator(ctx.ImageDefinition.Image.BaseImage, sourcePath, installPath)
 }
 
 func writeNetworkConfigurationScript(ctx *image.Context) (string, error) {

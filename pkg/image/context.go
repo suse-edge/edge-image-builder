@@ -12,7 +12,7 @@ type NetworkConfigGenerator interface {
 }
 
 type NetworkConfiguratorInstaller interface {
-	InstallConfigurator(imageName, installPath string) error
+	InstallConfigurator(imageName, sourcePath, installPath string) error
 }
 
 type Context struct {

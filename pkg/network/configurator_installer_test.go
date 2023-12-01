@@ -1,48 +1,93 @@
 package network
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
-func TestConfiguratorInstaller_InstallConfigurator_InvalidArch(t *testing.T) {
-	var installer ConfiguratorInstaller
+func TestConfiguratorInstaller_InstallConfigurator(t *testing.T) {
+	amdBinaryContents := []byte("amd")
+	armBinaryContents := []byte("arm")
 
-	err := installer.InstallConfigurator("abc", "def")
-	require.Error(t, err)
-	assert.EqualError(t, err, "failed to determine arch of image abc")
-}
-
-func TestConfiguratorInstaller_InstallConfigurator_AMD(t *testing.T) {
-	t.Skip()
-
-	tmpDir, err := os.MkdirTemp("", "eib-configurator-installer-")
+	srcDir, err := os.MkdirTemp("", "eib-configurator-installer-source-")
 	require.NoError(t, err)
+
 	defer func() {
-		assert.NoError(t, os.RemoveAll(tmpDir))
+		assert.NoError(t, os.RemoveAll(srcDir))
 	}()
 
-	var installer ConfiguratorInstaller
+	assert.NoError(t, os.WriteFile(filepath.Join(srcDir, "nmc-x86_64"), amdBinaryContents, fileio.NonExecutablePerms))
+	assert.NoError(t, os.WriteFile(filepath.Join(srcDir, "nmc-aarch64"), armBinaryContents, fileio.NonExecutablePerms))
 
-	installPath := filepath.Join(tmpDir, "nmc")
-	require.NoError(t, installer.InstallConfigurator("abc-x86_64", installPath))
-}
-
-func TestConfiguratorInstaller_InstallConfigurator_ARM(t *testing.T) {
-	t.Skip()
-
-	tmpDir, err := os.MkdirTemp("", "eib-configurator-installer-")
+	destDir, err := os.MkdirTemp("", "eib-configurator-installer-dest-")
 	require.NoError(t, err)
+
 	defer func() {
-		assert.NoError(t, os.RemoveAll(tmpDir))
+		assert.NoError(t, os.RemoveAll(destDir))
 	}()
 
+	tests := []struct {
+		name             string
+		imageName        string
+		sourcePath       string
+		installPath      string
+		expectedContents []byte
+		expectedError    string
+	}{
+		{
+			name:          "Failure to detect architecture from image name",
+			imageName:     "abc",
+			expectedError: "failed to determine arch of image abc",
+		},
+		{
+			name:          "Failure to copy non-existing binary",
+			imageName:     "abc-x86_64",
+			sourcePath:    "",
+			expectedError: "copying file: opening source file: open nmc-x86_64: no such file or directory",
+		},
+		{
+			name:             "Successfully installed x86_64 binary",
+			imageName:        "abc-x86_64",
+			sourcePath:       srcDir,
+			installPath:      fmt.Sprintf("%s/nmc-amd", destDir),
+			expectedContents: amdBinaryContents,
+		},
+		{
+			name:             "Successfully installed aarch64 binary",
+			imageName:        "abc-aarch64",
+			sourcePath:       srcDir,
+			installPath:      fmt.Sprintf("%s/nmc-arm", destDir),
+			expectedContents: armBinaryContents,
+		},
+	}
+
 	var installer ConfiguratorInstaller
 
-	installPath := filepath.Join(tmpDir, "nmc")
-	require.NoError(t, installer.InstallConfigurator("abc-aarch64", installPath))
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err = installer.InstallConfigurator(test.imageName, test.sourcePath, test.installPath)
+
+			if test.expectedError != "" {
+				require.Error(t, err)
+				assert.EqualError(t, err, test.expectedError)
+				return
+			}
+
+			require.NoError(t, err)
+
+			contents, err := os.ReadFile(test.installPath)
+			require.NoError(t, err)
+			assert.Equal(t, test.expectedContents, contents)
+
+			info, err := os.Stat(test.installPath)
+			require.NoError(t, err)
+			assert.Equal(t, fileio.ExecutablePerms, info.Mode())
+		})
+	}
 }

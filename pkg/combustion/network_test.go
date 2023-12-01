@@ -25,12 +25,12 @@ func (m mockNetworkConfigGenerator) GenerateNetworkConfig(configDir, outputDir s
 }
 
 type mockNetworkConfiguratorInstaller struct {
-	installConfiguratorFunc func(imageName, installPath string) error
+	installConfiguratorFunc func(imageName, sourcePath, installPath string) error
 }
 
-func (m mockNetworkConfiguratorInstaller) InstallConfigurator(imageName, installPath string) error {
+func (m mockNetworkConfiguratorInstaller) InstallConfigurator(imageName, sourcePath, installPath string) error {
 	if m.installConfiguratorFunc != nil {
-		return m.installConfiguratorFunc(imageName, installPath)
+		return m.installConfiguratorFunc(imageName, sourcePath, installPath)
 	}
 
 	panic("not implemented")
@@ -80,7 +80,7 @@ func TestConfigureNetwork(t *testing.T) {
 				},
 			},
 			configuratorInstaller: mockNetworkConfiguratorInstaller{
-				installConfiguratorFunc: func(imageName, installPath string) error {
+				installConfiguratorFunc: func(imageName, sourcePath, installPath string) error {
 					return fmt.Errorf("no installer for you")
 				},
 			},
@@ -94,7 +94,7 @@ func TestConfigureNetwork(t *testing.T) {
 				},
 			},
 			configuratorInstaller: mockNetworkConfiguratorInstaller{
-				installConfiguratorFunc: func(imageName, installPath string) error {
+				installConfiguratorFunc: func(imageName, sourcePath, installPath string) error {
 					return nil
 				},
 			},
