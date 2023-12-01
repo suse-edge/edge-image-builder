@@ -19,7 +19,6 @@ const (
 	argConfigDir   = "config-dir"
 	argBuildDir    = "build-dir"
 	argDeleteBuild = "delete-build-dir"
-	argVerbose     = "verbose"
 )
 
 func processArgs() (*image.Context, error) {
@@ -28,7 +27,6 @@ func processArgs() (*image.Context, error) {
 		configDir      string
 		buildDir       string
 		deleteBuildDir bool
-		verbose        bool
 	)
 
 	flag.StringVar(&configFile, argConfigFile, "", "name of the image configuration file")
@@ -36,7 +34,6 @@ func processArgs() (*image.Context, error) {
 	flag.StringVar(&buildDir, argBuildDir, "", "full path to the directory to store build artifacts")
 	flag.BoolVar(&deleteBuildDir, argDeleteBuild, false,
 		"if specified, the build directory will be deleted after the image is built")
-	flag.BoolVar(&verbose, argVerbose, false, "enables extra logging information")
 	flag.Parse()
 
 	imageDefinition, err := parseImageDefinition(configFile, configDir)
@@ -54,7 +51,7 @@ func processArgs() (*image.Context, error) {
 		return nil, fmt.Errorf("building dir structure: %w", err)
 	}
 
-	setupLogging(ctx, verbose)
+	setupLogging(ctx)
 
 	return ctx, nil
 }
@@ -68,16 +65,11 @@ func generateBuildLogFilename(ctx *image.Context) string {
 	return filepath.Join(ctx.BuildDir, filename)
 }
 
-func setupLogging(ctx *image.Context, verbose bool) {
+func setupLogging(ctx *image.Context) {
 	logFilename := generateBuildLogFilename(ctx)
 
-	logLevel := zap.InfoLevel
-	if verbose {
-		logLevel = zap.DebugLevel
-	}
-
 	logConfig := zap.NewProductionConfig()
-	logConfig.Level = zap.NewAtomicLevelAt(logLevel)
+	logConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 	logConfig.Encoding = "console"
 	logConfig.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 	logConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
