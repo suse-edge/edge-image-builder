@@ -16,18 +16,12 @@ const (
 )
 
 func configureCustomScripts(ctx *image.Context) ([]string, error) {
-	fullScriptsDir := filepath.Join(ctx.ImageConfigDir, customScriptsDir)
-
-	// Nothing to do if the image config dir doesn't have the scripts directory
-	_, err := os.Stat(fullScriptsDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			log.AuditComponentSkipped(customComponentName)
-			return nil, nil
-		}
-		log.AuditComponentFailed(customComponentName)
-		return nil, fmt.Errorf("checking for scripts directory at %s: %w", fullScriptsDir, err)
+	if !isComponentConfigured(ctx, customScriptsDir) {
+		log.AuditComponentSkipped(customComponentName)
+		return nil, nil
 	}
+
+	fullScriptsDir := generateComponentPath(ctx, customScriptsDir)
 
 	dirListing, err := os.ReadDir(fullScriptsDir)
 	if err != nil {

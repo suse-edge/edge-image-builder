@@ -10,6 +10,7 @@ import (
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"github.com/suse-edge/edge-image-builder/pkg/network"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -46,7 +47,7 @@ func processArgs() (*image.Context, error) {
 		return nil, fmt.Errorf("validating the config dir %s: %w", configDir, err)
 	}
 
-	ctx, err := image.NewContext(configDir, buildDir, deleteBuildDir, imageDefinition)
+	ctx, err := image.NewContext(configDir, buildDir, deleteBuildDir, imageDefinition, network.ConfigGenerator{}, network.ConfiguratorInstaller{})
 	if err != nil {
 		return nil, fmt.Errorf("building dir structure: %w", err)
 	}
