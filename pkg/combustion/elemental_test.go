@@ -71,5 +71,5 @@ func TestWriteElementalCombustionScript(t *testing.T) {
 	foundBytes, err := os.ReadFile(scriptFilename)
 	require.NoError(t, err)
 	found := string(foundBytes)
-	assert.Contains(t, found, "elemental-register --config-path ./"+elementalConfigName)
+	assert.Contains(t, found, "elemental-register --config-path /etc/elemental/config.yaml")
 }
