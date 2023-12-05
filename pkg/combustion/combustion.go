@@ -28,18 +28,37 @@ func Configure(ctx *image.Context) error {
 	//   being able to override/preempt the built-in behavior
 	// - Elemental must come after RPMs since (as of Dec 2023) the user must provide the
 	//   elemental RPMs manually
-	combustionComponents := map[string]configureComponent{
-		messageComponentName:   configureMessage,
-		customComponentName:    configureCustomScripts,
-		usersComponentName:     configureUsers,
-		rpmComponentName:       configureRPMs,
-		elementalComponentName: configureElemental,
+	type componentWrapper struct {
+		name     string
+		runnable configureComponent
+	}
+	combustionComponents := []componentWrapper{
+		{
+			name:     messageComponentName,
+			runnable: configureMessage,
+		},
+		{
+			name:     customComponentName,
+			runnable: configureCustomScripts,
+		},
+		{
+			name:     usersComponentName,
+			runnable: configureUsers,
+		},
+		{
+			name:     rpmComponentName,
+			runnable: configureRPMs,
+		},
+		{
+			name:     elementalComponentName,
+			runnable: configureElemental,
+		},
 	}
 
-	for componentName, configureFunc := range combustionComponents {
-		scripts, err := configureFunc(ctx)
+	for _, component := range combustionComponents {
+		scripts, err := component.runnable(ctx)
 		if err != nil {
-			return fmt.Errorf("configuring component %q: %w", componentName, err)
+			return fmt.Errorf("configuring component %q: %w", component.name, err)
 		}
 
 		combustionScripts = append(combustionScripts, scripts...)
