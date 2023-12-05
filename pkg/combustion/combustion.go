@@ -45,6 +45,10 @@ func Configure(ctx *image.Context) error {
 			runnable: configureCustomScripts,
 		},
 		{
+			name:     networkComponentName,
+			runnable: configureNetwork,
+		},
+		{
 			name:     usersComponentName,
 			runnable: configureUsers,
 		},
