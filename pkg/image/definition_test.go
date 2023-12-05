@@ -16,14 +16,27 @@ func TestParse(t *testing.T) {
 
 	// Test
 	definition, err := ParseDefinition(configData)
-	require.NoError(t, err)
 
 	// Verify
+	require.NoError(t, err)
+
+	// - Definition
 	assert.Equal(t, "1.0", definition.APIVersion)
 	assert.Equal(t, "iso", definition.Image.ImageType)
+
+	// - Image
 	assert.Equal(t, "slemicro5.5.iso", definition.Image.BaseImage)
 	assert.Equal(t, "eibimage.iso", definition.Image.OutputImageName)
 
+	// - Elemental
+	require.NotNil(t, definition.Elemental.Registration)
+	assert.Equal(t, "https://elemental.docs.rancher.com", definition.Elemental.Registration.RegistrationURL)
+	assert.Equal(t, "sample-ca-cert", definition.Elemental.Registration.CACert)
+	assert.Equal(t, true, definition.Elemental.Registration.EmulateTPM)
+	assert.Equal(t, 1, definition.Elemental.Registration.EmulateTPMSeed)
+	assert.Equal(t, "tpm", definition.Elemental.Registration.AuthType)
+
+	// - Operating System
 	expectedKernelArgs := []string{
 		"alpha=foo",
 		"beta=bar",

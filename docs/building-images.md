@@ -30,7 +30,7 @@ image:
 
 ### Operating System
 
-The operating system configuration is entirely optional.
+The operating system configuration section is entirely optional.
 
 The following describes the possible options for the operating system section:
 ```yaml
@@ -56,6 +56,34 @@ operatingSystem:
   * `password` - Optional; Encrypted password to set for the use (for example, using `openssl passwd -6 $PASSWORD`
     to generate the value for this field).
   * `sshKey` - Optional; Full public SSH key to configure for the user.
+
+### Elemental
+
+The elemental configuration section is entirely optional.
+
+The following describes the options for the elemental section:
+```yaml
+elemental:
+  registration:
+    url: https://rancher/elemental/registration/8hwjpp8tj56n7fh6x57ns7cd2tv6vxnbzg79zwmqzxdql2lm92xslr
+    ca-cert: |-
+      -----BEGIN CERTIFICATE-----
+      MIIBvDCCAWOgAwIBAgIBADAKBggqhkjOPQQDAjBGMRwwGgYDVQQKExNkeW5hbWlj
+      -----END CERTIFICATE-----
+    auth: tpm
+    emulate-tpm: true
+    emulated-tpm-seed: 1
+```
+
+* `url` - Required; Endpoint URL for registration.
+* `ca-cert` - Required; Certificate for TLS verification.
+
+For information on the TPM configuration, see the [Elemental MachineRegistration documentation](https://elemental.docs.rancher.com/machineregistration-reference/#configelementalregistration).
+
+Additionally, the following RPMs must be included in the RPMs directory as described in the
+Image Configuration Directory section:
+* `elemental-register`
+* `elemental-system-agent`
 
 ## Image Configuration Directory
 

@@ -1,4 +1,5 @@
 #!/bin/bash
+# combustion: network
 set -euo pipefail
 
 # Redirect output to the console

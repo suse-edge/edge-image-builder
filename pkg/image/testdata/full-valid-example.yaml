@@ -3,6 +3,13 @@ image:
   imageType: iso
   baseImage: slemicro5.5.iso
   outputImageName: eibimage.iso
+elemental:
+  registration:
+    url: https://elemental.docs.rancher.com
+    ca-cert: sample-ca-cert
+    emulate-tpm: true
+    emulated-tpm-seed: 1
+    auth: tpm
 operatingSystem:
   kernelArgs:
     - alpha=foo
