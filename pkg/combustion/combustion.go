@@ -22,6 +22,12 @@ type configureComponent func(context *image.Context) ([]string, error)
 func Configure(ctx *image.Context) error {
 	var combustionScripts []string
 
+	// Order rationale:
+	// - Message has no effect on the system, so this can go anywhere
+	// - Custom scripts should be early to allow the most flexibility in the user
+	//   being able to override/preempt the built-in behavior
+	// - Elemental must come after RPMs since (as of Dec 2023) the user must provide the
+	//   elemental RPMs manually
 	combustionComponents := map[string]configureComponent{
 		messageComponentName:   configureMessage,
 		customComponentName:    configureCustomScripts,
