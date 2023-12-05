@@ -1,12 +1,15 @@
 package combustion
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"go.uber.org/zap"
 )
 
 // configureComponent defines the combustion component contract.
@@ -75,4 +78,30 @@ func Configure(ctx *image.Context) error {
 	}
 
 	return nil
+}
+
+func generateComponentPath(ctx *image.Context, componentDir string) string {
+	return filepath.Join(ctx.ImageConfigDir, componentDir)
+}
+
+func isComponentConfigured(ctx *image.Context, componentDir string) bool {
+	if componentDir == "" {
+		zap.L().Warn("Component dir not provided")
+		return false
+	}
+
+	componentPath := generateComponentPath(ctx, componentDir)
+
+	_, err := os.Stat(componentPath)
+	if err == nil {
+		return true
+	}
+
+	if !errors.Is(err, fs.ErrNotExist) {
+		zap.L().Warn("Searching for component directory failed. Component will be skipped.",
+			zap.String("component", componentDir),
+			zap.Error(err))
+	}
+
+	return false
 }

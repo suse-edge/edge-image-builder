@@ -10,7 +10,7 @@ import (
 )
 
 func TestContext_New(t *testing.T) {
-	context, err := NewContext("", "", false, nil)
+	context, err := NewContext("", "", false, nil, nil, nil)
 	require.NoError(t, err)
 	defer os.RemoveAll(context.BuildDir)
 
@@ -25,7 +25,7 @@ func TestContext_New_ExistingBuildDir(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	// Test
-	context, err := NewContext("", tmpDir, false, nil)
+	context, err := NewContext("", tmpDir, false, nil, nil, nil)
 	require.NoError(t, err)
 
 	// Verify

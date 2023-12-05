@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	userRPMsDir         = "rpms"
 	modifyRPMScriptName = "10-rpm-install.sh"
 	rpmComponentName    = "RPM"
 )
@@ -22,16 +23,12 @@ const (
 var modifyRPMScript string
 
 func configureRPMs(ctx *image.Context) ([]string, error) {
-	rpmSourceDir, err := generateRPMPath(ctx)
-	if err != nil {
-		log.AuditComponentFailed(rpmComponentName)
-		return nil, fmt.Errorf("generating RPM path: %w", err)
-	}
-	// Only proceed with processing the RPMs if the directory exists
-	if rpmSourceDir == "" {
+	if !isComponentConfigured(ctx, userRPMsDir) {
 		log.AuditComponentSkipped(rpmComponentName)
 		return nil, nil
 	}
+
+	rpmSourceDir := generateComponentPath(ctx, userRPMsDir)
 
 	rpmFileNames, err := getRPMFileNames(rpmSourceDir)
 	if err != nil {
@@ -112,17 +109,4 @@ func writeRPMScript(ctx *image.Context, rpmFileNames []string) (string, error) {
 	}
 
 	return modifyRPMScriptName, nil
-}
-
-func generateRPMPath(ctx *image.Context) (string, error) {
-	rpmSourceDir := filepath.Join(ctx.ImageConfigDir, "rpms")
-	_, err := os.Stat(rpmSourceDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return "", nil
-		}
-		return "", fmt.Errorf("checking for RPM directory at %s: %w", rpmSourceDir, err)
-	}
-
-	return rpmSourceDir, nil
 }

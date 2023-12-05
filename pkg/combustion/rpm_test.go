@@ -166,23 +166,3 @@ func TestConfigureRPMs(t *testing.T) {
 	assert.Contains(t, foundContents, "rpm1.rpm")
 	assert.Contains(t, foundContents, "rpm2.rpm")
 }
-
-func TestGenerateRPMPath(t *testing.T) {
-	// Setup
-	ctx, teardown := setupContext(t)
-	defer teardown()
-
-	rpmDir := filepath.Join(ctx.ImageConfigDir, "rpms")
-	require.NoError(t, os.Mkdir(rpmDir, 0o755))
-	defer func() {
-		assert.NoError(t, os.RemoveAll(rpmDir))
-	}()
-
-	// Test
-	generatedPath, err := generateRPMPath(ctx)
-
-	// Verify
-	require.NoError(t, err)
-
-	assert.Equal(t, rpmDir, generatedPath)
-}

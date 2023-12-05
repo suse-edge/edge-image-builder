@@ -20,7 +20,7 @@ image:
   outputImageName: eib-image.iso
 ```
 
-* `apiVersion` - Indicates the version of the configuration file schema for EIB to expect 
+* `apiVersion` - Indicates the version of the configuration file schema for EIB to expect
 * `imageType` - Must be either `iso` or `raw`.
 * `baseImage` - Indicates the name of the image file used as the base for the built image. This file must be located
   under the `images` directory of the image configuration directory (see below for more information). This image will
@@ -108,8 +108,12 @@ the structure of this directory will be better fleshed out. For now, the require
 
 There are a number of optional directories that may be included in the image configuration directory:
 
+* `network` - If present, network configurations will be generated from all desired states in this directory
+  and will be included in the built image. The configurations relevant for the particular host will be identified
+  and applied during the combustion phase. Check [nm-configurator](https://github.com/suse-edge/nm-configurator/)
+  for more information.
 * `scripts` - If present, all the files in this directory will be included in the built image and automatically
   executed during the combustion phase.
-* `rpms` - If present, all RPMs in this directory will be included in the built image and installed during the 
+* `rpms` - If present, all RPMs in this directory will be included in the built image and installed during the
   combustion phase. These RPMs are installed directly (instead of using zypper), which means that there will be no
   automatic dependency resolution.
