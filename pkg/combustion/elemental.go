@@ -23,10 +23,6 @@ const (
 var elementalScript string
 
 func configureElemental(ctx *image.Context) ([]string, error) {
-	// Even if the "elemental" section is left out of the definition, the full structure will
-	// be created in the definition, using defaults for the specific types. The check to determine
-	// elemental registration is if the URL is present; if not, the entire elemental configuration
-	// is skipped.
 	if ctx.ImageDefinition.Elemental.Registration.RegistrationURL == "" {
 		log.AuditComponentSkipped(elementalComponentName)
 		return nil, nil
