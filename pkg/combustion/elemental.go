@@ -61,7 +61,7 @@ func writeElementalConfigFile(ctx *image.Context) error {
 		return fmt.Errorf("extracting elemental config: %w", err)
 	}
 
-	if err := os.WriteFile(configFilename, yamlData, fileio.ExecutablePerms); err != nil {
+	if err := os.WriteFile(configFilename, yamlData, fileio.NonExecutablePerms); err != nil {
 		return fmt.Errorf("writing elemental config file %s: %w", configFilename, err)
 	}
 
