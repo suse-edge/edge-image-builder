@@ -80,6 +80,11 @@ elemental:
 
 For information on the TPM configuration, see the [Elemental MachineRegistration documentation](https://elemental.docs.rancher.com/machineregistration-reference/#configelementalregistration).
 
+Additionally, the following RPMs must be included in the RPMs directory as described in the
+Image Configuration Directory section:
+* `elemental-register`
+* `elemental-system-agent`
+
 ## Image Configuration Directory
 
 The image configuration directory contains all the files necessary for EIB to build an image. As the project matures,
