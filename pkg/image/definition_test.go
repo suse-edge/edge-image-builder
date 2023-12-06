@@ -28,14 +28,6 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "slemicro5.5.iso", definition.Image.BaseImage)
 	assert.Equal(t, "eibimage.iso", definition.Image.OutputImageName)
 
-	// - Elemental
-	require.NotNil(t, definition.Elemental.Registration)
-	assert.Equal(t, "https://elemental.docs.rancher.com", definition.Elemental.Registration.RegistrationURL)
-	assert.Equal(t, "sample-ca-cert", definition.Elemental.Registration.CACert)
-	assert.Equal(t, true, definition.Elemental.Registration.EmulateTPM)
-	assert.Equal(t, 1, definition.Elemental.Registration.EmulateTPMSeed)
-	assert.Equal(t, "tpm", definition.Elemental.Registration.AuthType)
-
 	// - Operating System
 	expectedKernelArgs := []string{
 		"alpha=foo",

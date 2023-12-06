@@ -10,11 +10,12 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
-	"gopkg.in/yaml.v3"
+	"go.uber.org/zap"
 )
 
 const (
 	elementalComponentName = "elemental"
+	elementalConfigDir     = "elemental"
 	elementalScriptName    = "11-elemental.sh"
 	elementalConfigName    = "elemental_config.yaml"
 )
@@ -23,12 +24,14 @@ const (
 var elementalScript string
 
 func configureElemental(ctx *image.Context) ([]string, error) {
-	if ctx.ImageDefinition.Elemental.Registration.RegistrationURL == "" {
+
+	if !isComponentConfigured(ctx, elementalConfigDir) {
 		log.AuditComponentSkipped(elementalComponentName)
+		zap.L().Info("Skipping elemental registration component. Configuration is not provided")
 		return nil, nil
 	}
 
-	if err := writeElementalConfigFile(ctx); err != nil {
+	if err := copyElementalConfigFile(ctx); err != nil {
 		log.AuditComponentFailed(elementalComponentName)
 		return nil, err
 	}
@@ -42,23 +45,13 @@ func configureElemental(ctx *image.Context) ([]string, error) {
 	return []string{elementalScriptName}, nil
 }
 
-func writeElementalConfigFile(ctx *image.Context) error {
-	configFilename := filepath.Join(ctx.CombustionDir, elementalConfigName)
+func copyElementalConfigFile(ctx *image.Context) error {
+	srcFile := filepath.Join(ctx.ImageConfigDir, elementalConfigDir, elementalConfigName)
+	destFile := filepath.Join(ctx.CombustionDir, elementalConfigName)
 
-	// The root of the elemental config file needs to be `elemental`, so this wrapper
-	// ensures that is maintained
-	type ElementalWrapper struct {
-		Elemental image.Elemental
-	}
-	yamlData, err := yaml.Marshal(ElementalWrapper{
-		Elemental: ctx.ImageDefinition.Elemental,
-	})
+	err := fileio.CopyFile(srcFile, destFile, fileio.NonExecutablePerms)
 	if err != nil {
-		return fmt.Errorf("extracting elemental config: %w", err)
-	}
-
-	if err := os.WriteFile(configFilename, yamlData, fileio.NonExecutablePerms); err != nil {
-		return fmt.Errorf("writing elemental config file %s: %w", configFilename, err)
+		return fmt.Errorf("error copying elemental config file %s: %w", srcFile, err)
 	}
 
 	return nil
