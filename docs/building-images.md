@@ -57,28 +57,6 @@ operatingSystem:
     to generate the value for this field).
   * `sshKey` - Optional; Full public SSH key to configure for the user.
 
-### Elemental
-
-The elemental configuration section is entirely optional.
-
-The following describes the options for the elemental section:
-```yaml
-elemental:
-  registration:
-    url: https://rancher/elemental/registration/8hwjpp8tj56n7fh6x57ns7cd2tv6vxnbzg79zwmqzxdql2lm92xslr
-    ca-cert: |-
-      -----BEGIN CERTIFICATE-----
-      MIIBvDCCAWOgAwIBAgIBADAKBggqhkjOPQQDAjBGMRwwGgYDVQQKExNkeW5hbWlj
-      -----END CERTIFICATE-----
-    auth: tpm
-    emulate-tpm: true
-    emulated-tpm-seed: 1
-```
-
-* `url` - Required; Endpoint URL for registration.
-* `ca-cert` - Required; Certificate for TLS verification.
-
-For information on the TPM configuration, see the [Elemental MachineRegistration documentation](https://elemental.docs.rancher.com/machineregistration-reference/#configelementalregistration).
 
 Additionally, the following RPMs must be included in the RPMs directory as described in the
 Image Configuration Directory section:
@@ -114,6 +92,27 @@ There are a number of optional directories that may be included in the image con
   for more information.
 * `scripts` - If present, all the files in this directory will be included in the built image and automatically
   executed during the combustion phase.
-* `rpms` - If present, all RPMs in this directory will be included in the built image and installed during the
+
+The following sections further describe optional directories that may be included.
+
+### RPMs
+
+Custom RPMs may be included in the configuration directory. These RPMs will be bundled into the built image
+and installed when the image is booted. The following describes the directory structure needed to configure this:
+
+* `rpms` - All RPMs in this directory will be included in the built image and installed during the
   combustion phase. These RPMs are installed directly (instead of using zypper), which means that there will be no
   automatic dependency resolution.
+
+### Elemental
+
+Automatic Elemental registration may be configured for the image. The Elemental registration configuration file,
+which can be downloaded using the Elemental extension in Rancher, must be placed in the configuration directory
+as follows:
+
+* `elemental` - This must contain a file named `elemental_config.yaml`. This file will be bundled in
+  the built image and used to register with Elemental on boot.
+
+Additionally, the following RPMs must be included in the RPMs directory as described above:
+* `elemental-register`
+* `elemental-system-agent`
