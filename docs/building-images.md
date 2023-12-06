@@ -1,15 +1,15 @@
 # Building Images
 
 Two things are necessary to build an image using EIB:
-1. A configuration file that describes the image to build
+1. A definition file that describes the image to build
 1. A directory that contains the base SLE Micro image to modify, along with any other custom files that
    will be included in the built image
 
-## Image Configuration File
+## Image Definition File
 
-The image configuration file is a YAML document describing a single image to build. The file is specified using
+The Image Definition File is a YAML document describing a single image to build. The file is specified using
 the `-config-file` argument. Only a single image may be built at a time, however the same image configuration
-directory may be used to build multiple images by creating multiple configuration files.
+directory may be used to build multiple images by creating multiple definition files.
 
 The following can be used as the minimum configuration required to create an image:
 ```yaml
@@ -20,7 +20,7 @@ image:
   outputImageName: eib-image.iso
 ```
 
-* `apiVersion` - Indicates the version of the configuration file schema for EIB to expect
+* `apiVersion` - Indicates the version of the definition file schema for EIB to expect
 * `imageType` - Must be either `iso` or `raw`.
 * `baseImage` - Indicates the name of the image file used as the base for the built image. This file must be located
   under the `images` directory of the image configuration directory (see below for more information). This image will
@@ -87,7 +87,7 @@ Image Configuration Directory section:
 
 ## Image Configuration Directory
 
-The image configuration directory contains all the files necessary for EIB to build an image. As the project matures,
+The Image Configuration Directory contains all the files necessary for EIB to build an image. As the project matures,
 the structure of this directory will be better fleshed out. For now, the required structure is described below:
 
 ```shell
@@ -99,11 +99,11 @@ the structure of this directory will be better fleshed out. For now, the require
     └── SLE-Micro.x86_64-5.5.0-Default-GM.raw
 ```
 
-* `eib-config-iso.yaml`, `eib-config-raw.yaml` - All image configuration files should be in the root of the image
-  configuration directory. Multiple configuration files may be included in a single configuration directory, with
-  the specific configuration file specified as a CLI argument as described above.
+* `eib-config-iso.yaml`, `eib-config-raw.yaml` - All image definition files should be in the root of the image
+  configuration directory. Multiple definition files may be included in a single configuration directory, with
+  the specific definition file specified as a CLI argument as described above.
 * `images` - This directory must exist and contains the base images from which EIB will build customized images. There
-  are no restrictions on the naming; the image configuration file will specify which image in this directory to use
+  are no restrictions on the naming; the image definition file will specify which image in this directory to use
   for a particular build.
 
 There are a number of optional directories that may be included in the image configuration directory:
