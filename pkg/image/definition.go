@@ -35,7 +35,7 @@ type OperatingSystemUser struct {
 	SSHKey   string `yaml:"sshKey"`
 }
 
-type Systemd struct {gi
+type Systemd struct {
 	Enable  []string `yaml:"enable"`
 	Disable []string `yaml:"disable"`
 }
