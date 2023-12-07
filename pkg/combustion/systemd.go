@@ -23,7 +23,7 @@ var systemdTemplate string
 func configureSystemd(ctx *image.Context) ([]string, error) {
 	// Nothing to do if both lists are empty
 	systemd := ctx.ImageDefinition.OperatingSystem.Systemd
-	if systemd.Enable == nil && systemd.Disable == nil {
+	if len(systemd.Enable) == 0 && len(systemd.Disable) == 0 {
 		log.AuditComponentSkipped(systemdComponentName)
 		return nil, nil
 	}
