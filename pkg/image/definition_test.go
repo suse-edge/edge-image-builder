@@ -28,13 +28,14 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "slemicro5.5.iso", definition.Image.BaseImage)
 	assert.Equal(t, "eibimage.iso", definition.Image.OutputImageName)
 
-	// - Operating System
+	// - Operating System -> Kernel Arguments
 	expectedKernelArgs := []string{
 		"alpha=foo",
 		"beta=bar",
 	}
 	assert.Equal(t, expectedKernelArgs, definition.OperatingSystem.KernelArgs)
 
+	// Operating System -> Users
 	userConfigs := definition.OperatingSystem.Users
 	require.Len(t, userConfigs, 3)
 	assert.Equal(t, "alpha", userConfigs[0].Username)
@@ -46,6 +47,14 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "gamma", userConfigs[2].Username)
 	assert.Equal(t, "", userConfigs[2].Password)
 	assert.Contains(t, userConfigs[2].SSHKey, "ssh-rsa BBBBB3")
+
+	// Operating System -> Systemd
+	systemd := definition.OperatingSystem.Systemd
+	require.Len(t, systemd.Enable, 2)
+	assert.Equal(t, "enable0", systemd.Enable[0])
+	assert.Equal(t, "enable1", systemd.Enable[1])
+	require.Len(t, systemd.Disable, 1)
+	assert.Equal(t, "disable0", systemd.Disable[0])
 }
 
 func TestParseBadConfig(t *testing.T) {

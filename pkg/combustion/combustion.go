@@ -57,6 +57,10 @@ func Configure(ctx *image.Context) error {
 			runnable: configureRPMs,
 		},
 		{
+			name:     systemdComponentName,
+			runnable: configureSystemd,
+		},
+		{
 			name:     elementalComponentName,
 			runnable: configureElemental,
 		},
