@@ -67,6 +67,22 @@ operatingSystem:
   * `enable` - Optional; List of systemd services to enable.
   * `disable` - Optional; List of systemd services to disable.
 
+## SUSE Manager (SUMA)
+
+Automatic SUSE Manager registration can be configured for the image. The following items must be defined in the
+configuration file under the `suma` section:
+
+* `host` - This is the FQDN of the SUSE Manager host that the host needs to register against.
+* `activation_key` - This is the activation key that the node uses to register with.
+* `get_ssl` - This specifies whether EIB should download and install the SUMA SSL Certificate (default: false)
+
+The default SSL certificate for the SUSE Manager server can usually be found at
+`https://<suma-host>/pub/RHN-ORG-TRUSTED-SSL-CERT`
+
+Additionally, the appropriate *venv-salt-minion* RPM package must be supplied in the RPM's directory so it can be
+installed at boot time prior to SUSE Manager registration taking place. This RPM can usually be found on the
+SUSE Manager service itself at `https://<suma-host>/pub/repositories/slemicro/5/5/bootstrap/x86_64/` as an example.
+
 ## Image Configuration Directory
 
 The Image Configuration Directory contains all the files necessary for EIB to build an image. As the project matures,
@@ -120,19 +136,3 @@ as follows:
 Additionally, the following RPMs must be included in the RPMs directory as described above:
 * `elemental-register`
 * `elemental-system-agent`
-
-### SUSE Manager (SUMA)
-
-Automatic SUSE Manager registration can be configured for the image. The following items must be defined in the
-configuration file under the `suma` section:
-
-* `host` - this is the FQDN of the SUSE Manager host that the host needs to register against.
-* `activation_key` - this is the activation key that the node uses to register with.
-* `get_ssl` - this specifies whether EIB should download and install the SUMA SSL Certificate (default: false)
-
-The default SSL certificate for the SUSE Manager server can usually be found at
-https://<suma-host>/pub/RHN-ORG-TRUSTED-SSL-CERT
-
-Additionally, the appropriate *venv-salt-minion* RPM package must be supplied in the RPM's directory so it can be
-installed at boot time prior to SUSE Manager registration taking place. This RPM can usually be found on the
-SUSE Manager service itself at https://<suma-host>/pub/repositories/slemicro/5/5/bootstrap/x86_64/ as an example.
