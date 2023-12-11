@@ -13,7 +13,7 @@ master: {{ .Host }}
 
 grains:
   susemanager:
-    activation_key: "{{ .Activation_Key }}"
+    activation_key: "{{ .ActivationKey }}"
 
 server_id_use_crc: adler32
 enable_legacy_startup_events: False

@@ -39,7 +39,7 @@ func TestConfigureSuma_FullConfiguration(t *testing.T) {
 		OperatingSystem: image.OperatingSystem{
 			Suma: image.Suma{
 				Host:           "https://suma.edge.suse.com",
-				Activation_Key: "slemicro55",
+				ActivationKey: "slemicro55",
 				Get_SSL:        true,
 			},
 		},

@@ -43,7 +43,7 @@ type Systemd struct {
 
 type Suma struct {
 	Host string `yaml:"host"`
-	Activation_Key string `yaml:"activation_key"`
+	ActivationKey string `yaml:"activation_key"`
 	Get_SSL bool `yaml:"get_ssl"`
 }
 
