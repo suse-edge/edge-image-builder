@@ -3,7 +3,7 @@ set -euo pipefail
 
 mkdir -p /etc/venv-salt-minion/
 
-{{ if .Get_SSL }}
+{{ if .GetSSL }}
 	curl -k -o /etc/pki/trust/anchors/suma-cert.pem https://{{ .Host }}/pub/RHN-ORG-TRUSTED-SSL-CERT
 	update-ca-certificates
 {{ end }}
