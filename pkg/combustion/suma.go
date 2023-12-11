@@ -39,8 +39,6 @@ func configureSuma(ctx *image.Context) ([]string, error) {
 func writeSumaCombustionScript(ctx *image.Context) error {
 	sumaScriptFilename := filepath.Join(ctx.CombustionDir, sumaScriptName)
 
-
-
 	data, err := template.Parse(sumaScriptName, sumaScript, ctx.ImageDefinition.OperatingSystem.Suma)
 	if err != nil {
 		return fmt.Errorf("applying template to %s: %w", sumaScriptName, err)
