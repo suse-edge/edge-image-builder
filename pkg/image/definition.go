@@ -27,6 +27,7 @@ type OperatingSystem struct {
 	KernelArgs []string              `yaml:"kernelArgs"`
 	Users      []OperatingSystemUser `yaml:"users"`
 	Systemd    Systemd               `yaml:"systemd"`
+	Suma       Suma                  `yaml:"suma"`
 }
 
 type OperatingSystemUser struct {
@@ -38,6 +39,12 @@ type OperatingSystemUser struct {
 type Systemd struct {
 	Enable  []string `yaml:"enable"`
 	Disable []string `yaml:"disable"`
+}
+
+type Suma struct {
+	Host          string `yaml:"host"`
+	ActivationKey string `yaml:"activation_key"`
+	GetSSL        bool   `yaml:"get_ssl"`
 }
 
 func ParseDefinition(data []byte) (*Definition, error) {
