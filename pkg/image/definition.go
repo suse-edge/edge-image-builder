@@ -44,7 +44,7 @@ type Systemd struct {
 type Suma struct {
 	Host          string `yaml:"host"`
 	ActivationKey string `yaml:"activation_key"`
-	GetSSL       bool   `yaml:"get_ssl"`
+	GetSSL        bool   `yaml:"get_ssl"`
 }
 
 func ParseDefinition(data []byte) (*Definition, error) {
