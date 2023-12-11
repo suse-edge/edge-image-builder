@@ -29,8 +29,8 @@ func Configure(ctx *image.Context) error {
 	// - Message has no effect on the system, so this can go anywhere
 	// - Custom scripts should be early to allow the most flexibility in the user
 	//   being able to override/preempt the built-in behavior
-	// - Elemental must come after RPMs since (as of Dec 2023) the user must provide the
-	//   elemental RPMs manually
+	// - Elemental & SUMA must come after RPMs since the user must provide the
+	//   elemental and venv-salt-minion RPMs manually
 	type componentWrapper struct {
 		name     string
 		runnable configureComponent
@@ -63,6 +63,10 @@ func Configure(ctx *image.Context) error {
 		{
 			name:     elementalComponentName,
 			runnable: configureElemental,
+		},
+		{
+			name:     sumaComponentName,
+			runnable: configureSuma,
 		},
 	}
 
