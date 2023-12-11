@@ -69,19 +69,23 @@ operatingSystem:
 
 ## SUSE Manager (SUMA)
 
-Automatic SUSE Manager registration can be configured for the image. The following items must be defined in the
-configuration file under the `suma` section:
+Automatic SUSE Manager registration can be configured for the image, which will happen at system-boot time. Therefore
+your system will need to come up with networking, either via DHCP or configured statically, e.g. via `nmc` or via
+custom scripts. If you're creating an *air-gapped* image, do *not* use the SUSE Manager registration unless your server
+is available from within the air-gapped network.
 
-* `host` - This is the FQDN of the SUSE Manager host that the host needs to register against.
-* `activation_key` - This is the activation key that the node uses to register with.
-* `get_ssl` - This specifies whether EIB should download and install the SUMA SSL Certificate (default: false)
+The following items must be defined in the configuration file under the `suma` section:
+
+* `host` - This is the FQDN of the SUSE Manager host that the host needs to register against (do not use http/s prefix)
+* `activationKey` - This is the activation key that the node uses to register with.
+* `getSSL` - This specifies whether EIB should download and install the SUMA SSL Certificate (default: false)
 
 The default SSL certificate for the SUSE Manager server can usually be found at
-`https://<suma-host>/pub/RHN-ORG-TRUSTED-SSL-CERT`
+`https://<suma-host>/pub/RHN-ORG-TRUSTED-SSL-CERT`, and is currently hardcoded to look at this location relative to `host`.
 
 Additionally, the appropriate *venv-salt-minion* RPM package must be supplied in the RPM's directory so it can be
 installed at boot time prior to SUSE Manager registration taking place. This RPM can usually be found on the
-SUSE Manager service itself at `https://<suma-host>/pub/repositories/slemicro/5/5/bootstrap/x86_64/` as an example.
+SUSE Manager host itself at `https://<suma-host>/pub/repositories/slemicro/5/5/bootstrap/x86_64/` as an example.
 
 ## Image Configuration Directory
 

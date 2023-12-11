@@ -38,7 +38,7 @@ func TestConfigureSuma_FullConfiguration(t *testing.T) {
 	ctx.ImageDefinition = &image.Definition{
 		OperatingSystem: image.OperatingSystem{
 			Suma: image.Suma{
-				Host:          "https://suma.edge.suse.com",
+				Host:          "suma.edge.suse.com",
 				ActivationKey: "slemicro55",
 				GetSSL:        true,
 			},
@@ -68,7 +68,7 @@ func TestConfigureSuma_FullConfiguration(t *testing.T) {
 	assert.Contains(t, foundContents, "update-ca-certificates")
 
 	// - Ensure that we have the correct URL defined
-	assert.Contains(t, foundContents, "master: https://suma.edge.suse.com")
+	assert.Contains(t, foundContents, "master: suma.edge.suse.com")
 
 	// - Ensure that we've got the activation key defined
 	assert.Contains(t, foundContents, "activation_key: \"slemicro55\"")
