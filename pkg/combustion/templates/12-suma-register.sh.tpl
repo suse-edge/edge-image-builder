@@ -4,8 +4,8 @@ set -euo pipefail
 mkdir -p /etc/venv-salt-minion/
 
 {{ if .GetSSL }}
-	curl -k -o /etc/pki/trust/anchors/suma-cert.pem https://{{ .Host }}/pub/RHN-ORG-TRUSTED-SSL-CERT
-	update-ca-certificates
+curl -k -o /etc/pki/trust/anchors/suma-cert.pem https://{{ .Host }}/pub/RHN-ORG-TRUSTED-SSL-CERT
+update-ca-certificates
 {{ end }}
 
 cat <<EOF > /etc/venv-salt-minion/minion
