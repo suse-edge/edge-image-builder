@@ -25,3 +25,16 @@ operatingSystem:
     host: suma.edge.suse.com
     activationKey: slemicro55
     getSSL: false
+  packages:
+    pkgList:
+    - wget2
+    - dpdk22
+    - dpdk22-tools
+    - libdpdk-23
+    - libatomic1
+    - libbpf0
+    additionalRepos:
+    - http://updates.ext.suse.de/SUSE/Products/SLE-Module-Server-Applications/15-SP5/x86_64/product/
+    - http://updates.ext.suse.de/SUSE/Updates/SLE-Module-Basesystem/15-SP5/x86_64/update/
+    - http://updates.ext.suse.de/SUSE/Products/SLE-Module-Basesystem/15-SP5/x86_64/product/
+    regCode: INTERNAL-USE-ONLY-foo-bar

@@ -61,6 +61,27 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "suma.edge.suse.com", suma.Host)
 	assert.Equal(t, "slemicro55", suma.ActivationKey)
 	assert.Equal(t, false, suma.GetSSL)
+
+	// Operating System -> Packages
+	pkgConfig := definition.OperatingSystem.Packages
+	require.Len(t, pkgConfig.PKGList, 6)
+	require.Len(t, pkgConfig.AddRepos, 3)
+	expectedPKGList := []string{
+		"wget2",
+		"dpdk22",
+		"dpdk22-tools",
+		"libdpdk-23",
+		"libatomic1",
+		"libbpf0",
+	}
+	assert.Equal(t, expectedPKGList, pkgConfig.PKGList)
+	expectedAddRepos := []string{
+		"http://updates.ext.suse.de/SUSE/Products/SLE-Module-Server-Applications/15-SP5/x86_64/product/",
+		"http://updates.ext.suse.de/SUSE/Updates/SLE-Module-Basesystem/15-SP5/x86_64/update/",
+		"http://updates.ext.suse.de/SUSE/Products/SLE-Module-Basesystem/15-SP5/x86_64/product/",
+	}
+	assert.Equal(t, expectedAddRepos, pkgConfig.AddRepos)
+	assert.Equal(t, "INTERNAL-USE-ONLY-foo-bar", pkgConfig.RegCode)
 }
 
 func TestParseBadConfig(t *testing.T) {
