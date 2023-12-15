@@ -114,8 +114,10 @@ There are a number of optional directories that may be included in the image con
   and will be included in the built image. The configurations relevant for the particular host will be identified
   and applied during the combustion phase. Check [nm-configurator](https://github.com/suse-edge/nm-configurator/)
   for more information.
-* `scripts` - If present, all the files in this directory will be included in the built image and automatically
-  executed during the combustion phase.
+* `custom` - May be included to inject files into the built image. Files are organized by subdirectory as follows:
+  * `scripts` - If present, all the files in this directory will be included in the built image and automatically
+    executed during the combustion phase.
+  * `files` - If present, all the files in this directory will be included in the built image.
 
 The following sections further describe optional directories that may be included.
 

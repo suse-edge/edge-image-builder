@@ -42,7 +42,7 @@ func Configure(ctx *image.Context) error {
 		},
 		{
 			name:     customComponentName,
-			runnable: configureCustomScripts,
+			runnable: configureCustomFiles,
 		},
 		{
 			name:     networkComponentName,
