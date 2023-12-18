@@ -44,3 +44,5 @@ linters:
 
 run:
   timeout: 5m
+  build-tags:
+    - containers_image_openpgp
