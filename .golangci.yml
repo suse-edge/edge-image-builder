@@ -47,3 +47,4 @@ run:
   build-tags:
     - containers_image_openpgp
     - exclude_graphdriver_btrfs
+    - exclude_graphdriver_devicemapper
