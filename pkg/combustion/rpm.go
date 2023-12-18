@@ -138,12 +138,14 @@ func isResolutionNeeded(ctx *image.Context) bool {
 	// 1. packages from PackageHub are provided
 	// 2. third party packges are provided
 	// 3. third party repos for rpms are provided
-	if len(pkg.PKGList) > 0 && pkg.RegCode != "" {
+	switch {
+	case len(pkg.PKGList) > 0 && pkg.RegCode != "":
 		return true
-	} else if len(pkg.AddRepos) > 0 && len(pkg.PKGList) > 0 {
+	case len(pkg.AddRepos) > 0 && len(pkg.PKGList) > 0:
 		return true
-	} else if len(pkg.AddRepos) > 0 {
+	case len(pkg.AddRepos) > 0:
 		return true
+	default:
+		return false
 	}
-	return false
 }

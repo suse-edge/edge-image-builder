@@ -23,16 +23,18 @@ func CopyRPMs(src string, dest string) ([]string, error) {
 	}
 
 	for _, rpm := range rpms {
-		if filepath.Ext(rpm.Name()) == ".rpm" {
-			sourcePath := filepath.Join(src, rpm.Name())
-			destPath := filepath.Join(dest, rpm.Name())
-
-			err := fileio.CopyFile(sourcePath, destPath, fileio.NonExecutablePerms)
-			if err != nil {
-				return nil, fmt.Errorf("copying file %s: %w", sourcePath, err)
-			}
-			list = append(list, rpm.Name())
+		if filepath.Ext(rpm.Name()) != ".rpm" {
+			continue
 		}
+
+		sourcePath := filepath.Join(src, rpm.Name())
+		destPath := filepath.Join(dest, rpm.Name())
+		err := fileio.CopyFile(sourcePath, destPath, fileio.NonExecutablePerms)
+		if err != nil {
+			return nil, fmt.Errorf("copying file %s: %w", sourcePath, err)
+		}
+		list = append(list, rpm.Name())
+
 	}
 
 	return list, nil

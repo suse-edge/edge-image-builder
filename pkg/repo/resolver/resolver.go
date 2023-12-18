@@ -80,18 +80,18 @@ func New(ctx *image.Context) (Resolver, error) {
 //
 // Parameters:
 //   - out - location where the RPM directory will be created
-func (r *resolver) Resolve(out string) (string, []string, error) {
+func (r *resolver) Resolve(out string) (rpmDir string, pkgList []string, err error) {
 	zap.L().Info("Resolving package dependencies...")
 
-	if err := r.buildBase(); err != nil {
+	if err = r.buildBase(); err != nil {
 		return "", nil, fmt.Errorf("building base resolver image: %w", err)
 	}
 
-	if err := r.prepare(); err != nil {
+	if err = r.prepare(); err != nil {
 		return "", nil, fmt.Errorf("generating context for the resolver image: %w", err)
 	}
 
-	if err := r.podman.Build(r.generateBuildContextPath(), resolverImageRef); err != nil {
+	if err = r.podman.Build(r.generateBuildContextPath(), resolverImageRef); err != nil {
 		return "", nil, fmt.Errorf("building resolver image: %w", err)
 	}
 

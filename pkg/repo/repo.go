@@ -20,14 +20,14 @@ const (
 // Create creates an RPM repository consisting of the packages/rpms provided
 // by the user in the image context and their dependencies. Returns the path
 // to the repository and a list of packages that are ready to be installed.
-func Create(ctx *image.Context, reslv resolver.Resolver, out string) (string, []string, error) {
+func Create(ctx *image.Context, reslv resolver.Resolver, out string) (rpmRepo string, pkgList []string, err error) {
 	path, pkgs, err := reslv.Resolve(out)
 	if err != nil {
 		return "", nil, fmt.Errorf("resolving package dependencies: %w", err)
 	}
 
 	zap.L().Sugar().Infof("Creating RPM repository from '%s'", path)
-	if err := createRPMRepo(path, ctx.BuildDir); err != nil {
+	if err = createRPMRepo(path, ctx.BuildDir); err != nil {
 		return "", nil, fmt.Errorf("creating rpm repository: %w", err)
 	}
 

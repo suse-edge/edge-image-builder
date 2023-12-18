@@ -86,7 +86,7 @@ func (p *podman) Import(tarball, ref string) error {
 // Parameters:
 //   - context - context from where the image will be built
 //   - name    - name for the image
-func (p *podman) Build(context, name string) error {
+func (p *podman) Build(ctx, name string) error {
 	zap.L().Sugar().Infof("Building image %s...", name)
 	logFile, err := generatePodmanLogFile(podmanBuildLogFile, p.out)
 	if err != nil {
@@ -95,7 +95,7 @@ func (p *podman) Build(context, name string) error {
 
 	eOpts := entities.BuildOptions{
 		BuildOptions: define.BuildOptions{
-			ContextDirectory: context,
+			ContextDirectory: ctx,
 			Output:           name,
 			Out:              logFile,
 			Err:              logFile,
@@ -104,7 +104,7 @@ func (p *podman) Build(context, name string) error {
 
 	_, err = images.Build(p.context, []string{dockerfile}, eOpts)
 	if err != nil {
-		return fmt.Errorf("building image from context %s: %w", context, err)
+		return fmt.Errorf("building image from context %s: %w", ctx, err)
 	}
 
 	return nil
@@ -135,7 +135,7 @@ func (p *podman) Run(img string) (string, error) {
 func (p *podman) Copy(id, src, dest string) error {
 	zap.L().Sugar().Infof("Copying %s from container %s to %s", src, id, dest)
 
-	tmpArch, err := os.Create(filepath.Join(os.TempDir(), "tmp.tar"))
+	tmpArch, err := os.CreateTemp("", "*-tmp.tar")
 	if err != nil {
 		return fmt.Errorf("creating podman log file: %w", err)
 	}
