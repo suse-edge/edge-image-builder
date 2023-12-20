@@ -80,6 +80,10 @@ func Configure(ctx *image.Context) error {
 			name:     keymapComponentName,
 			runnable: configureKeymap,
 		},
+		{
+			name:     k8sComponentName,
+			runnable: configureKubernetes,
+		},
 	}
 
 	for _, component := range combustionComponents {
