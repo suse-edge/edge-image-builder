@@ -23,8 +23,6 @@ type Context struct {
 	BuildDir string
 	// CombustionDir is a subdirectory under BuildDir containing the Combustion script and all related files.
 	CombustionDir string
-	// DeleteBuildDir indicates whether the BuildDir should be cleaned up after the image is built.
-	DeleteBuildDir bool
 	// ImageDefinition contains the image definition properties.
 	ImageDefinition              *Definition
 	NetworkConfigGenerator       NetworkConfigGenerator
@@ -34,7 +32,6 @@ type Context struct {
 func NewContext(
 	imageConfigDir string,
 	rootBuildDir string,
-	deleteBuildDir bool,
 	definition *Definition,
 	generator NetworkConfigGenerator,
 	installer NetworkConfiguratorInstaller,
@@ -64,19 +61,8 @@ func NewContext(
 		ImageConfigDir:               imageConfigDir,
 		BuildDir:                     buildDir,
 		CombustionDir:                combustionDir,
-		DeleteBuildDir:               deleteBuildDir,
 		ImageDefinition:              definition,
 		NetworkConfigGenerator:       generator,
 		NetworkConfiguratorInstaller: installer,
 	}, nil
-}
-
-func CleanUpBuildDir(c *Context) error {
-	if c.DeleteBuildDir {
-		err := os.RemoveAll(c.BuildDir)
-		if err != nil {
-			return fmt.Errorf("deleting build directory: %w", err)
-		}
-	}
-	return nil
 }

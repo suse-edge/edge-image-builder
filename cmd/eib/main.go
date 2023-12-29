@@ -16,25 +16,21 @@ import (
 )
 
 const (
-	argConfigFile  = "config-file"
-	argConfigDir   = "config-dir"
-	argBuildDir    = "build-dir"
-	argDeleteBuild = "delete-build-dir"
+	argConfigFile = "config-file"
+	argConfigDir  = "config-dir"
+	argBuildDir   = "build-dir"
 )
 
 func processArgs() (*image.Context, error) {
 	var (
-		configFile     string
-		configDir      string
-		buildDir       string
-		deleteBuildDir bool
+		configFile string
+		configDir  string
+		buildDir   string
 	)
 
 	flag.StringVar(&configFile, argConfigFile, "", "name of the image configuration file")
 	flag.StringVar(&configDir, argConfigDir, "", "full path to the image configuration directory")
 	flag.StringVar(&buildDir, argBuildDir, "", "full path to the directory to store build artifacts")
-	flag.BoolVar(&deleteBuildDir, argDeleteBuild, false,
-		"if specified, the build directory will be deleted after the image is built")
 	flag.Parse()
 
 	imageDefinition, err := parseImageDefinition(configFile, configDir)
@@ -47,7 +43,7 @@ func processArgs() (*image.Context, error) {
 		return nil, fmt.Errorf("validating the config dir %s: %w", configDir, err)
 	}
 
-	ctx, err := image.NewContext(configDir, buildDir, deleteBuildDir, imageDefinition, network.ConfigGenerator{}, network.ConfiguratorInstaller{})
+	ctx, err := image.NewContext(configDir, buildDir, imageDefinition, network.ConfigGenerator{}, network.ConfiguratorInstaller{})
 	if err != nil {
 		return nil, fmt.Errorf("building dir structure: %w", err)
 	}
@@ -118,9 +114,5 @@ func main() {
 	builder := build.New(ctx)
 	if err = builder.Build(); err != nil {
 		zap.L().Fatal("An error occurred building the image", zap.Error(err))
-	}
-
-	if err = image.CleanUpBuildDir(ctx); err != nil {
-		zap.L().Error("Failed to clean up build directory", zap.Error(err))
 	}
 }

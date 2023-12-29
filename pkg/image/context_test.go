@@ -1,7 +1,6 @@
 package image
 
 import (
-	"io/fs"
 	"os"
 	"testing"
 
@@ -10,7 +9,7 @@ import (
 )
 
 func TestContext_New(t *testing.T) {
-	context, err := NewContext("", "", false, nil, nil, nil)
+	context, err := NewContext("", "", nil, nil, nil)
 	require.NoError(t, err)
 	defer os.RemoveAll(context.BuildDir)
 
@@ -25,47 +24,9 @@ func TestContext_New_ExistingBuildDir(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	// Test
-	context, err := NewContext("", tmpDir, false, nil, nil, nil)
+	context, err := NewContext("", tmpDir, nil, nil, nil)
 	require.NoError(t, err)
 
 	// Verify
 	assert.Contains(t, context.BuildDir, tmpDir)
-}
-
-func TestCleanUpBuildDirTrue(t *testing.T) {
-	// Setup
-	tmpDir, err := os.MkdirTemp("", "eib-test-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
-
-	context := &Context{
-		BuildDir:       tmpDir,
-		DeleteBuildDir: true,
-	}
-
-	// Test
-	require.NoError(t, CleanUpBuildDir(context))
-
-	// Verify
-	_, err = os.Stat(tmpDir)
-	assert.ErrorIs(t, err, fs.ErrNotExist)
-}
-
-func TestCleanUpBuildDirFalse(t *testing.T) {
-	// Setup
-	tmpDir, err := os.MkdirTemp("", "eib-test-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
-
-	context := &Context{
-		BuildDir:       tmpDir,
-		DeleteBuildDir: false,
-	}
-
-	// Test
-	require.NoError(t, CleanUpBuildDir(context))
-
-	// Verify
-	_, err = os.Stat(tmpDir)
-	require.NoError(t, err)
 }
