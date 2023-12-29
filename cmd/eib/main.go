@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -53,17 +52,8 @@ func processArgs() (*image.Context, error) {
 	return ctx, nil
 }
 
-func generateBuildLogFilename(ctx *image.Context) string {
-	const buildLogFile = "eib-build-%s.log"
-
-	timestamp := time.Now().Format("Jan02_15-04-05")
-	filename := fmt.Sprintf(buildLogFile, timestamp)
-
-	return filepath.Join(ctx.BuildDir, filename)
-}
-
 func setupLogging(ctx *image.Context) {
-	logFilename := generateBuildLogFilename(ctx)
+	logFilename := filepath.Join(ctx.BuildDir, "eib-build.log")
 
 	logConfig := zap.NewProductionConfig()
 	logConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
