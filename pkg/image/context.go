@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type NetworkConfigGenerator interface {
@@ -31,22 +32,31 @@ type Context struct {
 }
 
 func NewContext(
-	imageConfigDir, buildDir string,
+	imageConfigDir string,
+	rootBuildDir string,
 	deleteBuildDir bool,
 	definition *Definition,
 	generator NetworkConfigGenerator,
 	installer NetworkConfiguratorInstaller,
 ) (*Context, error) {
-	if buildDir == "" {
+	if rootBuildDir == "" {
 		tmpDir, err := os.MkdirTemp("", "eib-")
 		if err != nil {
 			return nil, fmt.Errorf("creating a temporary build directory: %w", err)
 		}
-		buildDir = tmpDir
+		rootBuildDir = tmpDir
 	}
+
+	timestamp := time.Now().Format("Jan02_15-04-05")
+	buildDir := filepath.Join(rootBuildDir, fmt.Sprintf("build-%s", timestamp))
+
+	if err := os.Mkdir(buildDir, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("creating a build directory: %w", err)
+	}
+
 	combustionDir := filepath.Join(buildDir, "combustion")
 
-	if err := os.MkdirAll(combustionDir, os.ModePerm); err != nil {
+	if err := os.Mkdir(combustionDir, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("creating the combustion directory: %w", err)
 	}
 

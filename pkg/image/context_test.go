@@ -29,7 +29,7 @@ func TestContext_New_ExistingBuildDir(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify
-	require.Equal(t, tmpDir, context.BuildDir)
+	assert.Contains(t, context.BuildDir, tmpDir)
 }
 
 func TestCleanUpBuildDirTrue(t *testing.T) {
