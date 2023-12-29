@@ -44,9 +44,8 @@ podman run --rm -it \
 * `-build-dir` - (optional) If unspecified, EIB will use a temporary directory inside the container for
   assembling/generating the components used in the build. This may be specified to a location within the mounted
   volume to make the build artifacts available after the container completes. In this example, a directory named
-  `_build` will be created in the image configuration directory and will persist after EIB finished. If it already
-  exists, EIB will delete this directory at the start of a build, meaning it does not need to manually be cleaned up
-  between builds.
+  `_build` will be created in the image configuration directory and will persist after EIB finishes. This directory
+  will contain subdirectories storing the respective artifacts of the different builds.
 
 ## Testing Images
 
