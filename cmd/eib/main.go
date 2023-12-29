@@ -22,14 +22,14 @@ const (
 
 func processArgs() (*image.Context, error) {
 	var (
-		configFile string
-		configDir  string
-		buildDir   string
+		configFile   string
+		configDir    string
+		rootBuildDir string
 	)
 
 	flag.StringVar(&configFile, argConfigFile, "", "name of the image configuration file")
 	flag.StringVar(&configDir, argConfigDir, "", "full path to the image configuration directory")
-	flag.StringVar(&buildDir, argBuildDir, "", "full path to the directory to store build artifacts")
+	flag.StringVar(&rootBuildDir, argBuildDir, "", "full path to the directory to store build artifacts")
 	flag.Parse()
 
 	imageDefinition, err := parseImageDefinition(configFile, configDir)
@@ -42,18 +42,25 @@ func processArgs() (*image.Context, error) {
 		return nil, fmt.Errorf("validating the config dir %s: %w", configDir, err)
 	}
 
-	ctx, err := image.NewContext(configDir, buildDir, imageDefinition, network.ConfigGenerator{}, network.ConfiguratorInstaller{})
+	buildDir, combustionDir, err := build.SetupBuildDirectory(rootBuildDir)
 	if err != nil {
-		return nil, fmt.Errorf("building dir structure: %w", err)
+		return nil, fmt.Errorf("setting up build directory: %w", err)
 	}
 
-	setupLogging(ctx)
+	setupLogging(buildDir)
 
-	return ctx, nil
+	return &image.Context{
+		ImageConfigDir:               configDir,
+		BuildDir:                     buildDir,
+		CombustionDir:                combustionDir,
+		ImageDefinition:              imageDefinition,
+		NetworkConfigGenerator:       network.ConfigGenerator{},
+		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
+	}, nil
 }
 
-func setupLogging(ctx *image.Context) {
-	logFilename := filepath.Join(ctx.BuildDir, "eib-build.log")
+func setupLogging(buildDir string) {
+	logFilename := filepath.Join(buildDir, "eib-build.log")
 
 	logConfig := zap.NewProductionConfig()
 	logConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
@@ -101,7 +108,7 @@ func main() {
 		log.Fatalf("CLI arguments could not be parsed: %s", err)
 	}
 
-	builder := build.New(ctx)
+	builder := build.NewBuilder(ctx)
 	if err = builder.Build(); err != nil {
 		zap.L().Fatal("An error occurred building the image", zap.Error(err))
 	}
