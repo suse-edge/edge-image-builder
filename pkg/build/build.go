@@ -79,7 +79,7 @@ func SetupBuildDirectory(rootDir string) (buildDir string, combustionDir string,
 
 	timestamp := time.Now().Format("Jan02_15-04-05")
 	buildDir = filepath.Join(rootDir, fmt.Sprintf("build-%s", timestamp))
-	if err = os.Mkdir(buildDir, os.ModePerm); err != nil {
+	if err = os.MkdirAll(buildDir, os.ModePerm); err != nil {
 		return "", "", fmt.Errorf("creating a build directory: %w", err)
 	}
 
