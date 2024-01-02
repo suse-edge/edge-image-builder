@@ -21,4 +21,4 @@ enable_fqdns_grains: False
 
 EOF
 
-systemctl restart venv-salt-minion || true
+systemctl enable venv-salt-minion || true
