@@ -2,7 +2,9 @@ package build
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -16,7 +18,7 @@ type Builder struct {
 	configureCombustion configureCombustion
 }
 
-func New(ctx *image.Context) *Builder {
+func NewBuilder(ctx *image.Context) *Builder {
 	return &Builder{
 		context:             ctx,
 		configureCombustion: combustion.Configure,
@@ -64,4 +66,27 @@ func (b *Builder) generateOutputImageFilename() string {
 func (b *Builder) generateBaseImageFilename() string {
 	filename := filepath.Join(b.context.ImageConfigDir, "images", b.context.ImageDefinition.Image.BaseImage)
 	return filename
+}
+
+func SetupBuildDirectory(rootDir string) (buildDir string, combustionDir string, err error) {
+	if rootDir == "" {
+		tmpDir, tmpErr := os.MkdirTemp("", "eib-")
+		if tmpErr != nil {
+			return "", "", fmt.Errorf("creating a temporary root directory: %w", tmpErr)
+		}
+		rootDir = tmpDir
+	}
+
+	timestamp := time.Now().Format("Jan02_15-04-05")
+	buildDir = filepath.Join(rootDir, fmt.Sprintf("build-%s", timestamp))
+	if err = os.MkdirAll(buildDir, os.ModePerm); err != nil {
+		return "", "", fmt.Errorf("creating a build directory: %w", err)
+	}
+
+	combustionDir = filepath.Join(buildDir, "combustion")
+	if err = os.Mkdir(combustionDir, os.ModePerm); err != nil {
+		return "", "", fmt.Errorf("creating a combustion directory: %w", err)
+	}
+
+	return buildDir, combustionDir, nil
 }

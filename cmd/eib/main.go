@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -16,25 +15,21 @@ import (
 )
 
 const (
-	argConfigFile  = "config-file"
-	argConfigDir   = "config-dir"
-	argBuildDir    = "build-dir"
-	argDeleteBuild = "delete-build-dir"
+	argConfigFile = "config-file"
+	argConfigDir  = "config-dir"
+	argBuildDir   = "build-dir"
 )
 
 func processArgs() (*image.Context, error) {
 	var (
-		configFile     string
-		configDir      string
-		buildDir       string
-		deleteBuildDir bool
+		configFile   string
+		configDir    string
+		rootBuildDir string
 	)
 
 	flag.StringVar(&configFile, argConfigFile, "", "name of the image configuration file")
 	flag.StringVar(&configDir, argConfigDir, "", "full path to the image configuration directory")
-	flag.StringVar(&buildDir, argBuildDir, "", "full path to the directory to store build artifacts")
-	flag.BoolVar(&deleteBuildDir, argDeleteBuild, false,
-		"if specified, the build directory will be deleted after the image is built")
+	flag.StringVar(&rootBuildDir, argBuildDir, "", "full path to the directory to store build artifacts")
 	flag.Parse()
 
 	imageDefinition, err := parseImageDefinition(configFile, configDir)
@@ -47,27 +42,25 @@ func processArgs() (*image.Context, error) {
 		return nil, fmt.Errorf("validating the config dir %s: %w", configDir, err)
 	}
 
-	ctx, err := image.NewContext(configDir, buildDir, deleteBuildDir, imageDefinition, network.ConfigGenerator{}, network.ConfiguratorInstaller{})
+	buildDir, combustionDir, err := build.SetupBuildDirectory(rootBuildDir)
 	if err != nil {
-		return nil, fmt.Errorf("building dir structure: %w", err)
+		return nil, fmt.Errorf("setting up build directory: %w", err)
 	}
 
-	setupLogging(ctx)
+	setupLogging(buildDir)
 
-	return ctx, nil
+	return &image.Context{
+		ImageConfigDir:               configDir,
+		BuildDir:                     buildDir,
+		CombustionDir:                combustionDir,
+		ImageDefinition:              imageDefinition,
+		NetworkConfigGenerator:       network.ConfigGenerator{},
+		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
+	}, nil
 }
 
-func generateBuildLogFilename(ctx *image.Context) string {
-	const buildLogFile = "eib-build-%s.log"
-
-	timestamp := time.Now().Format("Jan02_15-04-05")
-	filename := fmt.Sprintf(buildLogFile, timestamp)
-
-	return filepath.Join(ctx.BuildDir, filename)
-}
-
-func setupLogging(ctx *image.Context) {
-	logFilename := generateBuildLogFilename(ctx)
+func setupLogging(buildDir string) {
+	logFilename := filepath.Join(buildDir, "eib-build.log")
 
 	logConfig := zap.NewProductionConfig()
 	logConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
@@ -115,12 +108,8 @@ func main() {
 		log.Fatalf("CLI arguments could not be parsed: %s", err)
 	}
 
-	builder := build.New(ctx)
+	builder := build.NewBuilder(ctx)
 	if err = builder.Build(); err != nil {
 		zap.L().Fatal("An error occurred building the image", zap.Error(err))
-	}
-
-	if err = image.CleanUpBuildDir(ctx); err != nil {
-		zap.L().Error("Failed to clean up build directory", zap.Error(err))
 	}
 }

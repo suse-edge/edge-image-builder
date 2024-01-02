@@ -86,7 +86,9 @@ func TestCreateXorrisoCommand(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	defer os.Remove(builder.generateIsoLogFilename())
+	defer func() {
+		assert.NoError(t, os.Remove(logfile.Name()))
+	}()
 
 	assert.Equal(t, xorrisoExec, cmd.Path)
 
@@ -99,6 +101,6 @@ func TestCreateXorrisoCommand(t *testing.T) {
 	assert.Equal(t, expected, cmd.Args)
 
 	assert.NotNil(t, logfile)
-	assert.NotEqual(t, os.Stdout, cmd.Stdout)
-	assert.NotEqual(t, os.Stderr, cmd.Stderr)
+	assert.Equal(t, logfile, cmd.Stdout)
+	assert.Equal(t, logfile, cmd.Stderr)
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -79,7 +78,9 @@ func configureNetwork(ctx *image.Context) ([]string, error) {
 }
 
 func generateNetworkConfig(ctx *image.Context) error {
-	logFilename := generateNetworkLogFilename(ctx)
+	const networkConfigLogFile = "network-config.log"
+
+	logFilename := filepath.Join(ctx.BuildDir, networkConfigLogFile)
 	logFile, err := os.Create(logFilename)
 	if err != nil {
 		return fmt.Errorf("creating log file: %w", err)
@@ -95,15 +96,6 @@ func generateNetworkConfig(ctx *image.Context) error {
 	outputDir := filepath.Join(ctx.CombustionDir, networkConfigDir)
 
 	return ctx.NetworkConfigGenerator.GenerateNetworkConfig(configDir, outputDir, logFile)
-}
-
-func generateNetworkLogFilename(ctx *image.Context) string {
-	const networkConfigLogFile = "network-config-%s.log"
-
-	timestamp := time.Now().Format("Jan02_15-04-05")
-	filename := fmt.Sprintf(networkConfigLogFile, timestamp)
-
-	return filepath.Join(ctx.BuildDir, filename)
 }
 
 func installNetworkConfigurator(ctx *image.Context) error {
