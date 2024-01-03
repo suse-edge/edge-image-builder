@@ -1,6 +1,7 @@
 package build
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -90,11 +91,13 @@ func TestCreateModifyCommand(t *testing.T) {
 	}
 
 	// Test
-	cmd := builder.createModifyCommand()
+	cmd := builder.createModifyCommand(io.Discard)
 
 	// Verify
 	require.NotNil(t, cmd)
 
 	expectedPath := filepath.Join("build-dir", modifyScriptName)
 	assert.Equal(t, expectedPath, cmd.Path)
+	assert.Equal(t, io.Discard, cmd.Stdout)
+	assert.Equal(t, io.Discard, cmd.Stderr)
 }
