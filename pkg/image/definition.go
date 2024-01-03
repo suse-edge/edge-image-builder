@@ -2,6 +2,7 @@ package image
 
 import (
 	"fmt"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -53,6 +54,7 @@ func ParseDefinition(data []byte) (*Definition, error) {
 	if err := yaml.Unmarshal(data, &definition); err != nil {
 		return nil, fmt.Errorf("could not parse the image definition: %w", err)
 	}
+	definition.Image.ImageType = strings.ToLower(definition.Image.ImageType)
 
 	return &definition, nil
 }
