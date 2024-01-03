@@ -20,22 +20,22 @@ func TestConfigureUsers(t *testing.T) {
 		OperatingSystem: image.OperatingSystem{
 			Users: []image.OperatingSystemUser{
 				{
-					Username: "alpha",
-					Password: "alpha123",
-					SSHKey:   "alphakey",
+					Username:          "alpha",
+					EncryptedPassword: "alpha123",
+					SSHKey:            "alphakey",
 				},
 				{
-					Username: "beta",
-					Password: "beta123",
+					Username:          "beta",
+					EncryptedPassword: "beta123",
 				},
 				{
 					Username: "gamma",
 					SSHKey:   "gammakey",
 				},
 				{
-					Username: "root",
-					Password: "root123",
-					SSHKey:   "rootkey",
+					Username:          "root",
+					EncryptedPassword: "root123",
+					SSHKey:            "rootkey",
 				},
 			},
 		},

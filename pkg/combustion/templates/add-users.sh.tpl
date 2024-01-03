@@ -11,8 +11,8 @@ mount /home
 # Non-root user
 useradd -m {{.Username}}
 
-{{- if .Password }}
-echo '{{.Username}}:{{.Password}}' | chpasswd -e
+{{- if .EncryptedPassword }}
+echo '{{.Username}}:{{.EncryptedPassword}}' | chpasswd -e
 {{- end }}
 
 {{- if .SSHKey }}
@@ -24,8 +24,8 @@ chown -R {{.Username}} /home/{{.Username}}/.ssh
 {{- else }}
 
 # Root user
-{{- if .Password }}
-echo '{{.Username}}:{{.Password}}' | chpasswd -e
+{{- if .EncryptedPassword }}
+echo '{{.Username}}:{{.EncryptedPassword}}' | chpasswd -e
 {{- end }}
 
 {{- if .SSHKey }}
