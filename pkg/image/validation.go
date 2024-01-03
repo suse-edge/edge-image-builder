@@ -51,32 +51,32 @@ func validateImage(definition *Definition) error {
 }
 
 func validateOperatingSystem(definition *Definition) error {
-	if checkIfOperatingSystemDefined(definition.OperatingSystem) {
+	if checkIfOperatingSystemDefined(&definition.OperatingSystem) {
 		return nil
 	}
-	err := validateKernalArgs(definition.OperatingSystem)
+	err := validateKernalArgs(&definition.OperatingSystem)
 	if err != nil {
 		return fmt.Errorf("error validating kernal args: %w", err)
 	}
-	err = validateSystemd(definition.OperatingSystem)
+	err = validateSystemd(&definition.OperatingSystem)
 	if err != nil {
 		return fmt.Errorf("error validating systemd args: %w", err)
 	}
-	err = validateUsers(definition.OperatingSystem)
+	err = validateUsers(&definition.OperatingSystem)
 	if err != nil {
 		return fmt.Errorf("error validating users: %w", err)
 	}
 	return nil
 }
 
-func checkIfOperatingSystemDefined(os OperatingSystem) bool {
+func checkIfOperatingSystemDefined(os *OperatingSystem) bool {
 	return len(os.KernelArgs) == 0 &&
 		len(os.Users) == 0 &&
 		len(os.Systemd.Enable) == 0 && len(os.Systemd.Disable) == 0 &&
 		os.Suma.Host == "" && os.Suma.ActivationKey == "" && !os.Suma.GetSSL
 }
 
-func validateKernalArgs(os OperatingSystem) error {
+func validateKernalArgs(os *OperatingSystem) error {
 	seenKeys := make(map[string]bool)
 
 	for _, arg := range os.KernelArgs {
@@ -99,7 +99,7 @@ func validateKernalArgs(os OperatingSystem) error {
 	return nil
 }
 
-func validateSystemd(os OperatingSystem) error {
+func validateSystemd(os *OperatingSystem) error {
 	if err := checkForDuplicates(os.Systemd.Enable, "enable"); err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func checkForDuplicates(items []string, listType string) error {
 	return nil
 }
 
-func validateUsers(os OperatingSystem) error {
+func validateUsers(os *OperatingSystem) error {
 	seenUsernames := make(map[string]bool)
 
 	for _, user := range os.Users {
