@@ -76,7 +76,7 @@ func TestWriteModifyScript(t *testing.T) {
 	assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
 
 	foundContents := string(foundBytes)
-	assert.Contains(t, foundContents, "guestfish --rw -a config-dir/output-image")
+	assert.Contains(t, foundContents, "guestfish --format=raw --rw -a config-dir/output-image")
 	assert.Contains(t, foundContents, "copy-in "+builder.context.CombustionDir)
 	assert.Contains(t, foundContents, "download /boot/grub2/grub.cfg /tmp/grub.cfg")
 }
