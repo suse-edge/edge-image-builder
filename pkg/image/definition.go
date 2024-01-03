@@ -53,6 +53,9 @@ func ParseDefinition(data []byte) (*Definition, error) {
 	if err := yaml.Unmarshal(data, &definition); err != nil {
 		return nil, fmt.Errorf("could not parse the image definition: %w", err)
 	}
-
+	err := validate(&definition)
+	if err != nil {
+		return nil, fmt.Errorf("error validating definition file: %w", err)
+	}
 	return &definition, nil
 }
