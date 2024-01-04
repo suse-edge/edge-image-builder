@@ -12,6 +12,7 @@ func TestValidateDefinition(t *testing.T) {
 	// Setup
 	filename := "./testdata/full-valid-example.yaml"
 	configData, err := os.ReadFile(filename)
+	require.NoError(t, err)
 	definition, err := ParseDefinition(configData)
 	require.NoError(t, err)
 
