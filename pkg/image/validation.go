@@ -5,12 +5,8 @@ import (
 	"strings"
 )
 
-func validate(definition *Definition) error {
-	err := validateAPIVersion(definition)
-	if err != nil {
-		return fmt.Errorf("error validating apiVersion: %w", err)
-	}
-	err = validateImage(definition)
+func ValidateDefinition(definition *Definition) error {
+	err := validateImage(definition)
 	if err != nil {
 		return fmt.Errorf("error validating image: %w", err)
 	}
@@ -22,29 +18,19 @@ func validate(definition *Definition) error {
 	return nil
 }
 
-func validateAPIVersion(definition *Definition) error {
-	// Open to discussion regarding how to validate the else if
-	if definition.APIVersion == (Definition{}.APIVersion) {
-		return fmt.Errorf("apiVersion not defined")
-	} else if len(definition.APIVersion) < 2 {
-		return fmt.Errorf("invalid apiVersion")
-	}
-	return nil
-}
-
 func validateImage(definition *Definition) error {
 	if definition.Image == (Image{}) {
 		return fmt.Errorf("image not defined")
 	}
-	if definition.Image.ImageType == (Definition{}.Image.ImageType) {
+	if definition.Image.ImageType == "" {
 		return fmt.Errorf("imageType not defined")
 	} else if definition.Image.ImageType != "iso" && definition.Image.ImageType != "raw" {
 		return fmt.Errorf("invalid imageType, should be 'iso' or 'raw'")
 	}
-	if definition.Image.BaseImage == (Definition{}.Image.BaseImage) {
+	if definition.Image.BaseImage == "" {
 		return fmt.Errorf("baseImage not defined")
 	}
-	if definition.Image.OutputImageName == (Definition{}.Image.OutputImageName) {
+	if definition.Image.OutputImageName == "" {
 		return fmt.Errorf("outputImageName not defined")
 	}
 	return nil
@@ -54,7 +40,7 @@ func validateOperatingSystem(definition *Definition) error {
 	if checkIfOperatingSystemDefined(&definition.OperatingSystem) {
 		return nil
 	}
-	err := validateKernalArgs(&definition.OperatingSystem)
+	err := validateKernelArgs(&definition.OperatingSystem)
 	if err != nil {
 		return fmt.Errorf("error validating kernal args: %w", err)
 	}
@@ -66,6 +52,10 @@ func validateOperatingSystem(definition *Definition) error {
 	if err != nil {
 		return fmt.Errorf("error validating users: %w", err)
 	}
+	err = validateSuma(&definition.OperatingSystem)
+	if err != nil {
+		return fmt.Errorf("error validating suma: %w", err)
+	}
 	return nil
 }
 
@@ -73,16 +63,16 @@ func checkIfOperatingSystemDefined(os *OperatingSystem) bool {
 	return len(os.KernelArgs) == 0 &&
 		len(os.Users) == 0 &&
 		len(os.Systemd.Enable) == 0 && len(os.Systemd.Disable) == 0 &&
-		os.Suma.Host == "" && os.Suma.ActivationKey == "" && !os.Suma.GetSSL
+		os.Suma == (Suma{})
 }
 
-func validateKernalArgs(os *OperatingSystem) error {
+func validateKernelArgs(os *OperatingSystem) error {
 	seenKeys := make(map[string]bool)
 
 	for _, arg := range os.KernelArgs {
 		parts := strings.SplitN(arg, "=", 2)
 		if len(parts) != 2 {
-			return fmt.Errorf("invalid kernel arg: %s, expected format key=value", arg)
+			return fmt.Errorf("invalid kernel arg: '%s', expected format key=value", arg)
 		}
 
 		key, value := parts[0], parts[1]
@@ -91,7 +81,7 @@ func validateKernalArgs(os *OperatingSystem) error {
 		}
 
 		if _, exists := seenKeys[key]; exists {
-			return fmt.Errorf("duplicate kernel arg found: %s", key)
+			return fmt.Errorf("duplicate kernel arg found: '%s'", key)
 		}
 		seenKeys[key] = true
 	}
@@ -100,12 +90,12 @@ func validateKernalArgs(os *OperatingSystem) error {
 }
 
 func validateSystemd(os *OperatingSystem) error {
-	if err := checkForDuplicates(os.Systemd.Enable, "enable"); err != nil {
-		return err
+	if err := checkForDuplicates(os.Systemd.Enable); err != nil {
+		return fmt.Errorf("enable list contains duplicate: %w", err)
 	}
 
-	if err := checkForDuplicates(os.Systemd.Disable, "disable"); err != nil {
-		return err
+	if err := checkForDuplicates(os.Systemd.Disable); err != nil {
+		return fmt.Errorf("disable list contains duplicate: %w", err)
 	}
 
 	for _, enableItem := range os.Systemd.Enable {
@@ -119,11 +109,11 @@ func validateSystemd(os *OperatingSystem) error {
 	return nil
 }
 
-func checkForDuplicates(items []string, listType string) error {
+func checkForDuplicates(items []string) error {
 	seen := make(map[string]bool)
 	for _, item := range items {
 		if seen[item] {
-			return fmt.Errorf("duplicate found in %s: '%s'", listType, item)
+			return fmt.Errorf("'%s'", item)
 		}
 		seen[item] = true
 	}
@@ -149,5 +139,18 @@ func validateUsers(os *OperatingSystem) error {
 		seenUsernames[user.Username] = true
 	}
 
+	return nil
+}
+
+func validateSuma(os *OperatingSystem) error {
+	if os.Suma == (Suma{}) {
+		return nil
+	}
+	if os.Suma.Host == "" {
+		return fmt.Errorf("no host defined")
+	}
+	if os.Suma.ActivationKey == "" {
+		return fmt.Errorf("no activation key defined")
+	}
 	return nil
 }
