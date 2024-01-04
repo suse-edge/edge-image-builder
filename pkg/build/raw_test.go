@@ -1,6 +1,7 @@
 package build
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -76,7 +77,7 @@ func TestWriteModifyScript(t *testing.T) {
 	assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
 
 	foundContents := string(foundBytes)
-	assert.Contains(t, foundContents, "guestfish --rw -a config-dir/output-image")
+	assert.Contains(t, foundContents, "guestfish --format=raw --rw -a config-dir/output-image")
 	assert.Contains(t, foundContents, "copy-in "+builder.context.CombustionDir)
 	assert.Contains(t, foundContents, "download /boot/grub2/grub.cfg /tmp/grub.cfg")
 }
@@ -90,11 +91,13 @@ func TestCreateModifyCommand(t *testing.T) {
 	}
 
 	// Test
-	cmd := builder.createModifyCommand()
+	cmd := builder.createModifyCommand(io.Discard)
 
 	// Verify
 	require.NotNil(t, cmd)
 
 	expectedPath := filepath.Join("build-dir", modifyScriptName)
 	assert.Equal(t, expectedPath, cmd.Path)
+	assert.Equal(t, io.Discard, cmd.Stdout)
+	assert.Equal(t, io.Discard, cmd.Stderr)
 }

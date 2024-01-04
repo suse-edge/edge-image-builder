@@ -40,10 +40,10 @@ operatingSystem:
   - arg2
   users:
   - username: user1
-    password: 123
+    encryptedPassword: 123
     sshKey: user1Key
   - username: user2
-    password: 456
+    encryptedPassword: 456
   - username: user3
     sshKey: user3Key
   systemd:
@@ -59,7 +59,7 @@ operatingSystem:
   the following fields:
   * `username` - Required; Username of the user to create. To set the password or SSH key for the root user,
     use the value `root` for this field.
-  * `password` - Optional; Encrypted password to set for the use (for example, using `openssl passwd -6 $PASSWORD`
+  * `encryptedPassword` - Optional; Encrypted password to set for the use (for example, using `openssl passwd -6 $PASSWORD`
     to generate the value for this field).
   * `sshKey` - Optional; Full public SSH key to configure for the user.
 * `systemd` - Optional; Defines lists of services to enable/disable. Either or both of `enable` and `disable` may

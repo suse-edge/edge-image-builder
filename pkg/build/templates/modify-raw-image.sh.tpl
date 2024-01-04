@@ -9,7 +9,7 @@ set -euo pipefail
 #
 # Guestfish Command Documentation: https://libguestfs.org/guestfish.1.html
 
-guestfish --rw -a {{.OutputImage}} -i <<'EOF'
+guestfish --format=raw --rw -a {{.OutputImage}} -i <<'EOF'
   # Enables write access to the read only filesystem
   sh "btrfs property set / ro false"
 
