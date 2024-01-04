@@ -2,9 +2,10 @@ package image
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidateDefinition(t *testing.T) {
@@ -382,6 +383,44 @@ func TestValidateOperatingSystemSumaMissingHost(t *testing.T) {
 
 	// Verify
 	require.ErrorContains(t, err, "no host defined")
+}
+
+func TestValidateOperatingSystemSumaInvalidHostHTTP(t *testing.T) {
+	// Setup
+	def := Definition{
+		OperatingSystem: OperatingSystem{
+			Suma: Suma{
+				Host:          "http://hostname",
+				ActivationKey: "slemicro55",
+				GetSSL:        false,
+			},
+		},
+	}
+
+	// Test
+	err := validateSuma(&def.OperatingSystem)
+
+	// Verify
+	require.ErrorContains(t, err, "invalid hostname, hostname should not contain 'http://'")
+}
+
+func TestValidateOperatingSystemSumaInvalidHostHTTPS(t *testing.T) {
+	// Setup
+	def := Definition{
+		OperatingSystem: OperatingSystem{
+			Suma: Suma{
+				Host:          "https://hostname",
+				ActivationKey: "slemicro55",
+				GetSSL:        false,
+			},
+		},
+	}
+
+	// Test
+	err := validateSuma(&def.OperatingSystem)
+
+	// Verify
+	require.ErrorContains(t, err, "invalid hostname, hostname should not contain 'http://'")
 }
 
 func TestValidateOperatingSystemSumaMissingActivationKey(t *testing.T) {

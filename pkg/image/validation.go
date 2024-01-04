@@ -149,6 +149,9 @@ func validateSuma(os *OperatingSystem) error {
 	if os.Suma.Host == "" {
 		return fmt.Errorf("no host defined")
 	}
+	if strings.HasPrefix(os.Suma.Host, "http") {
+		return fmt.Errorf("invalid hostname, hostname should not contain 'http://' or 'https://'")
+	}
 	if os.Suma.ActivationKey == "" {
 		return fmt.Errorf("no activation key defined")
 	}
