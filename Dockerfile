@@ -13,7 +13,7 @@ FROM opensuse/leap:15.5
 # 1. ISO image building
 # 2. RAW image modification on x86_64
 RUN zypper install -y \
-    xorriso  \
+    xorriso squashfs  \
     libguestfs kernel-default e2fsprogs parted gptfdisk btrfsprogs
 
 # TODO: Install nmc via zypper once an RPM package is available

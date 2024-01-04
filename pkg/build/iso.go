@@ -1,39 +1,94 @@
 package build
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
 )
 
 const (
-	xorrisoArgsBase = "-indev %s -outdev %s -map %s /combustion -boot_image any replay -changes_pending yes"
-	xorrisoExec     = "/usr/bin/xorriso"
-	xorrisoLogFile  = "iso-build.log"
+	isoExtractDir        = "iso-extract"
+	rawExtractDir        = "raw-extract"
+	extractIsoScriptName = "iso-extract.sh"
+	extractIsoLogFile    = "iso-extract.log"
+	rebuildIsoScriptName = "iso-build.sh"
+	rebuildIsoLogFile    = "iso-build.log"
 )
 
+//go:embed templates/extract-iso.sh.tpl
+var extractIsoTemplate string
+
+//go:embed templates/rebuild-iso.sh.tpl
+var rebuildIsoTemplate string
+
 func (b *Builder) buildIsoImage() error {
-	err := b.deleteExistingOutputIso()
-	if err != nil {
+	if err := b.deleteExistingOutputIso(); err != nil {
 		return fmt.Errorf("deleting existing ISO image: %w", err)
 	}
 
-	cmd, logfile, err := b.createXorrisoCommand()
-	if err != nil {
-		return fmt.Errorf("configuring the ISO build command: %w", err)
-	}
-	defer logfile.Close()
-
-	err = cmd.Run()
-	if err != nil {
-		return fmt.Errorf("error running xorriso: %w", err)
+	if err := b.extractIso(); err != nil {
+		return fmt.Errorf("extracting the ISO image: %w", err)
 	}
 
-	return err
+	// TODO: Call into raw code
+
+	if err := b.rebuildIso(); err != nil {
+		return fmt.Errorf("building the ISO image: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Builder) extractIso() error {
+	scriptName := filepath.Join(b.context.BuildDir, extractIsoScriptName)
+	if err := b.writeIsoScript(extractIsoTemplate, scriptName); err != nil {
+		return fmt.Errorf("creating the ISO extraction script: %w", err)
+	}
+
+	cmd, extractLog, err := b.createIsoCommand(extractIsoLogFile, extractIsoScriptName)
+	if err != nil {
+		return fmt.Errorf("preparing to extract the contents of the ISO: %w", err)
+	}
+	defer func() {
+		if err = extractLog.Close(); err != nil {
+			zap.L().Warn("failed to close ISO extraction log file properly", zap.Error(err))
+		}
+	}()
+
+	if err = cmd.Run(); err != nil {
+		return fmt.Errorf("extracting the contents of the ISO: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Builder) rebuildIso() error {
+	scriptName := filepath.Join(b.context.BuildDir, rebuildIsoScriptName)
+	if err := b.writeIsoScript(rebuildIsoTemplate, scriptName); err != nil {
+		return fmt.Errorf("creating the ISO rebuild script: %w", err)
+	}
+
+	cmd, rebuildLog, err := b.createIsoCommand(rebuildIsoLogFile, rebuildIsoScriptName)
+	if err != nil {
+		return fmt.Errorf("preparing to build the new ISO: %w", err)
+	}
+	defer func() {
+		if err = rebuildLog.Close(); err != nil {
+			zap.L().Warn("failed to close ISO rebuild log file properly", zap.Error(err))
+		}
+	}()
+
+	if err = cmd.Run(); err != nil {
+		return fmt.Errorf("building the new ISO: %w", err)
+	}
+
+	return nil
 }
 
 func (b *Builder) deleteExistingOutputIso() error {
@@ -45,28 +100,44 @@ func (b *Builder) deleteExistingOutputIso() error {
 	return nil
 }
 
-func (b *Builder) createXorrisoCommand() (*exec.Cmd, *os.File, error) {
-	logFilename := filepath.Join(b.context.BuildDir, xorrisoLogFile)
-	xorrisoLog, err := os.Create(logFilename)
-	if err != nil {
-		return nil, nil, fmt.Errorf("opening ISO build logfile: %w", err)
+func (b *Builder) writeIsoScript(templateContents, outputFilename string) error {
+	isoExtractPath := filepath.Join(b.context.BuildDir, isoExtractDir)
+	rawExtractPath := filepath.Join(b.context.BuildDir, rawExtractDir)
+	arguments := struct {
+		IsoExtractDir       string
+		RawExtractDir       string
+		IsoSource           string
+		OutputImageFilename string
+	}{
+		IsoExtractDir:       isoExtractPath,
+		RawExtractDir:       rawExtractPath,
+		IsoSource:           b.generateBaseImageFilename(),
+		OutputImageFilename: b.generateOutputImageFilename(),
 	}
-	zap.L().Sugar().Debugf("ISO log file created: %s", logFilename)
 
-	args := b.generateXorrisoArgs()
-	cmd := exec.Command(xorrisoExec, args...)
-	cmd.Stdout = xorrisoLog
-	cmd.Stderr = xorrisoLog
+	contents, err := template.Parse("iso-script", templateContents, arguments)
+	if err != nil {
+		return fmt.Errorf("applying the ISO script template: %w", err)
+	}
 
-	return cmd, xorrisoLog, nil
+	if err = os.WriteFile(outputFilename, []byte(contents), fileio.ExecutablePerms); err != nil {
+		return fmt.Errorf("writing ISO extraction script %s: %w", outputFilename, err)
+	}
+
+	return nil
 }
 
-func (b *Builder) generateXorrisoArgs() []string {
-	indevPath := b.generateBaseImageFilename()
-	outdevPath := b.generateOutputImageFilename()
-	mapDir := b.context.CombustionDir
+func (b *Builder) createIsoCommand(logFilename, scriptName string) (*exec.Cmd, *os.File, error) {
+	fullLogFilename := filepath.Join(b.context.BuildDir, logFilename)
+	logFile, err := os.Create(fullLogFilename)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error opening ISO log file %s: %w", logFilename, err)
+	}
 
-	args := fmt.Sprintf(xorrisoArgsBase, indevPath, outdevPath, mapDir)
-	splitArgs := strings.Split(args, " ")
-	return splitArgs
+	scriptFilename := filepath.Join(b.context.BuildDir, scriptName)
+	cmd := exec.Command(scriptFilename)
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+
+	return cmd, logFile, nil
 }
