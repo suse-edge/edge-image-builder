@@ -70,20 +70,29 @@ func validateKernelArgs(os *OperatingSystem) error {
 	seenKeys := make(map[string]bool)
 
 	for _, arg := range os.KernelArgs {
-		parts := strings.SplitN(arg, "=", 2)
-		if len(parts) != 2 {
-			return fmt.Errorf("invalid kernel arg: '%s', expected format key=value", arg)
-		}
+		if !strings.Contains(arg, "=") {
+			if _, exists := seenKeys[arg]; exists {
+				return fmt.Errorf("duplicate kernel arg found: '%s'", arg)
+			}
+			seenKeys[arg] = true
+		} else {
+			parts := strings.SplitN(arg, "=", 2)
+			if len(parts) != 2 {
+				return fmt.Errorf("invalid kernel arg: '%s', expected format key=value or a single string", arg)
+			}
+			key, value := parts[0], parts[1]
+			if key == "" {
+				return fmt.Errorf("kernel arg value '%s' has no key but has '='", value)
+			}
+			if value == "" {
+				return fmt.Errorf("kernel arg '%s' has no value", key)
+			}
 
-		key, value := parts[0], parts[1]
-		if value == "" {
-			return fmt.Errorf("kernel arg '%s' has no value", key)
+			if _, exists := seenKeys[key]; exists {
+				return fmt.Errorf("duplicate kernel arg found: '%s'", key)
+			}
+			seenKeys[key] = true
 		}
-
-		if _, exists := seenKeys[key]; exists {
-			return fmt.Errorf("duplicate kernel arg found: '%s'", key)
-		}
-		seenKeys[key] = true
 	}
 
 	return nil

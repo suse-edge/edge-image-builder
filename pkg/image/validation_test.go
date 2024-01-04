@@ -108,11 +108,45 @@ func TestValidateImageUndefinedOutputImageName(t *testing.T) {
 	require.ErrorContains(t, err, "outputImageName not defined")
 }
 
-func TestValidateOperatingSystemValidKernelArgs(t *testing.T) {
+func TestValidateOperatingSystemEmptyButValid(t *testing.T) {
+	// Setup
+	def := Definition{
+		OperatingSystem: OperatingSystem{},
+	}
+
+	// Test
+	err := validateKernelArgs(&def.OperatingSystem)
+
+	// Verify
+	require.NoError(t, err)
+}
+
+func TestValidateOperatingSystemValid(t *testing.T) {
 	// Setup
 	def := Definition{
 		OperatingSystem: OperatingSystem{
-			KernelArgs: []string{"key1=value1", "key2=value2"},
+			KernelArgs: []string{"key1=value1", "key2=value2", "arg1", "arg2"},
+			Systemd: Systemd{
+				Enable:  []string{"enable1", "enable2", "enable3"},
+				Disable: []string{"disable1", "disable2", "disable3"},
+			},
+			Users: []OperatingSystemUser{
+				{
+					Username: "user1",
+					Password: "$6$bZfTI3Wj05fdxQcB$W",
+					SSHKey:   "ssh-rsa AAAqeCzFPRrNyA5a",
+				},
+				{
+					Username: "user2",
+					Password: "$6$bZfTI3Wj05fdxQcB$W",
+					SSHKey:   "ssh-rsa AAAqeCzFPRrNyA5a",
+				},
+			},
+			Suma: Suma{
+				Host:          "suma.edge.suse.com",
+				ActivationKey: "slemicro55",
+				GetSSL:        false,
+			},
 		},
 	}
 
@@ -121,6 +155,36 @@ func TestValidateOperatingSystemValidKernelArgs(t *testing.T) {
 
 	// Verify
 	require.NoError(t, err)
+}
+
+func TestValidateOperatingSystemValidKernelArgs(t *testing.T) {
+	// Setup
+	def := Definition{
+		OperatingSystem: OperatingSystem{
+			KernelArgs: []string{"key1=value1", "key2=value2", "arg1", "arg2"},
+		},
+	}
+
+	// Test
+	err := validateKernelArgs(&def.OperatingSystem)
+
+	// Verify
+	require.NoError(t, err)
+}
+
+func TestValidateOperatingSystemKernelArgMissingKey(t *testing.T) {
+	// Setup
+	def := Definition{
+		OperatingSystem: OperatingSystem{
+			KernelArgs: []string{"key1=value1", "=value2"},
+		},
+	}
+
+	// Test
+	err := validateKernelArgs(&def.OperatingSystem)
+
+	// Verify
+	require.ErrorContains(t, err, "has no key but has '='")
 }
 
 func TestValidateOperatingSystemKernelArgMissingValue(t *testing.T) {
@@ -138,11 +202,11 @@ func TestValidateOperatingSystemKernelArgMissingValue(t *testing.T) {
 	require.ErrorContains(t, err, "has no value")
 }
 
-func TestValidateOperatingSystemKernelArgInvalidFormat(t *testing.T) {
+func TestValidateOperatingSystemKernelArgMixedFormats(t *testing.T) {
 	// Setup
 	def := Definition{
 		OperatingSystem: OperatingSystem{
-			KernelArgs: []string{"key1", "key2=value2"},
+			KernelArgs: []string{"arg1", "key2=value2"},
 		},
 	}
 
@@ -150,7 +214,22 @@ func TestValidateOperatingSystemKernelArgInvalidFormat(t *testing.T) {
 	err := validateKernelArgs(&def.OperatingSystem)
 
 	// Verify
-	require.ErrorContains(t, err, "invalid kernel arg")
+	require.NoError(t, err)
+}
+
+func TestValidateOperatingSystemKernelArgDuplicatesInMixedFormat(t *testing.T) {
+	// Setup
+	def := Definition{
+		OperatingSystem: OperatingSystem{
+			KernelArgs: []string{"key2", "key2=value2"},
+		},
+	}
+
+	// Test
+	err := validateKernelArgs(&def.OperatingSystem)
+
+	// Verify
+	require.ErrorContains(t, err, "duplicate kernel arg found")
 }
 
 func TestValidateOperatingSystemKernelArgDuplicateArgs(t *testing.T) {
@@ -158,6 +237,21 @@ func TestValidateOperatingSystemKernelArgDuplicateArgs(t *testing.T) {
 	def := Definition{
 		OperatingSystem: OperatingSystem{
 			KernelArgs: []string{"key1=value2", "key1=value2"},
+		},
+	}
+
+	// Test
+	err := validateKernelArgs(&def.OperatingSystem)
+
+	// Verify
+	require.ErrorContains(t, err, "duplicate kernel arg")
+}
+
+func TestValidateOperatingSystemKernelArgDuplicateArgsSecondFormat(t *testing.T) {
+	// Setup
+	def := Definition{
+		OperatingSystem: OperatingSystem{
+			KernelArgs: []string{"key1", "key1"},
 		},
 	}
 
@@ -246,7 +340,7 @@ func TestValidateOperatingSystemUsersValid(t *testing.T) {
 		OperatingSystem: OperatingSystem{
 			Users: []OperatingSystemUser{
 				{
-					Username: "username",
+					Username: "user1",
 					Password: "$6$bZfTI3Wj05fdxQcB$W",
 					SSHKey:   "ssh-rsa AAAqeCzFPRrNyA5a",
 				},

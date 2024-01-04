@@ -32,6 +32,7 @@ func TestParse(t *testing.T) {
 	expectedKernelArgs := []string{
 		"alpha=foo",
 		"beta=bar",
+		"baz",
 	}
 	assert.Equal(t, expectedKernelArgs, definition.OperatingSystem.KernelArgs)
 
