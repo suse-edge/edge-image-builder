@@ -132,14 +132,14 @@ func TestValidateOperatingSystemValid(t *testing.T) {
 			},
 			Users: []OperatingSystemUser{
 				{
-					Username: "user1",
-					Password: "$6$bZfTI3Wj05fdxQcB$W",
-					SSHKey:   "ssh-rsa AAAqeCzFPRrNyA5a",
+					Username:          "user1",
+					EncryptedPassword: "$6$bZfTI3Wj05fdxQcB$W",
+					SSHKey:            "ssh-rsa AAAqeCzFPRrNyA5a",
 				},
 				{
-					Username: "user2",
-					Password: "$6$bZfTI3Wj05fdxQcB$W",
-					SSHKey:   "ssh-rsa AAAqeCzFPRrNyA5a",
+					Username:          "user2",
+					EncryptedPassword: "$6$bZfTI3Wj05fdxQcB$W",
+					SSHKey:            "ssh-rsa AAAqeCzFPRrNyA5a",
 				},
 			},
 			Suma: Suma{
@@ -340,9 +340,9 @@ func TestValidateOperatingSystemUsersValid(t *testing.T) {
 		OperatingSystem: OperatingSystem{
 			Users: []OperatingSystemUser{
 				{
-					Username: "user1",
-					Password: "$6$bZfTI3Wj05fdxQcB$W",
-					SSHKey:   "ssh-rsa AAAqeCzFPRrNyA5a",
+					Username:          "user1",
+					EncryptedPassword: "$6$bZfTI3Wj05fdxQcB$W",
+					SSHKey:            "ssh-rsa AAAqeCzFPRrNyA5a",
 				},
 			},
 		},
@@ -361,9 +361,9 @@ func TestValidateOperatingSystemUsersMissingUsername(t *testing.T) {
 		OperatingSystem: OperatingSystem{
 			Users: []OperatingSystemUser{
 				{
-					Username: "",
-					Password: "$6$bZfTI3Wj05fdxQcB$W",
-					SSHKey:   "ssh-rsa AAAqeCzFPRrNyA5a",
+					Username:          "",
+					EncryptedPassword: "$6$bZfTI3Wj05fdxQcB$W",
+					SSHKey:            "ssh-rsa AAAqeCzFPRrNyA5a",
 				},
 			},
 		},
@@ -382,14 +382,14 @@ func TestValidateOperatingSystemUsersDuplicateUsername(t *testing.T) {
 		OperatingSystem: OperatingSystem{
 			Users: []OperatingSystemUser{
 				{
-					Username: "user1",
-					Password: "$6$bZfTI3Wj05fdxQcB$W",
-					SSHKey:   "ssh-rsa AAAqeCzFPRrNyA5a",
+					Username:          "user1",
+					EncryptedPassword: "$6$bZfTI3Wj05fdxQcB$W",
+					SSHKey:            "ssh-rsa AAAqeCzFPRrNyA5a",
 				},
 				{
-					Username: "user1",
-					Password: "$6$bZfTI3Wj05fdxQcB$W",
-					SSHKey:   "ssh-rsa AAAqeCzFPRrNyA5a",
+					Username:          "user1",
+					EncryptedPassword: "$6$bZfTI3Wj05fdxQcB$W",
+					SSHKey:            "ssh-rsa AAAqeCzFPRrNyA5a",
 				},
 			},
 		},
@@ -408,9 +408,9 @@ func TestValidateOperatingSystemUsersNoSSHKeyOrPassword(t *testing.T) {
 		OperatingSystem: OperatingSystem{
 			Users: []OperatingSystemUser{
 				{
-					Username: "user1",
-					Password: "",
-					SSHKey:   "",
+					Username:          "user1",
+					EncryptedPassword: "",
+					SSHKey:            "",
 				},
 			},
 		},

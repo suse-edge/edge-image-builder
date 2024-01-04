@@ -55,6 +55,6 @@ func ParseDefinition(data []byte) (*Definition, error) {
 		return nil, fmt.Errorf("could not parse the image definition: %w", err)
 	}
 	definition.Image.ImageType = strings.ToLower(definition.Image.ImageType)
-  
+
 	return &definition, nil
 }

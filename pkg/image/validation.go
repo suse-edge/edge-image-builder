@@ -137,7 +137,7 @@ func validateUsers(os *OperatingSystem) error {
 			return fmt.Errorf("user entry missing username")
 		}
 
-		if user.Password == "" && user.SSHKey == "" {
+		if user.EncryptedPassword == "" && user.SSHKey == "" {
 			return fmt.Errorf("user '%s' must have either a password or an SSH key", user.Username)
 		}
 
