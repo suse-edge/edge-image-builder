@@ -9,6 +9,7 @@ import (
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+	audit "github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/network"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -108,8 +109,15 @@ func main() {
 		log.Fatalf("CLI arguments could not be parsed: %s", err)
 	}
 
+	defer func() {
+		if r := recover(); r != nil {
+			audit.Audit("Build failed unexpectedly, check the logs under the build directory for more information.")
+			zap.S().Fatalf("Unexpected error occurred: %s", r)
+		}
+	}()
+
 	builder := build.NewBuilder(ctx)
 	if err = builder.Build(); err != nil {
-		zap.L().Fatal("An error occurred building the image", zap.Error(err))
+		zap.S().Fatalf("An error occurred building the image: %s", err)
 	}
 }
