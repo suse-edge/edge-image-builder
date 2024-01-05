@@ -1,10 +1,10 @@
 package image
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,10 +17,7 @@ func TestValidateDefinition(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test
-	err = ValidateDefinition(definition)
-	if err != nil {
-		fmt.Println(err)
-	}
+	assert.NoError(t, ValidateDefinition(definition))
 }
 
 func TestValidateImageValid(t *testing.T) {
@@ -115,7 +112,7 @@ func TestValidateOperatingSystemEmptyButValid(t *testing.T) {
 	}
 
 	// Test
-	err := validateKernelArgs(&def.OperatingSystem)
+	err := validateOperatingSystem(&def)
 
 	// Verify
 	require.NoError(t, err)
@@ -151,7 +148,7 @@ func TestValidateOperatingSystemValid(t *testing.T) {
 	}
 
 	// Test
-	err := validateKernelArgs(&def.OperatingSystem)
+	err := validateOperatingSystem(&def)
 
 	// Verify
 	require.NoError(t, err)
@@ -184,7 +181,7 @@ func TestValidateOperatingSystemKernelArgMissingKey(t *testing.T) {
 	err := validateKernelArgs(&def.OperatingSystem)
 
 	// Verify
-	require.ErrorContains(t, err, "has no key but has '='")
+	require.ErrorContains(t, err, "has no key")
 }
 
 func TestValidateOperatingSystemKernelArgMissingValue(t *testing.T) {

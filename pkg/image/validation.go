@@ -42,7 +42,7 @@ func validateOperatingSystem(definition *Definition) error {
 	}
 	err := validateKernelArgs(&definition.OperatingSystem)
 	if err != nil {
-		return fmt.Errorf("error validating kernal args: %w", err)
+		return fmt.Errorf("error validating kernel args: %w", err)
 	}
 	err = validateSystemd(&definition.OperatingSystem)
 	if err != nil {
@@ -70,41 +70,36 @@ func validateKernelArgs(os *OperatingSystem) error {
 	seenKeys := make(map[string]bool)
 
 	for _, arg := range os.KernelArgs {
-		if !strings.Contains(arg, "=") {
-			if _, exists := seenKeys[arg]; exists {
-				return fmt.Errorf("duplicate kernel arg found: '%s'", arg)
-			}
-			seenKeys[arg] = true
-		} else {
-			parts := strings.SplitN(arg, "=", 2)
-			if len(parts) != 2 {
-				return fmt.Errorf("invalid kernel arg: '%s', expected format key=value or a single string", arg)
-			}
-			key, value := parts[0], parts[1]
+		key := arg
+
+		parts := strings.SplitN(arg, "=", 2)
+		if len(parts) == 2 {
+			var value string
+			key, value = parts[0], parts[1]
 			if key == "" {
-				return fmt.Errorf("kernel arg value '%s' has no key but has '='", value)
+				return fmt.Errorf("kernel arg value '%s' has no key", value)
 			}
 			if value == "" {
 				return fmt.Errorf("kernel arg '%s' has no value", key)
 			}
-
-			if _, exists := seenKeys[key]; exists {
-				return fmt.Errorf("duplicate kernel arg found: '%s'", key)
-			}
-			seenKeys[key] = true
 		}
+
+		if _, exists := seenKeys[key]; exists {
+			return fmt.Errorf("duplicate kernel arg found: '%s'", key)
+		}
+		seenKeys[key] = true
 	}
 
 	return nil
 }
 
 func validateSystemd(os *OperatingSystem) error {
-	if err := checkForDuplicates(os.Systemd.Enable); err != nil {
-		return fmt.Errorf("enable list contains duplicate: %w", err)
+	if duplicate := checkForDuplicates(os.Systemd.Enable); duplicate != "" {
+		return fmt.Errorf("enable list contains duplicate: %s", duplicate)
 	}
 
-	if err := checkForDuplicates(os.Systemd.Disable); err != nil {
-		return fmt.Errorf("disable list contains duplicate: %w", err)
+	if duplicate := checkForDuplicates(os.Systemd.Disable); duplicate != "" {
+		return fmt.Errorf("disable list contains duplicate: %s", duplicate)
 	}
 
 	for _, enableItem := range os.Systemd.Enable {
@@ -118,15 +113,15 @@ func validateSystemd(os *OperatingSystem) error {
 	return nil
 }
 
-func checkForDuplicates(items []string) error {
+func checkForDuplicates(items []string) string {
 	seen := make(map[string]bool)
 	for _, item := range items {
 		if seen[item] {
-			return fmt.Errorf("'%s'", item)
+			return item
 		}
 		seen[item] = true
 	}
-	return nil
+	return ""
 }
 
 func validateUsers(os *OperatingSystem) error {
