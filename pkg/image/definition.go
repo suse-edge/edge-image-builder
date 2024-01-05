@@ -32,7 +32,8 @@ func (a Arch) Short() string {
 	case ArchTypeARM:
 		return "arm64"
 	default:
-		return ""
+		message := fmt.Sprintf("unknown arch: %s", a)
+		panic(message)
 	}
 }
 

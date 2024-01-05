@@ -75,3 +75,12 @@ func TestParseBadConfig(t *testing.T) {
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "could not parse the image definition")
 }
+
+func TestArch_Short(t *testing.T) {
+	assert.Equal(t, "amd64", ArchTypeIntel.Short())
+	assert.Equal(t, "arm64", ArchTypeARM.Short())
+	assert.PanicsWithValue(t, "unknown arch: abc", func() {
+		arch := Arch("abc")
+		arch.Short()
+	})
+}
