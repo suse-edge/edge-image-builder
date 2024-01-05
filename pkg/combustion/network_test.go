@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 type mockNetworkConfigGenerator struct {
@@ -25,12 +26,12 @@ func (m mockNetworkConfigGenerator) GenerateNetworkConfig(configDir, outputDir s
 }
 
 type mockNetworkConfiguratorInstaller struct {
-	installConfiguratorFunc func(imageName, sourcePath, installPath string) error
+	installConfiguratorFunc func(arch image.Arch, sourcePath, installPath string) error
 }
 
-func (m mockNetworkConfiguratorInstaller) InstallConfigurator(imageName, sourcePath, installPath string) error {
+func (m mockNetworkConfiguratorInstaller) InstallConfigurator(arch image.Arch, sourcePath, installPath string) error {
 	if m.installConfiguratorFunc != nil {
-		return m.installConfiguratorFunc(imageName, sourcePath, installPath)
+		return m.installConfiguratorFunc(arch, sourcePath, installPath)
 	}
 
 	panic("not implemented")
@@ -80,7 +81,7 @@ func TestConfigureNetwork(t *testing.T) {
 				},
 			},
 			configuratorInstaller: mockNetworkConfiguratorInstaller{
-				installConfiguratorFunc: func(imageName, sourcePath, installPath string) error {
+				installConfiguratorFunc: func(arch image.Arch, sourcePath, installPath string) error {
 					return fmt.Errorf("no installer for you")
 				},
 			},
@@ -94,7 +95,7 @@ func TestConfigureNetwork(t *testing.T) {
 				},
 			},
 			configuratorInstaller: mockNetworkConfiguratorInstaller{
-				installConfiguratorFunc: func(imageName, sourcePath, installPath string) error {
+				installConfiguratorFunc: func(arch image.Arch, sourcePath, installPath string) error {
 					return nil
 				},
 			},
