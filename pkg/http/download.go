@@ -14,12 +14,6 @@ import (
 func DownloadFile(ctx context.Context, url, path string) error {
 	zap.S().Infof("Downloading file from '%s' to '%s'...", url, path)
 
-	file, err := os.Create(path)
-	if err != nil {
-		return fmt.Errorf("creating file: %w", err)
-	}
-	defer file.Close()
-
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
 		return fmt.Errorf("creating request: %w", err)
@@ -34,6 +28,12 @@ func DownloadFile(ctx context.Context, url, path string) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
+
+	file, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("creating file: %w", err)
+	}
+	defer file.Close()
 
 	if _, err = io.Copy(file, resp.Body); err != nil {
 		return fmt.Errorf("storing response: %w", err)
