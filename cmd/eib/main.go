@@ -87,6 +87,11 @@ func parseImageDefinition(configFile string, configDir string) (*image.Definitio
 		return nil, fmt.Errorf("error parsing definition file \"%s\": %w", configFile, err)
 	}
 
+	err = image.ValidateDefinition(imageDefinition)
+	if err != nil {
+		return nil, fmt.Errorf("error validating definition file: %w", err)
+	}
+
 	return imageDefinition, nil
 }
 
