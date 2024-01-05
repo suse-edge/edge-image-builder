@@ -12,8 +12,8 @@ const (
 )
 
 const (
-	ArchTypeIntel Arch = "x86_64"
-	ArchTypeARM   Arch = "aarch64"
+	ArchTypeX86 Arch = "x86_64"
+	ArchTypeARM Arch = "aarch64"
 )
 
 type Definition struct {
@@ -27,7 +27,7 @@ type Arch string
 
 func (a Arch) Short() string {
 	switch a {
-	case ArchTypeIntel:
+	case ArchTypeX86:
 		return "amd64"
 	case ArchTypeARM:
 		return "arm64"

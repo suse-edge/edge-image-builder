@@ -77,7 +77,7 @@ func TestParseBadConfig(t *testing.T) {
 }
 
 func TestArch_Short(t *testing.T) {
-	assert.Equal(t, "amd64", ArchTypeIntel.Short())
+	assert.Equal(t, "amd64", ArchTypeX86.Short())
 	assert.Equal(t, "arm64", ArchTypeARM.Short())
 	assert.PanicsWithValue(t, "unknown arch: abc", func() {
 		arch := Arch("abc")

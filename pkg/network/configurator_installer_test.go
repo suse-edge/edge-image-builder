@@ -43,13 +43,13 @@ func TestConfiguratorInstaller_InstallConfigurator(t *testing.T) {
 	}{
 		{
 			name:          "Failure to copy non-existing binary",
-			arch:          image.ArchTypeIntel,
+			arch:          image.ArchTypeX86,
 			sourcePath:    "",
 			expectedError: "copying file: opening source file: open nmc-x86_64: no such file or directory",
 		},
 		{
 			name:             "Successfully installed x86_64 binary",
-			arch:             image.ArchTypeIntel,
+			arch:             image.ArchTypeX86,
 			sourcePath:       srcDir,
 			installPath:      fmt.Sprintf("%s/nmc-amd", destDir),
 			expectedContents: amdBinaryContents,
