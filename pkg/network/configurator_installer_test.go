@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestConfiguratorInstaller_InstallConfigurator(t *testing.T) {
@@ -34,33 +35,28 @@ func TestConfiguratorInstaller_InstallConfigurator(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		imageName        string
+		arch             image.Arch
 		sourcePath       string
 		installPath      string
 		expectedContents []byte
 		expectedError    string
 	}{
 		{
-			name:          "Failure to detect architecture from image name",
-			imageName:     "abc",
-			expectedError: "failed to determine arch of image abc",
-		},
-		{
 			name:          "Failure to copy non-existing binary",
-			imageName:     "abc-x86_64",
+			arch:          image.ArchTypeX86,
 			sourcePath:    "",
 			expectedError: "copying file: opening source file: open nmc-x86_64: no such file or directory",
 		},
 		{
 			name:             "Successfully installed x86_64 binary",
-			imageName:        "abc-x86_64",
+			arch:             image.ArchTypeX86,
 			sourcePath:       srcDir,
 			installPath:      fmt.Sprintf("%s/nmc-amd", destDir),
 			expectedContents: amdBinaryContents,
 		},
 		{
 			name:             "Successfully installed aarch64 binary",
-			imageName:        "abc-aarch64",
+			arch:             image.ArchTypeARM,
 			sourcePath:       srcDir,
 			installPath:      fmt.Sprintf("%s/nmc-arm", destDir),
 			expectedContents: armBinaryContents,
@@ -71,7 +67,7 @@ func TestConfiguratorInstaller_InstallConfigurator(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err = installer.InstallConfigurator(test.imageName, test.sourcePath, test.installPath)
+			err = installer.InstallConfigurator(test.arch, test.sourcePath, test.installPath)
 
 			if test.expectedError != "" {
 				require.Error(t, err)
