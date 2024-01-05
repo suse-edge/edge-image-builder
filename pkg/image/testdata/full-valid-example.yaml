@@ -1,4 +1,5 @@
 apiVersion: 1.0
+arch: x86_64
 image:
   imageType: iso
   baseImage: slemicro5.5.iso

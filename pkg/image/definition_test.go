@@ -22,6 +22,7 @@ func TestParse(t *testing.T) {
 
 	// - Definition
 	assert.Equal(t, "1.0", definition.APIVersion)
+	assert.EqualValues(t, "x86_64", definition.Arch)
 	assert.Equal(t, "iso", definition.Image.ImageType)
 
 	// - Image

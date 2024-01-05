@@ -11,10 +11,29 @@ const (
 	TypeRAW = "raw"
 )
 
+const (
+	ArchTypeIntel Arch = "x86_64"
+	ArchTypeARM   Arch = "aarch64"
+)
+
 type Definition struct {
 	APIVersion      string          `yaml:"apiVersion"`
+	Arch            Arch            `yaml:"arch"`
 	Image           Image           `yaml:"image"`
 	OperatingSystem OperatingSystem `yaml:"operatingSystem"`
+}
+
+type Arch string
+
+func (a Arch) Short() string {
+	switch a {
+	case ArchTypeIntel:
+		return "amd64"
+	case ArchTypeARM:
+		return "arm64"
+	default:
+		return ""
+	}
 }
 
 type Image struct {
