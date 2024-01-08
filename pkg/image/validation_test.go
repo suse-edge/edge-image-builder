@@ -534,7 +534,7 @@ func TestValidateOperatingSystemSumaMissingActivationKey(t *testing.T) {
 	require.ErrorContains(t, err, "no activation key defined")
 }
 
-func TestValidateHauler(t *testing.T) {
+func TestValidateEmbeddedArtifactRegistry(t *testing.T) {
 	// Setup
 	def := Definition{EmbeddedArtifactRegistry: EmbeddedArtifactRegistry{
 		ContainerImages: []ContainerImage{
@@ -556,7 +556,7 @@ func TestValidateHauler(t *testing.T) {
 	}}
 
 	// Test
-	err := validateHauler(&def)
+	err := validateEmbeddedArtifactRegistry(&def)
 
 	// Verify
 	require.NoError(t, err)

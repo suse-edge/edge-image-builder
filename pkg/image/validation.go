@@ -14,9 +14,9 @@ func ValidateDefinition(definition *Definition) error {
 	if err != nil {
 		return fmt.Errorf("error validating operating system: %w", err)
 	}
-	err = validateHauler(definition)
+	err = validateEmbeddedArtifactRegistry(definition)
 	if err != nil {
-		return fmt.Errorf("error validating hauler: %w", err)
+		return fmt.Errorf("error validating embedded artifact registry: %w", err)
 	}
 
 	return nil
@@ -169,8 +169,8 @@ func validateSuma(os *OperatingSystem) error {
 	return nil
 }
 
-func validateHauler(definition *Definition) error {
-	if checkIfHaulerDefined(definition) {
+func validateEmbeddedArtifactRegistry(definition *Definition) error {
+	if checkIfEmbeddedArtifactRegistryDefined(definition) {
 		return nil
 	}
 	err := validateContainerImages(definition.EmbeddedArtifactRegistry.ContainerImages)
@@ -185,7 +185,7 @@ func validateHauler(definition *Definition) error {
 	return nil
 }
 
-func checkIfHaulerDefined(definition *Definition) bool {
+func checkIfEmbeddedArtifactRegistryDefined(definition *Definition) bool {
 	return len(definition.EmbeddedArtifactRegistry.HelmCharts) == 0 && len(definition.EmbeddedArtifactRegistry.ContainerImages) == 0
 }
 
