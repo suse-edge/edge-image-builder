@@ -179,11 +179,11 @@ func validateHauler(definition *Definition) error {
 	}
 	err = validateHelmCharts(definition.Hauler.HelmCharts)
 	if err != nil {
-		return fmt.Errorf("error validating container images: %w", err)
+		return fmt.Errorf("error validating helm charts: %w", err)
 	}
 	err = validateFiles(definition.Hauler.Files)
 	if err != nil {
-		return fmt.Errorf("error validating container images: %w", err)
+		return fmt.Errorf("error validating files: %w", err)
 	}
 
 	return nil
