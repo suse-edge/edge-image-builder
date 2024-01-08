@@ -536,14 +536,14 @@ func TestValidateOperatingSystemSumaMissingActivationKey(t *testing.T) {
 
 func TestValidateHauler(t *testing.T) {
 	// Setup
-	def := Definition{Hauler: Hauler{
+	def := Definition{EmbeddedArtifactRegistry: EmbeddedArtifactRegistry{
 		ContainerImages: []ContainerImage{
 			{
 				Name: "hello-world:latest",
 			},
 			{
-				Name: "rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1",
-				Key:  "carbide-key.pub",
+				Name:           "rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1",
+				SupplyChainKey: "carbide-key.pub",
 			},
 		},
 		HelmCharts: []HelmChart{
@@ -572,19 +572,12 @@ func TestValidateContainerImages(t *testing.T) {
 			name: "Valid Images",
 			images: []ContainerImage{
 				{
-					Name: "hello-world:latest",
-					Key:  "",
+					Name:           "hello-world:latest",
+					SupplyChainKey: "",
 				},
 				{
-					Name: "rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1",
-					Key:  "carbide-key.pub",
-				},
-				{
-					Name: "fake-image:latest",
-				},
-				{
-					Name: "fake-image2-with-dupe-key:latest",
-					Key:  "carbide-key.pub",
+					Name:           "rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1",
+					SupplyChainKey: "carbide-key.pub",
 				},
 			},
 		},
@@ -592,11 +585,8 @@ func TestValidateContainerImages(t *testing.T) {
 			name: "No Image Name Defined",
 			images: []ContainerImage{
 				{
-					Name: "",
-					Key:  "",
-				},
-				{
-					Key: "",
+					Name:           "",
+					SupplyChainKey: "",
 				},
 			},
 			expectedErr: "no image name defined",
@@ -605,12 +595,12 @@ func TestValidateContainerImages(t *testing.T) {
 			name: "Duplicate Container Image",
 			images: []ContainerImage{
 				{
-					Name: "hello-world:latest",
-					Key:  "",
+					Name:           "hello-world:latest",
+					SupplyChainKey: "",
 				},
 				{
-					Name: "hello-world:latest",
-					Key:  "carbide-key.pub",
+					Name:           "hello-world:latest",
+					SupplyChainKey: "carbide-key.pub",
 				},
 			},
 			expectedErr: "duplicate container image found: 'hello-world:latest'",

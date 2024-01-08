@@ -64,10 +64,10 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, false, suma.GetSSL)
 
 	// Hauler
-	hauler := definition.Hauler
+	hauler := definition.EmbeddedArtifactRegistry
 	assert.Equal(t, "hello-world:latest", hauler.ContainerImages[0].Name)
 	assert.Equal(t, "rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1", hauler.ContainerImages[1].Name)
-	assert.Equal(t, "carbide-key.pub", hauler.ContainerImages[1].Key)
+	assert.Equal(t, "carbide-key.pub", hauler.ContainerImages[1].SupplyChainKey)
 	assert.Equal(t, "rancher", hauler.HelmCharts[0].Name)
 	assert.Equal(t, "https://releases.rancher.com/server-charts/stable", hauler.HelmCharts[0].RepoURL)
 	assert.Equal(t, "2.8.0", hauler.HelmCharts[0].Version)

@@ -13,10 +13,10 @@ const (
 )
 
 type Definition struct {
-	APIVersion      string          `yaml:"apiVersion"`
-	Image           Image           `yaml:"image"`
-	OperatingSystem OperatingSystem `yaml:"operatingSystem"`
-	Hauler          Hauler          `yaml:"hauler"`
+	APIVersion               string                   `yaml:"apiVersion"`
+	Image                    Image                    `yaml:"image"`
+	OperatingSystem          OperatingSystem          `yaml:"operatingSystem"`
+	EmbeddedArtifactRegistry EmbeddedArtifactRegistry `yaml:"embeddedArtifactRegistry"`
 }
 
 type Image struct {
@@ -49,14 +49,14 @@ type Suma struct {
 	GetSSL        bool   `yaml:"getSSL"`
 }
 
-type Hauler struct {
+type EmbeddedArtifactRegistry struct {
 	ContainerImages []ContainerImage `yaml:"images"`
 	HelmCharts      []HelmChart      `yaml:"charts"`
 }
 
 type ContainerImage struct {
-	Name string `yaml:"name"`
-	Key  string `yaml:"key"`
+	Name           string `yaml:"name"`
+	SupplyChainKey string `yaml:"supplyChainKey"`
 }
 
 type HelmChart struct {

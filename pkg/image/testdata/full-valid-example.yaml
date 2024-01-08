@@ -26,11 +26,11 @@ operatingSystem:
     host: suma.edge.suse.com
     activationKey: slemicro55
     getSSL: false
-hauler:
+embeddedArtifactRegistry:
   images:
     - name: hello-world:latest
     - name: rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1
-      key: carbide-key.pub
+      supplyChainKey: carbide-key.pub
   charts:
     - name: rancher
       repoURL: https://releases.rancher.com/server-charts/stable

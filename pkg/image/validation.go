@@ -173,11 +173,11 @@ func validateHauler(definition *Definition) error {
 	if checkIfHaulerDefined(definition) {
 		return nil
 	}
-	err := validateContainerImages(definition.Hauler.ContainerImages)
+	err := validateContainerImages(definition.EmbeddedArtifactRegistry.ContainerImages)
 	if err != nil {
 		return fmt.Errorf("error validating container images: %w", err)
 	}
-	err = validateHelmCharts(definition.Hauler.HelmCharts)
+	err = validateHelmCharts(definition.EmbeddedArtifactRegistry.HelmCharts)
 	if err != nil {
 		return fmt.Errorf("error validating helm charts: %w", err)
 	}
@@ -186,7 +186,7 @@ func validateHauler(definition *Definition) error {
 }
 
 func checkIfHaulerDefined(definition *Definition) bool {
-	return len(definition.Hauler.HelmCharts) == 0 && len(definition.Hauler.ContainerImages) == 0
+	return len(definition.EmbeddedArtifactRegistry.HelmCharts) == 0 && len(definition.EmbeddedArtifactRegistry.ContainerImages) == 0
 }
 
 func validateContainerImages(containerImages []ContainerImage) error {
