@@ -16,6 +16,7 @@ type Definition struct {
 	APIVersion      string          `yaml:"apiVersion"`
 	Image           Image           `yaml:"image"`
 	OperatingSystem OperatingSystem `yaml:"operatingSystem"`
+	Hauler          Hauler          `yaml:"hauler"`
 }
 
 type Image struct {
@@ -46,6 +47,28 @@ type Suma struct {
 	Host          string `yaml:"host"`
 	ActivationKey string `yaml:"activationKey"`
 	GetSSL        bool   `yaml:"getSSL"`
+}
+
+type Hauler struct {
+	ContainerImages []ContainerImage `yaml:"images"`
+	HelmCharts      []HelmChart      `yaml:"charts"`
+	Files           []File           `yaml:"files"`
+}
+
+type ContainerImage struct {
+	Name string `yaml:"name"`
+	Key  string `yaml:"key"`
+}
+
+type HelmChart struct {
+	Name    string `yaml:"name"`
+	RepoURL string `yaml:"repoURL"`
+	Version string `yaml:"version"`
+}
+
+type File struct {
+	Name string `yaml:"name"`
+	Path string `yaml:"path"`
 }
 
 func ParseDefinition(data []byte) (*Definition, error) {
