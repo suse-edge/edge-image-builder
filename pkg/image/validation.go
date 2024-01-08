@@ -24,8 +24,13 @@ func validateImage(definition *Definition) error {
 	}
 	if definition.Image.ImageType == "" {
 		return fmt.Errorf("imageType not defined")
-	} else if definition.Image.ImageType != "iso" && definition.Image.ImageType != "raw" {
-		return fmt.Errorf("invalid imageType, should be 'iso' or 'raw'")
+	} else if definition.Image.ImageType != TypeISO && definition.Image.ImageType != TypeRAW {
+		return fmt.Errorf("imageType must be '%s' or '%s'", TypeISO, TypeRAW)
+	}
+	if definition.Image.Arch == "" {
+		return fmt.Errorf("arch not defined")
+	} else if definition.Image.Arch != ArchTypeX86 && definition.Image.Arch != ArchTypeARM {
+		return fmt.Errorf("arch must be '%s' or '%s'", ArchTypeX86, ArchTypeARM)
 	}
 	if definition.Image.BaseImage == "" {
 		return fmt.Errorf("baseImage not defined")
