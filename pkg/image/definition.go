@@ -19,7 +19,6 @@ const (
 
 type Definition struct {
 	APIVersion      string          `yaml:"apiVersion"`
-	Arch            Arch            `yaml:"arch"`
 	Image           Image           `yaml:"image"`
 	OperatingSystem OperatingSystem `yaml:"operatingSystem"`
 }
@@ -40,6 +39,7 @@ func (a Arch) Short() string {
 
 type Image struct {
 	ImageType       string `yaml:"imageType"`
+	Arch            Arch   `yaml:"arch"`
 	BaseImage       string `yaml:"baseImage"`
 	OutputImageName string `yaml:"outputImageName"`
 }

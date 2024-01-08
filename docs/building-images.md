@@ -2,7 +2,7 @@
 
 Two things are necessary to build an image using EIB:
 1. A definition file that describes the image to build
-2. A directory that contains the base SLE Micro image to modify, along with any other custom files that
+1. A directory that contains the base SLE Micro image to modify, along with any other custom files that
    will be included in the built image
 
 ## Image Definition File
@@ -14,16 +14,16 @@ directory may be used to build multiple images by creating multiple definition f
 The following can be used as the minimum configuration required to create an image:
 ```yaml
 apiVersion: 1.0
-arch: x86_64
 image:
   imageType: iso
+  arch: x86_64
   baseImage: SLE-Micro.x86_64-5.5.0-Default-SelfInstall-GM.install.iso
   outputImageName: eib-image.iso
 ```
 
 * `apiVersion` - Indicates the version of the definition file schema for EIB to expect
-* `arch` - Must be either `x86_64` or `aarch64`.
 * `imageType` - Must be either `iso` or `raw`.
+* `arch` - Must be either `x86_64` or `aarch64`.
 * `baseImage` - Indicates the name of the image file used as the base for the built image. This file must be located
   under the `images` directory of the image configuration directory (see below for more information). This image will
   **not** directly be modified by EIB; a new image will be created each time EIB is run.
