@@ -2,6 +2,7 @@ package image
 
 import (
 	"fmt"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -51,9 +52,9 @@ type OperatingSystem struct {
 }
 
 type OperatingSystemUser struct {
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-	SSHKey   string `yaml:"sshKey"`
+	Username          string `yaml:"username"`
+	EncryptedPassword string `yaml:"encryptedPassword"`
+	SSHKey            string `yaml:"sshKey"`
 }
 
 type Systemd struct {
@@ -73,6 +74,7 @@ func ParseDefinition(data []byte) (*Definition, error) {
 	if err := yaml.Unmarshal(data, &definition); err != nil {
 		return nil, fmt.Errorf("could not parse the image definition: %w", err)
 	}
+	definition.Image.ImageType = strings.ToLower(definition.Image.ImageType)
 
 	return &definition, nil
 }

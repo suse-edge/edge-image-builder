@@ -3,17 +3,20 @@ package build
 import (
 	_ "embed"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
+	"go.uber.org/zap"
 )
 
 const (
 	copyExec         = "/bin/cp"
 	modifyScriptName = "modify-raw-image.sh"
+	rawBuildLogFile  = "raw-build.log"
 )
 
 //go:embed templates/modify-raw-image.sh.tpl
@@ -27,12 +30,23 @@ func (b *Builder) buildRawImage() error {
 			b.context.ImageDefinition.Image.BaseImage, b.generateOutputImageFilename(), err)
 	}
 
-	err = b.writeModifyScript()
-	if err != nil {
+	if err = b.writeModifyScript(); err != nil {
 		return fmt.Errorf("writing the image modification script: %w", err)
 	}
 
-	cmd = b.createModifyCommand()
+	logFilename := filepath.Join(b.context.BuildDir, rawBuildLogFile)
+	logFile, err := os.Create(logFilename)
+	if err != nil {
+		return fmt.Errorf("creating log file: %w", err)
+	}
+
+	defer func() {
+		if err = logFile.Close(); err != nil {
+			zap.L().Warn("Failed to close raw build log file properly", zap.Error(err))
+		}
+	}()
+
+	cmd = b.createModifyCommand(logFile)
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("running the image modification script: %w", err)
@@ -81,8 +95,12 @@ func (b *Builder) writeModifyScript() error {
 	return nil
 }
 
-func (b *Builder) createModifyCommand() *exec.Cmd {
+func (b *Builder) createModifyCommand(writer io.Writer) *exec.Cmd {
 	scriptPath := filepath.Join(b.context.BuildDir, modifyScriptName)
+
 	cmd := exec.Command(scriptPath)
+	cmd.Stdout = writer
+	cmd.Stderr = writer
+
 	return cmd
 }
