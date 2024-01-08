@@ -181,18 +181,12 @@ func validateHauler(definition *Definition) error {
 	if err != nil {
 		return fmt.Errorf("error validating helm charts: %w", err)
 	}
-	err = validateFiles(definition.Hauler.Files)
-	if err != nil {
-		return fmt.Errorf("error validating files: %w", err)
-	}
 
 	return nil
 }
 
 func checkIfHaulerDefined(definition *Definition) bool {
-	return len(definition.Hauler.Files) == 0 &&
-		len(definition.Hauler.HelmCharts) == 0 &&
-		len(definition.Hauler.ContainerImages) == 0
+	return len(definition.Hauler.HelmCharts) == 0 && len(definition.Hauler.ContainerImages) == 0
 }
 
 func validateContainerImages(containerImages []ContainerImage) error {
@@ -233,26 +227,6 @@ func validateHelmCharts(charts []HelmChart) error {
 			return fmt.Errorf("duplicate chart found: '%s'", chart.Name)
 		}
 		seenCharts[chart.Name] = true
-	}
-
-	return nil
-}
-
-func validateFiles(files []File) error {
-	seenFiles := make(map[string]bool)
-
-	for _, file := range files {
-		if file.Name == "" {
-			return fmt.Errorf("no file name defined")
-		}
-		if file.Path == "" {
-			return fmt.Errorf("no file path defined")
-		}
-
-		if seenFiles[file.Name] {
-			return fmt.Errorf("duplicate file found: '%s'", file.Name)
-		}
-		seenFiles[file.Name] = true
 	}
 
 	return nil

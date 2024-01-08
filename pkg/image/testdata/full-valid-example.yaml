@@ -35,6 +35,3 @@ hauler:
     - name: rancher
       repoURL: https://releases.rancher.com/server-charts/stable
       version: 2.8.0
-  files:
-    - name: install.sh
-      path: https://get.rke2.io

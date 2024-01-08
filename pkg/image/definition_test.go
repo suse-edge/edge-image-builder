@@ -71,8 +71,6 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "rancher", hauler.HelmCharts[0].Name)
 	assert.Equal(t, "https://releases.rancher.com/server-charts/stable", hauler.HelmCharts[0].RepoURL)
 	assert.Equal(t, "2.8.0", hauler.HelmCharts[0].Version)
-	assert.Equal(t, "install.sh", hauler.Files[0].Name)
-	assert.Equal(t, "https://get.rke2.io", hauler.Files[0].Path)
 }
 
 func TestParseBadConfig(t *testing.T) {

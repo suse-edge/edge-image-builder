@@ -553,12 +553,6 @@ func TestValidateHauler(t *testing.T) {
 				Version: "2.8.0",
 			},
 		},
-		Files: []File{
-			{
-				Name: "install.sh",
-				Path: "https://get.rke2.io",
-			},
-		},
 	}}
 
 	// Test
@@ -569,7 +563,6 @@ func TestValidateHauler(t *testing.T) {
 }
 
 func TestValidateContainerImages(t *testing.T) {
-	// Setup
 	tests := []struct {
 		name        string
 		images      []ContainerImage
@@ -624,7 +617,6 @@ func TestValidateContainerImages(t *testing.T) {
 		},
 	}
 
-	// Test
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err := validateContainerImages(test.images)
@@ -639,7 +631,6 @@ func TestValidateContainerImages(t *testing.T) {
 }
 
 func TestValidateCharts(t *testing.T) {
-	// Setup
 	tests := []struct {
 		name        string
 		charts      []HelmChart
@@ -717,76 +708,9 @@ func TestValidateCharts(t *testing.T) {
 		},
 	}
 
-	// Test
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err := validateHelmCharts(test.charts)
-
-			if test.expectedErr != "" {
-				assert.EqualError(t, err, test.expectedErr)
-			} else {
-				require.Nil(t, err)
-			}
-		})
-	}
-}
-
-func TestValidateHaulerFiles(t *testing.T) {
-	// Setup
-	tests := []struct {
-		name        string
-		files       []File
-		expectedErr string
-	}{
-		{
-			name: "Valid Files",
-			files: []File{
-				{
-					Name: "install.sh",
-					Path: "https://get.rke2.io",
-				},
-			},
-		},
-		{
-			name: "No File Name Defined",
-			files: []File{
-				{
-					Name: "",
-					Path: "https://get.rke2.io",
-				},
-			},
-			expectedErr: "no file name defined",
-		},
-		{
-			name: "No File Path Defined",
-			files: []File{
-				{
-					Name: "install.sh",
-					Path: "",
-				},
-			},
-			expectedErr: "no file path defined",
-		},
-		{
-			name: "Duplicate File",
-			files: []File{
-				{
-					Name: "install.sh",
-					Path: "https://get.rke2.io",
-				},
-				{
-					Name: "install.sh",
-					Path: "https://get.rke2.io",
-				},
-			},
-			expectedErr: "duplicate file found: 'install.sh'",
-		},
-	}
-
-	// Test
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			err := validateFiles(test.files)
 
 			if test.expectedErr != "" {
 				assert.EqualError(t, err, test.expectedErr)

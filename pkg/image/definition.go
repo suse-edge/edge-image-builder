@@ -52,7 +52,6 @@ type Suma struct {
 type Hauler struct {
 	ContainerImages []ContainerImage `yaml:"images"`
 	HelmCharts      []HelmChart      `yaml:"charts"`
-	Files           []File           `yaml:"files"`
 }
 
 type ContainerImage struct {
@@ -64,11 +63,6 @@ type HelmChart struct {
 	Name    string `yaml:"name"`
 	RepoURL string `yaml:"repoURL"`
 	Version string `yaml:"version"`
-}
-
-type File struct {
-	Name string `yaml:"name"`
-	Path string `yaml:"path"`
 }
 
 func ParseDefinition(data []byte) (*Definition, error) {
