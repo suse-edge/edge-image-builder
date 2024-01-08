@@ -214,10 +214,10 @@ func validateHelmCharts(charts []HelmChart) error {
 			return fmt.Errorf("no chart name defined")
 		}
 		if chart.RepoURL == "" {
-			return fmt.Errorf("no chart repository URL defined")
+			return fmt.Errorf("no chart repository URL defined for '%s'", chart.Name)
 		}
 		if chart.Version == "" {
-			return fmt.Errorf("no chart version defined")
+			return fmt.Errorf("no chart version defined for '%s'", chart.Name)
 		}
 		if !strings.HasPrefix(chart.RepoURL, "http") {
 			return fmt.Errorf("invalid chart respository url, does not start with 'http://' or 'https://'")

@@ -666,7 +666,7 @@ func TestValidateCharts(t *testing.T) {
 					Version: "2.8.0",
 				},
 			},
-			expectedErr: "no chart repository URL defined",
+			expectedErr: "no chart repository URL defined for 'rancher'",
 		},
 		{
 			name: "No Chart Version Defined",
@@ -677,7 +677,7 @@ func TestValidateCharts(t *testing.T) {
 					Version: "",
 				},
 			},
-			expectedErr: "no chart version defined",
+			expectedErr: "no chart version defined for 'rancher'",
 		},
 		{
 			name: "Invalid Chart RepoURL",
