@@ -56,7 +56,7 @@ func (b *Builder) extractIso() error {
 	}
 	defer func() {
 		if err = extractLog.Close(); err != nil {
-			zap.S().Warn("failed to close ISO extraction log file properly", zap.Error(err))
+			zap.S().Warnf("failed to close ISO extraction log file properly: %s", err)
 		}
 	}()
 
@@ -78,7 +78,7 @@ func (b *Builder) rebuildIso() error {
 	}
 	defer func() {
 		if err = rebuildLog.Close(); err != nil {
-			zap.S().Warn("failed to close ISO rebuild log file properly", zap.Error(err))
+			zap.S().Warnf("failed to close ISO rebuild log file properly: %s", err)
 		}
 	}()
 
