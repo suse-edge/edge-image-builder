@@ -170,6 +170,7 @@ func TestCreateIsoCommand(t *testing.T) {
 
 	// Verify
 	require.NoError(t, err)
+	require.NotNil(t, cmd)
 
 	expectedCommandPath := filepath.Join(ctx.BuildDir, "test-script")
 	assert.Equal(t, expectedCommandPath, cmd.Path)
