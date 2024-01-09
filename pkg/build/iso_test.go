@@ -158,3 +158,21 @@ func TestWriteIsoScript_Rebuild(t *testing.T) {
 	expectedCombustionDir := ctx.CombustionDir
 	assert.Contains(t, found, fmt.Sprintf("COMBUSTION_DIR=%s", expectedCombustionDir))
 }
+
+func TestCreateIsoCommand(t *testing.T) {
+	// Setup
+	ctx, teardown := setupContext(t)
+	defer teardown()
+	builder := Builder{context: ctx}
+
+	// Test
+	cmd, logFile, err := builder.createIsoCommand("test-log", "test-script")
+
+	// Verify
+	require.NoError(t, err)
+
+	expectedCommandPath := filepath.Join(ctx.BuildDir, "test-script")
+	assert.Equal(t, expectedCommandPath, cmd.Path)
+	assert.Equal(t, logFile, cmd.Stdout)
+	assert.Equal(t, logFile, cmd.Stderr)
+}
