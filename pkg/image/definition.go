@@ -27,10 +27,11 @@ const (
 )
 
 type Definition struct {
-	APIVersion      string          `yaml:"apiVersion"`
-	Image           Image           `yaml:"image"`
-	OperatingSystem OperatingSystem `yaml:"operatingSystem"`
-	Kubernetes      Kubernetes      `yaml:"kubernetes"`
+	APIVersion               string                   `yaml:"apiVersion"`
+	Image                    Image                    `yaml:"image"`
+	OperatingSystem          OperatingSystem          `yaml:"operatingSystem"`
+	EmbeddedArtifactRegistry EmbeddedArtifactRegistry `yaml:"embeddedArtifactRegistry"`
+	Kubernetes               Kubernetes               `yaml:"kubernetes"`
 }
 
 type Arch string
@@ -76,6 +77,22 @@ type Suma struct {
 	Host          string `yaml:"host"`
 	ActivationKey string `yaml:"activationKey"`
 	GetSSL        bool   `yaml:"getSSL"`
+}
+
+type EmbeddedArtifactRegistry struct {
+	ContainerImages []ContainerImage `yaml:"images"`
+	HelmCharts      []HelmChart      `yaml:"charts"`
+}
+
+type ContainerImage struct {
+	Name           string `yaml:"name"`
+	SupplyChainKey string `yaml:"supplyChainKey"`
+}
+
+type HelmChart struct {
+	Name    string `yaml:"name"`
+	RepoURL string `yaml:"repoURL"`
+	Version string `yaml:"version"`
 }
 
 type Kubernetes struct {

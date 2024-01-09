@@ -27,9 +27,19 @@ operatingSystem:
     host: suma.edge.suse.com
     activationKey: slemicro55
     getSSL: false
+embeddedArtifactRegistry:
+  images:
+    - name: hello-world:latest
+    - name: rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1
+      supplyChainKey: carbide-key.pub
+  charts:
+    - name: rancher
+      repoURL: https://releases.rancher.com/server-charts/stable
+      version: 2.8.0
 kubernetes:
   version: v1.29.0+rke2r1
   nodeType: server
   cni: cilium
   multus: true
   vSphere: false
+

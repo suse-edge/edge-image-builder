@@ -709,3 +709,244 @@ func TestValidateOperatingSystemSumaMissingActivationKey(t *testing.T) {
 	// Verify
 	require.ErrorContains(t, err, "no activation key defined")
 }
+
+func TestValidateEmbeddedArtifactRegistry(t *testing.T) {
+	// Setup
+	def := Definition{EmbeddedArtifactRegistry: EmbeddedArtifactRegistry{
+		ContainerImages: []ContainerImage{
+			{
+				Name: "hello-world:latest",
+			},
+			{
+				Name:           "rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1",
+				SupplyChainKey: "carbide-key.pub",
+			},
+		},
+		HelmCharts: []HelmChart{
+			{
+				Name:    "rancher",
+				RepoURL: "https://releases.rancher.com/server-charts/stable",
+				Version: "2.8.0",
+			},
+		},
+	}}
+
+	// Test
+	err := validateEmbeddedArtifactRegistry(&def)
+
+	// Verify
+	require.NoError(t, err)
+}
+
+func TestValidateContainerImages(t *testing.T) {
+	tests := []struct {
+		name        string
+		images      []ContainerImage
+		expectedErr string
+	}{
+		{
+			name: "Valid Images",
+			images: []ContainerImage{
+				{
+					Name:           "hello-world:latest",
+					SupplyChainKey: "",
+				},
+				{
+					Name:           "rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1",
+					SupplyChainKey: "carbide-key.pub",
+				},
+			},
+		},
+		{
+			name: "No Image Name Defined",
+			images: []ContainerImage{
+				{
+					Name:           "",
+					SupplyChainKey: "",
+				},
+			},
+			expectedErr: "no image name defined",
+		},
+		{
+			name: "Duplicate Container Image",
+			images: []ContainerImage{
+				{
+					Name:           "hello-world:latest",
+					SupplyChainKey: "",
+				},
+				{
+					Name:           "hello-world:latest",
+					SupplyChainKey: "carbide-key.pub",
+				},
+			},
+			expectedErr: "duplicate container image found: 'hello-world:latest'",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := validateContainerImages(test.images)
+
+			if test.expectedErr != "" {
+				assert.EqualError(t, err, test.expectedErr)
+			} else {
+				require.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateCharts(t *testing.T) {
+	tests := []struct {
+		name        string
+		charts      []HelmChart
+		expectedErr string
+	}{
+		{
+			name: "Valid Charts",
+			charts: []HelmChart{
+				{
+					Name:    "rancher",
+					RepoURL: "https://releases.rancher.com/server-charts/stable",
+					Version: "2.8.0",
+				},
+			},
+		},
+		{
+			name: "No Chart Name Defined",
+			charts: []HelmChart{
+				{
+					Name:    "",
+					RepoURL: "https://releases.rancher.com/server-charts/stable",
+					Version: "2.8.0",
+				},
+			},
+			expectedErr: "no chart name defined",
+		},
+		{
+			name: "No Chart RepoURL Defined",
+			charts: []HelmChart{
+				{
+					Name:    "rancher",
+					RepoURL: "",
+					Version: "2.8.0",
+				},
+			},
+			expectedErr: "no chart repository URL defined for 'rancher'",
+		},
+		{
+			name: "No Chart Version Defined",
+			charts: []HelmChart{
+				{
+					Name:    "rancher",
+					RepoURL: "https://releases.rancher.com/server-charts/stable",
+					Version: "",
+				},
+			},
+			expectedErr: "no chart version defined for 'rancher'",
+		},
+		{
+			name: "Invalid Chart RepoURL",
+			charts: []HelmChart{
+				{
+					Name:    "rancher",
+					RepoURL: "releases.rancher.com/server-charts/stable",
+					Version: "2.8.0",
+				},
+			},
+			expectedErr: "invalid chart respository url, does not start with 'http://' or 'https://'",
+		},
+		{
+			name: "Duplicate Chart",
+			charts: []HelmChart{
+				{
+					Name:    "rancher",
+					RepoURL: "https://releases.rancher.com/server-charts/stable",
+					Version: "2.8.0",
+				},
+				{
+					Name:    "rancher",
+					RepoURL: "https://releases.rancher.com/server-charts/stable",
+					Version: "2.8.0",
+				},
+			},
+			expectedErr: "duplicate chart found: 'rancher'",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := validateHelmCharts(test.charts)
+
+			if test.expectedErr != "" {
+				assert.EqualError(t, err, test.expectedErr)
+			} else {
+				require.Nil(t, err)
+			}
+		})
+	}
+}
+
+func TestIsEmbeddedArtifactRegistryEmpty(t *testing.T) {
+	tests := []struct {
+		name     string
+		registry EmbeddedArtifactRegistry
+		isEmpty  bool
+	}{
+		{
+			name: "Both Defined",
+			registry: EmbeddedArtifactRegistry{
+				HelmCharts: []HelmChart{
+					{
+						Name:    "rancher",
+						RepoURL: "https://releases.rancher.com/server-charts/stable",
+						Version: "2.8.0",
+					},
+				},
+				ContainerImages: []ContainerImage{
+					{
+						Name:           "hello-world:latest",
+						SupplyChainKey: "",
+					},
+				},
+			},
+			isEmpty: false,
+		},
+		{
+			name: "Chart Defined",
+			registry: EmbeddedArtifactRegistry{
+				HelmCharts: []HelmChart{
+					{
+						Name:    "rancher",
+						RepoURL: "https://releases.rancher.com/server-charts/stable",
+						Version: "2.8.0",
+					},
+				},
+			},
+			isEmpty: false,
+		},
+		{
+			name: "Image Defined",
+			registry: EmbeddedArtifactRegistry{
+				ContainerImages: []ContainerImage{
+					{
+						Name:           "hello-world:latest",
+						SupplyChainKey: "",
+					},
+				},
+			},
+			isEmpty: false,
+		},
+		{
+			name:    "None Defined",
+			isEmpty: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := isEmbeddedArtifactRegistryEmpty(test.registry)
+			assert.Equal(t, test.isEmpty, result)
+		})
+	}
+}

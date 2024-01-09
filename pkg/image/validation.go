@@ -17,6 +17,10 @@ func ValidateDefinition(definition *Definition) error {
 		return fmt.Errorf("error validating operating system: %w", err)
 	}
 
+	if err := validateEmbeddedArtifactRegistry(definition); err != nil {
+		return fmt.Errorf("error validating embedded artifact registry: %w", err)
+	}
+
 	if err := validateKubernetes(definition); err != nil {
 		return fmt.Errorf("error validating kubernetes: %w", err)
 	}
@@ -44,6 +48,7 @@ func validateImage(definition *Definition) error {
 	if definition.Image.OutputImageName == "" {
 		return fmt.Errorf("outputImageName not defined")
 	}
+
 	return nil
 }
 
@@ -67,6 +72,7 @@ func validateOperatingSystem(definition *Definition) error {
 	if err != nil {
 		return fmt.Errorf("error validating suma: %w", err)
 	}
+
 	return nil
 }
 
@@ -157,6 +163,7 @@ func checkForDuplicates(items []string) string {
 		}
 		seen[item] = true
 	}
+
 	return ""
 }
 
@@ -175,7 +182,6 @@ func validateUsers(os *OperatingSystem) error {
 		if seenUsernames[user.Username] {
 			return fmt.Errorf("duplicate username found: '%s'", user.Username)
 		}
-
 		seenUsernames[user.Username] = true
 	}
 
@@ -195,5 +201,69 @@ func validateSuma(os *OperatingSystem) error {
 	if os.Suma.ActivationKey == "" {
 		return fmt.Errorf("no activation key defined")
 	}
+
+	return nil
+}
+
+func validateEmbeddedArtifactRegistry(definition *Definition) error {
+	if isEmbeddedArtifactRegistryEmpty(definition.EmbeddedArtifactRegistry) {
+		return nil
+	}
+	err := validateContainerImages(definition.EmbeddedArtifactRegistry.ContainerImages)
+	if err != nil {
+		return fmt.Errorf("error validating container images: %w", err)
+	}
+	err = validateHelmCharts(definition.EmbeddedArtifactRegistry.HelmCharts)
+	if err != nil {
+		return fmt.Errorf("error validating helm charts: %w", err)
+	}
+
+	return nil
+}
+
+func isEmbeddedArtifactRegistryEmpty(registry EmbeddedArtifactRegistry) bool {
+	return len(registry.HelmCharts) == 0 && len(registry.ContainerImages) == 0
+}
+
+func validateContainerImages(containerImages []ContainerImage) error {
+	seenContainerImages := make(map[string]bool)
+
+	for _, image := range containerImages {
+		if image.Name == "" {
+			return fmt.Errorf("no image name defined")
+		}
+
+		if seenContainerImages[image.Name] {
+			return fmt.Errorf("duplicate container image found: '%s'", image.Name)
+		}
+		seenContainerImages[image.Name] = true
+	}
+
+	return nil
+}
+
+func validateHelmCharts(charts []HelmChart) error {
+	seenCharts := make(map[string]bool)
+
+	for _, chart := range charts {
+		if chart.Name == "" {
+			return fmt.Errorf("no chart name defined")
+		}
+		if chart.RepoURL == "" {
+			return fmt.Errorf("no chart repository URL defined for '%s'", chart.Name)
+		}
+		if chart.Version == "" {
+			return fmt.Errorf("no chart version defined for '%s'", chart.Name)
+		}
+		if !strings.HasPrefix(chart.RepoURL, "http") {
+			return fmt.Errorf("invalid chart respository url, does not start with 'http://' or 'https://'")
+		}
+
+		if seenCharts[chart.Name] {
+			return fmt.Errorf("duplicate chart found: '%s'", chart.Name)
+		}
+		seenCharts[chart.Name] = true
+	}
+
 	return nil
 }
