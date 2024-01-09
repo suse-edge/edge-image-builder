@@ -88,7 +88,7 @@ func generateNetworkConfig(ctx *image.Context) error {
 
 	defer func() {
 		if err = logFile.Close(); err != nil {
-			zap.S().Warn("Failed to close network log file properly: %s", err)
+			zap.S().Warnf("Failed to close network log file properly: %s", err)
 		}
 	}()
 
