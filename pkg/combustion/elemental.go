@@ -27,7 +27,7 @@ func configureElemental(ctx *image.Context) ([]string, error) {
 
 	if !isComponentConfigured(ctx, elementalConfigDir) {
 		log.AuditComponentSkipped(elementalComponentName)
-		zap.L().Info("Skipping elemental registration component. Configuration is not provided")
+		zap.S().Info("Skipping elemental registration component, configuration is not provided")
 		return nil, nil
 	}
 

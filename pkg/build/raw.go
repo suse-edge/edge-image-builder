@@ -42,7 +42,7 @@ func (b *Builder) buildRawImage() error {
 
 	defer func() {
 		if err = logFile.Close(); err != nil {
-			zap.L().Warn("Failed to close raw build log file properly", zap.Error(err))
+			zap.S().Warnf("Failed to close raw build log file properly: %s", err)
 		}
 	}()
 

@@ -47,11 +47,11 @@ var configureNetworkScript string
 //	├── nmc
 //	└── configure-network.sh
 func configureNetwork(ctx *image.Context) ([]string, error) {
-	zap.L().Info("Configuring network component...")
+	zap.S().Info("Configuring network component...")
 
 	if !isComponentConfigured(ctx, networkConfigDir) {
 		log.AuditComponentSkipped(networkComponentName)
-		zap.L().Info("Skipping network component. Configuration is not provided")
+		zap.S().Info("Skipping network component, configuration is not provided")
 		return nil, nil
 	}
 
@@ -72,7 +72,7 @@ func configureNetwork(ctx *image.Context) ([]string, error) {
 	}
 
 	log.AuditComponentSuccessful(networkComponentName)
-	zap.L().Info("Successfully configured network component")
+	zap.S().Info("Successfully configured network component")
 
 	return []string{scriptName}, nil
 }
@@ -88,7 +88,7 @@ func generateNetworkConfig(ctx *image.Context) error {
 
 	defer func() {
 		if err = logFile.Close(); err != nil {
-			zap.L().Warn("Failed to close network log file properly", zap.Error(err))
+			zap.S().Warnf("Failed to close network log file properly: %s", err)
 		}
 	}()
 
