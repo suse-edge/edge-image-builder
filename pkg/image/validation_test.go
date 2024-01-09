@@ -738,6 +738,26 @@ func TestValidateEmbeddedArtifactRegistry(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestValidateEmbeddedArtifactRegistryExpectError(t *testing.T) {
+	// Setup
+	def := Definition{EmbeddedArtifactRegistry: EmbeddedArtifactRegistry{
+		ContainerImages: []ContainerImage{
+			{
+				Name: "hello-world:latest",
+			},
+			{
+				Name: "hello-world:latest",
+			},
+		},
+	}}
+
+	// Test
+	err := validateEmbeddedArtifactRegistry(&def)
+
+	// Verify
+	require.Error(t, err)
+}
+
 func TestValidateContainerImages(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -883,6 +903,70 @@ func TestValidateCharts(t *testing.T) {
 			} else {
 				require.Nil(t, err)
 			}
+		})
+	}
+}
+
+func TestIsEmbeddedArtifactRegistryEmpty(t *testing.T) {
+	tests := []struct {
+		name     string
+		registry *EmbeddedArtifactRegistry
+		isEmpty  bool
+	}{
+		{
+			name: "Both Defined",
+			registry: &EmbeddedArtifactRegistry{
+				HelmCharts: []HelmChart{
+					{
+						Name:    "rancher",
+						RepoURL: "https://releases.rancher.com/server-charts/stable",
+						Version: "2.8.0",
+					},
+				},
+				ContainerImages: []ContainerImage{
+					{
+						Name:           "hello-world:latest",
+						SupplyChainKey: "",
+					},
+				},
+			},
+			isEmpty: false,
+		},
+		{
+			name: "Chart Defined",
+			registry: &EmbeddedArtifactRegistry{
+				HelmCharts: []HelmChart{
+					{
+						Name:    "rancher",
+						RepoURL: "https://releases.rancher.com/server-charts/stable",
+						Version: "2.8.0",
+					},
+				},
+			},
+			isEmpty: false,
+		},
+		{
+			name: "Image Defined",
+			registry: &EmbeddedArtifactRegistry{
+				ContainerImages: []ContainerImage{
+					{
+						Name:           "hello-world:latest",
+						SupplyChainKey: "",
+					},
+				},
+			},
+			isEmpty: false,
+		},
+		{
+			name:    "None Defined",
+			isEmpty: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := isEmbeddedArtifactRegistryEmpty(test.registry)
+			assert.Equal(t, test.isEmpty, result)
 		})
 	}
 }
