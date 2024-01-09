@@ -37,12 +37,7 @@ type Podman struct {
 // Parameters:
 //   - out - location for podman to output any logs created as a result of podman commands
 func New(out string) (*Podman, error) {
-	podmanDirPath := filepath.Join(out, podmanDirName)
-	if err := os.MkdirAll(podmanDirPath, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("creating %s dir: %w", podmanDirPath, err)
-	}
-
-	if err := setupAPIListener(podmanDirPath); err != nil {
+	if err := setupAPIListener(out); err != nil {
 		return nil, fmt.Errorf("creating new podman instance: %w", err)
 	}
 
@@ -53,7 +48,7 @@ func New(out string) (*Podman, error) {
 
 	return &Podman{
 		context: conn,
-		out:     podmanDirPath,
+		out:     out,
 	}, nil
 }
 
