@@ -9,13 +9,13 @@ set -euo pipefail
 
 ISO_EXTRACT_DIR={{.IsoExtractDir}}
 RAW_EXTRACT_DIR={{.RawExtractDir}}
-ISO_PATH={{.IsoSource}}
+ISO_SOURCE={{.IsoSource}}
 
 # Create the extract directories
 mkdir -p ${ISO_EXTRACT_DIR} ${RAW_EXTRACT_DIR}
 
 # Extract the contents of the ISO to the build directory
-xorriso -osirrox on -indev ${ISO_PATH} extract / ${ISO_EXTRACT_DIR}
+xorriso -osirrox on -indev ${ISO_SOURCE} extract / ${ISO_EXTRACT_DIR}
 
 # Unsquash the raw image
 SQUASHED_IMAGE_NAME=`find ${ISO_EXTRACT_DIR} -name "*.squashfs"`
