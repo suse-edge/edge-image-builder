@@ -118,7 +118,7 @@ func TestCopyFileN(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := CopyFileN(test.source, test.destination, test.perms, 4096)
+			err := CopyFileN(test.source, test.destination, test.perms, 1)
 
 			if test.expectedErr != "" {
 				assert.EqualError(t, err, test.expectedErr)
