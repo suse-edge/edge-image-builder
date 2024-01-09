@@ -46,8 +46,7 @@ func (b *Builder) buildIsoImage() error {
 }
 
 func (b *Builder) extractIso() error {
-	scriptName := filepath.Join(b.context.BuildDir, extractIsoScriptName)
-	if err := b.writeIsoScript(extractIsoTemplate, scriptName); err != nil {
+	if err := b.writeIsoScript(extractIsoTemplate, extractIsoScriptName); err != nil {
 		return fmt.Errorf("creating the ISO extraction script: %w", err)
 	}
 
@@ -69,8 +68,7 @@ func (b *Builder) extractIso() error {
 }
 
 func (b *Builder) rebuildIso() error {
-	scriptName := filepath.Join(b.context.BuildDir, rebuildIsoScriptName)
-	if err := b.writeIsoScript(rebuildIsoTemplate, scriptName); err != nil {
+	if err := b.writeIsoScript(rebuildIsoTemplate, rebuildIsoScriptName); err != nil {
 		return fmt.Errorf("creating the ISO rebuild script: %w", err)
 	}
 
@@ -101,6 +99,7 @@ func (b *Builder) deleteExistingOutputIso() error {
 }
 
 func (b *Builder) writeIsoScript(templateContents, outputFilename string) error {
+	scriptName := filepath.Join(b.context.BuildDir, outputFilename)
 	isoExtractPath := filepath.Join(b.context.BuildDir, isoExtractDir)
 	rawExtractPath := filepath.Join(b.context.BuildDir, rawExtractDir)
 	arguments := struct {
@@ -108,11 +107,13 @@ func (b *Builder) writeIsoScript(templateContents, outputFilename string) error 
 		RawExtractDir       string
 		IsoSource           string
 		OutputImageFilename string
+		CombustionDir       string
 	}{
 		IsoExtractDir:       isoExtractPath,
 		RawExtractDir:       rawExtractPath,
 		IsoSource:           b.generateBaseImageFilename(),
 		OutputImageFilename: b.generateOutputImageFilename(),
+		CombustionDir:       b.context.CombustionDir,
 	}
 
 	contents, err := template.Parse("iso-script", templateContents, arguments)
@@ -120,7 +121,7 @@ func (b *Builder) writeIsoScript(templateContents, outputFilename string) error 
 		return fmt.Errorf("applying the ISO script template: %w", err)
 	}
 
-	if err = os.WriteFile(outputFilename, []byte(contents), fileio.ExecutablePerms); err != nil {
+	if err = os.WriteFile(scriptName, []byte(contents), fileio.ExecutablePerms); err != nil {
 		return fmt.Errorf("writing ISO extraction script %s: %w", outputFilename, err)
 	}
 
