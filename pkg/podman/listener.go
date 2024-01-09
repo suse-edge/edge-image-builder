@@ -28,13 +28,13 @@ func setupAPIListener(out string) error {
 		return fmt.Errorf("error running podman system service: %w", err)
 	}
 
-	return err
+	return nil
 }
 
 func preparePodmanCommand(out string) (*exec.Cmd, *os.File, error) {
 	logFile, err := os.Create(filepath.Join(out, podmanListenerLogFile))
 	if err != nil {
-		return nil, nil, fmt.Errorf("generating podman lister log file: %w", err)
+		return nil, nil, fmt.Errorf("creating podman listener log file: %w", err)
 	}
 
 	args := strings.Split(podmanArgsBase, " ")
