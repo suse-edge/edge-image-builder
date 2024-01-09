@@ -9,7 +9,7 @@ type NetworkConfigGenerator interface {
 }
 
 type NetworkConfiguratorInstaller interface {
-	InstallConfigurator(imageName, sourcePath, installPath string) error
+	InstallConfigurator(arch Arch, sourcePath, installPath string) error
 }
 
 type Context struct {

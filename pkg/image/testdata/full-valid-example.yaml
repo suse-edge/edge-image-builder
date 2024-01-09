@@ -1,6 +1,7 @@
 apiVersion: 1.0
 image:
   imageType: ISO
+  arch: x86_64
   baseImage: slemicro5.5.iso
   outputImageName: eibimage.iso
 operatingSystem:

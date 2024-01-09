@@ -25,6 +25,7 @@ func TestValidateImageValid(t *testing.T) {
 	def := Definition{
 		Image: Image{
 			ImageType:       "iso",
+			Arch:            "x86_64",
 			BaseImage:       "baseimage.iso",
 			OutputImageName: "output.iso",
 		},
@@ -51,7 +52,7 @@ func TestValidateImageInvalidImageType(t *testing.T) {
 	err := validateImage(&def)
 
 	// Verify
-	require.ErrorContains(t, err, "invalid imageType")
+	assert.EqualError(t, err, "imageType must be 'iso' or 'raw'")
 }
 
 func TestValidateImageUndefinedImageType(t *testing.T) {
@@ -71,11 +72,76 @@ func TestValidateImageUndefinedImageType(t *testing.T) {
 	require.ErrorContains(t, err, "imageType not defined")
 }
 
+func TestValidateImage_Arch(t *testing.T) {
+	tests := []struct {
+		name        string
+		definition  *Definition
+		expectedErr string
+	}{
+		{
+			name: "Undefined arch",
+			definition: &Definition{
+				Image: Image{
+					ImageType: "iso",
+					Arch:      "",
+				},
+			},
+			expectedErr: "arch not defined",
+		},
+		{
+			name: "Invalid arch",
+			definition: &Definition{
+				Image: Image{
+					ImageType: "iso",
+					Arch:      "arm64",
+				},
+			},
+			expectedErr: "arch must be 'x86_64' or 'aarch64'",
+		},
+		{
+			name: "Valid AMD arch",
+			definition: &Definition{
+				Image: Image{
+					ImageType:       "iso",
+					Arch:            "x86_64",
+					BaseImage:       "img.iso",
+					OutputImageName: "out.iso",
+				},
+			},
+		},
+		{
+			name: "Valid ARM arch",
+			definition: &Definition{
+				Image: Image{
+					ImageType:       "raw",
+					Arch:            "aarch64",
+					BaseImage:       "img.raw",
+					OutputImageName: "out.raw",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := validateImage(test.definition)
+
+			if test.expectedErr == "" {
+				assert.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				assert.EqualError(t, err, test.expectedErr)
+			}
+		})
+	}
+}
+
 func TestValidateImageUndefinedBaseImage(t *testing.T) {
 	// Setup
 	def := Definition{
 		Image: Image{
 			ImageType:       "raw",
+			Arch:            "x86_64",
 			BaseImage:       "",
 			OutputImageName: "output.iso",
 		},
@@ -93,6 +159,7 @@ func TestValidateImageUndefinedOutputImageName(t *testing.T) {
 	def := Definition{
 		Image: Image{
 			ImageType:       "raw",
+			Arch:            "x86_64",
 			BaseImage:       "baseimage.iso",
 			OutputImageName: "",
 		},

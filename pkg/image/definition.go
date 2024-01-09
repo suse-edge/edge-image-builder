@@ -12,14 +12,34 @@ const (
 	TypeRAW = "raw"
 )
 
+const (
+	ArchTypeX86 Arch = "x86_64"
+	ArchTypeARM Arch = "aarch64"
+)
+
 type Definition struct {
 	APIVersion      string          `yaml:"apiVersion"`
 	Image           Image           `yaml:"image"`
 	OperatingSystem OperatingSystem `yaml:"operatingSystem"`
 }
 
+type Arch string
+
+func (a Arch) Short() string {
+	switch a {
+	case ArchTypeX86:
+		return "amd64"
+	case ArchTypeARM:
+		return "arm64"
+	default:
+		message := fmt.Sprintf("unknown arch: %s", a)
+		panic(message)
+	}
+}
+
 type Image struct {
 	ImageType       string `yaml:"imageType"`
+	Arch            Arch   `yaml:"arch"`
 	BaseImage       string `yaml:"baseImage"`
 	OutputImageName string `yaml:"outputImageName"`
 }
