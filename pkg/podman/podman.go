@@ -131,7 +131,7 @@ func (p *Podman) Copy(id, src, dest string) error {
 	go func() {
 		err := copyFunc()
 		if err != nil {
-			zap.S().Errorf("copying %w to %w: %w", src, dest, err)
+			zap.S().Errorf("Copying %s to %s failed: %s", src, dest, err)
 		}
 
 		writer.Close()
