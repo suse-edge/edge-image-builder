@@ -1,14 +1,42 @@
 package build
 
 import (
+	"fmt"
 	"os"
-	"strings"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
+
+func setupContext(t *testing.T) (ctx *image.Context, teardown func()) {
+	// Copied from combustion_test due to time. This should eventually be refactored
+	// to something cleaner.
+
+	configDir, err := os.MkdirTemp("", "eib-config-")
+	require.NoError(t, err)
+
+	buildDir, err := os.MkdirTemp("", "eib-build-")
+	require.NoError(t, err)
+
+	combustionDir, err := os.MkdirTemp("", "eib-combustion-")
+	require.NoError(t, err)
+
+	ctx = &image.Context{
+		ImageConfigDir:  configDir,
+		BuildDir:        buildDir,
+		CombustionDir:   combustionDir,
+		ImageDefinition: &image.Definition{},
+	}
+
+	return ctx, func() {
+		assert.NoError(t, os.RemoveAll(combustionDir))
+		assert.NoError(t, os.RemoveAll(buildDir))
+		assert.NoError(t, os.RemoveAll(configDir))
+	}
+}
 
 func TestDeleteNoExistingImage(t *testing.T) {
 	// Setup
@@ -65,42 +93,87 @@ func TestDeleteExistingImage(t *testing.T) {
 	require.True(t, os.IsNotExist(err))
 }
 
-func TestCreateXorrisoCommand(t *testing.T) {
+func TestWriteIsoScript_Extract(t *testing.T) {
 	// Setup
-	builder := Builder{
-		context: &image.Context{
-			ImageConfigDir: "config-dir",
-			CombustionDir:  "combustion",
-			ImageDefinition: &image.Definition{
-				Image: image.Image{
-					BaseImage:       "base-image",
-					OutputImageName: "build-image",
-				},
-			},
-		},
-	}
+	ctx, teardown := setupContext(t)
+	defer teardown()
+	builder := Builder{context: ctx}
 
 	// Test
-	cmd, logfile, err := builder.createXorrisoCommand()
+	err := builder.writeIsoScript(extractIsoTemplate, extractIsoScriptName)
 
 	// Verify
 	require.NoError(t, err)
 
-	defer func() {
-		assert.NoError(t, os.Remove(logfile.Name()))
-	}()
+	expectedFilename := filepath.Join(ctx.BuildDir, extractIsoScriptName)
+	_, err = os.Stat(expectedFilename)
+	require.NoError(t, err)
 
-	assert.Equal(t, xorrisoExec, cmd.Path)
+	foundBytes, err := os.ReadFile(expectedFilename)
+	require.NoError(t, err)
+	found := string(foundBytes)
 
-	expectedString := "/usr/bin/xorriso " +
-		"-indev config-dir/images/base-image " +
-		"-outdev config-dir/build-image " +
-		"-map combustion /combustion " +
-		"-boot_image any replay -changes_pending yes"
-	expected := strings.Split(expectedString, " ")
-	assert.Equal(t, expected, cmd.Args)
+	expectedIsoExtractDir := filepath.Join(ctx.BuildDir, isoExtractDir)
+	assert.Contains(t, found, fmt.Sprintf("ISO_EXTRACT_DIR=%s", expectedIsoExtractDir))
 
-	assert.NotNil(t, logfile)
-	assert.Equal(t, logfile, cmd.Stdout)
-	assert.Equal(t, logfile, cmd.Stderr)
+	expectedRawExtractDir := filepath.Join(ctx.BuildDir, rawExtractDir)
+	assert.Contains(t, found, fmt.Sprintf("RAW_EXTRACT_DIR=%s", expectedRawExtractDir))
+
+	expectedIsoPath := builder.generateBaseImageFilename()
+	assert.Contains(t, found, fmt.Sprintf("ISO_SOURCE=%s", expectedIsoPath))
+}
+
+func TestWriteIsoScript_Rebuild(t *testing.T) {
+	// Setup
+	ctx, teardown := setupContext(t)
+	defer teardown()
+	builder := Builder{context: ctx}
+
+	// Test
+	err := builder.writeIsoScript(rebuildIsoTemplate, rebuildIsoScriptName)
+
+	// Verify
+	require.NoError(t, err)
+
+	expectedFilename := filepath.Join(ctx.BuildDir, rebuildIsoScriptName)
+	_, err = os.Stat(expectedFilename)
+	require.NoError(t, err)
+
+	foundBytes, err := os.ReadFile(expectedFilename)
+	require.NoError(t, err)
+	found := string(foundBytes)
+
+	expectedIsoExtractDir := filepath.Join(ctx.BuildDir, isoExtractDir)
+	assert.Contains(t, found, fmt.Sprintf("ISO_EXTRACT_DIR=%s", expectedIsoExtractDir))
+
+	expectedRawExtractDir := filepath.Join(ctx.BuildDir, rawExtractDir)
+	assert.Contains(t, found, fmt.Sprintf("RAW_EXTRACT_DIR=%s", expectedRawExtractDir))
+
+	expectedIsoPath := builder.generateBaseImageFilename()
+	assert.Contains(t, found, fmt.Sprintf("ISO_SOURCE=%s", expectedIsoPath))
+
+	expectedOutputImage := builder.generateOutputImageFilename()
+	assert.Contains(t, found, fmt.Sprintf("OUTPUT_IMAGE=%s", expectedOutputImage))
+
+	expectedCombustionDir := ctx.CombustionDir
+	assert.Contains(t, found, fmt.Sprintf("COMBUSTION_DIR=%s", expectedCombustionDir))
+}
+
+func TestCreateIsoCommand(t *testing.T) {
+	// Setup
+	ctx, teardown := setupContext(t)
+	defer teardown()
+	builder := Builder{context: ctx}
+
+	// Test
+	cmd, logFile, err := builder.createIsoCommand("test-log", "test-script")
+
+	// Verify
+	require.NoError(t, err)
+	require.NotNil(t, cmd)
+
+	expectedCommandPath := filepath.Join(ctx.BuildDir, "test-script")
+	assert.Equal(t, expectedCommandPath, cmd.Path)
+	assert.Equal(t, logFile, cmd.Stdout)
+	assert.Equal(t, logFile, cmd.Stderr)
 }
