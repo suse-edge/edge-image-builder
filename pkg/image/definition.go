@@ -79,7 +79,6 @@ type Suma struct {
 	GetSSL        bool   `yaml:"getSSL"`
 }
 
-
 type EmbeddedArtifactRegistry struct {
 	ContainerImages []ContainerImage `yaml:"images"`
 	HelmCharts      []HelmChart      `yaml:"charts"`
@@ -102,7 +101,6 @@ type Kubernetes struct {
 	CNI            string `yaml:"cni"`
 	MultusEnabled  bool   `yaml:"multus"`
 	VSphereEnabled bool   `yaml:"vSphere"`
-
 }
 
 func ParseDefinition(data []byte) (*Definition, error) {

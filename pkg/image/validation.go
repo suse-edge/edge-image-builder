@@ -16,8 +16,8 @@ func ValidateDefinition(definition *Definition) error {
 	if err := validateOperatingSystem(definition); err != nil {
 		return fmt.Errorf("error validating operating system: %w", err)
 	}
-	err = validateEmbeddedArtifactRegistry(definition)
-	if err != nil {
+
+	if err := validateEmbeddedArtifactRegistry(definition); err != nil {
 		return fmt.Errorf("error validating embedded artifact registry: %w", err)
 	}
 
