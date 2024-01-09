@@ -10,17 +10,27 @@ import (
 const (
 	TypeISO = "iso"
 	TypeRAW = "raw"
-)
 
-const (
 	ArchTypeX86 Arch = "x86_64"
 	ArchTypeARM Arch = "aarch64"
+
+	KubernetesDistroRKE2 = "rke2"
+	KubernetesDistroK3S  = "k3s"
+
+	KubernetesNodeTypeServer = "server"
+	KubernetesNodeTypeAgent  = "agent"
+
+	CNITypeNone   = "none"
+	CNITypeCilium = "cilium"
+	CNITypeCanal  = "canal"
+	CNITypeCalico = "calico"
 )
 
 type Definition struct {
 	APIVersion      string          `yaml:"apiVersion"`
 	Image           Image           `yaml:"image"`
 	OperatingSystem OperatingSystem `yaml:"operatingSystem"`
+	Kubernetes      Kubernetes      `yaml:"kubernetes"`
 }
 
 type Arch string
@@ -66,6 +76,14 @@ type Suma struct {
 	Host          string `yaml:"host"`
 	ActivationKey string `yaml:"activationKey"`
 	GetSSL        bool   `yaml:"getSSL"`
+}
+
+type Kubernetes struct {
+	Version        string `yaml:"version"`
+	NodeType       string `yaml:"nodeType"`
+	CNI            string `yaml:"cni"`
+	MultusEnabled  bool   `yaml:"multus"`
+	VSphereEnabled bool   `yaml:"vSphere"`
 }
 
 func ParseDefinition(data []byte) (*Definition, error) {

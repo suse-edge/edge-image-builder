@@ -2,17 +2,23 @@ package image
 
 import (
 	"fmt"
+	"slices"
 	"strings"
+
+	"github.com/suse-edge/edge-image-builder/pkg/log"
 )
 
 func ValidateDefinition(definition *Definition) error {
-	err := validateImage(definition)
-	if err != nil {
+	if err := validateImage(definition); err != nil {
 		return fmt.Errorf("error validating image: %w", err)
 	}
-	err = validateOperatingSystem(definition)
-	if err != nil {
+
+	if err := validateOperatingSystem(definition); err != nil {
 		return fmt.Errorf("error validating operating system: %w", err)
+	}
+
+	if err := validateKubernetes(definition); err != nil {
+		return fmt.Errorf("error validating kubernetes: %w", err)
 	}
 
 	return nil
@@ -61,6 +67,31 @@ func validateOperatingSystem(definition *Definition) error {
 	if err != nil {
 		return fmt.Errorf("error validating suma: %w", err)
 	}
+	return nil
+}
+
+func validateKubernetes(definition *Definition) error {
+	if definition.Kubernetes.Version == "" {
+		// Not configured
+		return nil
+	}
+
+	supportedCNIs := []string{CNITypeNone, CNITypeCanal, CNITypeCalico, CNITypeCilium}
+
+	if definition.Kubernetes.CNI == "" {
+		log.Audit("Kubernetes CNI was not specified. Please set \"cni: none\" if you intend to use your own")
+		return fmt.Errorf("CNI not specified")
+	} else if !slices.Contains(supportedCNIs, definition.Kubernetes.CNI) {
+		return fmt.Errorf("CNI '%s' is not supported", definition.Kubernetes.CNI)
+	}
+
+	// Empty string corresponds to a "server" node type
+	supportedNodeTypes := []string{"", KubernetesNodeTypeServer, KubernetesNodeTypeAgent}
+
+	if !slices.Contains(supportedNodeTypes, definition.Kubernetes.NodeType) {
+		return fmt.Errorf("unknown node type: %s", definition.Kubernetes.NodeType)
+	}
+
 	return nil
 }
 

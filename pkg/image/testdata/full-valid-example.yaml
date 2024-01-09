@@ -27,3 +27,9 @@ operatingSystem:
     host: suma.edge.suse.com
     activationKey: slemicro55
     getSSL: false
+kubernetes:
+  version: v1.29.0+rke2r1
+  nodeType: server
+  cni: cilium
+  multus: true
+  vSphere: false
