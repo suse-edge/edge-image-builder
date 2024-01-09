@@ -206,7 +206,7 @@ func validateSuma(os *OperatingSystem) error {
 }
 
 func validateEmbeddedArtifactRegistry(definition *Definition) error {
-	if isEmbeddedArtifactRegistryEmpty(&definition.EmbeddedArtifactRegistry) {
+	if isEmbeddedArtifactRegistryEmpty(definition.EmbeddedArtifactRegistry) {
 		return nil
 	}
 	err := validateContainerImages(definition.EmbeddedArtifactRegistry.ContainerImages)
@@ -221,7 +221,7 @@ func validateEmbeddedArtifactRegistry(definition *Definition) error {
 	return nil
 }
 
-func isEmbeddedArtifactRegistryEmpty(registry *EmbeddedArtifactRegistry) bool {
+func isEmbeddedArtifactRegistryEmpty(registry EmbeddedArtifactRegistry) bool {
 	return len(registry.HelmCharts) == 0 && len(registry.ContainerImages) == 0
 }
 

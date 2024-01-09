@@ -910,12 +910,12 @@ func TestValidateCharts(t *testing.T) {
 func TestIsEmbeddedArtifactRegistryEmpty(t *testing.T) {
 	tests := []struct {
 		name     string
-		registry *EmbeddedArtifactRegistry
+		registry EmbeddedArtifactRegistry
 		isEmpty  bool
 	}{
 		{
 			name: "Both Defined",
-			registry: &EmbeddedArtifactRegistry{
+			registry: EmbeddedArtifactRegistry{
 				HelmCharts: []HelmChart{
 					{
 						Name:    "rancher",
@@ -934,7 +934,7 @@ func TestIsEmbeddedArtifactRegistryEmpty(t *testing.T) {
 		},
 		{
 			name: "Chart Defined",
-			registry: &EmbeddedArtifactRegistry{
+			registry: EmbeddedArtifactRegistry{
 				HelmCharts: []HelmChart{
 					{
 						Name:    "rancher",
@@ -947,7 +947,7 @@ func TestIsEmbeddedArtifactRegistryEmpty(t *testing.T) {
 		},
 		{
 			name: "Image Defined",
-			registry: &EmbeddedArtifactRegistry{
+			registry: EmbeddedArtifactRegistry{
 				ContainerImages: []ContainerImage{
 					{
 						Name:           "hello-world:latest",
