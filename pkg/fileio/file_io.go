@@ -69,6 +69,7 @@ func createFileWithPerms(dest string, perms os.FileMode) (*os.File, error) {
 	}
 
 	if err = file.Chmod(perms); err != nil {
+		_ = file.Close()
 		return nil, fmt.Errorf("setting up permissions: %w", err)
 	}
 
