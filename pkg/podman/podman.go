@@ -129,7 +129,12 @@ func (p *Podman) Copy(id, src, dest string) error {
 	}
 
 	go func() {
-		writer.CloseWithError(copyFunc())
+		err := copyFunc()
+		if err != nil {
+			zap.S().Errorf("copying %w to %w: %w", src, dest, err)
+		}
+
+		writer.Close()
 	}()
 
 	if err := untar(reader, dest); err != nil {
@@ -140,6 +145,10 @@ func (p *Podman) Copy(id, src, dest string) error {
 }
 
 func untar(arch io.Reader, dest string) error {
+	const (
+		chunkSize = 4096
+	)
+
 	tarReader := tar.NewReader(arch)
 	for {
 		header, err := tarReader.Next()
@@ -161,7 +170,7 @@ func untar(arch io.Reader, dest string) error {
 				return fmt.Errorf("creating directory %s: %w", path, err)
 			}
 		case tar.TypeReg:
-			if err = fileio.CopyFileN(tarReader, path, os.FileMode(header.Mode), 4096); err != nil {
+			if err = fileio.CopyFileN(tarReader, path, os.FileMode(header.Mode), chunkSize); err != nil {
 				return fmt.Errorf("copying file: %w", err)
 			}
 		default:
