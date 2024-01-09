@@ -170,7 +170,7 @@ func validateSuma(os *OperatingSystem) error {
 }
 
 func validateEmbeddedArtifactRegistry(definition *Definition) error {
-	if checkIfEmbeddedArtifactRegistryDefined(definition) {
+	if !checkIfEmbeddedArtifactRegistryDefined(definition) {
 		return nil
 	}
 	err := validateContainerImages(definition.EmbeddedArtifactRegistry.ContainerImages)
@@ -186,7 +186,7 @@ func validateEmbeddedArtifactRegistry(definition *Definition) error {
 }
 
 func checkIfEmbeddedArtifactRegistryDefined(definition *Definition) bool {
-	return len(definition.EmbeddedArtifactRegistry.HelmCharts) == 0 && len(definition.EmbeddedArtifactRegistry.ContainerImages) == 0
+	return len(definition.EmbeddedArtifactRegistry.HelmCharts) != 0 && len(definition.EmbeddedArtifactRegistry.ContainerImages) != 0
 }
 
 func validateContainerImages(containerImages []ContainerImage) error {
