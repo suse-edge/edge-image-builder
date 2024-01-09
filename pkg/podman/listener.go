@@ -2,6 +2,7 @@ package podman
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,12 +18,14 @@ const (
 // creates a listening service that answers API calls for Podman (https://docs.podman.io/en/v4.8.2/markdown/podman-system-service.1.html)
 // only way to start the service from within a container - https://github.com/containers/podman/tree/v4.8.2/pkg/bindings#starting-the-service-manually
 func setupAPIListener(out string) error {
-	cmd, logfile, err := preparePodmanCommand(out)
+	logFile, err := os.Create(filepath.Join(out, podmanListenerLogFile))
 	if err != nil {
-		return fmt.Errorf("configuring the podman system serice command: %w", err)
+		return fmt.Errorf("creating podman listener log file: %w", err)
 	}
-	defer logfile.Close()
 
+	defer logFile.Close()
+
+	cmd := preparePodmanCommand(logFile)
 	err = cmd.Start()
 	if err != nil {
 		return fmt.Errorf("error running podman system service: %w", err)
@@ -31,16 +34,11 @@ func setupAPIListener(out string) error {
 	return nil
 }
 
-func preparePodmanCommand(out string) (*exec.Cmd, *os.File, error) {
-	logFile, err := os.Create(filepath.Join(out, podmanListenerLogFile))
-	if err != nil {
-		return nil, nil, fmt.Errorf("creating podman listener log file: %w", err)
-	}
-
+func preparePodmanCommand(out io.Writer) *exec.Cmd {
 	args := strings.Split(podmanArgsBase, " ")
 	cmd := exec.Command(podmanExec, args...)
-	cmd.Stdout = logFile
-	cmd.Stderr = logFile
+	cmd.Stdout = out
+	cmd.Stderr = out
 
-	return cmd, logFile, nil
+	return cmd
 }
