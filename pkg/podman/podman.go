@@ -29,7 +29,6 @@ const (
 
 type Podman struct {
 	context context.Context
-	socket  string
 	out     string
 }
 
@@ -54,7 +53,6 @@ func New(out string) (*Podman, error) {
 
 	return &Podman{
 		context: conn,
-		socket:  podmanSock,
 		out:     podmanDirPath,
 	}, nil
 }
