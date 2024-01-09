@@ -63,6 +63,14 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "suma.edge.suse.com", suma.Host)
 	assert.Equal(t, "slemicro55", suma.ActivationKey)
 	assert.Equal(t, false, suma.GetSSL)
+
+	// Kubernetes
+	kubernetes := definition.Kubernetes
+	assert.Equal(t, "v1.29.0+rke2r1", kubernetes.Version)
+	assert.Equal(t, "server", kubernetes.NodeType)
+	assert.Equal(t, "cilium", kubernetes.CNI)
+	assert.Equal(t, true, kubernetes.MultusEnabled)
+	assert.Equal(t, false, kubernetes.VSphereEnabled)
 }
 
 func TestParseBadConfig(t *testing.T) {
