@@ -98,7 +98,7 @@ func generateComponentPath(ctx *image.Context, componentDir string) string {
 
 func isComponentConfigured(ctx *image.Context, componentDir string) bool {
 	if componentDir == "" {
-		zap.L().Warn("Component dir not provided")
+		zap.S().Warn("Component dir not provided")
 		return false
 	}
 
@@ -110,9 +110,8 @@ func isComponentConfigured(ctx *image.Context, componentDir string) bool {
 	}
 
 	if !errors.Is(err, fs.ErrNotExist) {
-		zap.L().Warn("Searching for component directory failed. Component will be skipped.",
-			zap.String("component", componentDir),
-			zap.Error(err))
+		zap.S().Warnf("Searching for component directory (%s) failed, component will be skipped: %s",
+			componentDir, err)
 	}
 
 	return false
