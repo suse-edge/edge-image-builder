@@ -10,6 +10,20 @@ import (
 const (
 	TypeISO = "iso"
 	TypeRAW = "raw"
+
+	ArchTypeX86 Arch = "x86_64"
+	ArchTypeARM Arch = "aarch64"
+
+	KubernetesDistroRKE2 = "rke2"
+	KubernetesDistroK3S  = "k3s"
+
+	KubernetesNodeTypeServer = "server"
+	KubernetesNodeTypeAgent  = "agent"
+
+	CNITypeNone   = "none"
+	CNITypeCilium = "cilium"
+	CNITypeCanal  = "canal"
+	CNITypeCalico = "calico"
 )
 
 type Definition struct {
@@ -17,10 +31,26 @@ type Definition struct {
 	Image                    Image                    `yaml:"image"`
 	OperatingSystem          OperatingSystem          `yaml:"operatingSystem"`
 	EmbeddedArtifactRegistry EmbeddedArtifactRegistry `yaml:"embeddedArtifactRegistry"`
+	Kubernetes               Kubernetes               `yaml:"kubernetes"`
+}
+
+type Arch string
+
+func (a Arch) Short() string {
+	switch a {
+	case ArchTypeX86:
+		return "amd64"
+	case ArchTypeARM:
+		return "arm64"
+	default:
+		message := fmt.Sprintf("unknown arch: %s", a)
+		panic(message)
+	}
 }
 
 type Image struct {
 	ImageType       string `yaml:"imageType"`
+	Arch            Arch   `yaml:"arch"`
 	BaseImage       string `yaml:"baseImage"`
 	OutputImageName string `yaml:"outputImageName"`
 }
@@ -49,6 +79,7 @@ type Suma struct {
 	GetSSL        bool   `yaml:"getSSL"`
 }
 
+
 type EmbeddedArtifactRegistry struct {
 	ContainerImages []ContainerImage `yaml:"images"`
 	HelmCharts      []HelmChart      `yaml:"charts"`
@@ -63,6 +94,15 @@ type HelmChart struct {
 	Name    string `yaml:"name"`
 	RepoURL string `yaml:"repoURL"`
 	Version string `yaml:"version"`
+}
+
+type Kubernetes struct {
+	Version        string `yaml:"version"`
+	NodeType       string `yaml:"nodeType"`
+	CNI            string `yaml:"cni"`
+	MultusEnabled  bool   `yaml:"multus"`
+	VSphereEnabled bool   `yaml:"vSphere"`
+
 }
 
 func ParseDefinition(data []byte) (*Definition, error) {

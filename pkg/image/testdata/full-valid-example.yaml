@@ -1,6 +1,7 @@
 apiVersion: 1.0
 image:
   imageType: ISO
+  arch: x86_64
   baseImage: slemicro5.5.iso
   outputImageName: eibimage.iso
 operatingSystem:
@@ -35,3 +36,10 @@ embeddedArtifactRegistry:
     - name: rancher
       repoURL: https://releases.rancher.com/server-charts/stable
       version: 2.8.0
+kubernetes:
+  version: v1.29.0+rke2r1
+  nodeType: server
+  cni: cilium
+  multus: true
+  vSphere: false
+

@@ -102,7 +102,7 @@ func installNetworkConfigurator(ctx *image.Context) error {
 	sourcePath := "/" // root level of the container image
 	installPath := filepath.Join(ctx.CombustionDir, nmcExecutable)
 
-	return ctx.NetworkConfiguratorInstaller.InstallConfigurator(ctx.ImageDefinition.Image.BaseImage, sourcePath, installPath)
+	return ctx.NetworkConfiguratorInstaller.InstallConfigurator(ctx.ImageDefinition.Image.Arch, sourcePath, installPath)
 }
 
 func writeNetworkConfigurationScript(ctx *image.Context) (string, error) {

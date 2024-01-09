@@ -22,6 +22,7 @@ func TestParse(t *testing.T) {
 
 	// - Definition
 	assert.Equal(t, "1.0", definition.APIVersion)
+	assert.EqualValues(t, "x86_64", definition.Image.Arch)
 	assert.Equal(t, "iso", definition.Image.ImageType)
 
 	// - Image
@@ -71,6 +72,14 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "rancher", embeddedArtifactRegistry.HelmCharts[0].Name)
 	assert.Equal(t, "https://releases.rancher.com/server-charts/stable", embeddedArtifactRegistry.HelmCharts[0].RepoURL)
 	assert.Equal(t, "2.8.0", embeddedArtifactRegistry.HelmCharts[0].Version)
+
+	// Kubernetes
+	kubernetes := definition.Kubernetes
+	assert.Equal(t, "v1.29.0+rke2r1", kubernetes.Version)
+	assert.Equal(t, "server", kubernetes.NodeType)
+	assert.Equal(t, "cilium", kubernetes.CNI)
+	assert.Equal(t, true, kubernetes.MultusEnabled)
+	assert.Equal(t, false, kubernetes.VSphereEnabled)
 }
 
 func TestParseBadConfig(t *testing.T) {
@@ -83,4 +92,13 @@ func TestParseBadConfig(t *testing.T) {
 	// Verify
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "could not parse the image definition")
+}
+
+func TestArch_Short(t *testing.T) {
+	assert.Equal(t, "amd64", ArchTypeX86.Short())
+	assert.Equal(t, "arm64", ArchTypeARM.Short())
+	assert.PanicsWithValue(t, "unknown arch: abc", func() {
+		arch := Arch("abc")
+		arch.Short()
+	})
 }

@@ -16,12 +16,14 @@ The following can be used as the minimum configuration required to create an ima
 apiVersion: 1.0
 image:
   imageType: iso
+  arch: x86_64
   baseImage: SLE-Micro.x86_64-5.5.0-Default-SelfInstall-GM.install.iso
   outputImageName: eib-image.iso
 ```
 
 * `apiVersion` - Indicates the version of the definition file schema for EIB to expect
 * `imageType` - Must be either `iso` or `raw`.
+* `arch` - Must be either `x86_64` or `aarch64`.
 * `baseImage` - Indicates the name of the image file used as the base for the built image. This file must be located
   under the `images` directory of the image configuration directory (see below for more information). This image will
   **not** directly be modified by EIB; a new image will be created each time EIB is run.
@@ -104,9 +106,9 @@ the structure of this directory will be better fleshed out. For now, the require
 * `eib-config-iso.yaml`, `eib-config-raw.yaml` - All image definition files should be in the root of the image
   configuration directory. Multiple definition files may be included in a single configuration directory, with
   the specific definition file specified as a CLI argument as described above.
-* `images` - This directory must exist and contains the base images from which EIB will build customized images. There
-  are no restrictions on the naming other than the image filename *must* contain the architecture, e.g. "aarch64" or
-  "x86_64". The image definition file will specify which image in this directory to use for a particular build.
+* `images` - This directory must exist and contains the base images from which EIB will build customized images.
+  There are no restrictions on the naming. The image definition file will specify which image in this directory
+  to use for a particular build.
 
 There are a number of optional directories that may be included in the image configuration directory:
 
