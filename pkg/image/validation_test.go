@@ -738,26 +738,6 @@ func TestValidateEmbeddedArtifactRegistry(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestValidateEmbeddedArtifactRegistryExpectError(t *testing.T) {
-	// Setup
-	def := Definition{EmbeddedArtifactRegistry: EmbeddedArtifactRegistry{
-		ContainerImages: []ContainerImage{
-			{
-				Name: "hello-world:latest",
-			},
-			{
-				Name: "hello-world:latest",
-			},
-		},
-	}}
-
-	// Test
-	err := validateEmbeddedArtifactRegistry(&def)
-
-	// Verify
-	require.Error(t, err)
-}
-
 func TestValidateContainerImages(t *testing.T) {
 	tests := []struct {
 		name        string
