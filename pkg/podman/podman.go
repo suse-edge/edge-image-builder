@@ -58,7 +58,7 @@ func New(out string) (*Podman, error) {
 //   - tarball - path to the tarball to be imported
 //   - ref 	  - name for the image that will be created from the tarball
 func (p *Podman) Import(tarball, ref string) error {
-	zap.L().Sugar().Infof("Importing image '%s' from tarball...", ref)
+	zap.S().Infof("Importing image '%s' from tarball...", ref)
 	f, err := os.Open(tarball)
 	if err != nil {
 		return fmt.Errorf("opening tarball %s: %w", tarball, err)
@@ -74,7 +74,7 @@ func (p *Podman) Import(tarball, ref string) error {
 // Build looks for a 'Dockerfile' in the given context and build a podman image
 // from it.
 func (p *Podman) Build(imageContext, imageName string) error {
-	zap.L().Sugar().Infof("Building image %s...", imageName)
+	zap.S().Infof("Building image %s...", imageName)
 
 	logFile, err := os.Create(filepath.Join(p.out, podmanBuildLogFile))
 	if err != nil {
@@ -101,7 +101,7 @@ func (p *Podman) Build(imageContext, imageName string) error {
 
 // Create creates a container from the given image. Returns the id of the container.
 func (p *Podman) Create(img string) (string, error) {
-	zap.L().Sugar().Infof("Running container from %s image...", img)
+	zap.S().Infof("Creating container from %s image...", img)
 
 	s := specgen.NewSpecGenerator(img, false)
 	createResponse, err := containers.CreateWithSpec(p.context, s, nil)
@@ -118,7 +118,7 @@ func (p *Podman) Create(img string) (string, error) {
 // Note: No need to create a placeholder file/directory in dest. The file/directory will be created
 // automatically upon copying from source.
 func (p *Podman) Copy(id, src, dest string) error {
-	zap.L().Sugar().Infof("Copying %s from container %s to %s", src, id, dest)
+	zap.S().Infof("Copying %s from container %s to %s", src, id, dest)
 
 	reader, writer := io.Pipe()
 	defer reader.Close()
