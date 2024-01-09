@@ -1,7 +1,9 @@
 package fileio
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"testing"
 
@@ -35,13 +37,13 @@ func TestCopyFile(t *testing.T) {
 			name:        "Destination is an empty file",
 			source:      source,
 			destination: "",
-			expectedErr: "creating destination file: open : no such file or directory",
+			expectedErr: "creating file with permissions: creating file: open : no such file or directory",
 		},
 		{
 			name:        "Destination is a directory",
 			source:      source,
 			destination: tmpDir,
-			expectedErr: fmt.Sprintf("creating destination file: open %s: is a directory", tmpDir),
+			expectedErr: fmt.Sprintf("creating file with permissions: creating file: open %s: is a directory", tmpDir),
 		},
 		{
 			name:        "File is successfully copied",
@@ -66,6 +68,79 @@ func TestCopyFile(t *testing.T) {
 				dest, err := os.ReadFile(test.destination)
 				require.NoError(t, err)
 				assert.Equal(t, src, dest)
+
+				info, err := os.Stat(test.destination)
+				require.NoError(t, err)
+				assert.Equal(t, test.perms, info.Mode())
+			}
+		})
+	}
+}
+
+func TestCopyFileN(t *testing.T) {
+	const (
+		destDirPrefix  = "eib-copy-file-n-test-"
+		srcFilePrefix  = "eib-copy-file-n-test-file-"
+		srcFileContent = "CopyFileN test"
+	)
+
+	tmpDir, err := os.MkdirTemp("", destDirPrefix)
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+
+	tmpFile, err := os.CreateTemp(tmpDir, srcFilePrefix)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, tmpFile.Close())
+		require.NoError(t, os.Remove(tmpFile.Name()))
+	}()
+
+	_, err = tmpFile.WriteString(srcFileContent)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name        string
+		source      io.Reader
+		destination string
+		perms       os.FileMode
+		expectedErr string
+	}{
+		{
+			name:        "Destination is an empty file",
+			source:      tmpFile,
+			destination: "",
+			expectedErr: "creating file with permissions: creating file: open : no such file or directory",
+		},
+		{
+			name:        "Destination is a directory",
+			source:      tmpFile,
+			destination: tmpDir,
+			expectedErr: fmt.Sprintf("creating file with permissions: creating file: open %s: is a directory", tmpDir),
+		},
+		{
+			name:        "File is successfully copied",
+			source:      tmpFile,
+			destination: fmt.Sprintf("%s/copy", tmpDir),
+			perms:       NonExecutablePerms,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := CopyFileN(test.source, test.destination, test.perms, 4096)
+
+			if test.expectedErr != "" {
+				assert.EqualError(t, err, test.expectedErr)
+			} else {
+				require.Nil(t, err)
+
+				buf := new(bytes.Buffer)
+				_, err = buf.ReadFrom(test.source)
+				require.NoError(t, err)
+
+				dest, err := os.ReadFile(test.destination)
+				require.NoError(t, err)
+				assert.Equal(t, buf.Bytes(), dest)
 
 				info, err := os.Stat(test.destination)
 				require.NoError(t, err)

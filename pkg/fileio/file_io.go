@@ -1,6 +1,7 @@
 package fileio
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -22,21 +23,54 @@ func CopyFile(src string, dest string, perms os.FileMode) error {
 		_ = sourceFile.Close()
 	}()
 
-	destFile, err := os.Create(dest)
+	destFile, err := createFileWithPerms(dest, perms)
 	if err != nil {
-		return fmt.Errorf("creating destination file: %w", err)
+		return fmt.Errorf("creating file with permissions: %w", err)
 	}
+
 	defer func() {
 		_ = destFile.Close()
 	}()
-
-	if err = destFile.Chmod(perms); err != nil {
-		return fmt.Errorf("adjusting permissions: %w", err)
-	}
 
 	if _, err = io.Copy(destFile, sourceFile); err != nil {
 		return fmt.Errorf("copying file: %w", err)
 	}
 
 	return nil
+}
+
+func CopyFileN(src io.Reader, dest string, perms os.FileMode, n int64) error {
+	destFile, err := createFileWithPerms(dest, perms)
+	if err != nil {
+		return fmt.Errorf("creating file with permissions: %w", err)
+	}
+
+	defer func() {
+		_ = destFile.Close()
+	}()
+
+	for {
+		// TODO: mitigate impact of a possible decompression
+		// attack by doing a validation between copy chunks
+		_, err := io.CopyN(destFile, src, n)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
+			return fmt.Errorf("copying file bytes: %w", err)
+		}
+	}
+}
+
+func createFileWithPerms(dest string, perms os.FileMode) (*os.File, error) {
+	file, err := os.Create(dest)
+	if err != nil {
+		return nil, fmt.Errorf("creating file: %w", err)
+	}
+
+	if err = file.Chmod(perms); err != nil {
+		return nil, fmt.Errorf("setting up permissions: %w", err)
+	}
+
+	return file, nil
 }
