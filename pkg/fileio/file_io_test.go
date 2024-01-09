@@ -80,7 +80,6 @@ func TestCopyFile(t *testing.T) {
 func TestCopyFileN(t *testing.T) {
 	const (
 		destDirPrefix  = "eib-copy-file-n-test-"
-		srcFilePrefix  = "eib-copy-file-n-test-file-"
 		srcFileContent = "CopyFileN test"
 	)
 
@@ -88,15 +87,7 @@ func TestCopyFileN(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
-	tmpFile, err := os.CreateTemp(tmpDir, srcFilePrefix)
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, tmpFile.Close())
-		require.NoError(t, os.Remove(tmpFile.Name()))
-	}()
-
-	_, err = tmpFile.WriteString(srcFileContent)
-	require.NoError(t, err)
+	buffer := bytes.NewBufferString(srcFileContent)
 
 	tests := []struct {
 		name        string
@@ -107,19 +98,19 @@ func TestCopyFileN(t *testing.T) {
 	}{
 		{
 			name:        "Destination is an empty file",
-			source:      tmpFile,
+			source:      buffer,
 			destination: "",
 			expectedErr: "creating file with permissions: creating file: open : no such file or directory",
 		},
 		{
 			name:        "Destination is a directory",
-			source:      tmpFile,
+			source:      buffer,
 			destination: tmpDir,
 			expectedErr: fmt.Sprintf("creating file with permissions: creating file: open %s: is a directory", tmpDir),
 		},
 		{
 			name:        "File is successfully copied",
-			source:      tmpFile,
+			source:      buffer,
 			destination: fmt.Sprintf("%s/copy", tmpDir),
 			perms:       NonExecutablePerms,
 		},
@@ -134,13 +125,9 @@ func TestCopyFileN(t *testing.T) {
 			} else {
 				require.Nil(t, err)
 
-				buf := new(bytes.Buffer)
-				_, err = buf.ReadFrom(test.source)
-				require.NoError(t, err)
-
 				dest, err := os.ReadFile(test.destination)
 				require.NoError(t, err)
-				assert.Equal(t, buf.Bytes(), dest)
+				assert.Equal(t, []byte(srcFileContent), dest)
 
 				info, err := os.Stat(test.destination)
 				require.NoError(t, err)
