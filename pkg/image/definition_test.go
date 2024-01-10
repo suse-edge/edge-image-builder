@@ -67,7 +67,7 @@ func TestParse(t *testing.T) {
 	// Operating System -> Packages
 	pkgConfig := definition.OperatingSystem.Packages
 	require.Len(t, pkgConfig.PKGList, 6)
-	require.Len(t, pkgConfig.AddRepos, 2)
+	require.Len(t, pkgConfig.AdditionalRepos, 2)
 	expectedPKGList := []string{
 		"wget2",
 		"dpdk22",
@@ -81,7 +81,7 @@ func TestParse(t *testing.T) {
 		"https://download.nvidia.com/suse/sle15sp5/",
 		"https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/",
 	}
-	assert.Equal(t, expectedAddRepos, pkgConfig.AddRepos)
+	assert.Equal(t, expectedAddRepos, pkgConfig.AdditionalRepos)
 	assert.Equal(t, "INTERNAL-USE-ONLY-foo-bar", pkgConfig.RegCode)
 
 	// EmbeddedArtifactRegistry

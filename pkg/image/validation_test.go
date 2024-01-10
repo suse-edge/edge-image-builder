@@ -970,7 +970,7 @@ func TestValidatePackages(t *testing.T) {
 			name: "Additional repository with duplicate",
 			os: &OperatingSystem{
 				Packages: Packages{
-					AddRepos: []string{"https://foo.bar", "https://bar.foo", "https://foo.bar"},
+					AdditionalRepos: []string{"https://foo.bar", "https://bar.foo", "https://foo.bar"},
 				},
 			},
 			expectedErr: "additional repository list contains duplicate: https://foo.bar",
@@ -997,8 +997,8 @@ func TestValidatePackages(t *testing.T) {
 			name: "Configuring package from third party repo",
 			os: &OperatingSystem{
 				Packages: Packages{
-					PKGList:  []string{"foo", "bar"},
-					AddRepos: []string{"https://foo.bar"},
+					PKGList:         []string{"foo", "bar"},
+					AdditionalRepos: []string{"https://foo.bar"},
 				},
 			},
 		},
