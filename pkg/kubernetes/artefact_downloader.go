@@ -38,7 +38,6 @@ func (d ArtefactDownloader) DownloadArtefacts(kubernetes image.Kubernetes, arch 
 	}
 
 	path := filepath.Join(destinationPath, kubernetesDir)
-
 	if err := os.Mkdir(path, os.ModePerm); err != nil {
 		return fmt.Errorf("creating kubernetes dir: %w", err)
 	}
@@ -48,7 +47,7 @@ func (d ArtefactDownloader) DownloadArtefacts(kubernetes image.Kubernetes, arch 
 		return fmt.Errorf("gathering RKE2 artefacts: %w", err)
 	}
 
-	if err = downloadArtefacts(artefacts, rke2ReleaseURL, kubernetes.Version, destinationPath); err != nil {
+	if err = downloadArtefacts(artefacts, rke2ReleaseURL, kubernetes.Version, path); err != nil {
 		return fmt.Errorf("downloading RKE2 artefacts: %w", err)
 	}
 
