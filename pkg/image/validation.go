@@ -72,6 +72,10 @@ func validateOperatingSystem(definition *Definition) error {
 	if err != nil {
 		return fmt.Errorf("error validating suma: %w", err)
 	}
+	err = validatePackages(&definition.OperatingSystem)
+	if err != nil {
+		return fmt.Errorf("error validating packages: %w", err)
+	}
 
 	return nil
 }
@@ -263,6 +267,22 @@ func validateHelmCharts(charts []HelmChart) error {
 			return fmt.Errorf("duplicate chart found: '%s'", chart.Name)
 		}
 		seenCharts[chart.Name] = true
+	}
+
+	return nil
+}
+
+func validatePackages(os *OperatingSystem) error {
+	if duplicate := checkForDuplicates(os.Packages.PKGList); duplicate != "" {
+		return fmt.Errorf("package list contains duplicate: %s", duplicate)
+	}
+
+	if duplicate := checkForDuplicates(os.Packages.AdditionalRepos); duplicate != "" {
+		return fmt.Errorf("additional repository list contains duplicate: %s", duplicate)
+	}
+
+	if len(os.Packages.PKGList) > 0 && len(os.Packages.AdditionalRepos) == 0 && os.Packages.RegCode == "" {
+		return fmt.Errorf("package list configured without providing additional repository or registration code")
 	}
 
 	return nil
