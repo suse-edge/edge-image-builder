@@ -19,7 +19,8 @@ cd ${ISO_EXTRACT_DIR}
 # Regenerate the checksum, overwriting the existing one that was unsquashed
 RAW_IMAGE_FILE=`find ${RAW_EXTRACT_DIR} -name "*.raw"`
 CHECKSUM_FILE=`find ${RAW_EXTRACT_DIR} -name "*.md5"`
-echo "$(md5sum ${RAW_IMAGE_FILE} | awk '{print $1;}') 280064 8192" > ${CHECKSUM_FILE}
+BLK_CONF=$(awk '{print $2 " " $3;}' $CHECKSUM_FILE)
+echo "$(md5sum ${RAW_IMAGE_FILE} | awk '{print $1;}') $BLK_CONF" > ${CHECKSUM_FILE}
 
 # Resquash the raw image
 SQUASH_IMAGE_FILE=`find ${ISO_EXTRACT_DIR} -name "*.squashfs"`
