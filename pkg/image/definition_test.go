@@ -64,6 +64,26 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "slemicro55", suma.ActivationKey)
 	assert.Equal(t, false, suma.GetSSL)
 
+	// Operating System -> Packages
+	pkgConfig := definition.OperatingSystem.Packages
+	require.Len(t, pkgConfig.PKGList, 6)
+	require.Len(t, pkgConfig.AddRepos, 2)
+	expectedPKGList := []string{
+		"wget2",
+		"dpdk22",
+		"dpdk22-tools",
+		"libdpdk-23",
+		"libatomic1",
+		"libbpf0",
+	}
+	assert.Equal(t, expectedPKGList, pkgConfig.PKGList)
+	expectedAddRepos := []string{
+		"https://download.nvidia.com/suse/sle15sp5/",
+		"https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/",
+	}
+	assert.Equal(t, expectedAddRepos, pkgConfig.AddRepos)
+	assert.Equal(t, "INTERNAL-USE-ONLY-foo-bar", pkgConfig.RegCode)
+
 	// EmbeddedArtifactRegistry
 	embeddedArtifactRegistry := definition.EmbeddedArtifactRegistry
 	assert.Equal(t, "hello-world:latest", embeddedArtifactRegistry.ContainerImages[0].Name)

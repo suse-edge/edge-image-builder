@@ -60,6 +60,13 @@ type OperatingSystem struct {
 	Users      []OperatingSystemUser `yaml:"users"`
 	Systemd    Systemd               `yaml:"systemd"`
 	Suma       Suma                  `yaml:"suma"`
+	Packages   Packages              `yaml:"packages"`
+}
+
+type Packages struct {
+	PKGList  []string `yaml:"packageList"`
+	AddRepos []string `yaml:"additionalRepos"`
+	RegCode  string   `yaml:"registrationCode"`
 }
 
 type OperatingSystemUser struct {
