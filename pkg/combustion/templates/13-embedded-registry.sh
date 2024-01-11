@@ -1,20 +1,20 @@
 #!/bin/bash
 set -euo pipefail
 
-mkdir -p /etc/hauler
+mkdir /opt/hauler
 
-mv haul.tar.zst /etc/hauler/haul.tar.zst
+mv haul.tar.zst /opt/hauler/haul.tar.zst
 mv hauler /usr/bin/hauler
 
-cat <<- EOF > /etc/systemd/system/registry.service
+cat <<- EOF > /etc/systemd/system/embedded-registry.service
   [Unit]
-  Description=Hauler Load and Serve
+  Description=Load and Serve Embedded Registry
   After=network.target
 
   [Service]
   Type=simple
   User=root
-  WorkingDirectory=/etc/hauler
+  WorkingDirectory=/opt/hauler
   ExecStartPre=/usr/bin/hauler store load haul.tar.zst
   ExecStart=/usr/bin/hauler store serve
   Restart=on-failure
@@ -23,4 +23,4 @@ cat <<- EOF > /etc/systemd/system/registry.service
   WantedBy=multi-user.target
 EOF
 
-systemctl enable registry.service
+systemctl enable embedded-registry.service
