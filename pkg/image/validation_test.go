@@ -945,7 +945,7 @@ func TestIsEmbeddedArtifactRegistryEmpty(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := isEmbeddedArtifactRegistryEmpty(test.registry)
+			result := IsEmbeddedArtifactRegistryEmpty(test.registry)
 			assert.Equal(t, test.isEmpty, result)
 		})
 	}
