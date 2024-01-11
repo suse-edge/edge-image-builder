@@ -68,6 +68,10 @@ func Configure(ctx *image.Context) error {
 			name:     sumaComponentName,
 			runnable: configureSuma,
 		},
+		{
+			name:     registryComponentName,
+			runnable: configureRegistry,
+		},
 	}
 
 	for _, component := range combustionComponents {
