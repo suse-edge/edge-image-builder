@@ -1,7 +1,7 @@
 apiVersion: content.hauler.cattle.io/v1alpha1
 kind: Images
 metadata:
-  name: EIB-Embedded-Registry-Images
+  name: Embedded-Registry-Images
 spec:
   images:
     {{- range .ContainerImages }}
@@ -14,7 +14,7 @@ spec:
 apiVersion: content.hauler.cattle.io/v1alpha1
 kind: Charts
 metadata:
-  name: EIB-Embedded-Registry-Charts
+  name: Embedded-Registry-Charts
 spec:
   charts:
     {{- range .HelmCharts }}
