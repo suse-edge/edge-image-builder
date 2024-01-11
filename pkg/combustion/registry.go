@@ -31,7 +31,7 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		log.AuditComponentSkipped(registryComponentName)
 		return nil, nil
 	}
-	haulerExecutable := filepath.Join("/usr/bin", fmt.Sprintf("hauler-%s", ctx.ImageDefinition.Image.Arch.Short()))
+	haulerExecutable := filepath.Join("usr", "bin", fmt.Sprintf("hauler-%s", ctx.ImageDefinition.Image.Arch.Short()))
 
 	err := writeHaulerManifest(ctx)
 	if err != nil {
