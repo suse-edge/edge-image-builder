@@ -12,6 +12,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
 	audit "github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/network"
+	"github.com/suse-edge/edge-image-builder/pkg/rpm/resolver"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -51,6 +52,11 @@ func processArgs() (*image.Context, error) {
 
 	setupLogging(buildDir)
 
+	rpmResolver, err := resolver.New(buildDir, configDir, imageDefinition)
+	if err != nil {
+		return nil, fmt.Errorf("setting up rpm resolver instance: %w", err)
+	}
+
 	return &image.Context{
 		ImageConfigDir:               configDir,
 		BuildDir:                     buildDir,
@@ -60,6 +66,7 @@ func processArgs() (*image.Context, error) {
 		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
 		KubernetesScriptInstaller:    kubernetes.ScriptInstaller{},
 		KubernetesArtefactDownloader: kubernetes.ArtefactDownloader{},
+		RPMResolver:                  rpmResolver,
 	}, nil
 }
 

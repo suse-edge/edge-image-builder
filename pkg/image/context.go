@@ -20,6 +20,17 @@ type kubernetesArtefactDownloader interface {
 	DownloadArtefacts(kubernetes Kubernetes, arch Arch, destinationPath string) error
 }
 
+type Podman interface {
+	Import(tarball, ref string) error
+	Build(context, name string) error
+	Create(img string) (string, error)
+	Copy(id, src, dest string) error
+}
+
+type RPMResolver interface {
+	Resolve(out string, podman Podman) (string, []string, error)
+}
+
 type Context struct {
 	// ImageConfigDir is the root directory storing all configuration files.
 	ImageConfigDir string
@@ -33,4 +44,5 @@ type Context struct {
 	NetworkConfiguratorInstaller networkConfiguratorInstaller
 	KubernetesScriptInstaller    kubernetesScriptInstaller
 	KubernetesArtefactDownloader kubernetesArtefactDownloader
+	RPMResolver                  RPMResolver
 }
