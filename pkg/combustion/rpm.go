@@ -3,41 +3,49 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
+	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
+	"github.com/suse-edge/edge-image-builder/pkg/podman"
 	"github.com/suse-edge/edge-image-builder/pkg/rpm"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
+	"go.uber.org/zap"
 )
 
 const (
 	userRPMsDir         = "rpms"
 	modifyRPMScriptName = "10-rpm-install.sh"
 	rpmComponentName    = "RPM"
+	combustionBasePath  = "/dev/shm/combustion/config"
+	createRepoExec      = "/usr/bin/createrepo"
+	createRepoLog       = "createrepo.log"
 )
 
 //go:embed templates/10-rpm-install.sh.tpl
 var modifyRPMScript string
 
 func configureRPMs(ctx *image.Context) ([]string, error) {
-	if !isComponentConfigured(ctx, userRPMsDir) {
+	if skipRPMComponent(ctx) {
 		log.AuditComponentSkipped(rpmComponentName)
+		zap.L().Info("Skipping RPM component. Configuration is not provided")
 		return nil, nil
 	}
 
-	rpmSourceDir := generateComponentPath(ctx, userRPMsDir)
+	zap.L().Info("Configuring RPM component...")
 
-	rpmFileNames, err := rpm.CopyRPMs(rpmSourceDir, ctx.CombustionDir)
+	repoName, packages, err := handleRPMs(ctx)
 	if err != nil {
 		log.AuditComponentFailed(rpmComponentName)
-		return nil, fmt.Errorf("copying RPMs over: %w", err)
+		return nil, fmt.Errorf("handling rpms: %w", err)
 	}
 
-	script, err := writeRPMScript(ctx, rpmFileNames)
+	script, err := writeRPMScript(ctx, repoName, packages)
 	if err != nil {
 		log.AuditComponentFailed(rpmComponentName)
 		return nil, fmt.Errorf("writing the RPM install script %s: %w", modifyRPMScriptName, err)
@@ -47,11 +55,114 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 	return []string{script}, nil
 }
 
-func writeRPMScript(ctx *image.Context, rpmFileNames []string) (string, error) {
+func handleRPMs(ctx *image.Context) (repoName string, pkgToInstall []string, err error) {
+	if isResolutionNeeded(ctx) {
+		repoName, pkgToInstall, err = resolveToRPMRepo(ctx)
+		if err != nil {
+			return "", nil, fmt.Errorf("resolving rpms to a rpm repository: %w", err)
+		}
+	} else {
+		pkgToInstall, err = rpm.CopyRPMs(generateComponentPath(ctx, userRPMsDir), ctx.CombustionDir)
+		if err != nil {
+			log.AuditComponentFailed(rpmComponentName)
+			return "", nil, fmt.Errorf("moving individual rpm files: %w", err)
+		}
+	}
+
+	return repoName, pkgToInstall, nil
+}
+
+// determine whether RPM configuration is needed
+func skipRPMComponent(ctx *image.Context) bool {
+	pkg := ctx.ImageDefinition.OperatingSystem.Packages
+
+	if isComponentConfigured(ctx, userRPMsDir) {
+		// User provided standalone or third party RPMs
+		return false
+	}
+	if len(pkg.PKGList) > 0 {
+		// User provided PackageHub or third party packages
+		return false
+	}
+
+	return true
+}
+
+// determine whether package/rpm dependency resolution is needed
+func isResolutionNeeded(ctx *image.Context) bool {
+	pkg := ctx.ImageDefinition.OperatingSystem.Packages
+
+	if len(pkg.AdditionalRepos) > 0 {
+		// Packages/RPMs requested from third party repositories
+		return true
+	}
+
+	if pkg.RegCode != "" {
+		// Packages/RPMs requested from PackageHub
+		return true
+	}
+	return false
+}
+
+func resolveToRPMRepo(ctx *image.Context) (repoName string, packages []string, err error) {
+	p, err := podman.New(ctx.BuildDir)
+	if err != nil {
+		return "", nil, fmt.Errorf("starting podman client: %w", err)
+	}
+
+	var rpmDir string
+	rpmDir, packages, err = ctx.RPMResolver.Resolve(ctx.CombustionDir, p)
+	if err != nil {
+		return "", nil, fmt.Errorf("resolving rpm/package dependencies: %w", err)
+	}
+
+	if err = createRPMRepo(rpmDir, ctx.BuildDir); err != nil {
+		return "", nil, fmt.Errorf("creating resolved rpm repository: %w", err)
+	}
+
+	return filepath.Base(rpmDir), packages, nil
+}
+
+func createRPMRepo(path, logOut string) error {
+	zap.S().Infof("Creating RPM repository from '%s'", path)
+
+	logFile, err := os.Create(filepath.Join(logOut, createRepoLog))
+	if err != nil {
+		return fmt.Errorf("generating createrepo log file: %w", err)
+	}
+	defer logFile.Close()
+
+	cmd := prepareRepoCommand(path, logFile)
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("error running createrepo: %w", err)
+	}
+
+	zap.L().Info("RPM repository created successfully")
+	return err
+}
+
+func prepareRepoCommand(path string, log io.Writer) *exec.Cmd {
+	cmd := exec.Command(createRepoExec, path)
+	cmd.Stdout = log
+	cmd.Stderr = log
+
+	return cmd
+}
+
+func writeRPMScript(ctx *image.Context, repoName string, packages []string) (string, error) {
+	if len(packages) == 0 {
+		return "", fmt.Errorf("package list cannot be empty")
+	}
+
 	values := struct {
-		RPMs string
+		RepoPath string
+		RepoName string
+		PKGList  string
 	}{
-		RPMs: strings.Join(rpmFileNames, " "),
+		RepoPath: filepath.Join(combustionBasePath, repoName),
+		RepoName: repoName,
+		PKGList:  strings.Join(packages, " "),
 	}
 
 	data, err := template.Parse(modifyRPMScriptName, modifyRPMScript, &values)
