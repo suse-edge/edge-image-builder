@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
@@ -36,7 +37,13 @@ func (b *Builder) buildIsoImage() error {
 		return fmt.Errorf("extracting the ISO image: %w", err)
 	}
 
-	// TODO: Call into raw code
+	extractedRawImage, err := b.findExtractedRawImage()
+	if err != nil {
+		return fmt.Errorf("unable to find extracted raw image: %w", err)
+	}
+	if err = b.modifyRawImage(extractedRawImage, false, false); err != nil {
+		return fmt.Errorf("modifying the raw image inside of the ISO: %w", err)
+	}
 
 	if err := b.rebuildIso(); err != nil {
 		return fmt.Errorf("building the ISO image: %w", err)
@@ -141,4 +148,24 @@ func (b *Builder) createIsoCommand(logFilename, scriptName string) (*exec.Cmd, *
 	cmd.Stderr = logFile
 
 	return cmd, logFile, nil
+}
+
+func (b *Builder) findExtractedRawImage() (string, error) {
+	var foundFile string
+	f := func(s string, info os.FileInfo, e error) error {
+		if e != nil {
+			return e
+		}
+		if strings.HasSuffix(info.Name(), ".raw") {
+			foundFile = info.Name()
+		}
+		return nil
+	}
+
+	rawExtractPath := filepath.Join(b.context.BuildDir, rawExtractDir)
+	if err := filepath.Walk(rawExtractPath, f); err != nil {
+		return "", fmt.Errorf("traversing raw extract directory %s: %w", rawExtractPath, err)
+	}
+
+	return filepath.Join(rawExtractPath, foundFile), nil
 }

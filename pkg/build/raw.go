@@ -24,13 +24,22 @@ var modifyRawImageTemplate string
 
 func (b *Builder) buildRawImage() error {
 	cmd := b.createRawImageCopyCommand()
-	err := cmd.Run()
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("copying the base image %s to the output image location %s: %w",
 			b.context.ImageDefinition.Image.BaseImage, b.generateOutputImageFilename(), err)
 	}
 
-	if err = b.writeModifyScript(); err != nil {
+	if err := b.modifyRawImage(b.generateOutputImageFilename(), true, true); err != nil {
+		// modifyRawImage will wrap the error, simply return it here
+		return err
+	}
+
+	return nil
+}
+
+func (b *Builder) modifyRawImage(imagePath string, includeCombustion, renameFilesystem bool) error {
+
+	if err := b.writeModifyScript(imagePath, includeCombustion, renameFilesystem); err != nil {
 		return fmt.Errorf("writing the image modification script: %w", err)
 	}
 
@@ -46,7 +55,7 @@ func (b *Builder) buildRawImage() error {
 		}
 	}()
 
-	cmd = b.createModifyCommand(logFile)
+	cmd := b.createModifyCommand(logFile)
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("running the image modification script: %w", err)
@@ -63,7 +72,7 @@ func (b *Builder) createRawImageCopyCommand() *exec.Cmd {
 	return cmd
 }
 
-func (b *Builder) writeModifyScript() error {
+func (b *Builder) writeModifyScript(imageFilename string, includeCombustion, renameFilesystem bool) error {
 	// There is no need to check the returned results from this call. If there is no configuration,
 	// it will be an empty string, which is safe to pass into the template.
 	grubConfiguration, err := b.generateGRUBGuestfishCommands()
@@ -73,13 +82,17 @@ func (b *Builder) writeModifyScript() error {
 
 	// Assemble the template values
 	values := struct {
-		OutputImage   string
-		CombustionDir string
-		ConfigureGRUB string
+		ImagePath           string
+		CombustionDir       string
+		ConfigureGRUB       string
+		ConfigureCombustion bool
+		RenameFilesystem    bool
 	}{
-		OutputImage:   b.generateOutputImageFilename(),
-		CombustionDir: b.context.CombustionDir,
-		ConfigureGRUB: grubConfiguration,
+		ImagePath:           imageFilename,
+		CombustionDir:       b.context.CombustionDir,
+		ConfigureGRUB:       grubConfiguration,
+		ConfigureCombustion: includeCombustion,
+		RenameFilesystem:    renameFilesystem,
 	}
 
 	data, err := template.Parse(modifyScriptName, modifyRawImageTemplate, &values)

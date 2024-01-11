@@ -28,8 +28,6 @@ SQUASH_BASENAME=`basename ${SQUASH_IMAGE_FILE}`
 NEW_SQUASH_FILE=${RAW_EXTRACT_DIR}/${SQUASH_BASENAME}
 
 cd ${RAW_EXTRACT_DIR}
-
-echo "Squash"
 mksquashfs ${RAW_IMAGE_FILE} ${CHECKSUM_FILE} ${NEW_SQUASH_FILE}
 
 # Rebuild the previously extracted ISO with the new squashed raw image

@@ -177,3 +177,31 @@ func TestCreateIsoCommand(t *testing.T) {
 	assert.Equal(t, logFile, cmd.Stdout)
 	assert.Equal(t, logFile, cmd.Stderr)
 }
+
+func TestFindExtractedRawImage(t *testing.T) {
+	// Setup
+	ctx, teardown := setupContext(t)
+	defer teardown()
+	builder := Builder{context: ctx}
+
+	testExtractDir := filepath.Join(ctx.BuildDir, rawExtractDir)
+	require.NoError(t, os.Mkdir(testExtractDir, os.FileMode(0o744)))
+
+	testFiles := []string{
+		"foo",
+		"bar.raw",
+		"baz",
+	}
+	for _, testFile := range testFiles {
+		_, err := os.Create(filepath.Join(testExtractDir, testFile))
+		require.NoError(t, err)
+	}
+
+	// Test
+	foundFilename, err := builder.findExtractedRawImage()
+
+	// Verify
+	require.NoError(t, err)
+	expectedFilename := filepath.Join(testExtractDir, "bar.raw")
+	assert.Equal(t, expectedFilename, foundFilename)
+}
