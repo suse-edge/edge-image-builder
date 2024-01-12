@@ -142,10 +142,10 @@ func createRPMRepo(path, logOut string) error {
 	return err
 }
 
-func prepareRepoCommand(path string, log io.Writer) *exec.Cmd {
+func prepareRepoCommand(path string, w io.Writer) *exec.Cmd {
 	cmd := exec.Command(createRepoExec, path)
-	cmd.Stdout = log
-	cmd.Stderr = log
+	cmd.Stdout = w
+	cmd.Stderr = w
 
 	return cmd
 }
