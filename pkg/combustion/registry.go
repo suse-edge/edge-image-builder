@@ -59,14 +59,14 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("copying hauler binary: %w", err)
 	}
 
-	_, err = writeRegistryScript(ctx)
+	registryScriptNameResult, err := writeRegistryScript(ctx)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("writing registry script: %w", err)
 	}
 
 	log.AuditComponentSuccessful(registryComponentName)
-	return []string{registryScriptName}, nil
+	return []string{registryScriptNameResult}, nil
 }
 
 func writeHaulerManifest(ctx *image.Context) error {
