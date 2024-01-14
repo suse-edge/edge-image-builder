@@ -11,19 +11,21 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
+	"go.uber.org/zap"
 )
 
 const (
 	haulerManifestYamlName = "hauler-manifest.yaml"
 	registryScriptName     = "13-embedded-registry.sh"
-	haulerTarName          = "haul.tar.zst"
+	registryTarName        = "embedded-registry.tar.zst"
 	registryComponentName  = "embedded artifact registry"
+	registryLogFileName    = "embedded-registry.log"
 )
 
 //go:embed templates/hauler-manifest.yaml.tpl
 var haulerManifest string
 
-//go:embed templates/13-embedded-registry.sh
+//go:embed templates/13-embedded-registry.sh.tpl
 var registryScript string
 
 func configureRegistry(ctx *image.Context) ([]string, error) {
@@ -45,7 +47,7 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("populating hauler store: %w", err)
 	}
 
-	err = generateHaulerTar(ctx, haulerExecutable)
+	err = generateRegistryTar(ctx, haulerExecutable)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("generating hauler store tar: %w", err)
@@ -75,7 +77,7 @@ func writeHaulerManifest(ctx *image.Context) error {
 		return fmt.Errorf("applying template to %s: %w", haulerManifestYamlName, err)
 	}
 
-	if err := os.WriteFile(haulerManifestYamlFile, []byte(data), fileio.ExecutablePerms); err != nil {
+	if err := os.WriteFile(haulerManifestYamlFile, []byte(data), fileio.NonExecutablePerms); err != nil {
 		return fmt.Errorf("writing file %s: %w", haulerManifestYamlName, err)
 	}
 
@@ -84,23 +86,41 @@ func writeHaulerManifest(ctx *image.Context) error {
 
 func populateHaulerStore(ctx *image.Context, haulerExecutable string) error {
 	haulerManifestPath := filepath.Join(ctx.BuildDir, haulerManifestYamlName)
+	args := []string{"store", "sync", "--files", haulerManifestPath}
 
-	cmd := exec.Command(haulerExecutable, "store", "sync", "--files", haulerManifestPath)
-	output, err := cmd.CombinedOutput()
+	cmd, registryLog, err := createRegistryCommand(ctx, haulerExecutable, args)
 	if err != nil {
-		return fmt.Errorf("populating hauler store: %w: %s", err, string(output))
+		return fmt.Errorf("preparing to populate registry store: %w", err)
+	}
+	defer func() {
+		if err = registryLog.Close(); err != nil {
+			zap.S().Warnf("failed to close registry log file properly: %s", err)
+		}
+	}()
+
+	if err = cmd.Run(); err != nil {
+		return fmt.Errorf("populating hauler store: %w: ", err)
 	}
 
 	return nil
 }
 
-func generateHaulerTar(ctx *image.Context, haulerExecutable string) error {
-	haulerTarDest := filepath.Join(ctx.CombustionDir, haulerTarName)
+func generateRegistryTar(ctx *image.Context, haulerExecutable string) error {
+	haulerTarDest := filepath.Join(ctx.CombustionDir, registryTarName)
+	args := []string{"store", "save", "--filename", haulerTarDest}
 
-	cmd := exec.Command(haulerExecutable, "store", "save", "--filename", haulerTarDest)
-	output, err := cmd.CombinedOutput()
+	cmd, registryLog, err := createRegistryCommand(ctx, haulerExecutable, args)
 	if err != nil {
-		return fmt.Errorf("creating hauler registry tar: %w: %s", err, string(output))
+		return fmt.Errorf("preparing to generate registry tar: %w", err)
+	}
+	defer func() {
+		if err = registryLog.Close(); err != nil {
+			zap.S().Warnf("failed to close registry log file properly: %s", err)
+		}
+	}()
+
+	if err = cmd.Run(); err != nil {
+		return fmt.Errorf("creating registry tar: %w: ", err)
 	}
 
 	return nil
@@ -118,12 +138,36 @@ func copyHaulerBinary(ctx *image.Context, haulerExecutable string) error {
 }
 
 func writeRegistryScript(ctx *image.Context) (string, error) {
-	filename := filepath.Join(ctx.CombustionDir, registryScriptName)
+	values := struct {
+		EmbeddedRegistryTar string
+	}{
+		EmbeddedRegistryTar: registryTarName,
+	}
 
-	err := os.WriteFile(filename, []byte(registryScript), fileio.ExecutablePerms)
+	data, err := template.Parse(registryScriptName, registryScript, &values)
+	if err != nil {
+		return "", fmt.Errorf("parsing registry script template: %w", err)
+	}
+
+	filename := filepath.Join(ctx.CombustionDir, registryScriptName)
+	err = os.WriteFile(filename, []byte(data), fileio.ExecutablePerms)
 	if err != nil {
 		return "", fmt.Errorf("writing registry script: %w", err)
 	}
 
 	return registryScriptName, nil
+}
+
+func createRegistryCommand(ctx *image.Context, commandName string, args []string) (*exec.Cmd, *os.File, error) {
+	fullLogFilename := filepath.Join(ctx.BuildDir, registryLogFileName)
+	logFile, err := os.OpenFile(fullLogFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error opening registry log file %s: %w", registryLogFileName, err)
+	}
+
+	cmd := exec.Command(commandName, args...)
+	cmd.Stdout = logFile
+	cmd.Stderr = logFile
+
+	return cmd, logFile, nil
 }

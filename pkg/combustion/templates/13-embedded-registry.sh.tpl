@@ -3,10 +3,10 @@ set -euo pipefail
 
 mkdir /opt/hauler
 
-mv haul.tar.zst /opt/hauler/haul.tar.zst
+mv {{ .EmbeddedRegistryTar }} /opt/hauler/{{ .EmbeddedRegistryTar }}
 mv hauler /usr/bin/hauler
 
-cat <<- EOF > /etc/systemd/system/embedded-registry.service
+cat <<- EOF > /etc/systemd/system/eib-embedded-registry.service
   [Unit]
   Description=Load and Serve Embedded Registry
   After=network.target
@@ -15,7 +15,7 @@ cat <<- EOF > /etc/systemd/system/embedded-registry.service
   Type=simple
   User=root
   WorkingDirectory=/opt/hauler
-  ExecStartPre=/usr/bin/hauler store load haul.tar.zst
+  ExecStartPre=/usr/bin/hauler store load {{ .EmbeddedRegistryTar }}
   ExecStart=/usr/bin/hauler store serve
   Restart=on-failure
 
@@ -23,4 +23,4 @@ cat <<- EOF > /etc/systemd/system/embedded-registry.service
   WantedBy=multi-user.target
 EOF
 
-systemctl enable embedded-registry.service
+systemctl enable eib-embedded-registry.service
