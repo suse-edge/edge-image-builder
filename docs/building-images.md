@@ -37,6 +37,8 @@ The operating system configuration section is entirely optional.
 The following describes the possible options for the operating system section:
 ```yaml
 operatingSystem:
+  installDevice: /path/to/disk
+  unattended: false
   kernelArgs:
   - arg1
   - arg2
@@ -56,6 +58,11 @@ operatingSystem:
       - serviceX
 ```
 
+* `installDevice` - Optional; only for ISO images - specifies the disk that should be used as the install
+  device. This needs to be block special, and will default to automatically wipe any data found on the disk.
+* `unattended` - Optional; only for ISO images - forces GRUB override to automatically install the operating
+  system rather than prompting user to begin the installation. In combination with `installDevice` can create
+  a fully unattended and automated install. Beware of creating boot loops and data loss with these options.
 * `kernelArgs` - Optional; Provides a list of flags that should be passed to the kernel on boot.
 * `users` - Optional; Defines a list of operating system users to be created. Each entry is made up of
   the following fields:
