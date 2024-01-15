@@ -14,6 +14,7 @@ import (
 	audit "github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/network"
 	"github.com/suse-edge/edge-image-builder/pkg/podman"
+	"github.com/suse-edge/edge-image-builder/pkg/rpm"
 	"github.com/suse-edge/edge-image-builder/pkg/rpm/resolver"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -74,6 +75,7 @@ func processArgs() (*image.Context, error) {
 		imgPath := filepath.Join(configDir, "images", imageDefinition.Image.BaseImage)
 		rpmResolver := resolver.New(buildDir, imgPath, imageDefinition.Image.ImageType, p)
 		ctx.RPMResolver = rpmResolver
+		ctx.RPMRepoCreator = rpm.NewRepoCreator(buildDir)
 	}
 
 	return ctx, nil

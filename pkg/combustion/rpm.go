@@ -3,9 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -22,8 +20,6 @@ const (
 	modifyRPMScriptName = "10-rpm-install.sh"
 	rpmComponentName    = "RPM"
 	combustionBasePath  = "/dev/shm/combustion/config"
-	createRepoExec      = "/usr/bin/createrepo"
-	createRepoLog       = "createrepo.log"
 )
 
 //go:embed templates/10-rpm-install.sh.tpl
@@ -114,38 +110,11 @@ func resolveToRPMRepo(ctx *image.Context) (repoName string, packages []string, e
 		return "", nil, fmt.Errorf("resolving rpm/package dependencies: %w", err)
 	}
 
-	if err = createRPMRepo(repoPath, ctx.BuildDir); err != nil {
+	if err = ctx.RPMRepoCreator.Create(repoPath); err != nil {
 		return "", nil, fmt.Errorf("creating resolved rpm repository: %w", err)
 	}
 
 	return filepath.Base(repoPath), packages, nil
-}
-
-func createRPMRepo(path, logOut string) error {
-	zap.S().Infof("Creating RPM repository from '%s'", path)
-
-	logFile, err := os.Create(filepath.Join(logOut, createRepoLog))
-	if err != nil {
-		return fmt.Errorf("generating createrepo log file: %w", err)
-	}
-	defer logFile.Close()
-
-	cmd := prepareRepoCommand(path, logFile)
-	err = cmd.Run()
-	if err != nil {
-		return fmt.Errorf("error running createrepo: %w", err)
-	}
-
-	zap.L().Info("RPM repository created successfully")
-	return err
-}
-
-func prepareRepoCommand(path string, w io.Writer) *exec.Cmd {
-	cmd := exec.Command(createRepoExec, path)
-	cmd.Stdout = w
-	cmd.Stderr = w
-
-	return cmd
 }
 
 func writeRPMScript(ctx *image.Context, repoName string, packages []string) (string, error) {

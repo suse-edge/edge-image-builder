@@ -1,7 +1,6 @@
 package combustion
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -240,18 +239,4 @@ func TestConfigureRPMSStandaloneRPM(t *testing.T) {
 	expectedFilename := filepath.Join(ctx.CombustionDir, modifyRPMScriptName)
 	_, err = os.ReadFile(expectedFilename)
 	require.NoError(t, err)
-}
-
-func TestPrepareRepoCommand(t *testing.T) {
-	const (
-		testPath = "/foo/bar"
-	)
-
-	cmd := prepareRepoCommand(testPath, &bytes.Buffer{})
-
-	assert.Equal(t, cmd.Path, createRepoExec)
-	require.Len(t, cmd.Args, 2)
-	assert.Equal(t, cmd.Args[1], testPath)
-	require.NotNil(t, cmd.Stderr)
-	require.NotNil(t, cmd.Stdout)
 }
