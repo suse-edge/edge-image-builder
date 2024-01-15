@@ -45,6 +45,10 @@ func Configure(ctx *image.Context) error {
 			runnable: configureCustomFiles,
 		},
 		{
+			name:     timeComponentName,
+			runnable: configureTime,
+		},
+		{
 			name:     networkComponentName,
 			runnable: configureNetwork,
 		},

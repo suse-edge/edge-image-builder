@@ -7,6 +7,13 @@ image:
 operatingSystem:
   installDevice: /dev/sda
   unattended: true
+  time:
+    timezone: Europe/London
+    chronyPools:
+      - 2.suse.pool.ntp.org
+    chronyServers:
+      - 10.0.0.1
+      - 10.0.0.2
   kernelArgs:
     - alpha=foo
     - beta=bar
