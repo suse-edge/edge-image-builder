@@ -38,8 +38,6 @@ echo -e "set timeout=3\nset timeout_style=menu\n$(cat ${ISO_EXTRACT_DIR}/boot/gr
 {{ end }}
 
 cd ${RAW_EXTRACT_DIR}
-
-echo "Squash"
 mksquashfs ${RAW_IMAGE_FILE} ${CHECKSUM_FILE} ${NEW_SQUASH_FILE}
 
 # Rebuild the previously extracted ISO with the new squashed raw image
