@@ -166,13 +166,13 @@ func TestWriteIsoScript_Rebuild(t *testing.T) {
 	assert.Contains(t, found, fmt.Sprintf("COMBUSTION_DIR=%s", expectedCombustionDir))
 
 	// Make sure that unattended mode is configured for GRUB
-	assert.Contains(t, found, "set timeout=")
+	assert.Contains(t, found, "set timeout=", "unattended mode is not configured properly in GRUB menu")
 
 	// Make sure that target device is set as kernel cmdline argument
-	assert.Contains(t, found, "rd.kiwi.oem.installdevice=/dev/vda")
+	assert.Contains(t, found, "rd.kiwi.oem.installdevice=/dev/vda", "install device target is not configured as kernel cmdline argument")
 
 	// Make sure that the xorisso command also adds the grub.cfg mapping
-	assert.Contains(t, found, "-map ${ISO_EXTRACT_DIR}/boot/grub2/grub.cfg /boot/grub2/grub.cfg")
+	assert.Contains(t, found, "-map ${ISO_EXTRACT_DIR}/boot/grub2/grub.cfg /boot/grub2/grub.cfg", "xorisso doesn't have grub.cfg mapping")
 }
 
 func TestCreateIsoCommand(t *testing.T) {
