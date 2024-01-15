@@ -171,5 +171,9 @@ func (b *Builder) findExtractedRawImage() (string, error) {
 		return "", fmt.Errorf("traversing raw extract directory %s: %w", rawExtractPath, err)
 	}
 
+	if foundFile == "" {
+		return "", fmt.Errorf("unable to find a raw image in: %s", rawExtractDir)
+	}
+
 	return filepath.Join(rawExtractPath, foundFile), nil
 }

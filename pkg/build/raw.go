@@ -38,7 +38,6 @@ func (b *Builder) buildRawImage() error {
 }
 
 func (b *Builder) modifyRawImage(imagePath string, includeCombustion, renameFilesystem bool) error {
-
 	if err := b.writeModifyScript(imagePath, includeCombustion, renameFilesystem); err != nil {
 		return fmt.Errorf("writing the image modification script: %w", err)
 	}
