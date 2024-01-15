@@ -25,10 +25,11 @@ RUN curl -o nmc-aarch64 -L https://github.com/suse-edge/nm-configurator/releases
 
 RUN curl -o hauler-amd64.tar -L https://github.com/rancherfederal/hauler/releases/download/v0.4.2/hauler_0.4.2_linux_amd64.tar.gz && \
     tar -xf hauler-amd64.tar && \
-    mv hauler /usr/bin/hauler-amd64 && \
+    mv hauler hauler-x86_64 && \
     curl -o hauler-arm64.tar -L https://github.com/rancherfederal/hauler/releases/download/v0.4.2/hauler_0.4.2_linux_arm64.tar.gz && \
     tar -xf hauler-arm64.tar && \
-    mv hauler /usr/bin/hauler-arm64
+    mv hauler hauler-aarch64 && \
+    cp hauler-$(uname -m) /usr/bin/hauler
 
 COPY --from=0 /src/eib /bin/eib
 

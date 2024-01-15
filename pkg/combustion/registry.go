@@ -33,7 +33,7 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		log.AuditComponentSkipped(registryComponentName)
 		return nil, nil
 	}
-	haulerExecutable := filepath.Join("usr", "bin", fmt.Sprintf("hauler-%s", ctx.ImageDefinition.Image.Arch.Short()))
+	haulerExecutable := filepath.Join("usr", "bin", "hauler")
 
 	err := writeHaulerManifest(ctx)
 	if err != nil {
@@ -53,7 +53,7 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("generating hauler store tar: %w", err)
 	}
 
-	err = copyHaulerBinary(ctx, haulerExecutable)
+	err = copyHaulerBinary(ctx)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("copying hauler binary: %w", err)
@@ -126,10 +126,11 @@ func generateRegistryTar(ctx *image.Context, haulerExecutable string) error {
 	return nil
 }
 
-func copyHaulerBinary(ctx *image.Context, haulerExecutable string) error {
+func copyHaulerBinary(ctx *image.Context) error {
+	haulerBinaryPath := filepath.Join(fmt.Sprintf("hauler-%s", string(ctx.ImageDefinition.Image.Arch)))
 	destinationDir := filepath.Join(ctx.CombustionDir, "hauler")
 
-	err := fileio.CopyFile(haulerExecutable, destinationDir, fileio.ExecutablePerms)
+	err := fileio.CopyFile(haulerBinaryPath, destinationDir, fileio.ExecutablePerms)
 	if err != nil {
 		return fmt.Errorf("copying hauler binary to combustion dir: %w", err)
 	}
