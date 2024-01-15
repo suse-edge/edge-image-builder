@@ -64,14 +64,14 @@ func TestConfigureProxy_FullConfiguration(t *testing.T) {
 	foundContents := string(foundBytes)
 
 	// - Make sure that the global PROXY_ENABLED="yes" flag is set because either http/https proxy is set
-	assert.Contains(t, foundContents, "s/PROXY_ENABLED=.*/PROXY_ENABLED=\"yes\"/g", "global proxy has not been enabled")
+	assert.Contains(t, foundContents, "s|PROXY_ENABLED=.*|PROXY_ENABLED=\"yes\"|g", "global proxy has not been enabled")
 
 	// - Ensure that we have the HTTP_PROXY set correctly
-	assert.Contains(t, foundContents, "s/HTTP_PROXY=.*/HTTP_PROXY=\"http://10.0.0.1:3128\"/g", "HTTP_PROXY not set correctly")
+	assert.Contains(t, foundContents, "s|HTTP_PROXY=.*|HTTP_PROXY=\"http://10.0.0.1:3128\"|g", "HTTP_PROXY not set correctly")
 
 	// - Ensure that we have the HTTPS_PROXY set correctly
-	assert.Contains(t, foundContents, "s/HTTPS_PROXY=.*/HTTPS_PROXY=\"http://10.0.0.1:3128\"/g", "HTTPS_PROXY not set correctly")
+	assert.Contains(t, foundContents, "s|HTTPS_PROXY=.*|HTTPS_PROXY=\"http://10.0.0.1:3128\"|g", "HTTPS_PROXY not set correctly")
 
 	// - Ensure that we have the NO_PROXY list overridden
-	assert.Contains(t, foundContents, "s/NO_PROXY=.*/NO_PROXY=\"localhost, 127.0.0.1, edge.suse.com\"/g", "NO_PROXY not set correctly")
+	assert.Contains(t, foundContents, "s|NO_PROXY=.*|NO_PROXY=\"localhost, 127.0.0.1, edge.suse.com\"|g", "NO_PROXY not set correctly")
 }
