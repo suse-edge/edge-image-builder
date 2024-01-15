@@ -11,7 +11,6 @@ import (
 )
 
 func TestValidateImage(t *testing.T) {
-	// Setup
 	imageConfigDir, err := os.MkdirTemp("", "eib-image-tests-")
 	require.NoError(t, err)
 	defer func() {
@@ -26,7 +25,6 @@ func TestValidateImage(t *testing.T) {
 	_, err = os.Create(testBaseImageFilename)
 	require.NoError(t, err)
 
-	// Test Cases
 	tests := map[string]struct {
 		ImageDefinition        image.Definition
 		ExpectedFailedMessages []string
@@ -81,7 +79,6 @@ func TestValidateImage(t *testing.T) {
 		},
 	}
 
-	// Run
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			imageDef := test.ImageDefinition
