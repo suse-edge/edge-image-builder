@@ -144,7 +144,7 @@ func validateKernelArgs(os *OperatingSystem) error {
 }
 
 func validateUnattended(definition *Definition) error {
-	if definition.Image.ImageType != TypeISO && definition.OperatingSystem.Unattended == true {
+	if definition.Image.ImageType != TypeISO && definition.OperatingSystem.Unattended {
 		return fmt.Errorf("unattended mode can only be used with image type '%s'", TypeISO)
 	}
 
