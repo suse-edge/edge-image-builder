@@ -15,6 +15,8 @@ import (
 
 const (
 	kubernetesDir = "kubernetes"
+	installDir    = "install"
+	imagesDir     = "images"
 
 	rke2ReleaseURL = "https://github.com/rancher/rke2/releases/download/%s/%s"
 
@@ -32,41 +34,59 @@ const (
 
 type ArtefactDownloader struct{}
 
-func (d ArtefactDownloader) DownloadArtefacts(kubernetes image.Kubernetes, arch image.Arch, destinationPath string) error {
+func (d ArtefactDownloader) DownloadArtefacts(kubernetes image.Kubernetes, arch image.Arch, destinationPath string) (installPath, imagesPath string, err error) {
 	if !strings.Contains(kubernetes.Version, image.KubernetesDistroRKE2) {
-		return fmt.Errorf("kubernetes version '%s' is not supported", kubernetes.Version)
+		return "", "", fmt.Errorf("kubernetes version '%s' is not supported", kubernetes.Version)
 	}
 
-	path := filepath.Join(destinationPath, kubernetesDir)
-	if err := os.Mkdir(path, os.ModePerm); err != nil {
-		return fmt.Errorf("creating kubernetes dir: %w", err)
-	}
-
-	artefacts, err := gatherArtefacts(kubernetes, arch)
-	if err != nil {
-		return fmt.Errorf("gathering RKE2 artefacts: %w", err)
-	}
-
-	if err = downloadArtefacts(artefacts, rke2ReleaseURL, kubernetes.Version, path); err != nil {
-		return fmt.Errorf("downloading RKE2 artefacts: %w", err)
-	}
-
-	return nil
-}
-
-func gatherArtefacts(kubernetes image.Kubernetes, arch image.Arch) ([]string, error) {
 	if arch == image.ArchTypeARM {
 		log.Audit("WARNING: RKE2 support for aarch64 platforms is limited and experimental")
 	}
 
+	imagesPath = filepath.Join(kubernetesDir, imagesDir)
+	imagesDestination := filepath.Join(destinationPath, imagesPath)
+	if err = os.MkdirAll(imagesDestination, os.ModePerm); err != nil {
+		return "", "", fmt.Errorf("creating kubernetes images dir: %w", err)
+	}
+
+	installPath = filepath.Join(kubernetesDir, installDir)
+	installDestination := filepath.Join(destinationPath, installPath)
+	if err = os.MkdirAll(installDestination, os.ModePerm); err != nil {
+		return "", "", fmt.Errorf("creating kubernetes install dir: %w", err)
+	}
+
+	artefacts, err := imageArtefacts(kubernetes, arch)
+	if err != nil {
+		return "", "", fmt.Errorf("gathering RKE2 image artefacts: %w", err)
+	}
+
+	if err = downloadArtefacts(artefacts, rke2ReleaseURL, kubernetes.Version, imagesDestination); err != nil {
+		return "", "", fmt.Errorf("downloading RKE2 image artefacts: %w", err)
+	}
+
+	artefacts = installerArtefacts(arch)
+	if err = downloadArtefacts(artefacts, rke2ReleaseURL, kubernetes.Version, installDestination); err != nil {
+		return "", "", fmt.Errorf("downloading RKE2 install artefacts: %w", err)
+	}
+
+	return installPath, imagesPath, nil
+}
+
+func installerArtefacts(arch image.Arch) []string {
+	artefactArch := arch.Short()
+
+	return []string{
+		fmt.Sprintf(rke2Binary, artefactArch),
+		fmt.Sprintf(rke2Checksums, artefactArch),
+	}
+}
+
+func imageArtefacts(kubernetes image.Kubernetes, arch image.Arch) ([]string, error) {
 	artefactArch := arch.Short()
 
 	var artefacts []string
 
-	artefacts = append(artefacts,
-		fmt.Sprintf(rke2Binary, artefactArch),
-		fmt.Sprintf(rke2CoreImages, artefactArch),
-		fmt.Sprintf(rke2Checksums, artefactArch))
+	artefacts = append(artefacts, fmt.Sprintf(rke2CoreImages, artefactArch))
 
 	switch kubernetes.CNI {
 	case "":

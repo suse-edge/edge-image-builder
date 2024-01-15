@@ -17,7 +17,7 @@ type kubernetesScriptInstaller interface {
 }
 
 type kubernetesArtefactDownloader interface {
-	DownloadArtefacts(kubernetes Kubernetes, arch Arch, destinationPath string) error
+	DownloadArtefacts(kubernetes Kubernetes, arch Arch, destinationPath string) (installPath, imagesPath string, err error)
 }
 
 type Context struct {

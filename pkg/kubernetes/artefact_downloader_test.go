@@ -8,7 +8,15 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func TestGatherArtefacts(t *testing.T) {
+func TestInstallerArtefacts(t *testing.T) {
+	x86Artefacts := []string{"rke2.linux-amd64.tar.gz", "sha256sum-amd64.txt"}
+	assert.Equal(t, x86Artefacts, installerArtefacts(image.ArchTypeX86))
+
+	armArtefacts := []string{"rke2.linux-arm64.tar.gz", "sha256sum-arm64.txt"}
+	assert.Equal(t, armArtefacts, installerArtefacts(image.ArchTypeARM))
+}
+
+func TestImageArtefacts(t *testing.T) {
 	tests := []struct {
 		name              string
 		kubernetes        image.Kubernetes
@@ -37,9 +45,7 @@ func TestGatherArtefacts(t *testing.T) {
 			},
 			arch: image.ArchTypeX86,
 			expectedArtefacts: []string{
-				"rke2.linux-amd64.tar.gz",
 				"rke2-images-core.linux-amd64.tar.zst",
-				"sha256sum-amd64.txt",
 			},
 		},
 		{
@@ -49,9 +55,7 @@ func TestGatherArtefacts(t *testing.T) {
 			},
 			arch: image.ArchTypeX86,
 			expectedArtefacts: []string{
-				"rke2.linux-amd64.tar.gz",
 				"rke2-images-core.linux-amd64.tar.zst",
-				"sha256sum-amd64.txt",
 				"rke2-images-canal.linux-amd64.tar.zst",
 			},
 		},
@@ -62,9 +66,7 @@ func TestGatherArtefacts(t *testing.T) {
 			},
 			arch: image.ArchTypeX86,
 			expectedArtefacts: []string{
-				"rke2.linux-amd64.tar.gz",
 				"rke2-images-core.linux-amd64.tar.zst",
-				"sha256sum-amd64.txt",
 				"rke2-images-calico.linux-amd64.tar.zst",
 			},
 		},
@@ -75,9 +77,7 @@ func TestGatherArtefacts(t *testing.T) {
 			},
 			arch: image.ArchTypeX86,
 			expectedArtefacts: []string{
-				"rke2.linux-amd64.tar.gz",
 				"rke2-images-core.linux-amd64.tar.zst",
-				"sha256sum-amd64.txt",
 				"rke2-images-cilium.linux-amd64.tar.zst",
 			},
 		},
@@ -90,9 +90,7 @@ func TestGatherArtefacts(t *testing.T) {
 			},
 			arch: image.ArchTypeX86,
 			expectedArtefacts: []string{
-				"rke2.linux-amd64.tar.gz",
 				"rke2-images-core.linux-amd64.tar.zst",
-				"sha256sum-amd64.txt",
 				"rke2-images-cilium.linux-amd64.tar.zst",
 				"rke2-images-multus.linux-amd64.tar.zst",
 				"rke2-images-vsphere.linux-amd64.tar.zst",
@@ -105,9 +103,7 @@ func TestGatherArtefacts(t *testing.T) {
 			},
 			arch: image.ArchTypeARM,
 			expectedArtefacts: []string{
-				"rke2.linux-arm64.tar.gz",
 				"rke2-images-core.linux-arm64.tar.zst",
-				"sha256sum-arm64.txt",
 			},
 		},
 		{
@@ -117,9 +113,7 @@ func TestGatherArtefacts(t *testing.T) {
 			},
 			arch: image.ArchTypeARM,
 			expectedArtefacts: []string{
-				"rke2.linux-arm64.tar.gz",
 				"rke2-images-core.linux-arm64.tar.zst",
-				"sha256sum-arm64.txt",
 				"rke2-images-canal.linux-arm64.tar.zst",
 			},
 		},
@@ -161,7 +155,7 @@ func TestGatherArtefacts(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			artefacts, err := gatherArtefacts(test.kubernetes, test.arch)
+			artefacts, err := imageArtefacts(test.kubernetes, test.arch)
 
 			if test.expectedError != "" {
 				require.EqualError(t, err, test.expectedError)
