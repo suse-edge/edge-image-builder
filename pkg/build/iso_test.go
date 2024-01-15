@@ -129,6 +129,13 @@ func TestWriteIsoScript_Rebuild(t *testing.T) {
 	defer teardown()
 	builder := Builder{context: ctx}
 
+	ctx.ImageDefinition = &image.Definition{
+		OperatingSystem: image.OperatingSystem{
+			InstallDevice: "/dev/vda",
+			Unattended:    true,
+		},
+	}
+
 	// Test
 	err := builder.writeIsoScript(rebuildIsoTemplate, rebuildIsoScriptName)
 
@@ -157,6 +164,15 @@ func TestWriteIsoScript_Rebuild(t *testing.T) {
 
 	expectedCombustionDir := ctx.CombustionDir
 	assert.Contains(t, found, fmt.Sprintf("COMBUSTION_DIR=%s", expectedCombustionDir))
+
+	// Make sure that unattended mode is configured for GRUB
+	assert.Contains(t, found, "set timeout=")
+
+	// Make sure that target device is set as kernel cmdline argument
+	assert.Contains(t, found, "rd.kiwi.oem.installdevice=/dev/vda")
+
+	// Make sure that the xorisso command also adds the grub.cfg mapping
+	assert.Contains(t, found, "-map ${ISO_EXTRACT_DIR}/boot/grub2/grub.cfg /boot/grub2/grub.cfg")
 }
 
 func TestCreateIsoCommand(t *testing.T) {
