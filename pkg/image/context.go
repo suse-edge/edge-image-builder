@@ -4,12 +4,20 @@ import (
 	"io"
 )
 
-type NetworkConfigGenerator interface {
+type networkConfigGenerator interface {
 	GenerateNetworkConfig(configDir, outputDir string, outputWriter io.Writer) error
 }
 
-type NetworkConfiguratorInstaller interface {
+type networkConfiguratorInstaller interface {
 	InstallConfigurator(arch Arch, sourcePath, installPath string) error
+}
+
+type kubernetesScriptInstaller interface {
+	InstallScript(distribution, sourcePath, destinationPath string) error
+}
+
+type kubernetesArtefactDownloader interface {
+	DownloadArtefacts(kubernetes Kubernetes, arch Arch, destinationPath string) error
 }
 
 type Context struct {
@@ -21,6 +29,8 @@ type Context struct {
 	CombustionDir string
 	// ImageDefinition contains the image definition properties.
 	ImageDefinition              *Definition
-	NetworkConfigGenerator       NetworkConfigGenerator
-	NetworkConfiguratorInstaller NetworkConfiguratorInstaller
+	NetworkConfigGenerator       networkConfigGenerator
+	NetworkConfiguratorInstaller networkConfiguratorInstaller
+	KubernetesScriptInstaller    kubernetesScriptInstaller
+	KubernetesArtefactDownloader kubernetesArtefactDownloader
 }

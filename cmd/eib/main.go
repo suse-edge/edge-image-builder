@@ -9,6 +9,7 @@ import (
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
 	audit "github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/network"
 	"go.uber.org/zap"
@@ -57,6 +58,8 @@ func processArgs() (*image.Context, error) {
 		ImageDefinition:              imageDefinition,
 		NetworkConfigGenerator:       network.ConfigGenerator{},
 		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
+		KubernetesScriptInstaller:    kubernetes.ScriptInstaller{},
+		KubernetesArtefactDownloader: kubernetes.ArtefactDownloader{},
 	}, nil
 }
 
