@@ -20,15 +20,8 @@ type kubernetesArtefactDownloader interface {
 	DownloadArtefacts(kubernetes Kubernetes, arch Arch, destinationPath string) error
 }
 
-type Podman interface {
-	Import(tarball, ref string) error
-	Build(context, name string) error
-	Create(img string) (string, error)
-	Copy(id, src, dest string) error
-}
-
-type RPMResolver interface {
-	Resolve(out string, podman Podman) (string, []string, error)
+type rpmResolver interface {
+	Resolve(packages *Packages, localPackagesPath, outputDir string) (rpmDirPath string, pkgList []string, err error)
 }
 
 type Context struct {
@@ -44,5 +37,6 @@ type Context struct {
 	NetworkConfiguratorInstaller networkConfiguratorInstaller
 	KubernetesScriptInstaller    kubernetesScriptInstaller
 	KubernetesArtefactDownloader kubernetesArtefactDownloader
-	RPMResolver                  RPMResolver
+	// RPMResolver responsible for resolving rpm/package dependencies
+	RPMResolver rpmResolver
 }

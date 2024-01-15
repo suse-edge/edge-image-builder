@@ -12,7 +12,6 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
-	"github.com/suse-edge/edge-image-builder/pkg/podman"
 	"github.com/suse-edge/edge-image-builder/pkg/rpm"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
@@ -31,7 +30,7 @@ const (
 var modifyRPMScript string
 
 func configureRPMs(ctx *image.Context) ([]string, error) {
-	if skipRPMComponent(ctx) {
+	if SkipRPMComponent(ctx) {
 		log.AuditComponentSkipped(rpmComponentName)
 		zap.L().Info("Skipping RPM component. Configuration is not provided")
 		return nil, nil
@@ -73,7 +72,7 @@ func handleRPMs(ctx *image.Context) (repoName string, pkgToInstall []string, err
 }
 
 // determine whether RPM configuration is needed
-func skipRPMComponent(ctx *image.Context) bool {
+func SkipRPMComponent(ctx *image.Context) bool {
 	pkg := ctx.ImageDefinition.OperatingSystem.Packages
 
 	if isComponentConfigured(ctx, userRPMsDir) {
@@ -105,22 +104,21 @@ func isResolutionNeeded(ctx *image.Context) bool {
 }
 
 func resolveToRPMRepo(ctx *image.Context) (repoName string, packages []string, err error) {
-	p, err := podman.New(ctx.BuildDir)
-	if err != nil {
-		return "", nil, fmt.Errorf("starting podman client: %w", err)
+	var rpmDir string
+	if isComponentConfigured(ctx, userRPMsDir) {
+		rpmDir = generateComponentPath(ctx, userRPMsDir)
 	}
 
-	var rpmDir string
-	rpmDir, packages, err = ctx.RPMResolver.Resolve(ctx.CombustionDir, p)
+	repoPath, packages, err := ctx.RPMResolver.Resolve(&ctx.ImageDefinition.OperatingSystem.Packages, rpmDir, ctx.CombustionDir)
 	if err != nil {
 		return "", nil, fmt.Errorf("resolving rpm/package dependencies: %w", err)
 	}
 
-	if err = createRPMRepo(rpmDir, ctx.BuildDir); err != nil {
+	if err = createRPMRepo(repoPath, ctx.BuildDir); err != nil {
 		return "", nil, fmt.Errorf("creating resolved rpm repository: %w", err)
 	}
 
-	return filepath.Base(rpmDir), packages, nil
+	return filepath.Base(repoPath), packages, nil
 }
 
 func createRPMRepo(path, logOut string) error {

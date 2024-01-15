@@ -23,6 +23,13 @@ const (
 //go:embed templates/Dockerfile.tpl
 var dockerfileTemplate string
 
+type Podman interface {
+	Import(tarball, ref string) error
+	Build(context, name string) error
+	Create(img string) (string, error)
+	Copy(id, src, dest string) error
+}
+
 type Resolver struct {
 	// dir from where the resolver will work
 	dir string
@@ -30,67 +37,64 @@ type Resolver struct {
 	imgPath string
 	// type of the image that will be used as base (either ISO or RAW)
 	imgType string
-	// user provided packages for which dependency resolution will be done
-	packages *image.Packages
-	// user provided directory containing additional rpms for which dependency resolution will be done
-	customRPMDir string
+	// podman client which to use for container management tasks
+	podman Podman
 	// helper property, contains the names of the rpms that have been taken from the customRPMDir
 	rpms []string
 }
 
-// New creates a new Resolver instance that is based on the image context provided by the user
-func New(buildDir, imgConfDir string, imageDef *image.Definition) (*Resolver, error) {
-	rpmPath := filepath.Join(imgConfDir, "rpms")
-	if _, err := os.Stat(rpmPath); os.IsNotExist(err) {
-		rpmPath = ""
-	} else if err != nil {
-		return nil, fmt.Errorf("validating rpm dir exists: %w", err)
-	}
-
+func New(workDir, imgPath, imgType string, podman Podman) *Resolver {
 	return &Resolver{
-		dir:          buildDir,
-		imgPath:      filepath.Join(imgConfDir, "images", imageDef.Image.BaseImage),
-		imgType:      imageDef.Image.ImageType,
-		packages:     &imageDef.OperatingSystem.Packages,
-		customRPMDir: rpmPath,
-	}, nil
+		dir:     workDir,
+		imgPath: imgPath,
+		imgType: imgType,
+		podman:  podman,
+	}
 }
 
-// Resolve resolves all dependencies for the packages and third party rpms that have been configured by the user in the image context.
-// It then outputs the set of resolved rpms to a directory from which an RPM repository can be created. Returns the full path to the created
-// directory, the package/rpm names for which dependency resolution has been done, or an error if one has occurred.
+// Resolve resolves all dependencies for the provided pacakges and rpms. It then outputs the set of resolved rpms to a
+// directory (located in the provdied 'outputDir') from which an RPM repository can be created.
+//
+// Returns the full path to the created directory, the package/rpm names for which dependency resolution has been done, or an error if one has occurred.
 //
 // Parameters:
-//   - out - location where the RPM directory will be created
-func (r *Resolver) Resolve(out string, podman image.Podman) (rpmDir string, pkgList []string, err error) {
+// - packages - pacakge configuration
+//
+// - localPackagesPath - path to a directory containing local rpm packages. Will not be considered if left empty.
+//
+// - outputDir - directory in which the resolver will create a directory containing the resolved rpms.
+func (r *Resolver) Resolve(packages *image.Packages, localPackagesPath, outputDir string) (rpmDirPath string, pkgList []string, err error) {
 	zap.L().Info("Resolving package dependencies...")
 
-	if err = r.buildBase(podman); err != nil {
+	if err = r.buildBase(); err != nil {
 		return "", nil, fmt.Errorf("building base resolver image: %w", err)
 	}
 
-	if err = r.prepare(); err != nil {
+	if err = r.prepare(localPackagesPath, packages); err != nil {
 		return "", nil, fmt.Errorf("generating context for the resolver image: %w", err)
 	}
 
-	if err = podman.Build(r.generateBuildContextPath(), resolverImageRef); err != nil {
+	if err = r.podman.Build(r.generateBuildContextPath(), resolverImageRef); err != nil {
 		return "", nil, fmt.Errorf("building resolver image: %w", err)
 	}
 
-	id, err := podman.Create(resolverImageRef)
+	id, err := r.podman.Create(resolverImageRef)
 	if err != nil {
 		return "", nil, fmt.Errorf("run container from resolver image %s: %w", resolverImageRef, err)
 	}
 
-	err = podman.Copy(id, r.generateRPMRepoPath(), out)
+	err = r.podman.Copy(id, r.generateRPMRepoPath(), outputDir)
 	if err != nil {
-		return "", nil, fmt.Errorf("copying resolved package cache to %s: %w", out, err)
+		return "", nil, fmt.Errorf("copying resolved package cache to %s: %w", outputDir, err)
 	}
 
-	return filepath.Join(out, rpmRepoName), r.getPKGInstallList(), nil
+	// rpmRepoName is the name of the directory to which all packages/rpms have been resovled to.
+	// Since we are copying a directory inside of the 'outputDir', we concatenate the path in order
+	// to return the correct path.
+	return filepath.Join(outputDir, rpmRepoName), r.getPKGInstallList(packages), nil
 }
 
-func (r *Resolver) prepare() error {
+func (r *Resolver) prepare(localPackagesPath string, packages *image.Packages) error {
 	zap.L().Info("Preparing resolver image context...")
 
 	buildContext := r.generateBuildContextPath()
@@ -98,20 +102,20 @@ func (r *Resolver) prepare() error {
 		return fmt.Errorf("creating build context dir %s: %w", buildContext, err)
 	}
 
-	if r.customRPMDir != "" {
+	if localPackagesPath != "" {
 		dest := r.generateRPMPathInBuildContext()
 		if err := os.MkdirAll(dest, os.ModePerm); err != nil {
 			return fmt.Errorf("creating rpm directory in resolver dir: %w", err)
 		}
 
-		rpmNames, err := rpm.CopyRPMs(r.customRPMDir, dest)
+		rpmNames, err := rpm.CopyRPMs(localPackagesPath, dest)
 		if err != nil {
 			return fmt.Errorf("copying local rpms to %s: %w", dest, err)
 		}
 		r.rpms = rpmNames
 	}
 
-	if err := r.writeDockerfile(); err != nil {
+	if err := r.writeDockerfile(localPackagesPath, packages); err != nil {
 		return fmt.Errorf("writing dockerfile: %w", err)
 	}
 
@@ -119,7 +123,7 @@ func (r *Resolver) prepare() error {
 	return nil
 }
 
-func (r *Resolver) writeDockerfile() error {
+func (r *Resolver) writeDockerfile(localPackagesPath string, packages *image.Packages) error {
 	values := struct {
 		BaseImage   string
 		RegCode     string
@@ -130,13 +134,13 @@ func (r *Resolver) writeDockerfile() error {
 		ToRPMPath   string
 	}{
 		BaseImage: baseImageRef,
-		RegCode:   r.packages.RegCode,
-		AddRepo:   strings.Join(r.packages.AdditionalRepos, " "),
+		RegCode:   packages.RegCode,
+		AddRepo:   strings.Join(packages.AdditionalRepos, " "),
 		CacheDir:  r.generateRPMRepoPath(),
-		PkgList:   strings.Join(r.getPKGForResolve(), " "),
+		PkgList:   strings.Join(r.getPKGForResolve(packages), " "),
 	}
 
-	if r.customRPMDir != "" {
+	if localPackagesPath != "" {
 		values.FromRPMPath = filepath.Base(r.generateRPMPathInBuildContext())
 		values.ToRPMPath = r.generateLocalRPMDirPath()
 	}
@@ -147,18 +151,18 @@ func (r *Resolver) writeDockerfile() error {
 	}
 
 	filename := filepath.Join(r.generateBuildContextPath(), dockerfileName)
-	if err = os.WriteFile(filename, []byte(data), fileio.ExecutablePerms); err != nil {
+	if err = os.WriteFile(filename, []byte(data), fileio.NonExecutablePerms); err != nil {
 		return fmt.Errorf("writing prepare base image script %s: %w", filename, err)
 	}
 
 	return nil
 }
 
-func (r *Resolver) getPKGForResolve() []string {
+func (r *Resolver) getPKGForResolve(packages *image.Packages) []string {
 	list := []string{}
 
-	if len(r.packages.PKGList) > 0 {
-		list = append(list, r.packages.PKGList...)
+	if len(packages.PKGList) > 0 {
+		list = append(list, packages.PKGList...)
 	}
 
 	if len(r.rpms) > 0 {
@@ -171,11 +175,11 @@ func (r *Resolver) getPKGForResolve() []string {
 	return list
 }
 
-func (r *Resolver) getPKGInstallList() []string {
+func (r *Resolver) getPKGInstallList(packages *image.Packages) []string {
 	list := []string{}
 
-	if len(r.packages.PKGList) > 0 {
-		list = append(list, r.packages.PKGList...)
+	if len(packages.PKGList) > 0 {
+		list = append(list, packages.PKGList...)
 	}
 
 	if len(r.rpms) > 0 {
@@ -190,7 +194,7 @@ func (r *Resolver) getPKGInstallList() []string {
 
 // path to the build dir, as seen in the EIB image
 func (r *Resolver) generateBuildContextPath() string {
-	return filepath.Join(r.dir, "build")
+	return filepath.Join(r.dir, "resolver-image-build")
 }
 
 // path to the rpms directory in the resolver build context, as seen in the EIB image

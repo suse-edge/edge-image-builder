@@ -134,7 +134,7 @@ func TestSkipRPMConfigure(t *testing.T) {
 			ctx.ImageDefinition.OperatingSystem.Packages = test.packages
 
 			if test.expectedResult {
-				assert.True(t, skipRPMComponent(ctx))
+				assert.True(t, SkipRPMComponent(ctx))
 			} else {
 				if test.needsRPMDir && !isComponentConfigured(ctx, userRPMsDir) {
 					require.NoError(t, os.Mkdir(rpmDir, 0o755))
@@ -144,7 +144,7 @@ func TestSkipRPMConfigure(t *testing.T) {
 					require.NoError(t, os.RemoveAll(rpmDir))
 				}
 
-				assert.False(t, skipRPMComponent(ctx))
+				assert.False(t, SkipRPMComponent(ctx))
 			}
 		})
 	}

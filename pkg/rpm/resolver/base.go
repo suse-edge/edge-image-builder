@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
 )
@@ -24,7 +23,7 @@ const (
 //go:embed templates/prepare-base.sh.tpl
 var prepareBaseTemplate string
 
-func (r *Resolver) buildBase(podman image.Podman) error {
+func (r *Resolver) buildBase() error {
 	zap.L().Info("Building base resolver image...")
 
 	defer os.RemoveAll(r.getBaseImgDir())
@@ -41,7 +40,7 @@ func (r *Resolver) buildBase(podman image.Podman) error {
 	}
 
 	tarballPath := filepath.Join(r.getBaseImgDir(), baseImageArchiveName)
-	if err := podman.Import(tarballPath, baseImageRef); err != nil {
+	if err := r.podman.Import(tarballPath, baseImageRef); err != nil {
 		return fmt.Errorf("importing the base image: %w", err)
 	}
 

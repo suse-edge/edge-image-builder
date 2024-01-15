@@ -8,10 +8,12 @@ import (
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
+	"github.com/suse-edge/edge-image-builder/pkg/combustion"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
 	audit "github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/network"
+	"github.com/suse-edge/edge-image-builder/pkg/podman"
 	"github.com/suse-edge/edge-image-builder/pkg/rpm/resolver"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -52,12 +54,7 @@ func processArgs() (*image.Context, error) {
 
 	setupLogging(buildDir)
 
-	rpmResolver, err := resolver.New(buildDir, configDir, imageDefinition)
-	if err != nil {
-		return nil, fmt.Errorf("setting up rpm resolver instance: %w", err)
-	}
-
-	return &image.Context{
+	ctx := &image.Context{
 		ImageConfigDir:               configDir,
 		BuildDir:                     buildDir,
 		CombustionDir:                combustionDir,
@@ -66,8 +63,20 @@ func processArgs() (*image.Context, error) {
 		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
 		KubernetesScriptInstaller:    kubernetes.ScriptInstaller{},
 		KubernetesArtefactDownloader: kubernetes.ArtefactDownloader{},
-		RPMResolver:                  rpmResolver,
-	}, nil
+	}
+
+	if !combustion.SkipRPMComponent(ctx) {
+		p, err := podman.New(buildDir)
+		if err != nil {
+			return nil, fmt.Errorf("starting podman client: %w", err)
+		}
+
+		imgPath := filepath.Join(configDir, "images", imageDefinition.Image.BaseImage)
+		rpmResolver := resolver.New(buildDir, imgPath, imageDefinition.Image.ImageType, p)
+		ctx.RPMResolver = rpmResolver
+	}
+
+	return ctx, nil
 }
 
 func setupLogging(buildDir string) {
