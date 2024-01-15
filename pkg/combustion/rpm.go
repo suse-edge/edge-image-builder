@@ -80,7 +80,7 @@ func writeRPMScript(ctx *image.Context, repoPath string, packages []string) (str
 	}
 
 	if repoPath == "" {
-		return "", fmt.Errorf("path to RPM repository list cannot be empty")
+		return "", fmt.Errorf("path to RPM repository cannot be empty")
 	}
 
 	values := struct {
