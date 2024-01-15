@@ -63,6 +63,7 @@ type OperatingSystem struct {
 	Packages      Packages              `yaml:"packages"`
 	InstallDevice string                `yaml:"installDevice"`
 	Unattended    bool                  `yaml:"unattended"`
+	Time          Time                  `yaml:"time"`
 }
 
 type Packages struct {
@@ -86,6 +87,12 @@ type Suma struct {
 	Host          string `yaml:"host"`
 	ActivationKey string `yaml:"activationKey"`
 	GetSSL        bool   `yaml:"getSSL"`
+}
+
+type Time struct {
+	Timezone      string   `yaml:"timezone"`
+	ChronyPools   []string `yaml:"chronyPools"`
+	ChronyServers []string `yaml:"chronyServers"`
 }
 
 type EmbeddedArtifactRegistry struct {
