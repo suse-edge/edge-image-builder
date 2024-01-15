@@ -149,56 +149,6 @@ func TestSkipRPMConfigure(t *testing.T) {
 	}
 }
 
-func TestIsResolutionNeeded(t *testing.T) {
-	ctx, teardown := setupContext(t)
-	defer teardown()
-
-	tests := []struct {
-		name           string
-		packages       image.Packages
-		expectedResult bool
-	}{
-		{
-			name: "RPM/package resolution from PackageHub",
-			packages: image.Packages{
-				RegCode: "foo.bar",
-			},
-			expectedResult: true,
-		},
-		{
-			name: "RPM/package resolution from third party repository",
-			packages: image.Packages{
-				AdditionalRepos: []string{"https://foo.bar"},
-			},
-			expectedResult: true,
-		},
-		{
-			name: "RPM/package resolution PackageHub and third party repository",
-			packages: image.Packages{
-				AdditionalRepos: []string{"https://foo.bar"},
-				RegCode:         "foo.bar",
-			},
-			expectedResult: true,
-		},
-		{
-			name:           "Standalone RPM",
-			expectedResult: false,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			ctx.ImageDefinition.OperatingSystem.Packages = test.packages
-
-			if test.expectedResult {
-				assert.True(t, isResolutionNeeded(ctx))
-			} else {
-				assert.False(t, isResolutionNeeded(ctx))
-			}
-		})
-	}
-}
-
 func TestConfigureRPMSSkipComponent(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()

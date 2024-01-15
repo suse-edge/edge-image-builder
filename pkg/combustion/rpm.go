@@ -10,7 +10,6 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
-	"github.com/suse-edge/edge-image-builder/pkg/rpm"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
 )
@@ -34,13 +33,23 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 
 	zap.L().Info("Configuring RPM component...")
 
-	repoName, packages, err := handleRPMs(ctx)
-	if err != nil {
-		log.AuditComponentFailed(rpmComponentName)
-		return nil, fmt.Errorf("handling rpms: %w", err)
+	var rpmDir string
+	if isComponentConfigured(ctx, userRPMsDir) {
+		rpmDir = generateComponentPath(ctx, userRPMsDir)
 	}
 
-	script, err := writeRPMScript(ctx, repoName, packages)
+	repoPath, packages, err := ctx.RPMResolver.Resolve(&ctx.ImageDefinition.OperatingSystem.Packages, rpmDir, ctx.CombustionDir)
+	if err != nil {
+		log.AuditComponentFailed(rpmComponentName)
+		return nil, fmt.Errorf("resolving rpm/package dependencies: %w", err)
+	}
+
+	if err = ctx.RPMRepoCreator.Create(repoPath); err != nil {
+		log.AuditComponentFailed(rpmComponentName)
+		return nil, fmt.Errorf("creating resolved rpm repository: %w", err)
+	}
+
+	script, err := writeRPMScript(ctx, filepath.Base(repoPath), packages)
 	if err != nil {
 		log.AuditComponentFailed(rpmComponentName)
 		return nil, fmt.Errorf("writing the RPM install script %s: %w", modifyRPMScriptName, err)
@@ -48,23 +57,6 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 
 	log.AuditComponentSuccessful(rpmComponentName)
 	return []string{script}, nil
-}
-
-func handleRPMs(ctx *image.Context) (repoName string, pkgToInstall []string, err error) {
-	if isResolutionNeeded(ctx) {
-		repoName, pkgToInstall, err = resolveToRPMRepo(ctx)
-		if err != nil {
-			return "", nil, fmt.Errorf("resolving rpms to a rpm repository: %w", err)
-		}
-	} else {
-		pkgToInstall, err = rpm.CopyRPMs(generateComponentPath(ctx, userRPMsDir), ctx.CombustionDir)
-		if err != nil {
-			log.AuditComponentFailed(rpmComponentName)
-			return "", nil, fmt.Errorf("moving individual rpm files: %w", err)
-		}
-	}
-
-	return repoName, pkgToInstall, nil
 }
 
 // determine whether RPM configuration is needed
@@ -81,40 +73,6 @@ func SkipRPMComponent(ctx *image.Context) bool {
 	}
 
 	return true
-}
-
-// determine whether package/rpm dependency resolution is needed
-func isResolutionNeeded(ctx *image.Context) bool {
-	pkg := ctx.ImageDefinition.OperatingSystem.Packages
-
-	if len(pkg.AdditionalRepos) > 0 {
-		// Packages/RPMs requested from third party repositories
-		return true
-	}
-
-	if pkg.RegCode != "" {
-		// Packages/RPMs requested from PackageHub
-		return true
-	}
-	return false
-}
-
-func resolveToRPMRepo(ctx *image.Context) (repoName string, packages []string, err error) {
-	var rpmDir string
-	if isComponentConfigured(ctx, userRPMsDir) {
-		rpmDir = generateComponentPath(ctx, userRPMsDir)
-	}
-
-	repoPath, packages, err := ctx.RPMResolver.Resolve(&ctx.ImageDefinition.OperatingSystem.Packages, rpmDir, ctx.CombustionDir)
-	if err != nil {
-		return "", nil, fmt.Errorf("resolving rpm/package dependencies: %w", err)
-	}
-
-	if err = ctx.RPMRepoCreator.Create(repoPath); err != nil {
-		return "", nil, fmt.Errorf("creating resolved rpm repository: %w", err)
-	}
-
-	return filepath.Base(repoPath), packages, nil
 }
 
 func writeRPMScript(ctx *image.Context, repoName string, packages []string) (string, error) {
