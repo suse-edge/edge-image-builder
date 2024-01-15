@@ -32,6 +32,7 @@ func TestWriteRPMScriptWithRPMRepo(t *testing.T) {
 	assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
 
 	foundContents := string(foundBytes)
+	combustionBasePath := "/dev/shm/combustion/config"
 	zypperAR := fmt.Sprintf("zypper ar file://%s %s", filepath.Join(combustionBasePath, repoName), repoName)
 	zypperInstall := fmt.Sprintf("zypper --no-gpg-checks install -r %s -y --force-resolution --auto-agree-with-licenses %s", repoName, strings.Join(pkgList, " "))
 	zypperRR := fmt.Sprintf("zypper rr %s", repoName)

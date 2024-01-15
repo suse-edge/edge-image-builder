@@ -18,7 +18,6 @@ const (
 	userRPMsDir         = "rpms"
 	modifyRPMScriptName = "10-rpm-install.sh"
 	rpmComponentName    = "RPM"
-	combustionBasePath  = "/dev/shm/combustion/config"
 )
 
 //go:embed templates/10-rpm-install.sh.tpl
@@ -49,7 +48,7 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("creating resolved rpm repository: %w", err)
 	}
 
-	script, err := writeRPMScript(ctx, filepath.Base(repoPath), packages)
+	script, err := writeRPMScript(ctx, repoPath, packages)
 	if err != nil {
 		log.AuditComponentFailed(rpmComponentName)
 		return nil, fmt.Errorf("writing the RPM install script %s: %w", modifyRPMScriptName, err)
@@ -75,18 +74,20 @@ func SkipRPMComponent(ctx *image.Context) bool {
 	return true
 }
 
-func writeRPMScript(ctx *image.Context, repoName string, packages []string) (string, error) {
+func writeRPMScript(ctx *image.Context, repoPath string, packages []string) (string, error) {
 	if len(packages) == 0 {
 		return "", fmt.Errorf("package list cannot be empty")
 	}
 
+	if repoPath == "" {
+		return "", fmt.Errorf("path to RPM repository list cannot be empty")
+	}
+
 	values := struct {
-		RepoPath string
 		RepoName string
 		PKGList  string
 	}{
-		RepoPath: filepath.Join(combustionBasePath, repoName),
-		RepoName: repoName,
+		RepoName: filepath.Base(repoPath),
 		PKGList:  strings.Join(packages, " "),
 	}
 
