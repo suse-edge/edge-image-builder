@@ -10,7 +10,6 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/http"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
-	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -106,22 +105,14 @@ func gatherArtefacts(kubernetes image.Kubernetes, arch image.Arch) ([]string, er
 }
 
 func downloadArtefacts(artefacts []string, releaseURL, version, destinationPath string) error {
-	errGroup, ctx := errgroup.WithContext(context.Background())
-
 	for _, artefact := range artefacts {
-		func(artefact string) {
-			errGroup.Go(func() error {
-				url := fmt.Sprintf(releaseURL, version, artefact)
-				path := filepath.Join(destinationPath, artefact)
+		url := fmt.Sprintf(releaseURL, version, artefact)
+		path := filepath.Join(destinationPath, artefact)
 
-				if err := http.DownloadFile(ctx, url, path); err != nil {
-					return fmt.Errorf("downloading artefact '%s': %w", artefact, err)
-				}
-
-				return nil
-			})
-		}(artefact)
+		if err := http.DownloadFile(context.Background(), url, path); err != nil {
+			return fmt.Errorf("downloading artefact '%s': %w", artefact, err)
+		}
 	}
 
-	return errGroup.Wait()
+	return nil
 }
