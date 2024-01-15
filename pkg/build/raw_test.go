@@ -15,9 +15,17 @@ import (
 
 func TestCreateRawImageCopyCommand(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
-	defer teardown()
-	builder := Builder{context: ctx}
+	builder := Builder{
+		context: &image.Context{
+			ImageConfigDir: "config-dir",
+			ImageDefinition: &image.Definition{
+				Image: image.Image{
+					BaseImage:       "base-image",
+					OutputImageName: "build-image",
+				},
+			},
+		},
+	}
 
 	// Test
 	cmd := builder.createRawImageCopyCommand()
@@ -112,17 +120,18 @@ func TestWriteModifyScript(t *testing.T) {
 
 func TestCreateModifyCommand(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
-	defer teardown()
-	builder := Builder{context: ctx}
-
+	builder := Builder{
+		context: &image.Context{
+			BuildDir: "build-dir",
+		},
+	}
 	// Test
 	cmd := builder.createModifyCommand(io.Discard)
 
 	// Verify
 	require.NotNil(t, cmd)
 
-	expectedPath := filepath.Join(ctx.BuildDir, modifyScriptName)
+	expectedPath := filepath.Join("build-dir", modifyScriptName)
 	assert.Equal(t, expectedPath, cmd.Path)
 	assert.Equal(t, io.Discard, cmd.Stdout)
 	assert.Equal(t, io.Discard, cmd.Stderr)
