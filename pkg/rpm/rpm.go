@@ -6,10 +6,11 @@ import (
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"go.uber.org/zap"
 )
 
 // CopyRPMs copies all ".rpm" files from src to dest and returns
-// a list of the copeied ".rpm" base filenames
+// a list of the copied ".rpm" base filenames
 func CopyRPMs(src string, dest string) ([]string, error) {
 	if dest == "" {
 		return nil, fmt.Errorf("RPM destination directory cannot be empty")
@@ -24,6 +25,7 @@ func CopyRPMs(src string, dest string) ([]string, error) {
 
 	for _, rpm := range rpms {
 		if filepath.Ext(rpm.Name()) != ".rpm" {
+			zap.S().Warnf("Skipping %s as it is not a rpm file", rpm.Name())
 			continue
 		}
 
