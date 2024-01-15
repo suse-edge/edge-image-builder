@@ -37,8 +37,8 @@ func TestConfigureProxy_FullConfiguration(t *testing.T) {
 	ctx.ImageDefinition = &image.Definition{
 		OperatingSystem: image.OperatingSystem{
 			Proxy: image.Proxy{
-				HttpProxy:  "http://10.0.0.1:3128",
-				HttpsProxy: "http://10.0.0.1:3128",
+				HTTPProxy:  "http://10.0.0.1:3128",
+				HTTPSProxy: "http://10.0.0.1:3128",
 				NoProxy:    "localhost, 127.0.0.1, edge.suse.com",
 			},
 		},

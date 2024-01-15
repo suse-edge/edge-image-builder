@@ -1,16 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
-{{ if or ( .HttpProxy ) ( .HttpsProxy ) }}
+{{ if or ( .HTTPProxy ) ( .HTTPSProxy ) }}
 sed -i 's|PROXY_ENABLED=.*|PROXY_ENABLED="yes"|g' /etc/sysconfig/proxy
 {{ end -}}
 
-{{ if .HttpProxy -}}
-sed -i 's|HTTP_PROXY=.*|HTTP_PROXY="{{ .HttpProxy }}"|g' /etc/sysconfig/proxy
+{{ if .HTTPProxy -}}
+sed -i 's|HTTP_PROXY=.*|HTTP_PROXY="{{ .HTTPProxy }}"|g' /etc/sysconfig/proxy
 {{ end -}}
 
-{{ if .HttpsProxy -}}
-sed -i 's|HTTPS_PROXY=.*|HTTPS_PROXY="{{ .HttpsProxy }}"|g' /etc/sysconfig/proxy
+{{ if .HTTPSProxy -}}
+sed -i 's|HTTPS_PROXY=.*|HTTPS_PROXY="{{ .HTTPSProxy }}"|g' /etc/sysconfig/proxy
 {{ end -}}
 
 {{ if .NoProxy -}}

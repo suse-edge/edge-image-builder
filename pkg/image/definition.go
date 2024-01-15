@@ -97,8 +97,8 @@ type Time struct {
 }
 
 type Proxy struct {
-	HttpProxy  string `yaml:"httpProxy"`
-	HttpsProxy string `yaml:"httpsProxy"`
+	HTTPProxy  string `yaml:"httpProxy"`
+	HTTPSProxy string `yaml:"httpsProxy"`
 	NoProxy    string `yaml:"noProxy"`
 }
 

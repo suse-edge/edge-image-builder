@@ -22,7 +22,7 @@ var proxyScript string
 
 func configureProxy(ctx *image.Context) ([]string, error) {
 	proxy := ctx.ImageDefinition.OperatingSystem.Proxy
-	if proxy.HttpProxy == "" && proxy.HttpsProxy == "" {
+	if proxy.HTTPProxy == "" && proxy.HTTPSProxy == "" {
 		log.AuditComponentSkipped(proxyComponentName)
 		return nil, nil
 	}

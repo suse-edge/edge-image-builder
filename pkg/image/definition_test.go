@@ -105,12 +105,12 @@ func TestParse(t *testing.T) {
 	}
 	assert.Equal(t, expectedChronyServers, time.ChronyServers)
 
-	// Operating System -> Proxy -> HttpProxy
-	httpProxy := definition.OperatingSystem.Proxy.HttpProxy
+	// Operating System -> Proxy -> HTTPProxy
+	httpProxy := definition.OperatingSystem.Proxy.HTTPProxy
 	assert.Equal(t, "http://10.0.0.1:3128", httpProxy)
 
-	// Operating System -> Proxy -> HttpsProxy
-	httpsProxy := definition.OperatingSystem.Proxy.HttpsProxy
+	// Operating System -> Proxy -> HTTPSProxy
+	httpsProxy := definition.OperatingSystem.Proxy.HTTPSProxy
 	assert.Equal(t, "http://10.0.0.1:3128", httpsProxy)
 
 	// Operating System -> Proxy -> NoProxy
