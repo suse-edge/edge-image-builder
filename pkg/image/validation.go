@@ -76,6 +76,10 @@ func validateOperatingSystem(definition *Definition) error {
 	if err != nil {
 		return fmt.Errorf("error validating packages: %w", err)
 	}
+	err = validateUnattended(definition)
+	if err != nil {
+		return fmt.Errorf("error validating unattended mode: %w", err)
+	}
 
 	return nil
 }
@@ -134,6 +138,18 @@ func validateKernelArgs(os *OperatingSystem) error {
 			return fmt.Errorf("duplicate kernel arg found: '%s'", key)
 		}
 		seenKeys[key] = true
+	}
+
+	return nil
+}
+
+func validateUnattended(definition *Definition) error {
+	if definition.Image.ImageType != TypeISO && definition.OperatingSystem.Unattended {
+		return fmt.Errorf("unattended mode can only be used with image type '%s'", TypeISO)
+	}
+
+	if definition.Image.ImageType != TypeISO && definition.OperatingSystem.InstallDevice != "" {
+		return fmt.Errorf("install device can only be selected with image type '%s'", TypeISO)
 	}
 
 	return nil

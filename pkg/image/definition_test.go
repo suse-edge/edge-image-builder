@@ -84,6 +84,14 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, expectedAddRepos, pkgConfig.AdditionalRepos)
 	assert.Equal(t, "INTERNAL-USE-ONLY-foo-bar", pkgConfig.RegCode)
 
+	// Operating System -> InstallDevice
+	installDevice := definition.OperatingSystem.InstallDevice
+	assert.Equal(t, "/dev/sda", installDevice)
+
+	// Operating System -> Unattended
+	unattended := definition.OperatingSystem.Unattended
+	assert.Equal(t, true, unattended)
+
 	// EmbeddedArtifactRegistry
 	embeddedArtifactRegistry := definition.EmbeddedArtifactRegistry
 	assert.Equal(t, "hello-world:latest", embeddedArtifactRegistry.ContainerImages[0].Name)

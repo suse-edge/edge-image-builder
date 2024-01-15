@@ -56,11 +56,13 @@ type Image struct {
 }
 
 type OperatingSystem struct {
-	KernelArgs []string              `yaml:"kernelArgs"`
-	Users      []OperatingSystemUser `yaml:"users"`
-	Systemd    Systemd               `yaml:"systemd"`
-	Suma       Suma                  `yaml:"suma"`
-	Packages   Packages              `yaml:"packages"`
+	KernelArgs    []string              `yaml:"kernelArgs"`
+	Users         []OperatingSystemUser `yaml:"users"`
+	Systemd       Systemd               `yaml:"systemd"`
+	Suma          Suma                  `yaml:"suma"`
+	Packages      Packages              `yaml:"packages"`
+	InstallDevice string                `yaml:"installDevice"`
+	Unattended    bool                  `yaml:"unattended"`
 }
 
 type Packages struct {
