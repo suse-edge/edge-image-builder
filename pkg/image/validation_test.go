@@ -297,6 +297,9 @@ func TestValidateOperatingSystemEmptyButValid(t *testing.T) {
 func TestValidateOperatingSystemValid(t *testing.T) {
 	// Setup
 	def := Definition{
+		Image: Image{
+			ImageType: "iso",
+		},
 		OperatingSystem: OperatingSystem{
 			KernelArgs: []string{"key1=value1", "key2=value2", "arg1", "arg2"},
 			Systemd: Systemd{
@@ -320,6 +323,8 @@ func TestValidateOperatingSystemValid(t *testing.T) {
 				ActivationKey: "slemicro55",
 				GetSSL:        false,
 			},
+			InstallDevice: "/dev/sda",
+			Unattended:    true,
 		},
 	}
 

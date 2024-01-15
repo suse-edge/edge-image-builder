@@ -108,12 +108,16 @@ func (b *Builder) writeIsoScript(templateContents, outputFilename string) error 
 		IsoSource           string
 		OutputImageFilename string
 		CombustionDir       string
+		InstallDevice       string
+		Unattended          bool
 	}{
 		IsoExtractDir:       isoExtractPath,
 		RawExtractDir:       rawExtractPath,
 		IsoSource:           b.generateBaseImageFilename(),
 		OutputImageFilename: b.generateOutputImageFilename(),
 		CombustionDir:       b.context.CombustionDir,
+		InstallDevice:       b.context.ImageDefinition.OperatingSystem.InstallDevice,
+		Unattended:          b.context.ImageDefinition.OperatingSystem.Unattended,
 	}
 
 	contents, err := template.Parse("iso-script", templateContents, arguments)
