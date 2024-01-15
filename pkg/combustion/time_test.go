@@ -13,8 +13,7 @@ import (
 
 func TestConfigureTime_NoConf(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
-	defer teardown()
+	var ctx image.Context
 
 	ctx.ImageDefinition = &image.Definition{
 		OperatingSystem: image.OperatingSystem{
@@ -23,7 +22,7 @@ func TestConfigureTime_NoConf(t *testing.T) {
 	}
 
 	// Test
-	scripts, err := configureTime(ctx)
+	scripts, err := configureTime(&ctx)
 
 	// Verify
 	require.NoError(t, err)
@@ -32,8 +31,7 @@ func TestConfigureTime_NoConf(t *testing.T) {
 
 func TestConfigureTime_FullConfiguration(t *testing.T) {
 	// Setup
-	ctx, teardown := setupContext(t)
-	defer teardown()
+	var ctx image.Context
 
 	ctx.ImageDefinition = &image.Definition{
 		OperatingSystem: image.OperatingSystem{
@@ -46,7 +44,7 @@ func TestConfigureTime_FullConfiguration(t *testing.T) {
 	}
 
 	// Test
-	scripts, err := configureTime(ctx)
+	scripts, err := configureTime(&ctx)
 
 	// Verify
 	require.NoError(t, err)
