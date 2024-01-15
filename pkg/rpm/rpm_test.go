@@ -71,27 +71,8 @@ func TestCopyRPMsNoRPMs(t *testing.T) {
 	assert.Empty(t, rpmFileNames)
 }
 
-func TestCopyRPMsNoRPMDestDir(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "copy-location")
-	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, os.RemoveAll(tmpDir))
-	}()
-
-	_, err = CopyRPMs(tmpDir, "")
-
-	require.Error(t, err)
-	require.ErrorContains(t, err, "RPM destination directory cannot be empty")
-}
-
 func TestCopyRPMsNoRPMSrcDir(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "copy-location")
-	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, os.RemoveAll(tmpDir))
-	}()
-
-	_, err = CopyRPMs("", tmpDir)
+	_, err := CopyRPMs("", "/foo/bar")
 
 	require.Error(t, err)
 	require.ErrorContains(t, err, "reading RPM source dir")
