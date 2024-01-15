@@ -37,6 +37,13 @@ The operating system configuration section is entirely optional.
 The following describes the possible options for the operating system section:
 ```yaml
 operatingSystem:
+  time:
+    timezone: Europe/London
+  chronyPools:
+    - 1.pool.server.com
+  chronyServers:
+    - 10.0.0.1
+    - 10.0.0.2
   kernelArgs:
   - arg1
   - arg2
@@ -57,6 +64,10 @@ operatingSystem:
 ```
 
 * `kernelArgs` - Optional; Provides a list of flags that should be passed to the kernel on boot.
+* `time` - Optional; section where the user can provide timezone information and Chronyd configuration
+  * `timezone` - Optional; the timezone in the format of "Region/Locality", e.g. "Europe/London". Full list via `timedatectl list-timezones`
+  * `chronyPools` - Optional; a list of pools that Chrony can use as data sources.
+  * `chronyServers` - Optional; a list of servers that Chrony can use as data sources.
 * `users` - Optional; Defines a list of operating system users to be created. Each entry is made up of
   the following fields:
   * `username` - Required; Username of the user to create. To set the password or SSH key for the root user,
