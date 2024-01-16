@@ -37,6 +37,7 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 		rpmDir = generateComponentPath(ctx, userRPMsDir)
 	}
 
+	log.Audit("Resolving package dependencies...")
 	repoPath, packages, err := ctx.RPMResolver.Resolve(&ctx.ImageDefinition.OperatingSystem.Packages, rpmDir, ctx.CombustionDir)
 	if err != nil {
 		log.AuditComponentFailed(rpmComponentName)
