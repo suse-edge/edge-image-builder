@@ -4,9 +4,9 @@ set -euo pipefail
 mkdir /opt/hauler
 
 mount /usr/local
-
 mv {{ .EmbeddedRegistryTar }} /opt/hauler/{{ .EmbeddedRegistryTar }}
 mv hauler /usr/local/bin/hauler
+umount /usr/local
 
 cat <<- EOF > /etc/systemd/system/eib-embedded-registry.service
   [Unit]
