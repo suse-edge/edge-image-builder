@@ -71,10 +71,10 @@ operatingSystem:
 * `unattended` - Optional; only for ISO images - forces GRUB override to automatically install the operating
   system rather than prompting user to begin the installation. In combination with `installDevice` can create
   a fully unattended and automated install. Beware of creating boot loops and data loss with these options.
-  If left omiitted (or set to `false`) the user will still have to choose to install via the GRUB menu.
+  If left omitted (or set to `false`) the user will still have to choose to install via the GRUB menu.
 * `kernelArgs` - Optional; Provides a list of flags that should be passed to the kernel on boot.
-* `time` - Optional; section where the user can provide timezone information and Chronyd configuration
-  * `timezone` - Optional; the timezone in the format of "Region/Locality", e.g. "Europe/London". Full list via `timedatectl list-timezones`
+* `time` - Optional; section where the user can provide timezone information and Chronyd configuration.
+  * `timezone` - Optional; the timezone in the format of "Region/Locality", e.g. "Europe/London". Full list via `timedatectl list-timezones`.
   * `chronyPools` - Optional; a list of pools that Chrony can use as data sources.
   * `chronyServers` - Optional; a list of servers that Chrony can use as data sources.
 * `users` - Optional; Defines a list of operating system users to be created. Each entry is made up of

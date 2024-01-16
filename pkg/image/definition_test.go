@@ -92,6 +92,19 @@ func TestParse(t *testing.T) {
 	unattended := definition.OperatingSystem.Unattended
 	assert.Equal(t, true, unattended)
 
+	// Operating System -> Time
+	time := definition.OperatingSystem.Time
+	assert.Equal(t, "Europe/London", time.Timezone)
+	expectedChronyPools := []string{
+		"2.suse.pool.ntp.org",
+	}
+	assert.Equal(t, expectedChronyPools, time.ChronyPools)
+	expectedChronyServers := []string{
+		"10.0.0.1",
+		"10.0.0.2",
+	}
+	assert.Equal(t, expectedChronyServers, time.ChronyServers)
+
 	// EmbeddedArtifactRegistry
 	embeddedArtifactRegistry := definition.EmbeddedArtifactRegistry
 	assert.Equal(t, "hello-world:latest", embeddedArtifactRegistry.ContainerImages[0].Name)
