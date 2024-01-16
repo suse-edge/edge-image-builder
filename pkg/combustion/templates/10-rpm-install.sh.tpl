@@ -2,6 +2,9 @@
 set -euo pipefail
 
 #  Template Fields
-#  RPMs - A string that contains all of the RPMs present in the user created config directory, separated by spaces.
+#  RepoName - name of the air-gapped repository that was created by the RPM resovler
+#  PKGList  - list of packages that will be installed
 
-rpm -ivh --nosignature {{.RPMs}}
+zypper ar file:///dev/shm/combustion/config/{{.RepoName}} {{.RepoName}}
+zypper --no-gpg-checks install -r {{.RepoName}} -y --force-resolution --auto-agree-with-licenses {{.PKGList}}
+zypper rr {{.RepoName}}

@@ -11,6 +11,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
+	"go.uber.org/zap"
 )
 
 const (
@@ -23,26 +24,32 @@ const (
 var modifyRPMScript string
 
 func configureRPMs(ctx *image.Context) ([]string, error) {
-	if !isComponentConfigured(ctx, userRPMsDir) {
+	if SkipRPMComponent(ctx) {
 		log.AuditComponentSkipped(rpmComponentName)
+		zap.L().Info("Skipping RPM component. Configuration is not provided")
 		return nil, nil
 	}
 
-	rpmSourceDir := generateComponentPath(ctx, userRPMsDir)
+	zap.L().Info("Configuring RPM component...")
 
-	rpmFileNames, err := getRPMFileNames(rpmSourceDir)
-	if err != nil {
-		log.AuditComponentFailed(rpmComponentName)
-		return nil, fmt.Errorf("getting RPM file names: %w", err)
+	var rpmDir string
+	if isComponentConfigured(ctx, userRPMsDir) {
+		rpmDir = generateComponentPath(ctx, userRPMsDir)
 	}
 
-	err = copyRPMs(rpmSourceDir, ctx.CombustionDir, rpmFileNames)
+	log.Audit("Resolving package dependencies...")
+	repoPath, packages, err := ctx.RPMResolver.Resolve(&ctx.ImageDefinition.OperatingSystem.Packages, rpmDir, ctx.CombustionDir)
 	if err != nil {
 		log.AuditComponentFailed(rpmComponentName)
-		return nil, fmt.Errorf("copying RPMs over: %w", err)
+		return nil, fmt.Errorf("resolving rpm/package dependencies: %w", err)
 	}
 
-	script, err := writeRPMScript(ctx, rpmFileNames)
+	if err = ctx.RPMRepoCreator.Create(repoPath); err != nil {
+		log.AuditComponentFailed(rpmComponentName)
+		return nil, fmt.Errorf("creating resolved rpm repository: %w", err)
+	}
+
+	script, err := writeRPMScript(ctx, repoPath, packages)
 	if err != nil {
 		log.AuditComponentFailed(rpmComponentName)
 		return nil, fmt.Errorf("writing the RPM install script %s: %w", modifyRPMScriptName, err)
@@ -52,49 +59,37 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 	return []string{script}, nil
 }
 
-func getRPMFileNames(rpmSourceDir string) ([]string, error) {
-	var rpmFileNames []string
+// determine whether RPM configuration is needed
+func SkipRPMComponent(ctx *image.Context) bool {
+	pkg := ctx.ImageDefinition.OperatingSystem.Packages
 
-	rpms, err := os.ReadDir(rpmSourceDir)
-	if err != nil {
-		return nil, fmt.Errorf("reading RPM source dir: %w", err)
+	if isComponentConfigured(ctx, userRPMsDir) {
+		// User provided standalone or third party RPMs
+		return false
+	}
+	if len(pkg.PKGList) > 0 {
+		// User provided PackageHub or third party packages
+		return false
 	}
 
-	for _, rpmFile := range rpms {
-		if filepath.Ext(rpmFile.Name()) == ".rpm" {
-			rpmFileNames = append(rpmFileNames, rpmFile.Name())
-		}
-	}
-
-	if len(rpmFileNames) == 0 {
-		return nil, fmt.Errorf("no RPMs found")
-	}
-
-	return rpmFileNames, nil
+	return true
 }
 
-func copyRPMs(rpmSourceDir string, rpmDestDir string, rpmFileNames []string) error {
-	if rpmDestDir == "" {
-		return fmt.Errorf("RPM destination directory cannot be empty")
-	}
-	for _, rpm := range rpmFileNames {
-		sourcePath := filepath.Join(rpmSourceDir, rpm)
-		destPath := filepath.Join(rpmDestDir, rpm)
-
-		err := fileio.CopyFile(sourcePath, destPath, fileio.NonExecutablePerms)
-		if err != nil {
-			return fmt.Errorf("copying file %s: %w", sourcePath, err)
-		}
+func writeRPMScript(ctx *image.Context, repoPath string, packages []string) (string, error) {
+	if len(packages) == 0 {
+		return "", fmt.Errorf("package list cannot be empty")
 	}
 
-	return nil
-}
+	if repoPath == "" {
+		return "", fmt.Errorf("path to RPM repository cannot be empty")
+	}
 
-func writeRPMScript(ctx *image.Context, rpmFileNames []string) (string, error) {
 	values := struct {
-		RPMs string
+		RepoName string
+		PKGList  string
 	}{
-		RPMs: strings.Join(rpmFileNames, " "),
+		RepoName: filepath.Base(repoPath),
+		PKGList:  strings.Join(packages, " "),
 	}
 
 	data, err := template.Parse(modifyRPMScriptName, modifyRPMScript, &values)

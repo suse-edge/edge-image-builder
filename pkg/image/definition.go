@@ -64,6 +64,8 @@ type OperatingSystem struct {
 	InstallDevice string                `yaml:"installDevice"`
 	Unattended    bool                  `yaml:"unattended"`
 	Time          Time                  `yaml:"time"`
+	Proxy         Proxy                 `yaml:"proxy"`
+	Keymap        string                `yaml:"keymap"`
 }
 
 type Packages struct {
@@ -93,6 +95,12 @@ type Time struct {
 	Timezone      string   `yaml:"timezone"`
 	ChronyPools   []string `yaml:"chronyPools"`
 	ChronyServers []string `yaml:"chronyServers"`
+}
+
+type Proxy struct {
+	HTTPProxy  string `yaml:"httpProxy"`
+	HTTPSProxy string `yaml:"httpsProxy"`
+	NoProxy    string `yaml:"noProxy"`
 }
 
 type EmbeddedArtifactRegistry struct {

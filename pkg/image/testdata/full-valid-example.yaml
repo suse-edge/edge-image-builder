@@ -14,6 +14,10 @@ operatingSystem:
     chronyServers:
       - 10.0.0.1
       - 10.0.0.2
+  proxy:
+    httpProxy: http://10.0.0.1:3128
+    httpsProxy: http://10.0.0.1:3128
+    noProxy: localhost, 127.0.0.1, edge.suse.com
   kernelArgs:
     - alpha=foo
     - beta=bar
@@ -24,6 +28,7 @@ operatingSystem:
       - enable1
     disable:
       - disable0
+  keymap: us
   users:
     - username: alpha
       encryptedPassword: $6$bZfTI3Wj05fdxQcB$W1HJQTKw/MaGTCwK75ic9putEquJvYO7vMnDBVAfuAMFW58/79abky4mx9.8znK0UZwSKng9dVosnYQR1toH71
