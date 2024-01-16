@@ -76,6 +76,10 @@ func Configure(ctx *image.Context) error {
 			name:     sumaComponentName,
 			runnable: configureSuma,
 		},
+		{
+			name:     keymapComponentName,
+			runnable: configureKeymap,
+		},
 	}
 
 	for _, component := range combustionComponents {
