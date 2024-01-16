@@ -38,7 +38,7 @@ RUN curl -o hauler-amd64.tar -L https://github.com/rancherfederal/hauler/release
     curl -o hauler-arm64.tar -L https://github.com/rancherfederal/hauler/releases/download/v0.4.2/hauler_0.4.2_linux_arm64.tar.gz && \
     tar -xf hauler-arm64.tar && \
     mv hauler hauler-aarch64 && \
-    cp hauler-$(uname -m) /usr/bin/hauler
+    cp hauler-$(uname -m) /usr/local/bin/hauler
 
 RUN curl -o rke2_installer.sh -L https://get.rke2.io
 
