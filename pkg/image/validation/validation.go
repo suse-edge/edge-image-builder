@@ -17,6 +17,7 @@ func ValidateDefinition(ctx *image.Context) []FailedValidation {
 
 	validations := []validateComponent{
 		validateImage,
+		validateOperatingSystem,
 	}
 	for _, v := range validations {
 		componentFailures := v(ctx)
@@ -24,4 +25,18 @@ func ValidateDefinition(ctx *image.Context) []FailedValidation {
 	}
 
 	return failures
+}
+
+func findDuplicates(items []string) []string {
+	var duplicates []string
+
+	seen := make(map[string]bool)
+	for _, item := range items {
+		if seen[item] {
+			duplicates = append(duplicates, item)
+		}
+		seen[item] = true
+	}
+
+	return duplicates
 }
