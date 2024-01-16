@@ -1,6 +1,7 @@
 package combustion
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -50,30 +51,9 @@ func TestWriteHaulerManifestValidManifest(t *testing.T) {
 	foundBytes, err := os.ReadFile(manifestFileName)
 	require.NoError(t, err)
 	found := string(foundBytes)
-	assert.Contains(t, found, "rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1")
-	assert.Contains(t, found, "https://releases.rancher.com/server-charts/stable")
-}
-
-func TestWriteHaulerManifestEmptyManifest(t *testing.T) {
-	// Setup
-	ctx, teardown := setupContext(t)
-	defer teardown()
-
-	// Test
-	err := writeHaulerManifest(ctx)
-
-	// Verify
-	require.NoError(t, err)
-
-	manifestFileName := filepath.Join(ctx.BuildDir, haulerManifestYamlName)
-	_, err = os.Stat(manifestFileName)
-	require.NoError(t, err)
-
-	foundBytes, err := os.ReadFile(manifestFileName)
-	require.NoError(t, err)
-	found := string(foundBytes)
-	assert.Contains(t, found, "Embedded-Registry-Images")
-	assert.Contains(t, found, "Embedded-Registry-Charts")
+	assert.Contains(t, found, "- name: hello-world:latest")
+	assert.Contains(t, found, "- name: rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1")
+	assert.Contains(t, found, "repoURL: https://releases.rancher.com/server-charts/stable")
 }
 
 func TestCreateRegistryCommand(t *testing.T) {
@@ -121,6 +101,9 @@ func TestWriteRegistryScript(t *testing.T) {
 	require.NoError(t, err)
 	found := string(foundBytes)
 	assert.Contains(t, found, registryTarName)
+	assert.Contains(t, found, "mv hauler /usr/bin/hauler")
+	assert.Contains(t, found, "systemctl enable eib-embedded-registry.service")
+	assert.Contains(t, found, "ExecStartPre=/usr/bin/hauler store load")
 }
 
 func TestCopyHaulerBinary(t *testing.T) {
@@ -128,11 +111,12 @@ func TestCopyHaulerBinary(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
-	haulerExecutable := filepath.Join(ctx.BuildDir, "hauler")
-	err := os.WriteFile(haulerExecutable, []byte(""), fileio.ExecutablePerms)
-	assert.NoError(t, err)
+	haulerBinaryPath := filepath.Join(ctx.BuildDir, fmt.Sprintf("hauler-%s", string(ctx.ImageDefinition.Image.Arch)))
+	err := os.WriteFile(haulerBinaryPath, []byte(""), fileio.ExecutablePerms)
+	require.NoError(t, err)
+
 	// Test
-	err = copyHaulerBinary(ctx, haulerExecutable)
+	err = copyHaulerBinary(ctx, haulerBinaryPath)
 
 	// Verify
 	require.NoError(t, err)

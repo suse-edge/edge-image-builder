@@ -20,6 +20,7 @@ const (
 	registryTarName        = "embedded-registry.tar.zst"
 	registryComponentName  = "embedded artifact registry"
 	registryLogFileName    = "embedded-registry.log"
+	hauler                 = "hauler"
 )
 
 //go:embed templates/hauler-manifest.yaml.tpl
@@ -33,7 +34,6 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		log.AuditComponentSkipped(registryComponentName)
 		return nil, nil
 	}
-	haulerExecutable := filepath.Join("usr", "bin", "hauler")
 
 	err := writeHaulerManifest(ctx)
 	if err != nil {
@@ -41,19 +41,20 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("writing hauler manifest: %w", err)
 	}
 
-	err = populateHaulerStore(ctx, haulerExecutable)
+	err = populateHaulerStore(ctx)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("populating hauler store: %w", err)
 	}
 
-	err = generateRegistryTar(ctx, haulerExecutable)
+	err = generateRegistryTar(ctx)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("generating hauler store tar: %w", err)
 	}
 
-	err = copyHaulerBinary(ctx)
+	haulerBinaryPath := fmt.Sprintf("hauler-%s", string(ctx.ImageDefinition.Image.Arch))
+	err = copyHaulerBinary(ctx, haulerBinaryPath)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("copying hauler binary: %w", err)
@@ -84,11 +85,11 @@ func writeHaulerManifest(ctx *image.Context) error {
 	return nil
 }
 
-func populateHaulerStore(ctx *image.Context, haulerExecutable string) error {
+func populateHaulerStore(ctx *image.Context) error {
 	haulerManifestPath := filepath.Join(ctx.BuildDir, haulerManifestYamlName)
 	args := []string{"store", "sync", "--files", haulerManifestPath}
 
-	cmd, registryLog, err := createRegistryCommand(ctx, haulerExecutable, args)
+	cmd, registryLog, err := createRegistryCommand(ctx, hauler, args)
 	if err != nil {
 		return fmt.Errorf("preparing to populate registry store: %w", err)
 	}
@@ -105,11 +106,11 @@ func populateHaulerStore(ctx *image.Context, haulerExecutable string) error {
 	return nil
 }
 
-func generateRegistryTar(ctx *image.Context, haulerExecutable string) error {
+func generateRegistryTar(ctx *image.Context) error {
 	haulerTarDest := filepath.Join(ctx.CombustionDir, registryTarName)
 	args := []string{"store", "save", "--filename", haulerTarDest}
 
-	cmd, registryLog, err := createRegistryCommand(ctx, haulerExecutable, args)
+	cmd, registryLog, err := createRegistryCommand(ctx, hauler, args)
 	if err != nil {
 		return fmt.Errorf("preparing to generate registry tar: %w", err)
 	}
@@ -126,8 +127,7 @@ func generateRegistryTar(ctx *image.Context, haulerExecutable string) error {
 	return nil
 }
 
-func copyHaulerBinary(ctx *image.Context) error {
-	haulerBinaryPath := filepath.Join(fmt.Sprintf("hauler-%s", string(ctx.ImageDefinition.Image.Arch)))
+func copyHaulerBinary(ctx *image.Context, haulerBinaryPath string) error {
 	destinationDir := filepath.Join(ctx.CombustionDir, "hauler")
 
 	err := fileio.CopyFile(haulerBinaryPath, destinationDir, fileio.ExecutablePerms)
