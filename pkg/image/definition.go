@@ -65,6 +65,7 @@ type OperatingSystem struct {
 	Unattended    bool                  `yaml:"unattended"`
 	Time          Time                  `yaml:"time"`
 	Proxy         Proxy                 `yaml:"proxy"`
+	Keymap        string                `yaml:"keymap"`
 }
 
 type Packages struct {

@@ -67,6 +67,7 @@ operatingSystem:
       - service1
     disable:
       - serviceX
+  keymap: us
 ```
 
 * `installDevice` - Optional; only for ISO images - specifies the disk that should be used as the install
@@ -97,6 +98,8 @@ operatingSystem:
   be included; if neither are provided, this section is ignored.
   * `enable` - Optional; List of systemd services to enable.
   * `disable` - Optional; List of systemd services to disable.
+* `keymap` - Optional; sets the virtual console (VC) keymap, full list via `localectl list-keymaps`. If unset, we default to
+  `us`.
 
 ## SUSE Manager (SUMA)
 
