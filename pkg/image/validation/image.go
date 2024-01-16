@@ -14,11 +14,11 @@ const (
 	imageComponent = "image"
 )
 
-var validImageTypes = []string{image.TypeISO, image.TypeRAW}
-var validArchTypes = []string{string(image.ArchTypeARM), string(image.ArchTypeX86)}
-
 func validateImage(ctx *image.Context) []FailedValidation {
 	def := ctx.ImageDefinition
+
+	validImageTypes := []string{image.TypeISO, image.TypeRAW}
+	validArchTypes := []string{string(image.ArchTypeARM), string(image.ArchTypeX86)}
 
 	var failures []FailedValidation
 
