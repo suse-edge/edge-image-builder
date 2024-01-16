@@ -37,6 +37,15 @@ The operating system configuration section is entirely optional.
 The following describes the possible options for the operating system section:
 ```yaml
 operatingSystem:
+  installDevice: /path/to/disk
+  unattended: false
+  time:
+    timezone: Europe/London
+    chronyPools:
+      - 1.pool.server.com
+    chronyServers:
+      - 10.0.0.1
+      - 10.0.0.2
   kernelArgs:
   - arg1
   - arg2
@@ -56,7 +65,18 @@ operatingSystem:
       - serviceX
 ```
 
+* `installDevice` - Optional; only for ISO images - specifies the disk that should be used as the install
+  device. This needs to be block special, and will default to automatically wipe any data found on the disk.
+  If left omitted, the user will still have to select the disk to install to (if >1 found) and confirm wipe.
+* `unattended` - Optional; only for ISO images - forces GRUB override to automatically install the operating
+  system rather than prompting user to begin the installation. In combination with `installDevice` can create
+  a fully unattended and automated install. Beware of creating boot loops and data loss with these options.
+  If left omiitted (or set to `false`) the user will still have to choose to install via the GRUB menu.
 * `kernelArgs` - Optional; Provides a list of flags that should be passed to the kernel on boot.
+* `time` - Optional; section where the user can provide timezone information and Chronyd configuration
+  * `timezone` - Optional; the timezone in the format of "Region/Locality", e.g. "Europe/London". Full list via `timedatectl list-timezones`
+  * `chronyPools` - Optional; a list of pools that Chrony can use as data sources.
+  * `chronyServers` - Optional; a list of servers that Chrony can use as data sources.
 * `users` - Optional; Defines a list of operating system users to be created. Each entry is made up of
   the following fields:
   * `username` - Required; Username of the user to create. To set the password or SSH key for the root user,

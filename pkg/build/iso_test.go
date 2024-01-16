@@ -129,6 +129,13 @@ func TestWriteIsoScript_Rebuild(t *testing.T) {
 	defer teardown()
 	builder := Builder{context: ctx}
 
+	ctx.ImageDefinition = &image.Definition{
+		OperatingSystem: image.OperatingSystem{
+			InstallDevice: "/dev/vda",
+			Unattended:    true,
+		},
+	}
+
 	// Test
 	err := builder.writeIsoScript(rebuildIsoTemplate, rebuildIsoScriptName)
 
@@ -157,6 +164,15 @@ func TestWriteIsoScript_Rebuild(t *testing.T) {
 
 	expectedCombustionDir := ctx.CombustionDir
 	assert.Contains(t, found, fmt.Sprintf("COMBUSTION_DIR=%s", expectedCombustionDir))
+
+	// Make sure that unattended mode is configured for GRUB
+	assert.Contains(t, found, "set timeout=", "unattended mode is not configured properly in GRUB menu")
+
+	// Make sure that target device is set as kernel cmdline argument
+	assert.Contains(t, found, "rd.kiwi.oem.installdevice=/dev/vda", "install device target is not configured as kernel cmdline argument")
+
+	// Make sure that the xorisso command also adds the grub.cfg mapping
+	assert.Contains(t, found, "-map ${ISO_EXTRACT_DIR}/boot/grub2/grub.cfg /boot/grub2/grub.cfg", "xorisso doesn't have grub.cfg mapping")
 }
 
 func TestCreateIsoCommand(t *testing.T) {
@@ -176,4 +192,58 @@ func TestCreateIsoCommand(t *testing.T) {
 	assert.Equal(t, expectedCommandPath, cmd.Path)
 	assert.Equal(t, logFile, cmd.Stdout)
 	assert.Equal(t, logFile, cmd.Stderr)
+}
+
+func TestFindExtractedRawImage(t *testing.T) {
+	// Setup
+	ctx, teardown := setupContext(t)
+	defer teardown()
+	builder := Builder{context: ctx}
+
+	testExtractDir := filepath.Join(ctx.BuildDir, rawExtractDir)
+	require.NoError(t, os.Mkdir(testExtractDir, os.FileMode(0o744)))
+
+	testFiles := []string{
+		"foo",
+		"bar.raw",
+		"baz",
+	}
+	for _, testFile := range testFiles {
+		_, err := os.Create(filepath.Join(testExtractDir, testFile))
+		require.NoError(t, err)
+	}
+
+	// Test
+	foundFilename, err := builder.findExtractedRawImage()
+
+	// Verify
+	require.NoError(t, err)
+	expectedFilename := filepath.Join(testExtractDir, "bar.raw")
+	assert.Equal(t, expectedFilename, foundFilename)
+}
+
+func TestFindExtractedRawImage_NoRawImage(t *testing.T) {
+	// Setup
+	ctx, teardown := setupContext(t)
+	defer teardown()
+	builder := Builder{context: ctx}
+
+	testExtractDir := filepath.Join(ctx.BuildDir, rawExtractDir)
+	require.NoError(t, os.Mkdir(testExtractDir, os.FileMode(0o744)))
+
+	testFiles := []string{
+		"foo",
+		"baz",
+	}
+	for _, testFile := range testFiles {
+		_, err := os.Create(filepath.Join(testExtractDir, testFile))
+		require.NoError(t, err)
+	}
+
+	// Test
+	foundFilename, err := builder.findExtractedRawImage()
+
+	// Verify
+	assert.Errorf(t, err, "unable to find a raw image")
+	assert.Equal(t, "", foundFilename)
 }

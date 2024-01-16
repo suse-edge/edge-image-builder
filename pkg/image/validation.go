@@ -72,6 +72,14 @@ func validateOperatingSystem(definition *Definition) error {
 	if err != nil {
 		return fmt.Errorf("error validating suma: %w", err)
 	}
+	err = validatePackages(&definition.OperatingSystem)
+	if err != nil {
+		return fmt.Errorf("error validating packages: %w", err)
+	}
+	err = validateUnattended(definition)
+	if err != nil {
+		return fmt.Errorf("error validating unattended mode: %w", err)
+	}
 
 	return nil
 }
@@ -130,6 +138,18 @@ func validateKernelArgs(os *OperatingSystem) error {
 			return fmt.Errorf("duplicate kernel arg found: '%s'", key)
 		}
 		seenKeys[key] = true
+	}
+
+	return nil
+}
+
+func validateUnattended(definition *Definition) error {
+	if definition.Image.ImageType != TypeISO && definition.OperatingSystem.Unattended {
+		return fmt.Errorf("unattended mode can only be used with image type '%s'", TypeISO)
+	}
+
+	if definition.Image.ImageType != TypeISO && definition.OperatingSystem.InstallDevice != "" {
+		return fmt.Errorf("install device can only be selected with image type '%s'", TypeISO)
 	}
 
 	return nil
@@ -263,6 +283,22 @@ func validateHelmCharts(charts []HelmChart) error {
 			return fmt.Errorf("duplicate chart found: '%s'", chart.Name)
 		}
 		seenCharts[chart.Name] = true
+	}
+
+	return nil
+}
+
+func validatePackages(os *OperatingSystem) error {
+	if duplicate := checkForDuplicates(os.Packages.PKGList); duplicate != "" {
+		return fmt.Errorf("package list contains duplicate: %s", duplicate)
+	}
+
+	if duplicate := checkForDuplicates(os.Packages.AdditionalRepos); duplicate != "" {
+		return fmt.Errorf("additional repository list contains duplicate: %s", duplicate)
+	}
+
+	if len(os.Packages.PKGList) > 0 && len(os.Packages.AdditionalRepos) == 0 && os.Packages.RegCode == "" {
+		return fmt.Errorf("package list configured without providing additional repository or registration code")
 	}
 
 	return nil

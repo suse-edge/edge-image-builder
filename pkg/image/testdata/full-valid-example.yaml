@@ -5,6 +5,15 @@ image:
   baseImage: slemicro5.5.iso
   outputImageName: eibimage.iso
 operatingSystem:
+  installDevice: /dev/sda
+  unattended: true
+  time:
+    timezone: Europe/London
+    chronyPools:
+      - 2.suse.pool.ntp.org
+    chronyServers:
+      - 10.0.0.1
+      - 10.0.0.2
   kernelArgs:
     - alpha=foo
     - beta=bar
@@ -27,6 +36,18 @@ operatingSystem:
     host: suma.edge.suse.com
     activationKey: slemicro55
     getSSL: false
+  packages:
+    packageList:
+    - wget2
+    - dpdk22
+    - dpdk22-tools
+    - libdpdk-23
+    - libatomic1
+    - libbpf0
+    additionalRepos:
+    - https://download.nvidia.com/suse/sle15sp5/
+    - https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/
+    registrationCode: INTERNAL-USE-ONLY-foo-bar
 embeddedArtifactRegistry:
   images:
     - name: hello-world:latest
@@ -42,4 +63,3 @@ kubernetes:
   cni: cilium
   multus: true
   vSphere: false
-

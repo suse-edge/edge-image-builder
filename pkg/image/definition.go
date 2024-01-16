@@ -56,10 +56,20 @@ type Image struct {
 }
 
 type OperatingSystem struct {
-	KernelArgs []string              `yaml:"kernelArgs"`
-	Users      []OperatingSystemUser `yaml:"users"`
-	Systemd    Systemd               `yaml:"systemd"`
-	Suma       Suma                  `yaml:"suma"`
+	KernelArgs    []string              `yaml:"kernelArgs"`
+	Users         []OperatingSystemUser `yaml:"users"`
+	Systemd       Systemd               `yaml:"systemd"`
+	Suma          Suma                  `yaml:"suma"`
+	Packages      Packages              `yaml:"packages"`
+	InstallDevice string                `yaml:"installDevice"`
+	Unattended    bool                  `yaml:"unattended"`
+	Time          Time                  `yaml:"time"`
+}
+
+type Packages struct {
+	PKGList         []string `yaml:"packageList"`
+	AdditionalRepos []string `yaml:"additionalRepos"`
+	RegCode         string   `yaml:"registrationCode"`
 }
 
 type OperatingSystemUser struct {
@@ -77,6 +87,12 @@ type Suma struct {
 	Host          string `yaml:"host"`
 	ActivationKey string `yaml:"activationKey"`
 	GetSSL        bool   `yaml:"getSSL"`
+}
+
+type Time struct {
+	Timezone      string   `yaml:"timezone"`
+	ChronyPools   []string `yaml:"chronyPools"`
+	ChronyServers []string `yaml:"chronyServers"`
 }
 
 type EmbeddedArtifactRegistry struct {

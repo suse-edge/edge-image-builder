@@ -297,6 +297,9 @@ func TestValidateOperatingSystemEmptyButValid(t *testing.T) {
 func TestValidateOperatingSystemValid(t *testing.T) {
 	// Setup
 	def := Definition{
+		Image: Image{
+			ImageType: "iso",
+		},
 		OperatingSystem: OperatingSystem{
 			KernelArgs: []string{"key1=value1", "key2=value2", "arg1", "arg2"},
 			Systemd: Systemd{
@@ -320,6 +323,8 @@ func TestValidateOperatingSystemValid(t *testing.T) {
 				ActivationKey: "slemicro55",
 				GetSSL:        false,
 			},
+			InstallDevice: "/dev/sda",
+			Unattended:    true,
 		},
 	}
 
@@ -947,6 +952,72 @@ func TestIsEmbeddedArtifactRegistryEmpty(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := IsEmbeddedArtifactRegistryEmpty(test.registry)
 			assert.Equal(t, test.isEmpty, result)
+		})
+	}
+}
+
+func TestValidatePackages(t *testing.T) {
+	tests := []struct {
+		name        string
+		os          *OperatingSystem
+		expectedErr string
+	}{
+		{
+			name: "Package list with duplicate",
+			os: &OperatingSystem{
+				Packages: Packages{
+					PKGList: []string{"foo", "bar", "foo"},
+				},
+			},
+			expectedErr: "package list contains duplicate: foo",
+		},
+		{
+			name: "Additional repository with duplicate",
+			os: &OperatingSystem{
+				Packages: Packages{
+					AdditionalRepos: []string{"https://foo.bar", "https://bar.foo", "https://foo.bar"},
+				},
+			},
+			expectedErr: "additional repository list contains duplicate: https://foo.bar",
+		},
+		{
+			name: "Package list defined without registration code or third party repo",
+			os: &OperatingSystem{
+				Packages: Packages{
+					PKGList: []string{"foo", "bar"},
+				},
+			},
+			expectedErr: "package list configured without providing additional repository or registration code",
+		},
+		{
+			name: "Configuring package from PackageHub",
+			os: &OperatingSystem{
+				Packages: Packages{
+					PKGList: []string{"foo", "bar"},
+					RegCode: "foo.bar",
+				},
+			},
+		},
+		{
+			name: "Configuring package from third party repo",
+			os: &OperatingSystem{
+				Packages: Packages{
+					PKGList:         []string{"foo", "bar"},
+					AdditionalRepos: []string{"https://foo.bar"},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := validatePackages(test.os)
+
+			if test.expectedErr != "" {
+				assert.EqualError(t, err, test.expectedErr)
+			} else {
+				require.Nil(t, err)
+			}
 		})
 	}
 }
