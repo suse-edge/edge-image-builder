@@ -6,13 +6,17 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 
+	"github.com/schollz/progressbar/v3"
 	"go.uber.org/zap"
 )
 
 // DownloadFile downloads a file from the specified URL and stores it to the given path.
 func DownloadFile(ctx context.Context, url, path string) error {
-	zap.S().Infof("Downloading file from '%s' to '%s'...", url, path)
+	filename := filepath.Base(path)
+
+	zap.S().Infof("Downloading file '%s' from '%s' to '%s'...", filename, url, filepath.Dir(path))
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
@@ -35,9 +39,13 @@ func DownloadFile(ctx context.Context, url, path string) error {
 	}
 	defer file.Close()
 
-	if _, err = io.Copy(file, resp.Body); err != nil {
+	bar := progressbar.DefaultBytes(resp.ContentLength, fmt.Sprintf("Downloading file: %s", filename))
+
+	if _, err = io.Copy(io.MultiWriter(file, bar), resp.Body); err != nil {
 		return fmt.Errorf("storing response: %w", err)
 	}
+
+	zap.S().Infof("Downloading file '%s' completed", filename)
 
 	return nil
 }
