@@ -18,7 +18,40 @@ func TestConfigureKeymap(t *testing.T) {
 
 	ctx.ImageDefinition = &image.Definition{
 		OperatingSystem: image.OperatingSystem{
-			Keymap: "us",
+			Keymap: "gb",
+		},
+	}
+
+	// Test
+	scripts, err := configureKeymap(ctx)
+
+	// Verify
+	require.NoError(t, err)
+
+	require.Len(t, scripts, 1)
+	assert.Equal(t, keymapScriptName, scripts[0])
+
+	expectedFilename := filepath.Join(ctx.CombustionDir, keymapScriptName)
+	foundBytes, err := os.ReadFile(expectedFilename)
+	require.NoError(t, err)
+
+	stats, err := os.Stat(expectedFilename)
+	require.NoError(t, err)
+	assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
+
+	foundContents := string(foundBytes)
+
+	// - Make sure that the keymap is set correctly
+	assert.Contains(t, foundContents, "echo \"KEYMAP=gb\" >> /etc/vconsole.conf", "keymap not correctly set")
+}
+
+func TestConfigureKeymap_NoConf(t *testing.T) {
+	// Setup
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition = &image.Definition{
+		OperatingSystem: image.OperatingSystem{
 		},
 	}
 

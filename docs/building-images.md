@@ -98,8 +98,8 @@ operatingSystem:
   be included; if neither are provided, this section is ignored.
   * `enable` - Optional; List of systemd services to enable.
   * `disable` - Optional; List of systemd services to disable.
-* `keymap` - Optional; sets the virtual console (VC) keymap, full list via `localectl list-keymaps`. It's not critical to set
-  a keymap as the default is `us`, but if this is left unset, you may see console warnings about a keymap not being set.
+* `keymap` - Optional; sets the virtual console (VC) keymap, full list via `localectl list-keymaps`. If unset, we default to
+  `us`.
 
 ## SUSE Manager (SUMA)
 

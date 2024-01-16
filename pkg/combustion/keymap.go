@@ -21,12 +21,6 @@ const (
 var keymapScript string
 
 func configureKeymap(ctx *image.Context) ([]string, error) {
-	keymap := ctx.ImageDefinition.OperatingSystem.Keymap
-	if keymap == "" {
-		log.AuditComponentSkipped(keymapComponentName)
-		return nil, nil
-	}
-
 	if err := writeKeymapCombustionScript(ctx); err != nil {
 		log.AuditComponentFailed(keymapComponentName)
 		return nil, err
