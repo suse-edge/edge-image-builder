@@ -117,6 +117,10 @@ func TestParse(t *testing.T) {
 	noProxy := definition.OperatingSystem.Proxy.NoProxy
 	assert.Equal(t, "localhost, 127.0.0.1, edge.suse.com", noProxy)
 
+	// Operating System -> Keymap
+	keymap := definition.OperatingSystem.Keymap
+	assert.Equal(t, "us", keymap)
+
 	// EmbeddedArtifactRegistry
 	embeddedArtifactRegistry := definition.EmbeddedArtifactRegistry
 	assert.Equal(t, "hello-world:latest", embeddedArtifactRegistry.ContainerImages[0].Name)
