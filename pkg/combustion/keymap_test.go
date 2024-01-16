@@ -51,8 +51,7 @@ func TestConfigureKeymap_NoConf(t *testing.T) {
 	defer teardown()
 
 	ctx.ImageDefinition = &image.Definition{
-		OperatingSystem: image.OperatingSystem{
-		},
+		OperatingSystem: image.OperatingSystem{},
 	}
 
 	// Test
