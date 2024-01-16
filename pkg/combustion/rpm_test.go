@@ -1,8 +1,10 @@
 package combustion
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,119 +13,235 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func setupRPMSourceDir(t *testing.T) (ctx *image.Context, rpmSourceDir string, teardown func()) {
-	ctx, teardownCtx := setupContext(t)
+type mockRPMResolver struct {
+	resolveFunc func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error)
+}
 
-	rpmSourceDir = filepath.Join(ctx.ImageConfigDir, "rpms")
-	require.NoError(t, os.Mkdir(rpmSourceDir, 0o755))
-
-	file1, err := os.Create(filepath.Join(rpmSourceDir, "rpm1.rpm"))
-	require.NoError(t, err)
-
-	file2, err := os.Create(filepath.Join(rpmSourceDir, "rpm2.rpm"))
-	require.NoError(t, err)
-
-	return ctx, rpmSourceDir, func() {
-		assert.NoError(t, file1.Close())
-		assert.NoError(t, file2.Close())
-
-		teardownCtx()
+func (m mockRPMResolver) Resolve(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+	if m.resolveFunc != nil {
+		return m.resolveFunc(packages, localPackagesPath, outputDir)
 	}
+
+	panic("not implemented")
 }
 
-func TestGetRPMFileNames(t *testing.T) {
-	// Setup
-	_, rpmSourceDir, teardown := setupRPMSourceDir(t)
-	defer teardown()
-
-	// Test
-	rpmFileNames, err := getRPMFileNames(rpmSourceDir)
-
-	// Verify
-	require.NoError(t, err)
-
-	assert.Contains(t, rpmFileNames, "rpm1.rpm")
-	assert.Contains(t, rpmFileNames, "rpm2.rpm")
+type mockRPMRepoCreator struct {
+	createFunc func(path string) error
 }
 
-func TestCopyRPMs(t *testing.T) {
-	// Setup
-	ctx, rpmSourceDir, teardown := setupRPMSourceDir(t)
-	defer teardown()
+func (mr mockRPMRepoCreator) Create(path string) error {
+	if mr.createFunc != nil {
+		return mr.createFunc(path)
+	}
 
-	tmpDestDir := filepath.Join(ctx.BuildDir, "temp-dest-dir")
-	require.NoError(t, os.Mkdir(tmpDestDir, 0o755))
-
-	// Test
-	require.NoError(t, copyRPMs(rpmSourceDir, tmpDestDir, []string{"rpm1.rpm", "rpm2.rpm"}))
-
-	// Verify
-	_, err := os.Stat(filepath.Join(tmpDestDir, "rpm1.rpm"))
-	require.NoError(t, err)
-
-	_, err = os.Stat(filepath.Join(tmpDestDir, "rpm2.rpm"))
-	require.NoError(t, err)
+	panic("not implemented")
 }
 
-func TestGetRPMFileNamesNoRPMs(t *testing.T) {
-	// Setup
-	tmpDir, err := os.MkdirTemp("", "eib-rpm-")
-	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, os.RemoveAll(tmpDir))
-	}()
-
-	// Test
-	rpmFileNames, err := getRPMFileNames(tmpDir)
-
-	// Verify
-	require.ErrorContains(t, err, "no RPMs found")
-
-	assert.Empty(t, rpmFileNames)
-}
-
-func TestCopyRPMsNoRPMDestDir(t *testing.T) {
-	// Setup
-	tmpDir, err := os.MkdirTemp("", "eib-rpm-")
-	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, os.RemoveAll(tmpDir))
-	}()
-
-	// Test
-	err = copyRPMs(tmpDir, "", []string{"rpm1.rpm", "rpm2.rpm"})
-
-	// Verify
-	require.ErrorContains(t, err, "RPM destination directory cannot be empty")
-}
-
-func TestCopyRPMsNoRPMSrcDir(t *testing.T) {
-	// Setup
-	tmpDir, err := os.MkdirTemp("", "eib-rpm-")
-	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, os.RemoveAll(tmpDir))
-	}()
-
-	// Test
-	err = copyRPMs("", tmpDir, []string{"rpm1.rpm", "rpm2.rpm"})
-
-	// Verify
-	require.ErrorContains(t, err, "opening source file")
-}
-
-func TestWriteRPMScript(t *testing.T) {
-	// Setup
+func TestSkipRPMComponentTrue(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
-	// Test
-	script, err := writeRPMScript(ctx, []string{"rpm1.rpm", "rpm2.rpm"})
+	tests := []struct {
+		name     string
+		packages image.Packages
+	}{
+		{
+			name: "No RPM directory or package list",
+		},
+		{
+			name: "Additional repository without an RPM directory or package list",
+			packages: image.Packages{
+				AdditionalRepos: []string{"https://foo.bar"},
+			},
+		},
+		{
+			name: "Additional repository and registration code without RPM directory or package list",
+			packages: image.Packages{
+				AdditionalRepos: []string{"https://foo.bar"},
+				RegCode:         "foo.bar",
+			},
+		},
+	}
 
-	// Verify
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctx.ImageDefinition.OperatingSystem.Packages = test.packages
+			assert.True(t, SkipRPMComponent(ctx))
+		})
+	}
+
+}
+
+func TestSkipRPMComponentProvidedPKGList(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.OperatingSystem.Packages = image.Packages{
+		PKGList: []string{"pkg1", "pkg2"},
+	}
+
+	assert.False(t, SkipRPMComponent(ctx))
+}
+
+func TestSkipRPMComponentRPMInDir(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	rpmDir := filepath.Join(ctx.ImageConfigDir, userRPMsDir)
+	require.NoError(t, os.Mkdir(rpmDir, 0o755))
+	defer func() {
+		require.NoError(t, os.RemoveAll(rpmDir))
+	}()
+
+	assert.False(t, SkipRPMComponent(ctx))
+}
+
+func TestSkipRPMComponentFullConfig(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	rpmDir := filepath.Join(ctx.ImageConfigDir, userRPMsDir)
+	require.NoError(t, os.Mkdir(rpmDir, 0o755))
+	defer func() {
+		require.NoError(t, os.RemoveAll(rpmDir))
+	}()
+
+	ctx.ImageDefinition.OperatingSystem.Packages = image.Packages{
+		PKGList:         []string{"pkg1", "pkg2"},
+		AdditionalRepos: []string{"https://foo.bar"},
+		RegCode:         "foo.bar",
+	}
+
+	assert.False(t, SkipRPMComponent(ctx))
+}
+
+func TestConfigureRPMSSkipComponent(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	scripts, err := configureRPMs(ctx)
+
 	require.NoError(t, err)
+	assert.Nil(t, scripts)
+}
 
-	assert.Equal(t, modifyRPMScriptName, script)
+func TestConfigureRPMSError(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	// do not skip RPM component
+	ctx.ImageDefinition.OperatingSystem.Packages = image.Packages{
+		PKGList:         []string{"foo", "bar"},
+		AdditionalRepos: []string{"https://foo.bar"},
+	}
+
+	tests := []struct {
+		name           string
+		rpmResolver    mockRPMResolver
+		rpmRepoCreator mockRPMRepoCreator
+		expectedErr    string
+	}{
+		{
+			name: "Resolving RPM dependencies fails",
+			rpmResolver: mockRPMResolver{
+				resolveFunc: func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+					return "", nil, fmt.Errorf("resolution failed")
+				},
+			},
+			expectedErr: "resolving rpm/package dependencies: resolution failed",
+		},
+		{
+			name: "Creating RPM repository fails",
+			rpmResolver: mockRPMResolver{
+				resolveFunc: func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+					return "rpm-repo", []string{"foo", "bar"}, nil
+				},
+			},
+			rpmRepoCreator: mockRPMRepoCreator{
+				createFunc: func(path string) error {
+					return fmt.Errorf("rpm repo creation failed")
+				},
+			},
+			expectedErr: "creating resolved rpm repository: rpm repo creation failed",
+		},
+		{
+			name: "Writing RPM script with empty package list",
+			rpmResolver: mockRPMResolver{
+				resolveFunc: func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+					return "rpm-repo", []string{}, nil
+				},
+			},
+			rpmRepoCreator: mockRPMRepoCreator{
+				createFunc: func(path string) error {
+					return nil
+				},
+			},
+			expectedErr: "writing the RPM install script 10-rpm-install.sh: package list cannot be empty",
+		},
+		{
+			name: "Writing RPM script with empty repo path",
+			rpmResolver: mockRPMResolver{
+				resolveFunc: func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+					return "", []string{"foo", "bar"}, nil
+				},
+			},
+			rpmRepoCreator: mockRPMRepoCreator{
+				createFunc: func(path string) error {
+					return nil
+				},
+			},
+			expectedErr: "writing the RPM install script 10-rpm-install.sh: path to RPM repository cannot be empty",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctx.RPMResolver = test.rpmResolver
+			ctx.RPMRepoCreator = test.rpmRepoCreator
+
+			_, err := configureRPMs(ctx)
+			require.Error(t, err)
+			assert.EqualError(t, err, test.expectedErr)
+		})
+	}
+}
+
+func TestConfigureRPMSSuccessfulConfig(t *testing.T) {
+	expectedRepoName := "bar"
+	expectedDir := "/foo/bar"
+	expectedPkg := []string{"foo", "bar"}
+
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.OperatingSystem.Packages = image.Packages{
+		PKGList:         []string{"foo", "bar"},
+		AdditionalRepos: []string{"https://foo.bar"},
+	}
+
+	rpmDir := filepath.Join(ctx.ImageConfigDir, userRPMsDir)
+	require.NoError(t, os.Mkdir(rpmDir, 0o755))
+	defer func() {
+		require.NoError(t, os.RemoveAll(rpmDir))
+	}()
+
+	ctx.RPMRepoCreator = mockRPMRepoCreator{
+		createFunc: func(path string) error {
+			return nil
+		},
+	}
+
+	ctx.RPMResolver = mockRPMResolver{
+		resolveFunc: func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+			return expectedDir, expectedPkg, nil
+		},
+	}
+
+	scripts, err := configureRPMs(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, scripts)
+	require.Len(t, scripts, 1)
+	assert.Equal(t, modifyRPMScriptName, scripts[0])
 
 	expectedFilename := filepath.Join(ctx.CombustionDir, modifyRPMScriptName)
 	foundBytes, err := os.ReadFile(expectedFilename)
@@ -134,35 +252,11 @@ func TestWriteRPMScript(t *testing.T) {
 	assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
 
 	foundContents := string(foundBytes)
-	assert.Contains(t, foundContents, "rpm1.rpm")
-	assert.Contains(t, foundContents, "rpm2.rpm")
-}
-
-func TestConfigureRPMs(t *testing.T) {
-	// Setup
-	ctx, _, teardown := setupRPMSourceDir(t)
-	defer teardown()
-
-	// Test
-	scripts, err := configureRPMs(ctx)
-
-	// Verify
-	require.NoError(t, err)
-
-	require.Len(t, scripts, 1)
-	assert.Equal(t, modifyRPMScriptName, scripts[0])
-
-	_, err = os.Stat(filepath.Join(ctx.CombustionDir, "rpm1.rpm"))
-	require.NoError(t, err)
-
-	_, err = os.Stat(filepath.Join(ctx.CombustionDir, "rpm2.rpm"))
-	require.NoError(t, err)
-
-	expectedFilename := filepath.Join(ctx.CombustionDir, modifyRPMScriptName)
-	foundBytes, err := os.ReadFile(expectedFilename)
-	require.NoError(t, err)
-
-	foundContents := string(foundBytes)
-	assert.Contains(t, foundContents, "rpm1.rpm")
-	assert.Contains(t, foundContents, "rpm2.rpm")
+	combustionBasePath := "/dev/shm/combustion/config"
+	zypperAR := fmt.Sprintf("zypper ar file://%s %s", filepath.Join(combustionBasePath, expectedRepoName), expectedRepoName)
+	zypperInstall := fmt.Sprintf("zypper --no-gpg-checks install -r %s -y --force-resolution --auto-agree-with-licenses %s", expectedRepoName, strings.Join(expectedPkg, " "))
+	zypperRR := fmt.Sprintf("zypper rr %s", expectedRepoName)
+	assert.Contains(t, foundContents, zypperAR)
+	assert.Contains(t, foundContents, zypperInstall)
+	assert.Contains(t, foundContents, zypperRR)
 }

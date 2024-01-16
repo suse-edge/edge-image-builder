@@ -19,10 +19,12 @@ FROM opensuse/leap:15.5
 # 1. ISO image building
 # 2. RAW image modification on x86_64
 # 3. Podman EIB library
+# 4. RPM resolution logic
 RUN zypper install -y \
     xorriso squashfs  \
     libguestfs kernel-default e2fsprogs parted gptfdisk btrfsprogs \
-    podman
+    podman \
+    createrepo_c
 
 # TODO: Install nmc via zypper once an RPM package is available
 RUN curl -o nmc-aarch64 -L https://github.com/suse-edge/nm-configurator/releases/download/v0.2.0/nmc-linux-aarch64 && \

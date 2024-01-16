@@ -20,6 +20,14 @@ type kubernetesArtefactDownloader interface {
 	DownloadArtefacts(kubernetes Kubernetes, arch Arch, destinationPath string) (installPath, imagesPath string, err error)
 }
 
+type rpmResolver interface {
+	Resolve(packages *Packages, localPackagesPath, outputDir string) (rpmDirPath string, pkgList []string, err error)
+}
+
+type rpmRepoCreator interface {
+	Create(path string) error
+}
+
 type Context struct {
 	// ImageConfigDir is the root directory storing all configuration files.
 	ImageConfigDir string
@@ -33,4 +41,7 @@ type Context struct {
 	NetworkConfiguratorInstaller networkConfiguratorInstaller
 	KubernetesScriptInstaller    kubernetesScriptInstaller
 	KubernetesArtefactDownloader kubernetesArtefactDownloader
+	// RPMResolver responsible for resolving rpm/package dependencies
+	RPMResolver    rpmResolver
+	RPMRepoCreator rpmRepoCreator
 }
