@@ -77,6 +77,10 @@ func Configure(ctx *image.Context) error {
 			runnable: configureSuma,
 		},
 		{
+			name:     registryComponentName,
+			runnable: configureRegistry,
+		},
+		{
 			name:     keymapComponentName,
 			runnable: configureKeymap,
 		},
