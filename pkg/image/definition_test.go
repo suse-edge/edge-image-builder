@@ -105,6 +105,18 @@ func TestParse(t *testing.T) {
 	}
 	assert.Equal(t, expectedChronyServers, time.ChronyServers)
 
+	// Operating System -> Proxy -> HTTPProxy
+	httpProxy := definition.OperatingSystem.Proxy.HTTPProxy
+	assert.Equal(t, "http://10.0.0.1:3128", httpProxy)
+
+	// Operating System -> Proxy -> HTTPSProxy
+	httpsProxy := definition.OperatingSystem.Proxy.HTTPSProxy
+	assert.Equal(t, "http://10.0.0.1:3128", httpsProxy)
+
+	// Operating System -> Proxy -> NoProxy
+	noProxy := definition.OperatingSystem.Proxy.NoProxy
+	assert.Equal(t, "localhost, 127.0.0.1, edge.suse.com", noProxy)
+
 	// EmbeddedArtifactRegistry
 	embeddedArtifactRegistry := definition.EmbeddedArtifactRegistry
 	assert.Equal(t, "hello-world:latest", embeddedArtifactRegistry.ContainerImages[0].Name)

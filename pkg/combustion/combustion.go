@@ -57,6 +57,10 @@ func Configure(ctx *image.Context) error {
 			runnable: configureUsers,
 		},
 		{
+			name:     proxyComponentName,
+			runnable: configureProxy,
+		},
+		{
 			name:     rpmComponentName,
 			runnable: configureRPMs,
 		},
