@@ -33,7 +33,7 @@ if [ `wc -w <<< $RAW_FILE` -ne 1 ]; then
 	exit 1
 fi
 
-virt-tar-out -a $RAW_FILE / - | gzip --best > $WORK_DIR/{{.ArchiveName}}
+virt-tar-out -a $RAW_FILE / - | pigz --best > $WORK_DIR/{{.ArchiveName}}
 {{ else }}
-virt-tar-out -a $IMG_PATH / - | gzip --best > $WORK_DIR/{{.ArchiveName}}
+virt-tar-out -a $IMG_PATH / - | pigz --best > $WORK_DIR/{{.ArchiveName}}
 {{ end }}
