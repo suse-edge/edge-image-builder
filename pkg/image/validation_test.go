@@ -79,68 +79,11 @@ func TestValidateKubernetes(t *testing.T) {
 		expectedErr string
 	}{
 		{
-			name: "Empty CNI",
-			definition: &Definition{
-				Kubernetes: Kubernetes{
-					Version: "v1.29.0+rke2r1",
-					CNI:     "",
-				},
-			},
-			expectedErr: "CNI not specified",
-		},
-		{
-			name: "Unsupported CNI",
-			definition: &Definition{
-				Kubernetes: Kubernetes{
-					Version: "v1.29.0+rke2r1",
-					CNI:     "flannel",
-				},
-			},
-			expectedErr: "CNI 'flannel' is not supported",
-		},
-		{
-			name: "No CNI",
-			definition: &Definition{
-				Kubernetes: Kubernetes{
-					Version: "v1.29.0+rke2r1",
-					CNI:     "none",
-				},
-			},
-		},
-		{
-			name: "Canal CNI",
-			definition: &Definition{
-				Kubernetes: Kubernetes{
-					Version: "v1.29.0+rke2r1",
-					CNI:     "canal",
-				},
-			},
-		},
-		{
-			name: "Calico CNI",
-			definition: &Definition{
-				Kubernetes: Kubernetes{
-					Version: "v1.29.0+rke2r1",
-					CNI:     "calico",
-				},
-			},
-		},
-		{
-			name: "Cilium CNI",
-			definition: &Definition{
-				Kubernetes: Kubernetes{
-					Version: "v1.29.0+rke2r1",
-					CNI:     "cilium",
-				},
-			},
-		},
-		{
 			name: "Server node type",
 			definition: &Definition{
 				Kubernetes: Kubernetes{
 					Version:  "v1.29.0+rke2r1",
 					NodeType: "server",
-					CNI:      "cilium",
 				},
 			},
 		},
@@ -150,7 +93,6 @@ func TestValidateKubernetes(t *testing.T) {
 				Kubernetes: Kubernetes{
 					Version:  "v1.29.0+rke2r1",
 					NodeType: "agent",
-					CNI:      "cilium",
 				},
 			},
 		},
@@ -160,7 +102,6 @@ func TestValidateKubernetes(t *testing.T) {
 				Kubernetes: Kubernetes{
 					Version:  "v1.29.0+rke2r1",
 					NodeType: "worker",
-					CNI:      "cilium",
 				},
 			},
 			expectedErr: "unknown node type: worker",

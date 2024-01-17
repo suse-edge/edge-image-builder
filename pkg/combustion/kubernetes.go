@@ -14,6 +14,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -21,6 +22,9 @@ const (
 	k8sConfigDir      = "kubernetes"
 	k8sConfigFile     = "config.yaml"
 	rke2InstallScript = "15-rke2-install.sh"
+
+	cniKey          = "cni"
+	cniDefaultValue = image.CNITypeCilium
 )
 
 var (
@@ -83,14 +87,26 @@ func configureRKE2(ctx *image.Context) (string, error) {
 		return "", fmt.Errorf("copying RKE2 installer script: %w", err)
 	}
 
-	configFile, err := copyKubernetesConfig(ctx, image.KubernetesDistroRKE2)
+	config, err := parseKubernetesConfig(ctx)
 	if err != nil {
-		return "", fmt.Errorf("copying RKE2 config: %w", err)
+		return "", fmt.Errorf("parsing RKE2 config: %w", err)
+	}
+
+	cni, multusEnabled, err := extractCNI(config)
+	if err != nil {
+		return "", fmt.Errorf("extracting CNI from RKE2 config: %w", err)
+	}
+
+	configFile, err := storeKubernetesConfig(ctx, config, image.KubernetesDistroRKE2)
+	if err != nil {
+		return "", fmt.Errorf("storing RKE2 config file: %w", err)
 	}
 
 	installPath, imagesPath, err := ctx.KubernetesArtefactDownloader.DownloadArtefacts(
-		ctx.ImageDefinition.Kubernetes,
 		ctx.ImageDefinition.Image.Arch,
+		ctx.ImageDefinition.Kubernetes.Version,
+		cni,
+		multusEnabled,
 		ctx.CombustionDir,
 	)
 	if err != nil {
@@ -122,28 +138,116 @@ func configureRKE2(ctx *image.Context) (string, error) {
 	return rke2InstallScript, nil
 }
 
-func copyKubernetesConfig(ctx *image.Context, distro string) (string, error) {
+func parseKubernetesConfig(ctx *image.Context) (map[string]any, error) {
+	auditDefaultCNI := func() {
+		auditMessage := fmt.Sprintf("Kubernetes CNI not explicitly set, defaulting to: %s", cniDefaultValue)
+		log.Audit(auditMessage)
+	}
+
+	config := map[string]any{}
+
 	if !isComponentConfigured(ctx, k8sConfigDir) {
-		zap.S().Info("Kubernetes config file not provided")
-		return "", nil
+		auditDefaultCNI()
+		zap.S().Infof("Kubernetes config file not provided, proceeding with CNI: %s", cniDefaultValue)
+
+		config[cniKey] = cniDefaultValue
+		return config, nil
 	}
 
 	configDir := generateComponentPath(ctx, k8sConfigDir)
 	configFile := filepath.Join(configDir, k8sConfigFile)
 
-	_, err := os.Stat(configFile)
+	b, err := os.ReadFile(configFile)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			return "", fmt.Errorf("kubernetes component directory exists but does not contain config.yaml")
+			return nil, fmt.Errorf("kubernetes component directory exists but does not contain config.yaml")
 		}
-		return "", fmt.Errorf("error checking kubernetes config file: %w", err)
+		return nil, fmt.Errorf("reading kubernetes config file: %w", err)
 	}
 
-	destFile := fmt.Sprintf("%s_config.yaml", distro)
-
-	if err = fileio.CopyFile(configFile, filepath.Join(ctx.CombustionDir, destFile), fileio.NonExecutablePerms); err != nil {
-		return "", fmt.Errorf("copying kubernetes config file: %w", err)
+	if err = yaml.Unmarshal(b, &config); err != nil {
+		return nil, fmt.Errorf("parsing kubernetes config file: %w", err)
 	}
 
-	return destFile, nil
+	if _, ok := config[cniKey]; !ok {
+		auditDefaultCNI()
+		zap.S().Infof("CNI not set in config file, proceeding with CNI: %s", cniDefaultValue)
+
+		config[cniKey] = cniDefaultValue
+	}
+
+	return config, nil
+}
+
+func extractCNI(config map[string]any) (cni string, multusEnabled bool, err error) {
+	switch configuredCNI := config[cniKey].(type) {
+	case string:
+		if configuredCNI == "" {
+			return "", false, fmt.Errorf("cni not configured")
+		}
+
+		var cnis []string
+		for _, cni = range strings.Split(configuredCNI, ",") {
+			cnis = append(cnis, strings.TrimSpace(cni))
+		}
+
+		return parseCNIs(cnis)
+
+	case []string:
+		return parseCNIs(configuredCNI)
+
+	case []any:
+		var cnis []string
+		for _, cni := range configuredCNI {
+			c, ok := cni.(string)
+			if !ok {
+				return "", false, fmt.Errorf("invalid cni value: %v", cni)
+			}
+			cnis = append(cnis, c)
+		}
+
+		return parseCNIs(cnis)
+
+	default:
+		return "", false, fmt.Errorf("invalid cni: %v", configuredCNI)
+	}
+}
+
+func parseCNIs(cnis []string) (cni string, multusEnabled bool, err error) {
+	const multusPlugin = "multus"
+
+	switch len(cnis) {
+	case 1:
+		cni = cnis[0]
+		if cni == multusPlugin {
+			return "", false, fmt.Errorf("multus must be used alongside another primary cni selection")
+		}
+	case 2:
+		if cnis[0] == multusPlugin {
+			cni = cnis[1]
+			multusEnabled = true
+		} else {
+			return "", false, fmt.Errorf("multiple cni values are only allowed if multus is the first one")
+		}
+	default:
+		return "", false, fmt.Errorf("invalid cni value: %v", cnis)
+	}
+
+	return cni, multusEnabled, nil
+}
+
+func storeKubernetesConfig(ctx *image.Context, config map[string]any, distribution string) (string, error) {
+	data, err := yaml.Marshal(config)
+	if err != nil {
+		return "", fmt.Errorf("serializing kubernetes config: %w", err)
+	}
+
+	configFile := fmt.Sprintf("%s_config.yaml", distribution)
+	configPath := filepath.Join(ctx.CombustionDir, configFile)
+
+	if err = os.WriteFile(configPath, data, fileio.NonExecutablePerms); err != nil {
+		return "", fmt.Errorf("storing kubernetes config file: %w", err)
+	}
+
+	return configFile, nil
 }
