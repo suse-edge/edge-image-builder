@@ -1,11 +1,102 @@
 package validation
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
+
+func TestValidateOperatingSystem(t *testing.T) {
+	tests := map[string]struct {
+		Definition             image.Definition
+		ExpectedFailedMessages []string
+	}{
+		`no os defined`: {
+			Definition: image.Definition{},
+		},
+		`all valid`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeISO,
+				},
+				OperatingSystem: image.OperatingSystem{
+					KernelArgs: []string{"foo=bar", "baz"},
+					Systemd: image.Systemd{
+						Enable:  []string{"runMe"},
+						Disable: []string{"dontRunMe"},
+					},
+					Users: []image.OperatingSystemUser{
+						{
+							Username:          "danny",
+							EncryptedPassword: "InternNoMore",
+							SSHKey:            "asdf",
+						},
+					},
+					Suma: image.Suma{
+						Host:          "example.com",
+						ActivationKey: "please?",
+					},
+					Packages: image.Packages{
+						PKGList:         []string{"zsh", "git"},
+						AdditionalRepos: []string{"myrepo.com"},
+						RegCode:         "letMeIn",
+					},
+					Unattended:    true,
+					InstallDevice: "/dev/sda",
+				},
+			},
+		},
+		`all invalid`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					KernelArgs: []string{"foo="},
+					Systemd: image.Systemd{
+						Enable:  []string{"confusedUser"},
+						Disable: []string{"confusedUser"},
+					},
+					Users: []image.OperatingSystemUser{
+						{
+							Username: "danny",
+						},
+					},
+					Suma: image.Suma{
+						ActivationKey: "please?",
+					},
+					Packages: image.Packages{
+						PKGList: []string{"zsh", "git"},
+					},
+					Unattended:    true,
+					InstallDevice: "/dev/sda",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Kernel arguments must be specified as 'key=value'.",
+				"Systemd conflict found, 'confusedUser' is both enabled and disabled.",
+				"User 'danny' must have either a password or SSH key.",
+				"The 'host' field is required for the 'suma' section.",
+				"When including the 'packageList' field, either additional repositories or a registration code must be included.",
+				fmt.Sprintf("The 'unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO),
+				fmt.Sprintf("The 'installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			def := test.Definition
+			ctx := image.Context{
+				ImageDefinition: &def,
+			}
+			failures := validateOperatingSystem(&ctx)
+			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+		})
+	}
+}
 
 func TestIsOperatingSystemDefined(t *testing.T) {
 	tests := map[string]struct {
@@ -102,6 +193,7 @@ func TestValidateKernelArgs(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.userMessage)
+				assert.Equal(t, osComponent, foundValidation.component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -158,6 +250,7 @@ func TestValidateSystemd(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.userMessage)
+				assert.Equal(t, osComponent, foundValidation.component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -230,6 +323,7 @@ func TestValidateUsers(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.userMessage)
+				assert.Equal(t, osComponent, foundValidation.component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -291,6 +385,7 @@ func TestValidateSuma(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.userMessage)
+				assert.Equal(t, osComponent, foundValidation.component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -353,6 +448,73 @@ func TestPackages(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.userMessage)
+				assert.Equal(t, osComponent, foundValidation.component)
+			}
+
+			for _, expectedMessage := range test.ExpectedFailedMessages {
+				assert.Contains(t, foundMessages, expectedMessage)
+			}
+		})
+	}
+}
+
+func TestValidateUnattended(t *testing.T) {
+	tests := map[string]struct {
+		Definition             image.Definition
+		ExpectedFailedMessages []string
+	}{
+		`not included`: {
+			Definition: image.Definition{},
+		},
+		`iso both specified`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeISO,
+				},
+				OperatingSystem: image.OperatingSystem{
+					Unattended:    true,
+					InstallDevice: "/dev/sda",
+				},
+			},
+		},
+		`not iso unattended`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					Unattended: true,
+				},
+			},
+			ExpectedFailedMessages: []string{
+				fmt.Sprintf("The 'unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO),
+			},
+		},
+		`not iso install device`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					InstallDevice: "/dev/sda",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				fmt.Sprintf("The 'installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			def := test.Definition
+			failures := validateUnattended(&def)
+			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+
+			var foundMessages []string
+			for _, foundValidation := range failures {
+				foundMessages = append(foundMessages, foundValidation.userMessage)
+				assert.Equal(t, osComponent, foundValidation.component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {

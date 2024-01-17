@@ -16,7 +16,7 @@ func validateOperatingSystem(ctx *image.Context) []FailedValidation {
 
 	var failures []FailedValidation
 
-	if isOperatingSystemDefined(&def.OperatingSystem) {
+	if !isOperatingSystemDefined(&def.OperatingSystem) {
 		return failures
 	}
 
@@ -25,6 +25,7 @@ func validateOperatingSystem(ctx *image.Context) []FailedValidation {
 	failures = append(failures, validateUsers(&def.OperatingSystem)...)
 	failures = append(failures, validateSuma(&def.OperatingSystem)...)
 	failures = append(failures, validatePackages(&def.OperatingSystem)...)
+	failures = append(failures, validateUnattended(def)...)
 
 	return failures
 }
@@ -189,6 +190,28 @@ func validatePackages(os *image.OperatingSystem) []FailedValidation {
 	if len(os.Packages.PKGList) > 0 && len(os.Packages.AdditionalRepos) == 0 && os.Packages.RegCode == "" {
 		failures = append(failures, FailedValidation{
 			userMessage: "When including the 'packageList' field, either additional repositories or a registration code must be included.",
+			component:   osComponent,
+		})
+	}
+
+	return failures
+}
+
+func validateUnattended(def *image.Definition) []FailedValidation {
+	var failures []FailedValidation
+
+	if def.Image.ImageType != image.TypeISO && def.OperatingSystem.Unattended {
+		msg := fmt.Sprintf("The 'unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO)
+		failures = append(failures, FailedValidation{
+			userMessage: msg,
+			component:   osComponent,
+		})
+	}
+
+	if def.Image.ImageType != image.TypeISO && def.OperatingSystem.InstallDevice != "" {
+		msg := fmt.Sprintf("The 'installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO)
+		failures = append(failures, FailedValidation{
+			userMessage: msg,
 			component:   osComponent,
 		})
 	}
