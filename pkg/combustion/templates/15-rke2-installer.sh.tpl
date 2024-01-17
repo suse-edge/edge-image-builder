@@ -20,7 +20,4 @@ export INSTALL_RKE2_ARTIFACT_PATH={{ .InstallPath }}
 
 ./rke2_installer.sh
 
-echo "export KUBECONFIG=/etc/rancher/rke2/rke2.yaml" >> ~/.bashrc
-echo "export PATH=${PATH}:/var/lib/rancher/rke2/bin" >> ~/.bashrc
-
 systemctl enable rke2-{{ or .NodeType "server" }}.service
