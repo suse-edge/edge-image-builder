@@ -99,7 +99,12 @@ func Configure(ctx *image.Context) error {
 		combustionScripts = append(combustionScripts, scripts...)
 	}
 
-	script, err := assembleScript(combustionScripts)
+	var networkScript string
+	if isComponentConfigured(ctx, networkConfigDir) {
+		networkScript = networkConfigScriptName
+	}
+
+	script, err := assembleScript(combustionScripts, networkScript)
 	if err != nil {
 		return fmt.Errorf("assembling script: %w", err)
 	}
