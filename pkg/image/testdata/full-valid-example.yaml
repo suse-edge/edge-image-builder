@@ -43,15 +43,15 @@ operatingSystem:
     getSSL: false
   packages:
     packageList:
-    - wget2
-    - dpdk22
-    - dpdk22-tools
-    - libdpdk-23
-    - libatomic1
-    - libbpf0
+      - wget2
+      - dpdk22
+      - dpdk22-tools
+      - libdpdk-23
+      - libatomic1
+      - libbpf0
     additionalRepos:
-    - https://download.nvidia.com/suse/sle15sp5/
-    - https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/
+      - https://download.nvidia.com/suse/sle15sp5/
+      - https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/
     registrationCode: INTERNAL-USE-ONLY-foo-bar
 embeddedArtifactRegistry:
   images:
@@ -68,3 +68,6 @@ kubernetes:
   cni: cilium
   multus: true
   vSphere: false
+  manifests:
+    urls:
+      - https://k8s.io/examples/application/nginx-app.yaml

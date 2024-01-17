@@ -165,6 +165,52 @@ func TestValidateKubernetes(t *testing.T) {
 			},
 			expectedErr: "unknown node type: worker",
 		},
+		{
+			name: "Valid manifest URLs",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					CNI:     "cilium",
+					Manifests: Manifests{
+						URLs: []string{
+							"https://k8s.io/examples/application/nginx-app.yaml",
+							"http://localhost:5000/manifest.yaml",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Duplicate manifest URLs",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					CNI:     "cilium",
+					Manifests: Manifests{
+						URLs: []string{
+							"https://k8s.io/examples/application/nginx-app.yaml",
+							"https://k8s.io/examples/application/nginx-app.yaml",
+						},
+					},
+				},
+			},
+			expectedErr: "validating manifest urls: duplicate manifest url found: 'https://k8s.io/examples/application/nginx-app.yaml'",
+		},
+		{
+			name: "Invalid manifest URL",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					CNI:     "cilium",
+					Manifests: Manifests{
+						URLs: []string{
+							"k8s.io/examples/application/nginx-app.yaml",
+						},
+					},
+				},
+			},
+			expectedErr: "validating manifest urls: invalid manifest url, does not start with 'http://' or 'https://'",
+		},
 	}
 
 	for _, test := range tests {

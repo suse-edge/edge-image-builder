@@ -137,6 +137,7 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "cilium", kubernetes.CNI)
 	assert.Equal(t, true, kubernetes.MultusEnabled)
 	assert.Equal(t, false, kubernetes.VSphereEnabled)
+	assert.Equal(t, "https://k8s.io/examples/application/nginx-app.yaml", kubernetes.Manifests.URLs[0])
 }
 
 func TestParseBadConfig(t *testing.T) {
