@@ -28,8 +28,8 @@ const (
 )
 
 var (
-	//go:embed templates/15-rke2-installer.sh.tpl
-	rke2InstallerScript string
+	//go:embed templates/15-rke2-single-node-installer.sh.tpl
+	rke2SingleNodeInstaller string
 )
 
 func configureKubernetes(ctx *image.Context) ([]string, error) {
@@ -125,7 +125,7 @@ func configureRKE2(ctx *image.Context) (string, error) {
 		ImagesPath:  imagesPath,
 	}
 
-	data, err := template.Parse(rke2InstallScript, rke2InstallerScript, &rke2)
+	data, err := template.Parse(rke2InstallScript, rke2SingleNodeInstaller, &rke2)
 	if err != nil {
 		return "", fmt.Errorf("parsing RKE2 install template: %w", err)
 	}
