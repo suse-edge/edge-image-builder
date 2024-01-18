@@ -30,7 +30,7 @@ var haulerManifest string
 var registryScript string
 
 func configureRegistry(ctx *image.Context) ([]string, error) {
-	if image.IsEmbeddedArtifactRegistryEmpty(ctx.ImageDefinition.EmbeddedArtifactRegistry) {
+	if IsEmbeddedArtifactRegistryEmpty(ctx.ImageDefinition.EmbeddedArtifactRegistry) {
 		log.AuditComponentSkipped(registryComponentName)
 		return nil, nil
 	}
@@ -171,4 +171,8 @@ func createRegistryCommand(ctx *image.Context, commandName string, args []string
 	cmd.Stderr = logFile
 
 	return cmd, logFile, nil
+}
+
+func IsEmbeddedArtifactRegistryEmpty(registry image.EmbeddedArtifactRegistry) bool {
+	return len(registry.HelmCharts) == 0 && len(registry.ContainerImages) == 0
 }
