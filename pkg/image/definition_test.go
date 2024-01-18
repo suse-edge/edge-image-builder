@@ -133,7 +133,6 @@ func TestParse(t *testing.T) {
 	// Kubernetes
 	kubernetes := definition.Kubernetes
 	assert.Equal(t, "v1.29.0+rke2r1", kubernetes.Version)
-	assert.Equal(t, "server", kubernetes.NodeType)
 	assert.Equal(t, "https://k8s.io/examples/application/nginx-app.yaml", kubernetes.Manifests.URLs[0])
 
 }

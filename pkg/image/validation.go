@@ -2,7 +2,6 @@ package image
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 )
 
@@ -89,13 +88,6 @@ func validateKubernetes(definition *Definition) error {
 	}
 
 	// TODO: Validate config file
-
-	// Empty string corresponds to a "server" node type
-	supportedNodeTypes := []string{"", KubernetesNodeTypeServer, KubernetesNodeTypeAgent}
-
-	if !slices.Contains(supportedNodeTypes, definition.Kubernetes.NodeType) {
-		return fmt.Errorf("unknown node type: %s", definition.Kubernetes.NodeType)
-	}
 
 	err := validateManifestURLs(&definition.Kubernetes)
 	if err != nil {

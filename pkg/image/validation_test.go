@@ -79,34 +79,6 @@ func TestValidateKubernetes(t *testing.T) {
 		expectedErr string
 	}{
 		{
-			name: "Server node type",
-			definition: &Definition{
-				Kubernetes: Kubernetes{
-					Version:  "v1.29.0+rke2r1",
-					NodeType: "server",
-				},
-			},
-		},
-		{
-			name: "Agent node type",
-			definition: &Definition{
-				Kubernetes: Kubernetes{
-					Version:  "v1.29.0+rke2r1",
-					NodeType: "agent",
-				},
-			},
-		},
-		{
-			name: "Unknown node type",
-			definition: &Definition{
-				Kubernetes: Kubernetes{
-					Version:  "v1.29.0+rke2r1",
-					NodeType: "worker",
-				},
-			},
-			expectedErr: "unknown node type: worker",
-		},
-		{
 			name: "Valid manifest URLs",
 			definition: &Definition{
 				Kubernetes: Kubernetes{
