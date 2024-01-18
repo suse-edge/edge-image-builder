@@ -120,8 +120,9 @@ type HelmChart struct {
 }
 
 type Kubernetes struct {
-	Version        string    `yaml:"version"`
-	NodeType       string    `yaml:"nodeType"`
+	Version   string    `yaml:"version"`
+	NodeType  string    `yaml:"nodeType"`
+	Manifests Manifests `yaml:"manifests"`
 }
 
 type Manifests struct {

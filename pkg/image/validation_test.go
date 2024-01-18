@@ -111,7 +111,6 @@ func TestValidateKubernetes(t *testing.T) {
 			definition: &Definition{
 				Kubernetes: Kubernetes{
 					Version: "v1.29.0+rke2r1",
-					CNI:     "cilium",
 					Manifests: Manifests{
 						URLs: []string{
 							"https://k8s.io/examples/application/nginx-app.yaml",
@@ -126,7 +125,6 @@ func TestValidateKubernetes(t *testing.T) {
 			definition: &Definition{
 				Kubernetes: Kubernetes{
 					Version: "v1.29.0+rke2r1",
-					CNI:     "cilium",
 					Manifests: Manifests{
 						URLs: []string{
 							"https://k8s.io/examples/application/nginx-app.yaml",
@@ -142,7 +140,6 @@ func TestValidateKubernetes(t *testing.T) {
 			definition: &Definition{
 				Kubernetes: Kubernetes{
 					Version: "v1.29.0+rke2r1",
-					CNI:     "cilium",
 					Manifests: Manifests{
 						URLs: []string{
 							"k8s.io/examples/application/nginx-app.yaml",
