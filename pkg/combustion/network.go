@@ -19,10 +19,10 @@ const (
 	// Used for both input component source and
 	// output configurations subdirectory under combustion.
 	networkConfigDir        = "network"
-	networkConfigScriptName = "configure-network.sh"
+	networkConfigScriptName = "03-configure-network.sh"
 )
 
-//go:embed templates/configure-network.sh.tpl
+//go:embed templates/03-configure-network.sh.tpl
 var configureNetworkScript string
 
 // Configures the network component if enabled.
@@ -45,7 +45,7 @@ var configureNetworkScript string
 //	│   │   └── eth1.nmconnection
 //	│   └── host_config.yaml
 //	├── nmc
-//	└── configure-network.sh
+//	└── 03-configure-network.sh
 func configureNetwork(ctx *image.Context) ([]string, error) {
 	zap.S().Info("Configuring network component...")
 

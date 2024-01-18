@@ -5,15 +5,28 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+
+	"github.com/suse-edge/edge-image-builder/pkg/template"
 )
 
-//go:embed templates/script-base.sh
+//go:embed templates/script-base.sh.tpl
 var combustionScriptBase string
 
-func assembleScript(scripts []string) (string, error) {
+func assembleScript(scripts []string, networkScript string) (string, error) {
 	b := new(strings.Builder)
 
-	_, err := b.WriteString(combustionScriptBase)
+	values := struct {
+		NetworkScript string
+	}{
+		NetworkScript: networkScript,
+	}
+
+	data, err := template.Parse("combustion-base", combustionScriptBase, values)
+	if err != nil {
+		return "", fmt.Errorf("parsing combustion base template: %w", err)
+	}
+
+	_, err = b.WriteString(data)
 	if err != nil {
 		return "", fmt.Errorf("writing script base: %w", err)
 	}
