@@ -65,6 +65,3 @@ embeddedArtifactRegistry:
 kubernetes:
   version: v1.29.0+rke2r1
   nodeType: server
-  cni: cilium
-  multus: true
-  vSphere: false
