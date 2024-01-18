@@ -1,0 +1,50 @@
+apiVersion: "custom.example.com/v1"
+kind: ComplexApplication
+metadata:
+  name: my-complex-app
+  labels:
+    app: complex-application
+spec:
+  components:
+    - name: web-frontend
+      type: frontend
+      containers:
+        - name: nginx-container
+          image: nginx:latest
+        - name: frontend-builder
+          image: node:14
+      settings:
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+    - name: api-server
+      type: backend
+      containers:
+        - name: api-container
+          image: custom-api:1.2.3
+      settings:
+        resources:
+          limits:
+            cpu: "1"
+            memory: "512Mi"
+  database:
+    type: sql
+    version: "5.7"
+    containers:
+      - name: sql-container
+        image: mysql:5.7
+    settings:
+      storage:
+        size: "10Gi"
+  caching:
+    type: redis
+    containers:
+      - name: redis-container
+        image: redis:6.0
+      - name: sql-container
+        image: mysql:5.7
+
+    settings:
+      memory:
+        max: "256Mi"
