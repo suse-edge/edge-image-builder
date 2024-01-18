@@ -97,6 +97,32 @@ func validateKubernetes(definition *Definition) error {
 		return fmt.Errorf("unknown node type: %s", definition.Kubernetes.NodeType)
 	}
 
+	err := validateManifestURLs(&definition.Kubernetes)
+	if err != nil {
+		return fmt.Errorf("validating manifest urls: %w", err)
+	}
+
+	return nil
+}
+
+func validateManifestURLs(kubernetes *Kubernetes) error {
+	if len(kubernetes.Manifests.URLs) == 0 {
+		return nil
+	}
+	seenManifests := make(map[string]bool)
+
+	for _, manifest := range kubernetes.Manifests.URLs {
+		if !strings.HasPrefix(manifest, "http") {
+			return fmt.Errorf("invalid manifest url, does not start with 'http://' or 'https://'")
+		}
+
+		if _, exists := seenManifests[manifest]; exists {
+			return fmt.Errorf("duplicate manifest url found: '%s'", manifest)
+		}
+
+		seenManifests[manifest] = true
+	}
+
 	return nil
 }
 
