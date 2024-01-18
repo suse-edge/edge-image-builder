@@ -122,10 +122,6 @@ type HelmChart struct {
 type Kubernetes struct {
 	Version        string    `yaml:"version"`
 	NodeType       string    `yaml:"nodeType"`
-	CNI            string    `yaml:"cni"`
-	MultusEnabled  bool      `yaml:"multus"`
-	VSphereEnabled bool      `yaml:"vSphere"`
-	Manifests      Manifests `yaml:"manifests"`
 }
 
 type Manifests struct {

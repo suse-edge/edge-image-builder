@@ -27,15 +27,13 @@ const (
 	rke2CanalImages  = "rke2-images-canal.linux-%s.tar.zst"
 	rke2CiliumImages = "rke2-images-cilium.linux-%s.tar.zst"
 	rke2MultusImages = "rke2-images-multus.linux-%s.tar.zst"
-
-	rke2VSphereImages = "rke2-images-vsphere.linux-%s.tar.zst"
 )
 
 type ArtefactDownloader struct{}
 
-func (d ArtefactDownloader) DownloadArtefacts(kubernetes image.Kubernetes, arch image.Arch, destinationPath string) (installPath, imagesPath string, err error) {
-	if !strings.Contains(kubernetes.Version, image.KubernetesDistroRKE2) {
-		return "", "", fmt.Errorf("kubernetes version '%s' is not supported", kubernetes.Version)
+func (d ArtefactDownloader) DownloadArtefacts(arch image.Arch, version, cni string, multusEnabled bool, destinationPath string) (installPath, imagesPath string, err error) {
+	if !strings.Contains(version, image.KubernetesDistroRKE2) {
+		return "", "", fmt.Errorf("kubernetes version '%s' is not supported", version)
 	}
 
 	if arch == image.ArchTypeARM {
@@ -54,17 +52,17 @@ func (d ArtefactDownloader) DownloadArtefacts(kubernetes image.Kubernetes, arch 
 		return "", "", fmt.Errorf("creating kubernetes install dir: %w", err)
 	}
 
-	artefacts, err := imageArtefacts(kubernetes, arch)
+	artefacts, err := imageArtefacts(cni, multusEnabled, arch)
 	if err != nil {
 		return "", "", fmt.Errorf("gathering RKE2 image artefacts: %w", err)
 	}
 
-	if err = downloadArtefacts(artefacts, rke2ReleaseURL, kubernetes.Version, imagesDestination); err != nil {
+	if err = downloadArtefacts(artefacts, rke2ReleaseURL, version, imagesDestination); err != nil {
 		return "", "", fmt.Errorf("downloading RKE2 image artefacts: %w", err)
 	}
 
 	artefacts = installerArtefacts(arch)
-	if err = downloadArtefacts(artefacts, rke2ReleaseURL, kubernetes.Version, installDestination); err != nil {
+	if err = downloadArtefacts(artefacts, rke2ReleaseURL, version, installDestination); err != nil {
 		return "", "", fmt.Errorf("downloading RKE2 install artefacts: %w", err)
 	}
 
@@ -80,14 +78,14 @@ func installerArtefacts(arch image.Arch) []string {
 	}
 }
 
-func imageArtefacts(kubernetes image.Kubernetes, arch image.Arch) ([]string, error) {
+func imageArtefacts(cni string, multusEnabled bool, arch image.Arch) ([]string, error) {
 	artefactArch := arch.Short()
 
 	var artefacts []string
 
 	artefacts = append(artefacts, fmt.Sprintf(rke2CoreImages, artefactArch))
 
-	switch kubernetes.CNI {
+	switch cni {
 	case "":
 		return nil, fmt.Errorf("CNI not specified")
 	case image.CNITypeNone:
@@ -104,21 +102,14 @@ func imageArtefacts(kubernetes image.Kubernetes, arch image.Arch) ([]string, err
 		}
 		artefacts = append(artefacts, fmt.Sprintf(rke2CiliumImages, artefactArch))
 	default:
-		return nil, fmt.Errorf("unsupported CNI: %s", kubernetes.CNI)
+		return nil, fmt.Errorf("unsupported CNI: %s", cni)
 	}
 
-	if kubernetes.MultusEnabled {
+	if multusEnabled {
 		if arch == image.ArchTypeARM {
 			return nil, fmt.Errorf("multus is not supported on %s platforms", arch)
 		}
 		artefacts = append(artefacts, fmt.Sprintf(rke2MultusImages, artefactArch))
-	}
-
-	if kubernetes.VSphereEnabled {
-		if arch == image.ArchTypeARM {
-			return nil, fmt.Errorf("vSphere is not supported on %s platforms", arch)
-		}
-		artefacts = append(artefacts, fmt.Sprintf(rke2VSphereImages, artefactArch))
 	}
 
 	return artefacts, nil

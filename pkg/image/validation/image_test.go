@@ -92,6 +92,7 @@ func TestValidateImage(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failedValidations {
 				foundMessages = append(foundMessages, foundValidation.userMessage)
+				assert.Equal(t, imageComponent, foundValidation.component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {

@@ -65,9 +65,6 @@ embeddedArtifactRegistry:
 kubernetes:
   version: v1.29.0+rke2r1
   nodeType: server
-  cni: cilium
-  multus: true
-  vSphere: false
   manifests:
     urls:
       - https://k8s.io/examples/application/nginx-app.yaml

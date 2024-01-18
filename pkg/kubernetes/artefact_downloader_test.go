@@ -19,30 +19,26 @@ func TestInstallerArtefacts(t *testing.T) {
 func TestImageArtefacts(t *testing.T) {
 	tests := []struct {
 		name              string
-		kubernetes        image.Kubernetes
+		cni               string
+		multusEnabled     bool
 		arch              image.Arch
 		expectedArtefacts []string
 		expectedError     string
 	}{
 		{
 			name:          "CNI not specified",
-			kubernetes:    image.Kubernetes{},
 			arch:          image.ArchTypeX86,
 			expectedError: "CNI not specified",
 		},
 		{
-			name: "CNI not supported",
-			kubernetes: image.Kubernetes{
-				CNI: "flannel",
-			},
+			name:          "CNI not supported",
+			cni:           "flannel",
 			arch:          image.ArchTypeX86,
 			expectedError: "unsupported CNI: flannel",
 		},
 		{
 			name: "x86_64 artefacts without CNI",
-			kubernetes: image.Kubernetes{
-				CNI: image.CNITypeNone,
-			},
+			cni:  image.CNITypeNone,
 			arch: image.ArchTypeX86,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-amd64.tar.zst",
@@ -50,9 +46,7 @@ func TestImageArtefacts(t *testing.T) {
 		},
 		{
 			name: "x86_64 artefacts with canal CNI",
-			kubernetes: image.Kubernetes{
-				CNI: image.CNITypeCanal,
-			},
+			cni:  image.CNITypeCanal,
 			arch: image.ArchTypeX86,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-amd64.tar.zst",
@@ -61,9 +55,7 @@ func TestImageArtefacts(t *testing.T) {
 		},
 		{
 			name: "x86_64 artefacts with calico CNI",
-			kubernetes: image.Kubernetes{
-				CNI: image.CNITypeCalico,
-			},
+			cni:  image.CNITypeCalico,
 			arch: image.ArchTypeX86,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-amd64.tar.zst",
@@ -72,9 +64,7 @@ func TestImageArtefacts(t *testing.T) {
 		},
 		{
 			name: "x86_64 artefacts with cilium CNI",
-			kubernetes: image.Kubernetes{
-				CNI: image.CNITypeCilium,
-			},
+			cni:  image.CNITypeCilium,
 			arch: image.ArchTypeX86,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-amd64.tar.zst",
@@ -82,25 +72,19 @@ func TestImageArtefacts(t *testing.T) {
 			},
 		},
 		{
-			name: "x86_64 artefacts with cilium CNI + multus + vSphere",
-			kubernetes: image.Kubernetes{
-				CNI:            image.CNITypeCilium,
-				MultusEnabled:  true,
-				VSphereEnabled: true,
-			},
-			arch: image.ArchTypeX86,
+			name:          "x86_64 artefacts with cilium CNI + multus",
+			cni:           image.CNITypeCilium,
+			multusEnabled: true,
+			arch:          image.ArchTypeX86,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-amd64.tar.zst",
 				"rke2-images-cilium.linux-amd64.tar.zst",
 				"rke2-images-multus.linux-amd64.tar.zst",
-				"rke2-images-vsphere.linux-amd64.tar.zst",
 			},
 		},
 		{
 			name: "aarch64 artefacts for CNI none",
-			kubernetes: image.Kubernetes{
-				CNI: image.CNITypeNone,
-			},
+			cni:  image.CNITypeNone,
 			arch: image.ArchTypeARM,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-arm64.tar.zst",
@@ -108,9 +92,7 @@ func TestImageArtefacts(t *testing.T) {
 		},
 		{
 			name: "aarch64 artefacts with canal CNI",
-			kubernetes: image.Kubernetes{
-				CNI: image.CNITypeCanal,
-			},
+			cni:  image.CNITypeCanal,
 			arch: image.ArchTypeARM,
 			expectedArtefacts: []string{
 				"rke2-images-core.linux-arm64.tar.zst",
@@ -118,44 +100,29 @@ func TestImageArtefacts(t *testing.T) {
 			},
 		},
 		{
-			name: "aarch64 artefacts with calico CNI",
-			kubernetes: image.Kubernetes{
-				CNI: image.CNITypeCalico,
-			},
+			name:          "aarch64 artefacts with calico CNI",
+			cni:           image.CNITypeCalico,
 			arch:          image.ArchTypeARM,
 			expectedError: "calico is not supported on aarch64 platforms",
 		},
 		{
-			name: "aarch64 artefacts with cilium CNI",
-			kubernetes: image.Kubernetes{
-				CNI: image.CNITypeCilium,
-			},
+			name:          "aarch64 artefacts with cilium CNI",
+			cni:           image.CNITypeCilium,
 			arch:          image.ArchTypeARM,
 			expectedError: "cilium is not supported on aarch64 platforms",
 		},
 		{
-			name: "aarch64 artefacts with canal CNI + multus",
-			kubernetes: image.Kubernetes{
-				CNI:           image.CNITypeCanal,
-				MultusEnabled: true,
-			},
+			name:          "aarch64 artefacts with canal CNI + multus",
+			cni:           image.CNITypeCanal,
+			multusEnabled: true,
 			arch:          image.ArchTypeARM,
 			expectedError: "multus is not supported on aarch64 platforms",
-		},
-		{
-			name: "aarch64 artefacts with canal CNI + vSphere",
-			kubernetes: image.Kubernetes{
-				CNI:            image.CNITypeCanal,
-				VSphereEnabled: true,
-			},
-			arch:          image.ArchTypeARM,
-			expectedError: "vSphere is not supported on aarch64 platforms",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			artefacts, err := imageArtefacts(test.kubernetes, test.arch)
+			artefacts, err := imageArtefacts(test.cni, test.multusEnabled, test.arch)
 
 			if test.expectedError != "" {
 				require.EqualError(t, err, test.expectedError)

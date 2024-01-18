@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-
-	"github.com/suse-edge/edge-image-builder/pkg/log"
 )
 
 func ValidateDefinition(definition *Definition) error {
@@ -90,14 +88,7 @@ func validateKubernetes(definition *Definition) error {
 		return nil
 	}
 
-	supportedCNIs := []string{CNITypeNone, CNITypeCanal, CNITypeCalico, CNITypeCilium}
-
-	if definition.Kubernetes.CNI == "" {
-		log.Audit("Kubernetes CNI was not specified. Please set \"cni: none\" if you intend to use your own")
-		return fmt.Errorf("CNI not specified")
-	} else if !slices.Contains(supportedCNIs, definition.Kubernetes.CNI) {
-		return fmt.Errorf("CNI '%s' is not supported", definition.Kubernetes.CNI)
-	}
+	// TODO: Validate config file
 
 	// Empty string corresponds to a "server" node type
 	supportedNodeTypes := []string{"", KubernetesNodeTypeServer, KubernetesNodeTypeAgent}
