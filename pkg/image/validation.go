@@ -90,14 +90,6 @@ func validateKubernetes(definition *Definition) error {
 
 	// TODO: Validate config file(s?)
 
-	if definition.Kubernetes.Network.APIVIP == "" {
-		return fmt.Errorf("virtual API address is not provided")
-	}
-
-	if definition.Kubernetes.Network.APIHost == "" {
-		return fmt.Errorf("API host is not provided")
-	}
-
 	if err := validateNodes(&definition.Kubernetes); err != nil {
 		return fmt.Errorf("validating nodes: %w", err)
 	}
@@ -124,6 +116,14 @@ func validateNodes(kubernetes *Kubernetes) error {
 			return fmt.Errorf("node hostname cannot be empty")
 		}
 	default:
+		if kubernetes.Network.APIVIP == "" {
+			return fmt.Errorf("virtual API address is not provided")
+		}
+
+		if kubernetes.Network.APIHost == "" {
+			return fmt.Errorf("API host is not provided")
+		}
+
 		var nodeTypes []string
 		var nodeNames []string
 		var firstNodes []string

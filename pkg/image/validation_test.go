@@ -79,27 +79,6 @@ func TestValidateKubernetes(t *testing.T) {
 		expectedErr string
 	}{
 		{
-			name: "Empty VIP",
-			definition: &Definition{
-				Kubernetes: Kubernetes{
-					Version: "v1.29.0+rke2r1",
-				},
-			},
-			expectedErr: "virtual API address is not provided",
-		},
-		{
-			name: "Empty API host",
-			definition: &Definition{
-				Kubernetes: Kubernetes{
-					Version: "v1.29.0+rke2r1",
-					Network: Network{
-						APIVIP: "192.168.0.1",
-					},
-				},
-			},
-			expectedErr: "API host is not provided",
-		},
-		{
 			name: "Empty node list",
 			definition: &Definition{
 				Kubernetes: Kubernetes{
@@ -210,6 +189,47 @@ func TestValidateKubernetes(t *testing.T) {
 				},
 			},
 			expectedErr: "validating nodes: invalid node type: worker",
+		},
+		{
+			name: "Multi node empty VIP",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+						},
+						{
+							Type:     "agent",
+							Hostname: "node2.suse.com",
+						},
+					},
+				},
+			},
+			expectedErr: "validating nodes: virtual API address is not provided",
+		},
+		{
+			name: "Multi node empty API host",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP: "192.168.0.1",
+					},
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+						},
+						{
+							Type:     "agent",
+							Hostname: "node2.suse.com",
+						},
+					},
+				},
+			},
+			expectedErr: "validating nodes: API host is not provided",
 		},
 		{
 			name: "Multi node duplicate node hostnames",
