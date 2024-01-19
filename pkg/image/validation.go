@@ -102,64 +102,55 @@ func validateKubernetes(definition *Definition) error {
 }
 
 func validateNodes(kubernetes *Kubernetes) error {
-	switch len(kubernetes.Nodes) {
-	case 0:
-		return fmt.Errorf("node list is empty")
-	case 1:
-		node := kubernetes.Nodes[0]
+	n := len(kubernetes.Nodes)
+	if n == 0 || n == 1 {
+		// Single node cluster, node configurations are not required
+		return nil
+	}
 
-		if node.Type != KubernetesNodeTypeServer {
-			return fmt.Errorf("node type in single node cluster must be 'server'")
-		}
+	if kubernetes.Network.APIVIP == "" {
+		return fmt.Errorf("virtual API address is not provided")
+	}
 
+	if kubernetes.Network.APIHost == "" {
+		return fmt.Errorf("API host is not provided")
+	}
+
+	var nodeTypes []string
+	var nodeNames []string
+	var firstNodes []string
+
+	for _, node := range kubernetes.Nodes {
 		if node.Hostname == "" {
 			return fmt.Errorf("node hostname cannot be empty")
 		}
-	default:
-		if kubernetes.Network.APIVIP == "" {
-			return fmt.Errorf("virtual API address is not provided")
+
+		if node.Type != KubernetesNodeTypeServer && node.Type != KubernetesNodeTypeAgent {
+			return fmt.Errorf("invalid node type: %s", node.Type)
 		}
 
-		if kubernetes.Network.APIHost == "" {
-			return fmt.Errorf("API host is not provided")
-		}
+		if node.First {
+			firstNodes = append(firstNodes, node.Hostname)
 
-		var nodeTypes []string
-		var nodeNames []string
-		var firstNodes []string
-
-		for _, node := range kubernetes.Nodes {
-			if node.Hostname == "" {
-				return fmt.Errorf("node hostname cannot be empty")
+			if node.Type == KubernetesNodeTypeAgent {
+				return fmt.Errorf("agent nodes cannot be cluster initialisers: %s", node.Hostname)
 			}
-
-			if node.Type != KubernetesNodeTypeServer && node.Type != KubernetesNodeTypeAgent {
-				return fmt.Errorf("invalid node type: %s", node.Type)
-			}
-
-			if node.First {
-				firstNodes = append(firstNodes, node.Hostname)
-
-				if node.Type == KubernetesNodeTypeAgent {
-					return fmt.Errorf("agent nodes cannot be cluster initialisers: %s", node.Hostname)
-				}
-			}
-
-			nodeNames = append(nodeNames, node.Hostname)
-			nodeTypes = append(nodeTypes, node.Type)
 		}
 
-		if duplicate := checkForDuplicates(nodeNames); duplicate != "" {
-			return fmt.Errorf("node list contains duplicate: %s", duplicate)
-		}
+		nodeNames = append(nodeNames, node.Hostname)
+		nodeTypes = append(nodeTypes, node.Type)
+	}
 
-		if !slices.Contains(nodeTypes, KubernetesNodeTypeServer) {
-			return fmt.Errorf("cluster of only agent nodes cannot be formed")
-		}
+	if duplicate := checkForDuplicates(nodeNames); duplicate != "" {
+		return fmt.Errorf("node list contains duplicate: %s", duplicate)
+	}
 
-		if len(firstNodes) > 1 {
-			return fmt.Errorf("only one node can be cluster initialiser")
-		}
+	if !slices.Contains(nodeTypes, KubernetesNodeTypeServer) {
+		return fmt.Errorf("cluster of only agent nodes cannot be formed")
+	}
+
+	if len(firstNodes) > 1 {
+		return fmt.Errorf("only one node can be cluster initialiser")
 	}
 
 	return nil

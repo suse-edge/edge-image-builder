@@ -79,69 +79,10 @@ func TestValidateKubernetes(t *testing.T) {
 		expectedErr string
 	}{
 		{
-			name: "Empty node list",
-			definition: &Definition{
-				Kubernetes: Kubernetes{
-					Version: "v1.29.0+rke2r1",
-					Network: Network{
-						APIVIP:  "192.168.0.1",
-						APIHost: "api.cluster01.hosted.on.edge.suse.com",
-					},
-				},
-			},
-			expectedErr: "validating nodes: node list is empty",
-		},
-		{
-			name: "Invalid single node type",
-			definition: &Definition{
-				Kubernetes: Kubernetes{
-					Version: "v1.29.0+rke2r1",
-					Network: Network{
-						APIVIP:  "192.168.0.1",
-						APIHost: "api.cluster01.hosted.on.edge.suse.com",
-					},
-					Nodes: []Node{
-						{
-							Type: "agent",
-						},
-					},
-				},
-			},
-			expectedErr: "validating nodes: node type in single node cluster must be 'server'",
-		},
-		{
-			name: "Single node empty hostname",
-			definition: &Definition{
-				Kubernetes: Kubernetes{
-					Version: "v1.29.0+rke2r1",
-					Network: Network{
-						APIVIP:  "192.168.0.1",
-						APIHost: "api.cluster01.hosted.on.edge.suse.com",
-					},
-					Nodes: []Node{
-						{
-							Type: "server",
-						},
-					},
-				},
-			},
-			expectedErr: "validating nodes: node hostname cannot be empty",
-		},
-		{
 			name: "Valid single node",
 			definition: &Definition{
 				Kubernetes: Kubernetes{
 					Version: "v1.29.0+rke2r1",
-					Network: Network{
-						APIVIP:  "192.168.0.1",
-						APIHost: "api.cluster01.hosted.on.edge.suse.com",
-					},
-					Nodes: []Node{
-						{
-							Type:     "server",
-							Hostname: "node1.suse.com",
-						},
-					},
 				},
 			},
 		},
