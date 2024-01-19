@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	imageComponent = "image"
+	imageComponent = "Image"
 )
 
 func validateImage(ctx *image.Context) []FailedValidation {
