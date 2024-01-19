@@ -110,7 +110,7 @@ func TestValidateKubernetes(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "node list is empty",
+			expectedErr: "validating nodes: node list is empty",
 		},
 		{
 			name: "Invalid single node type",
@@ -128,7 +128,7 @@ func TestValidateKubernetes(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "node type in single node cluster must be 'server'",
+			expectedErr: "validating nodes: node type in single node cluster must be 'server'",
 		},
 		{
 			name: "Single node empty hostname",
@@ -146,7 +146,7 @@ func TestValidateKubernetes(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "node hostname cannot be empty",
+			expectedErr: "validating nodes: node hostname cannot be empty",
 		},
 		{
 			name: "Valid single node",
@@ -186,7 +186,7 @@ func TestValidateKubernetes(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "node hostname cannot be empty",
+			expectedErr: "validating nodes: node hostname cannot be empty",
 		},
 		{
 			name: "Multi node invalid type",
@@ -209,7 +209,7 @@ func TestValidateKubernetes(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "invalid node type: worker",
+			expectedErr: "validating nodes: invalid node type: worker",
 		},
 		{
 			name: "Multi node duplicate node hostnames",
@@ -232,7 +232,7 @@ func TestValidateKubernetes(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "node list contains duplicate: node1.suse.com",
+			expectedErr: "validating nodes: node list contains duplicate: node1.suse.com",
 		},
 		{
 			name: "Multi node agents only",
@@ -255,7 +255,56 @@ func TestValidateKubernetes(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "cluster of only agent nodes cannot be formed",
+			expectedErr: "validating nodes: cluster of only agent nodes cannot be formed",
+		},
+		{
+			name: "Multi node agent initialiser",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+						},
+						{
+							Type:     "agent",
+							Hostname: "node2.suse.com",
+							First:    true,
+						},
+					},
+				},
+			},
+			expectedErr: "validating nodes: agent nodes cannot be cluster initialisers: node2.suse.com",
+		},
+		{
+			name: "Multi node multiple initialisers",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+							First:    true,
+						},
+						{
+							Type:     "server",
+							Hostname: "node2.suse.com",
+							First:    true,
+						},
+					},
+				},
+			},
+			expectedErr: "validating nodes: only one node can be cluster initialiser",
 		},
 		{
 			name: "Valid multi node",
@@ -270,6 +319,7 @@ func TestValidateKubernetes(t *testing.T) {
 						{
 							Type:     "server",
 							Hostname: "node1.suse.com",
+							First:    true,
 						},
 						{
 							Type:     "agent",

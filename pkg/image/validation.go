@@ -98,11 +98,23 @@ func validateKubernetes(definition *Definition) error {
 		return fmt.Errorf("API host is not provided")
 	}
 
-	switch len(definition.Kubernetes.Nodes) {
+	if err := validateNodes(&definition.Kubernetes); err != nil {
+		return fmt.Errorf("validating nodes: %w", err)
+	}
+
+	if err := validateManifestURLs(&definition.Kubernetes); err != nil {
+		return fmt.Errorf("validating manifest urls: %w", err)
+	}
+
+	return nil
+}
+
+func validateNodes(kubernetes *Kubernetes) error {
+	switch len(kubernetes.Nodes) {
 	case 0:
 		return fmt.Errorf("node list is empty")
 	case 1:
-		node := definition.Kubernetes.Nodes[0]
+		node := kubernetes.Nodes[0]
 
 		if node.Type != KubernetesNodeTypeServer {
 			return fmt.Errorf("node type in single node cluster must be 'server'")
@@ -114,14 +126,23 @@ func validateKubernetes(definition *Definition) error {
 	default:
 		var nodeTypes []string
 		var nodeNames []string
+		var firstNodes []string
 
-		for _, node := range definition.Kubernetes.Nodes {
+		for _, node := range kubernetes.Nodes {
 			if node.Hostname == "" {
 				return fmt.Errorf("node hostname cannot be empty")
 			}
 
 			if node.Type != KubernetesNodeTypeServer && node.Type != KubernetesNodeTypeAgent {
 				return fmt.Errorf("invalid node type: %s", node.Type)
+			}
+
+			if node.First {
+				firstNodes = append(firstNodes, node.Hostname)
+
+				if node.Type == KubernetesNodeTypeAgent {
+					return fmt.Errorf("agent nodes cannot be cluster initialisers: %s", node.Hostname)
+				}
 			}
 
 			nodeNames = append(nodeNames, node.Hostname)
@@ -135,11 +156,10 @@ func validateKubernetes(definition *Definition) error {
 		if !slices.Contains(nodeTypes, KubernetesNodeTypeServer) {
 			return fmt.Errorf("cluster of only agent nodes cannot be formed")
 		}
-	}
 
-	err := validateManifestURLs(&definition.Kubernetes)
-	if err != nil {
-		return fmt.Errorf("validating manifest urls: %w", err)
+		if len(firstNodes) > 1 {
+			return fmt.Errorf("only one node can be cluster initialiser")
+		}
 	}
 
 	return nil
