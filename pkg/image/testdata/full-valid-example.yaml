@@ -70,6 +70,15 @@ kubernetes:
   nodes:
     - hostname: node1.suse.com
       type: server
+    - hostname: node2.suse.com
+      type: server
+      firstNode: true
+    - hostname: node3.suse.com
+      type: agent
+    - hostname: node4.suse.com
+      type: server
+    - hostname: node5.suse.com
+      type: agent
   manifests:
     urls:
       - https://k8s.io/examples/application/nginx-app.yaml
