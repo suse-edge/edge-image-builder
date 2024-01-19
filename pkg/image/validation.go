@@ -2,6 +2,7 @@ package image
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -87,7 +88,54 @@ func validateKubernetes(definition *Definition) error {
 		return nil
 	}
 
-	// TODO: Validate config file
+	// TODO: Validate config file(s?)
+
+	if definition.Kubernetes.Network.APIVIP == "" {
+		return fmt.Errorf("virtual API address is not provided")
+	}
+
+	if definition.Kubernetes.Network.APIHost == "" {
+		return fmt.Errorf("API host is not provided")
+	}
+
+	switch len(definition.Kubernetes.Nodes) {
+	case 0:
+		return fmt.Errorf("node list is empty")
+	case 1:
+		node := definition.Kubernetes.Nodes[0]
+
+		if node.Type != KubernetesNodeTypeServer {
+			return fmt.Errorf("node type in single node cluster must be 'server'")
+		}
+
+		if node.Hostname == "" {
+			return fmt.Errorf("node hostname cannot be empty")
+		}
+	default:
+		var nodeTypes []string
+		var nodeNames []string
+
+		for _, node := range definition.Kubernetes.Nodes {
+			if node.Hostname == "" {
+				return fmt.Errorf("node hostname cannot be empty")
+			}
+
+			if node.Type != KubernetesNodeTypeServer && node.Type != KubernetesNodeTypeAgent {
+				return fmt.Errorf("invalid node type: %s", node.Type)
+			}
+
+			nodeNames = append(nodeNames, node.Hostname)
+			nodeTypes = append(nodeTypes, node.Type)
+		}
+
+		if duplicate := checkForDuplicates(nodeNames); duplicate != "" {
+			return fmt.Errorf("node list contains duplicate: %s", duplicate)
+		}
+
+		if !slices.Contains(nodeTypes, KubernetesNodeTypeServer) {
+			return fmt.Errorf("cluster of only agent nodes cannot be formed")
+		}
+	}
 
 	err := validateManifestURLs(&definition.Kubernetes)
 	if err != nil {

@@ -79,10 +79,221 @@ func TestValidateKubernetes(t *testing.T) {
 		expectedErr string
 	}{
 		{
+			name: "Empty VIP",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+				},
+			},
+			expectedErr: "virtual API address is not provided",
+		},
+		{
+			name: "Empty API host",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP: "192.168.0.1",
+					},
+				},
+			},
+			expectedErr: "API host is not provided",
+		},
+		{
+			name: "Empty node list",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+				},
+			},
+			expectedErr: "node list is empty",
+		},
+		{
+			name: "Invalid single node type",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type: "agent",
+						},
+					},
+				},
+			},
+			expectedErr: "node type in single node cluster must be 'server'",
+		},
+		{
+			name: "Single node empty hostname",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type: "server",
+						},
+					},
+				},
+			},
+			expectedErr: "node hostname cannot be empty",
+		},
+		{
+			name: "Valid single node",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "Multi node empty hostname",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+						},
+						{
+							Type: "server",
+						},
+					},
+				},
+			},
+			expectedErr: "node hostname cannot be empty",
+		},
+		{
+			name: "Multi node invalid type",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+						},
+						{
+							Type:     "worker",
+							Hostname: "node2.suse.com",
+						},
+					},
+				},
+			},
+			expectedErr: "invalid node type: worker",
+		},
+		{
+			name: "Multi node duplicate node hostnames",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+						},
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+						},
+					},
+				},
+			},
+			expectedErr: "node list contains duplicate: node1.suse.com",
+		},
+		{
+			name: "Multi node agents only",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type:     "agent",
+							Hostname: "node1.suse.com",
+						},
+						{
+							Type:     "agent",
+							Hostname: "node2.suse.com",
+						},
+					},
+				},
+			},
+			expectedErr: "cluster of only agent nodes cannot be formed",
+		},
+		{
+			name: "Valid multi node",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+						},
+						{
+							Type:     "agent",
+							Hostname: "node2.suse.com",
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "Valid manifest URLs",
 			definition: &Definition{
 				Kubernetes: Kubernetes{
 					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Hostname: "node1.suse.com",
+							Type:     "server",
+						},
+					},
 					Manifests: Manifests{
 						URLs: []string{
 							"https://k8s.io/examples/application/nginx-app.yaml",
@@ -97,6 +308,16 @@ func TestValidateKubernetes(t *testing.T) {
 			definition: &Definition{
 				Kubernetes: Kubernetes{
 					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Hostname: "node1.suse.com",
+							Type:     "server",
+						},
+					},
 					Manifests: Manifests{
 						URLs: []string{
 							"https://k8s.io/examples/application/nginx-app.yaml",
@@ -112,6 +333,16 @@ func TestValidateKubernetes(t *testing.T) {
 			definition: &Definition{
 				Kubernetes: Kubernetes{
 					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Hostname: "node1.suse.com",
+							Type:     "server",
+						},
+					},
 					Manifests: Manifests{
 						URLs: []string{
 							"k8s.io/examples/application/nginx-app.yaml",
