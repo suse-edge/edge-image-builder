@@ -133,8 +133,13 @@ func TestParse(t *testing.T) {
 	// Kubernetes
 	kubernetes := definition.Kubernetes
 	assert.Equal(t, "v1.29.0+rke2r1", kubernetes.Version)
+	assert.Equal(t, "192.168.122.100", kubernetes.Network.APIVIP)
+	assert.Equal(t, "api.cluster01.hosted.on.edge.suse.com", kubernetes.Network.APIHost)
+	require.Len(t, kubernetes.Nodes, 1)
+	assert.Equal(t, "node1.suse.com", kubernetes.Nodes[0].Hostname)
+	assert.Equal(t, "server", kubernetes.Nodes[0].Type)
+	assert.Equal(t, false, kubernetes.Nodes[0].First)
 	assert.Equal(t, "https://k8s.io/examples/application/nginx-app.yaml", kubernetes.Manifests.URLs[0])
-
 }
 
 func TestParseBadConfig(t *testing.T) {

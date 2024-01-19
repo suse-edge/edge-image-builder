@@ -121,7 +121,20 @@ type HelmChart struct {
 
 type Kubernetes struct {
 	Version   string    `yaml:"version"`
+	Network   Network   `yaml:"network"`
+	Nodes     []Node    `yaml:"nodes"`
 	Manifests Manifests `yaml:"manifests"`
+}
+
+type Network struct {
+	APIHost string `yaml:"apiHost"`
+	APIVIP  string `yaml:"apiVIP"`
+}
+
+type Node struct {
+	Hostname string `yaml:"hostname"`
+	Type     string `yaml:"type"`
+	First    bool   `yaml:"firstNode"`
 }
 
 type Manifests struct {

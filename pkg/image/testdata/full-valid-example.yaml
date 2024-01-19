@@ -64,7 +64,12 @@ embeddedArtifactRegistry:
       version: 2.8.0
 kubernetes:
   version: v1.29.0+rke2r1
-  nodeType: server
+  network:
+    apiVIP: 192.168.122.100
+    apiHost: api.cluster01.hosted.on.edge.suse.com
+  nodes:
+    - hostname: node1.suse.com
+      type: server
   manifests:
     urls:
       - https://k8s.io/examples/application/nginx-app.yaml
