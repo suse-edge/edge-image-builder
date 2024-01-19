@@ -77,8 +77,8 @@ func TestValidateKubernetes(t *testing.T) {
 
 			var foundMessages []string
 			for _, foundValidation := range failures {
-				foundMessages = append(foundMessages, foundValidation.userMessage)
-				assert.Equal(t, k8sComponent, foundValidation.component)
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+				assert.Equal(t, k8sComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -294,8 +294,8 @@ func TestValidateNodes(t *testing.T) {
 
 			var foundMessages []string
 			for _, foundValidation := range failures {
-				foundMessages = append(foundMessages, foundValidation.userMessage)
-				assert.Equal(t, k8sComponent, foundValidation.component)
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+				assert.Equal(t, k8sComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -368,8 +368,8 @@ func TestValidateManifestURLs(t *testing.T) {
 
 			var foundMessages []string
 			for _, foundValidation := range failures {
-				foundMessages = append(foundMessages, foundValidation.userMessage)
-				assert.Equal(t, k8sComponent, foundValidation.component)
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+				assert.Equal(t, k8sComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {

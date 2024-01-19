@@ -27,16 +27,16 @@ func validateContainerImages(ear *image.EmbeddedArtifactRegistry) []FailedValida
 	for _, cImage := range ear.ContainerImages {
 		if cImage.Name == "" {
 			failures = append(failures, FailedValidation{
-				userMessage: "The 'name' field is required for each entry in 'images'.",
-				component:   registryComponent,
+				UserMessage: "The 'name' field is required for each entry in 'images'.",
+				Component:   registryComponent,
 			})
 		}
 
 		if seenContainerImages[cImage.Name] {
 			msg := fmt.Sprintf("Duplicate image name '%s' found in the 'images' section.", cImage.Name)
 			failures = append(failures, FailedValidation{
-				userMessage: msg,
-				component:   registryComponent,
+				UserMessage: msg,
+				Component:   registryComponent,
 			})
 		}
 		seenContainerImages[cImage.Name] = true
@@ -53,35 +53,35 @@ func validateHelmCharts(ear *image.EmbeddedArtifactRegistry) []FailedValidation 
 	for _, chart := range charts {
 		if chart.Name == "" {
 			failures = append(failures, FailedValidation{
-				userMessage: "The 'name' field is required for each entry in 'charts'.",
-				component:   registryComponent,
+				UserMessage: "The 'name' field is required for each entry in 'charts'.",
+				Component:   registryComponent,
 			})
 		}
 
 		if chart.RepoURL == "" {
 			failures = append(failures, FailedValidation{
-				userMessage: "The 'repoURL' field is required for each entry in 'charts'.",
-				component:   registryComponent,
+				UserMessage: "The 'repoURL' field is required for each entry in 'charts'.",
+				Component:   registryComponent,
 			})
 		} else if !strings.HasPrefix(chart.RepoURL, "http") {
 			failures = append(failures, FailedValidation{
-				userMessage: "The 'repoURL' field must begin with either 'http://' or 'https://'.",
-				component:   registryComponent,
+				UserMessage: "The 'repoURL' field must begin with either 'http://' or 'https://'.",
+				Component:   registryComponent,
 			})
 		}
 
 		if chart.Version == "" {
 			failures = append(failures, FailedValidation{
-				userMessage: "The 'version' field is required for each entry in 'charts'.",
-				component:   registryComponent,
+				UserMessage: "The 'version' field is required for each entry in 'charts'.",
+				Component:   registryComponent,
 			})
 		}
 
 		if seenCharts[chart.Name] {
 			msg := fmt.Sprintf("Duplicate chart name '%s' found in the 'charts' section.", chart.Name)
 			failures = append(failures, FailedValidation{
-				userMessage: msg,
-				component:   registryComponent,
+				UserMessage: msg,
+				Component:   registryComponent,
 			})
 		}
 		seenCharts[chart.Name] = true

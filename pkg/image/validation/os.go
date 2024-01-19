@@ -51,16 +51,16 @@ func validateKernelArgs(os *image.OperatingSystem) []FailedValidation {
 			key, value = parts[0], parts[1]
 			if key == "" || value == "" {
 				failures = append(failures, FailedValidation{
-					userMessage: "Kernel arguments must be specified as 'key=value'.",
-					component:   osComponent,
+					UserMessage: "Kernel arguments must be specified as 'key=value'.",
+					Component:   osComponent,
 				})
 			}
 		}
 
 		if _, exists := seenKeys[key]; exists {
 			failures = append(failures, FailedValidation{
-				userMessage: fmt.Sprintf("Duplicate kernel argument found: %s", key),
-				component:   osComponent,
+				UserMessage: fmt.Sprintf("Duplicate kernel argument found: %s", key),
+				Component:   osComponent,
 			})
 		}
 		seenKeys[key] = true
@@ -76,8 +76,8 @@ func validateSystemd(os *image.OperatingSystem) []FailedValidation {
 		duplicateValues := strings.Join(duplicates, ", ")
 		msg := fmt.Sprintf("Systemd enable list contains duplicate entries: %s", duplicateValues)
 		failures = append(failures, FailedValidation{
-			userMessage: msg,
-			component:   osComponent,
+			UserMessage: msg,
+			Component:   osComponent,
 		})
 	}
 
@@ -85,8 +85,8 @@ func validateSystemd(os *image.OperatingSystem) []FailedValidation {
 		duplicateValues := strings.Join(duplicates, ", ")
 		msg := fmt.Sprintf("Systemd disable list contains duplicate entries: %s", duplicateValues)
 		failures = append(failures, FailedValidation{
-			userMessage: msg,
-			component:   osComponent,
+			UserMessage: msg,
+			Component:   osComponent,
 		})
 	}
 
@@ -95,8 +95,8 @@ func validateSystemd(os *image.OperatingSystem) []FailedValidation {
 			if enableItem == disableItem {
 				msg := fmt.Sprintf("Systemd conflict found, '%s' is both enabled and disabled.", enableItem)
 				failures = append(failures, FailedValidation{
-					userMessage: msg,
-					component:   osComponent,
+					UserMessage: msg,
+					Component:   osComponent,
 				})
 			}
 		}
@@ -112,24 +112,24 @@ func validateUsers(os *image.OperatingSystem) []FailedValidation {
 	for _, user := range os.Users {
 		if user.Username == "" {
 			failures = append(failures, FailedValidation{
-				userMessage: "The 'username' field is required for all entries under 'users'.",
-				component:   osComponent,
+				UserMessage: "The 'username' field is required for all entries under 'users'.",
+				Component:   osComponent,
 			})
 		}
 
 		if user.EncryptedPassword == "" && user.SSHKey == "" {
 			msg := fmt.Sprintf("User '%s' must have either a password or SSH key.", user.Username)
 			failures = append(failures, FailedValidation{
-				userMessage: msg,
-				component:   osComponent,
+				UserMessage: msg,
+				Component:   osComponent,
 			})
 		}
 
 		if seenUsernames[user.Username] {
 			msg := fmt.Sprintf("Duplicate username found: %s", user.Username)
 			failures = append(failures, FailedValidation{
-				userMessage: msg,
-				component:   osComponent,
+				UserMessage: msg,
+				Component:   osComponent,
 			})
 		}
 		seenUsernames[user.Username] = true
@@ -146,20 +146,20 @@ func validateSuma(os *image.OperatingSystem) []FailedValidation {
 	}
 	if os.Suma.Host == "" {
 		failures = append(failures, FailedValidation{
-			userMessage: "The 'host' field is required for the 'suma' section.",
-			component:   osComponent,
+			UserMessage: "The 'host' field is required for the 'suma' section.",
+			Component:   osComponent,
 		})
 	}
 	if strings.HasPrefix(os.Suma.Host, "http") {
 		failures = append(failures, FailedValidation{
-			userMessage: "The suma 'host' field may not contain 'http://' or 'https://'",
-			component:   osComponent,
+			UserMessage: "The suma 'host' field may not contain 'http://' or 'https://'",
+			Component:   osComponent,
 		})
 	}
 	if os.Suma.ActivationKey == "" {
 		failures = append(failures, FailedValidation{
-			userMessage: "The 'activationKey' field is required for the 'suma' section.",
-			component:   osComponent,
+			UserMessage: "The 'activationKey' field is required for the 'suma' section.",
+			Component:   osComponent,
 		})
 	}
 
@@ -173,8 +173,8 @@ func validatePackages(os *image.OperatingSystem) []FailedValidation {
 		duplicateValues := strings.Join(duplicates, ", ")
 		msg := fmt.Sprintf("The 'packageList' field contains duplicate packages: %s", duplicateValues)
 		failures = append(failures, FailedValidation{
-			userMessage: msg,
-			component:   osComponent,
+			UserMessage: msg,
+			Component:   osComponent,
 		})
 	}
 
@@ -182,15 +182,15 @@ func validatePackages(os *image.OperatingSystem) []FailedValidation {
 		duplicateValues := strings.Join(duplicates, ", ")
 		msg := fmt.Sprintf("The 'additionalRepos' field contains duplicate repos: %s", duplicateValues)
 		failures = append(failures, FailedValidation{
-			userMessage: msg,
-			component:   osComponent,
+			UserMessage: msg,
+			Component:   osComponent,
 		})
 	}
 
 	if len(os.Packages.PKGList) > 0 && len(os.Packages.AdditionalRepos) == 0 && os.Packages.RegCode == "" {
 		failures = append(failures, FailedValidation{
-			userMessage: "When including the 'packageList' field, either additional repositories or a registration code must be included.",
-			component:   osComponent,
+			UserMessage: "When including the 'packageList' field, either additional repositories or a registration code must be included.",
+			Component:   osComponent,
 		})
 	}
 
@@ -203,16 +203,16 @@ func validateUnattended(def *image.Definition) []FailedValidation {
 	if def.Image.ImageType != image.TypeISO && def.OperatingSystem.Unattended {
 		msg := fmt.Sprintf("The 'unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO)
 		failures = append(failures, FailedValidation{
-			userMessage: msg,
-			component:   osComponent,
+			UserMessage: msg,
+			Component:   osComponent,
 		})
 	}
 
 	if def.Image.ImageType != image.TypeISO && def.OperatingSystem.InstallDevice != "" {
 		msg := fmt.Sprintf("The 'installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO)
 		failures = append(failures, FailedValidation{
-			userMessage: msg,
-			component:   osComponent,
+			UserMessage: msg,
+			Component:   osComponent,
 		})
 	}
 

@@ -24,41 +24,41 @@ func validateImage(ctx *image.Context) []FailedValidation {
 
 	if def.Image.ImageType == "" {
 		failures = append(failures, FailedValidation{
-			userMessage: "The 'imageType' field is required in the 'image' section.",
-			component:   imageComponent,
+			UserMessage: "The 'imageType' field is required in the 'image' section.",
+			Component:   imageComponent,
 		})
 	} else if !slices.Contains(validImageTypes, def.Image.ImageType) {
 		msg := fmt.Sprintf("The 'imageType' field must be one of: %s", strings.Join(validImageTypes, ", "))
 		failures = append(failures, FailedValidation{
-			userMessage: msg,
-			component:   imageComponent,
+			UserMessage: msg,
+			Component:   imageComponent,
 		})
 	}
 
 	if def.Image.Arch == "" {
 		failures = append(failures, FailedValidation{
-			userMessage: "The 'arch' field is required in the 'image' section.",
-			component:   imageComponent,
+			UserMessage: "The 'arch' field is required in the 'image' section.",
+			Component:   imageComponent,
 		})
 	} else if !slices.Contains(validArchTypes, string(def.Image.Arch)) {
 		msg := fmt.Sprintf("The 'arch' field must be one of: %s", strings.Join(validArchTypes, ", "))
 		failures = append(failures, FailedValidation{
-			userMessage: msg,
-			component:   imageComponent,
+			UserMessage: msg,
+			Component:   imageComponent,
 		})
 	}
 
 	if def.Image.OutputImageName == "" {
 		failures = append(failures, FailedValidation{
-			userMessage: "The 'outputImageName' field is required in the 'image' section.",
-			component:   imageComponent,
+			UserMessage: "The 'outputImageName' field is required in the 'image' section.",
+			Component:   imageComponent,
 		})
 	}
 
 	if def.Image.BaseImage == "" {
 		failures = append(failures, FailedValidation{
-			userMessage: "The 'baseImage' field is required in the 'image' section.",
-			component:   imageComponent,
+			UserMessage: "The 'baseImage' field is required in the 'image' section.",
+			Component:   imageComponent,
 		})
 	} else {
 		baseImageFilename := filepath.Join(ctx.ImageConfigDir, "images", def.Image.BaseImage)
@@ -67,15 +67,15 @@ func validateImage(ctx *image.Context) []FailedValidation {
 			if os.IsNotExist(err) {
 				msg := fmt.Sprintf("The specified base image '%s' cannot be found.", def.Image.BaseImage)
 				failures = append(failures, FailedValidation{
-					userMessage: msg,
-					component:   imageComponent,
+					UserMessage: msg,
+					Component:   imageComponent,
 				})
 			} else {
 				msg := fmt.Sprintf("The specified base image '%s' cannot be read. See the logs for more information.", def.Image.BaseImage)
 				failures = append(failures, FailedValidation{
-					userMessage: msg,
-					component:   imageComponent,
-					err:         err,
+					UserMessage: msg,
+					Component:   imageComponent,
+					Error:       err,
 				})
 			}
 		}
