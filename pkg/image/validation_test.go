@@ -79,32 +79,216 @@ func TestValidateKubernetes(t *testing.T) {
 		expectedErr string
 	}{
 		{
-			name: "Server node type",
+			name: "Valid single node",
 			definition: &Definition{
 				Kubernetes: Kubernetes{
-					Version:  "v1.29.0+rke2r1",
-					NodeType: "server",
+					Version: "v1.29.0+rke2r1",
 				},
 			},
 		},
 		{
-			name: "Agent node type",
+			name: "Multi node empty hostname",
 			definition: &Definition{
 				Kubernetes: Kubernetes{
-					Version:  "v1.29.0+rke2r1",
-					NodeType: "agent",
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+						},
+						{
+							Type: "server",
+						},
+					},
 				},
 			},
+			expectedErr: "validating nodes: node hostname cannot be empty",
 		},
 		{
-			name: "Unknown node type",
+			name: "Multi node invalid type",
 			definition: &Definition{
 				Kubernetes: Kubernetes{
-					Version:  "v1.29.0+rke2r1",
-					NodeType: "worker",
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+						},
+						{
+							Type:     "worker",
+							Hostname: "node2.suse.com",
+						},
+					},
 				},
 			},
-			expectedErr: "unknown node type: worker",
+			expectedErr: "validating nodes: invalid node type: worker",
+		},
+		{
+			name: "Multi node empty VIP",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+						},
+						{
+							Type:     "agent",
+							Hostname: "node2.suse.com",
+						},
+					},
+				},
+			},
+			expectedErr: "validating nodes: virtual API address is not provided",
+		},
+		{
+			name: "Multi node empty API host",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP: "192.168.0.1",
+					},
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+						},
+						{
+							Type:     "agent",
+							Hostname: "node2.suse.com",
+						},
+					},
+				},
+			},
+			expectedErr: "validating nodes: API host is not provided",
+		},
+		{
+			name: "Multi node duplicate node hostnames",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+						},
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+						},
+					},
+				},
+			},
+			expectedErr: "validating nodes: node list contains duplicate: node1.suse.com",
+		},
+		{
+			name: "Multi node agents only",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type:     "agent",
+							Hostname: "node1.suse.com",
+						},
+						{
+							Type:     "agent",
+							Hostname: "node2.suse.com",
+						},
+					},
+				},
+			},
+			expectedErr: "validating nodes: cluster of only agent nodes cannot be formed",
+		},
+		{
+			name: "Multi node agent initialiser",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+						},
+						{
+							Type:     "agent",
+							Hostname: "node2.suse.com",
+							First:    true,
+						},
+					},
+				},
+			},
+			expectedErr: "validating nodes: agent nodes cannot be cluster initialisers: node2.suse.com",
+		},
+		{
+			name: "Multi node multiple initialisers",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+							First:    true,
+						},
+						{
+							Type:     "server",
+							Hostname: "node2.suse.com",
+							First:    true,
+						},
+					},
+				},
+			},
+			expectedErr: "validating nodes: only one node can be cluster initialiser",
+		},
+		{
+			name: "Valid multi node",
+			definition: &Definition{
+				Kubernetes: Kubernetes{
+					Version: "v1.29.0+rke2r1",
+					Network: Network{
+						APIVIP:  "192.168.0.1",
+						APIHost: "api.cluster01.hosted.on.edge.suse.com",
+					},
+					Nodes: []Node{
+						{
+							Type:     "server",
+							Hostname: "node1.suse.com",
+							First:    true,
+						},
+						{
+							Type:     "agent",
+							Hostname: "node2.suse.com",
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "Valid manifest URLs",
@@ -872,70 +1056,6 @@ func TestValidateCharts(t *testing.T) {
 			} else {
 				require.Nil(t, err)
 			}
-		})
-	}
-}
-
-func TestIsEmbeddedArtifactRegistryEmpty(t *testing.T) {
-	tests := []struct {
-		name     string
-		registry EmbeddedArtifactRegistry
-		isEmpty  bool
-	}{
-		{
-			name: "Both Defined",
-			registry: EmbeddedArtifactRegistry{
-				HelmCharts: []HelmChart{
-					{
-						Name:    "rancher",
-						RepoURL: "https://releases.rancher.com/server-charts/stable",
-						Version: "2.8.0",
-					},
-				},
-				ContainerImages: []ContainerImage{
-					{
-						Name:           "hello-world:latest",
-						SupplyChainKey: "",
-					},
-				},
-			},
-			isEmpty: false,
-		},
-		{
-			name: "Chart Defined",
-			registry: EmbeddedArtifactRegistry{
-				HelmCharts: []HelmChart{
-					{
-						Name:    "rancher",
-						RepoURL: "https://releases.rancher.com/server-charts/stable",
-						Version: "2.8.0",
-					},
-				},
-			},
-			isEmpty: false,
-		},
-		{
-			name: "Image Defined",
-			registry: EmbeddedArtifactRegistry{
-				ContainerImages: []ContainerImage{
-					{
-						Name:           "hello-world:latest",
-						SupplyChainKey: "",
-					},
-				},
-			},
-			isEmpty: false,
-		},
-		{
-			name:    "None Defined",
-			isEmpty: true,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := IsEmbeddedArtifactRegistryEmpty(test.registry)
-			assert.Equal(t, test.isEmpty, result)
 		})
 	}
 }

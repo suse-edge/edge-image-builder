@@ -5,9 +5,9 @@ import (
 )
 
 type FailedValidation struct {
-	component   string
-	userMessage string
-	err         error
+	Component   string
+	UserMessage string
+	Error       error
 }
 
 type validateComponent func(ctx *image.Context) []FailedValidation
@@ -18,6 +18,8 @@ func ValidateDefinition(ctx *image.Context) []FailedValidation {
 	validations := []validateComponent{
 		validateImage,
 		validateOperatingSystem,
+		validateEmbeddedArtifactRegistry,
+		validateKubernetes,
 	}
 	for _, v := range validations {
 		componentFailures := v(ctx)

@@ -18,18 +18,19 @@ import (
 )
 
 const (
-	k8sComponentName  = "kubernetes"
-	k8sConfigDir      = "kubernetes"
-	k8sConfigFile     = "config.yaml"
-	rke2InstallScript = "15-rke2-install.sh"
+	k8sComponentName    = "kubernetes"
+	k8sDir              = "kubernetes"
+	k8sConfigDir        = "config"
+	k8sServerConfigFile = "server.yaml"
+	rke2InstallScript   = "15-rke2-install.sh"
 
 	cniKey          = "cni"
 	cniDefaultValue = image.CNITypeCilium
 )
 
 var (
-	//go:embed templates/15-rke2-installer.sh.tpl
-	rke2InstallerScript string
+	//go:embed templates/15-rke2-single-node-installer.sh.tpl
+	rke2SingleNodeInstaller string
 )
 
 func configureKubernetes(ctx *image.Context) ([]string, error) {
@@ -125,7 +126,7 @@ func configureRKE2(ctx *image.Context) (string, error) {
 		ImagesPath:  imagesPath,
 	}
 
-	data, err := template.Parse(rke2InstallScript, rke2InstallerScript, &rke2)
+	data, err := template.Parse(rke2InstallScript, rke2SingleNodeInstaller, &rke2)
 	if err != nil {
 		return "", fmt.Errorf("parsing RKE2 install template: %w", err)
 	}
@@ -146,23 +147,20 @@ func parseKubernetesConfig(ctx *image.Context) (map[string]any, error) {
 
 	config := map[string]any{}
 
-	if !isComponentConfigured(ctx, k8sConfigDir) {
-		auditDefaultCNI()
-		zap.S().Infof("Kubernetes config file not provided, proceeding with CNI: %s", cniDefaultValue)
-
-		config[cniKey] = cniDefaultValue
-		return config, nil
-	}
-
-	configDir := generateComponentPath(ctx, k8sConfigDir)
-	configFile := filepath.Join(configDir, k8sConfigFile)
+	configDir := generateComponentPath(ctx, k8sDir)
+	configFile := filepath.Join(configDir, k8sConfigDir, k8sServerConfigFile)
 
 	b, err := os.ReadFile(configFile)
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return nil, fmt.Errorf("kubernetes component directory exists but does not contain config.yaml")
+		if !errors.Is(err, fs.ErrNotExist) {
+			return nil, fmt.Errorf("reading kubernetes config file: %w", err)
 		}
-		return nil, fmt.Errorf("reading kubernetes config file: %w", err)
+
+		auditDefaultCNI()
+		zap.S().Infof("Kubernetes server config file not provided, proceeding with CNI: %s", cniDefaultValue)
+
+		config[cniKey] = cniDefaultValue
+		return config, nil
 	}
 
 	if err = yaml.Unmarshal(b, &config); err != nil {

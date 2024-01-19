@@ -9,13 +9,9 @@ umount /var
 mkdir -p /etc/rancher/rke2/
 cp {{ .ConfigFile }} /etc/rancher/rke2/config.yaml
 
-{{- if .NodeType }}
-export INSTALL_RKE2_TYPE={{ .NodeType }}
-{{- end }}
-
 export INSTALL_RKE2_TAR_PREFIX=/opt/rke2
 export INSTALL_RKE2_ARTIFACT_PATH={{ .InstallPath }}
 
 ./rke2_installer.sh
 
-systemctl enable rke2-{{ or .NodeType "server" }}.service
+systemctl enable rke2-server.service

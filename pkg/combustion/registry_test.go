@@ -137,3 +137,67 @@ func TestCopyHaulerBinaryNoFile(t *testing.T) {
 	// Verify
 	require.ErrorContains(t, err, "no such file")
 }
+
+func TestIsEmbeddedArtifactRegistryEmpty(t *testing.T) {
+	tests := []struct {
+		name     string
+		registry image.EmbeddedArtifactRegistry
+		isEmpty  bool
+	}{
+		{
+			name: "Both Defined",
+			registry: image.EmbeddedArtifactRegistry{
+				HelmCharts: []image.HelmChart{
+					{
+						Name:    "rancher",
+						RepoURL: "https://releases.rancher.com/server-charts/stable",
+						Version: "2.8.0",
+					},
+				},
+				ContainerImages: []image.ContainerImage{
+					{
+						Name:           "hello-world:latest",
+						SupplyChainKey: "",
+					},
+				},
+			},
+			isEmpty: false,
+		},
+		{
+			name: "Chart Defined",
+			registry: image.EmbeddedArtifactRegistry{
+				HelmCharts: []image.HelmChart{
+					{
+						Name:    "rancher",
+						RepoURL: "https://releases.rancher.com/server-charts/stable",
+						Version: "2.8.0",
+					},
+				},
+			},
+			isEmpty: false,
+		},
+		{
+			name: "Image Defined",
+			registry: image.EmbeddedArtifactRegistry{
+				ContainerImages: []image.ContainerImage{
+					{
+						Name:           "hello-world:latest",
+						SupplyChainKey: "",
+					},
+				},
+			},
+			isEmpty: false,
+		},
+		{
+			name:    "None Defined",
+			isEmpty: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result := IsEmbeddedArtifactRegistryEmpty(test.registry)
+			assert.Equal(t, test.isEmpty, result)
+		})
+	}
+}
