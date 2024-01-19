@@ -295,16 +295,6 @@ func TestValidateKubernetes(t *testing.T) {
 			definition: &Definition{
 				Kubernetes: Kubernetes{
 					Version: "v1.29.0+rke2r1",
-					Network: Network{
-						APIVIP:  "192.168.0.1",
-						APIHost: "api.cluster01.hosted.on.edge.suse.com",
-					},
-					Nodes: []Node{
-						{
-							Hostname: "node1.suse.com",
-							Type:     "server",
-						},
-					},
 					Manifests: Manifests{
 						URLs: []string{
 							"https://k8s.io/examples/application/nginx-app.yaml",
@@ -319,16 +309,6 @@ func TestValidateKubernetes(t *testing.T) {
 			definition: &Definition{
 				Kubernetes: Kubernetes{
 					Version: "v1.29.0+rke2r1",
-					Network: Network{
-						APIVIP:  "192.168.0.1",
-						APIHost: "api.cluster01.hosted.on.edge.suse.com",
-					},
-					Nodes: []Node{
-						{
-							Hostname: "node1.suse.com",
-							Type:     "server",
-						},
-					},
 					Manifests: Manifests{
 						URLs: []string{
 							"https://k8s.io/examples/application/nginx-app.yaml",
@@ -344,16 +324,6 @@ func TestValidateKubernetes(t *testing.T) {
 			definition: &Definition{
 				Kubernetes: Kubernetes{
 					Version: "v1.29.0+rke2r1",
-					Network: Network{
-						APIVIP:  "192.168.0.1",
-						APIHost: "api.cluster01.hosted.on.edge.suse.com",
-					},
-					Nodes: []Node{
-						{
-							Hostname: "node1.suse.com",
-							Type:     "server",
-						},
-					},
 					Manifests: Manifests{
 						URLs: []string{
 							"k8s.io/examples/application/nginx-app.yaml",
