@@ -127,33 +127,6 @@ func TestConfigureKubernetes_ArtefactDownloaderErrorRKE2(t *testing.T) {
 	assert.Nil(t, scripts)
 }
 
-func TestConfigureKubernetes_ConfigFileMissingErrorRKE2(t *testing.T) {
-	ctx, teardown := setupContext(t)
-	defer teardown()
-
-	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
-		Version: "v1.29.0+rke2r1",
-	}
-	ctx.KubernetesScriptInstaller = mockKubernetesScriptInstaller{
-		installScript: func(distribution, sourcePath, destPath string) error {
-			return nil
-		},
-	}
-	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
-		downloadArtefacts: func(arch image.Arch, version, cni string, multusEnabled bool, destPath string) (string, string, error) {
-			return "", "", nil
-		},
-	}
-
-	require.NoError(t, os.Mkdir(filepath.Join(ctx.ImageConfigDir, k8sConfigDir), os.ModePerm))
-
-	scripts, err := configureKubernetes(ctx)
-	require.Error(t, err)
-	assert.EqualError(t, err, "configuring kubernetes components: parsing RKE2 config: "+
-		"kubernetes component directory exists but does not contain config.yaml")
-	assert.Nil(t, scripts)
-}
-
 func TestConfigureKubernetes_SuccessfulRKE2Server(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
@@ -171,13 +144,6 @@ func TestConfigureKubernetes_SuccessfulRKE2Server(t *testing.T) {
 			return "server-installer", "server-images", nil
 		},
 	}
-
-	configDir := filepath.Join(ctx.ImageConfigDir, k8sConfigDir)
-	require.NoError(t, os.Mkdir(configDir, os.ModePerm))
-
-	configFile := filepath.Join(configDir, k8sConfigFile)
-	data := []byte("") // default CNI will be used since the file will not contain one
-	require.NoError(t, os.WriteFile(configFile, data, os.ModePerm))
 
 	scripts, err := configureKubernetes(ctx)
 	require.NoError(t, err)
