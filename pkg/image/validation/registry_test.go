@@ -7,7 +7,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func TestValidateEmbeddedArtefactRegistry(t *testing.T) {
+func TestValidateEmbeddedArtifactRegistry(t *testing.T) {
 	tests := map[string]struct {
 		Registry               image.EmbeddedArtifactRegistry
 		ExpectedFailedMessages []string
@@ -62,7 +62,7 @@ func TestValidateEmbeddedArtefactRegistry(t *testing.T) {
 					EmbeddedArtifactRegistry: ear,
 				},
 			}
-			failures := validateEmbeddedArtefactRegistry(&ctx)
+			failures := validateEmbeddedArtifactRegistry(&ctx)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
 
 			var foundMessages []string

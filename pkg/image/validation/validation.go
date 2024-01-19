@@ -18,7 +18,7 @@ func ValidateDefinition(ctx *image.Context) []FailedValidation {
 	validations := []validateComponent{
 		validateImage,
 		validateOperatingSystem,
-		validateEmbeddedArtefactRegistry,
+		validateEmbeddedArtifactRegistry,
 	}
 	for _, v := range validations {
 		componentFailures := v(ctx)

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/suse-edge/edge-image-builder/pkg/combustion"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
@@ -12,13 +11,8 @@ const (
 	registryComponent = "Artifact Registry"
 )
 
-func validateEmbeddedArtefactRegistry(ctx *image.Context) []FailedValidation {
+func validateEmbeddedArtifactRegistry(ctx *image.Context) []FailedValidation {
 	var failures []FailedValidation
-	def := ctx.ImageDefinition
-
-	if combustion.IsEmbeddedArtifactRegistryEmpty(def.EmbeddedArtifactRegistry) {
-		return failures
-	}
 
 	failures = append(failures, validateContainerImages(&ctx.ImageDefinition.EmbeddedArtifactRegistry)...)
 	failures = append(failures, validateHelmCharts(&ctx.ImageDefinition.EmbeddedArtifactRegistry)...)
