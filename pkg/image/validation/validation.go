@@ -19,6 +19,7 @@ func ValidateDefinition(ctx *image.Context) []FailedValidation {
 		validateImage,
 		validateOperatingSystem,
 		validateEmbeddedArtifactRegistry,
+		validateKubernetes,
 	}
 	for _, v := range validations {
 		componentFailures := v(ctx)
