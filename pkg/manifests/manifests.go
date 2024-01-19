@@ -14,8 +14,50 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func configureManifests() {
+func configureManifests(ctx *image.Context) error {
+	var downloadedManifests []string
+	var combinedManifestPaths []string
+	var extractedImages []string
+	var err error // created here to avoid scoping issues with "downloadedManifests" when using := on line 29
 
+	if len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0 {
+		downloadDestination := filepath.Join(ctx.CombustionDir, "downloaded-manifests")
+		if err := os.MkdirAll(downloadDestination, os.ModePerm); err != nil {
+			return fmt.Errorf("creating %s dir: %w", downloadDestination, err)
+		}
+
+		downloadedManifests, err = downloadManifests(ctx, downloadDestination)
+		if err != nil {
+			return fmt.Errorf("error downloading manifests: %w", err)
+		}
+	}
+
+	localManifestSrcDir := filepath.Join(ctx.ImageConfigDir, "manifests")
+	localManifestDestDir := filepath.Join(ctx.ImageConfigDir, "local-manifests")
+	copiedManifests, err := copyManifests(localManifestSrcDir, localManifestDestDir)
+	if err != nil {
+		return fmt.Errorf("error copying manifests: %w", err)
+	}
+
+	combinedManifestPaths = append(copiedManifests, downloadedManifests...)
+
+	for _, manifestPath := range combinedManifestPaths {
+		manifestData, err := readManifest(manifestPath)
+		if err != nil {
+			return fmt.Errorf("error reading manifest %w", err)
+		}
+
+		foundImages, err := findImagesInManifest(manifestData)
+		if err != nil {
+			return fmt.Errorf("error finding images in manifest %w", err)
+		}
+		extractedImages = append(extractedImages, foundImages...)
+	}
+
+	extractedImages = removeDuplicateImages(extractedImages)
+	addImagesToRegistryDefinition(ctx, extractedImages)
+
+	return nil
 }
 
 func readManifest(manifestPath string) (interface{}, error) {
@@ -73,7 +115,7 @@ func copyManifests(src string, dest string) ([]string, error) {
 		return nil, fmt.Errorf("manifest destination directory not defined")
 	}
 
-	var list []string
+	var manifestPaths []string
 
 	manifests, err := os.ReadDir(src)
 	if err != nil {
@@ -93,21 +135,59 @@ func copyManifests(src string, dest string) ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("copying manifest file %s: %w", sourcePath, err)
 		}
-		list = append(list, manifest.Name())
+		manifestPaths = append(manifestPaths, destPath)
 
 	}
 
-	return list, nil
+	return manifestPaths, nil
 }
 
-func downloadManifests(ctx image.Context, destPath string) error {
-	manifestURLs := ctx.ImageDefinition.Kubernetes.Manifests.URLs
+func downloadManifests(ctx *image.Context, destPath string) ([]string, error) {
+	manifests := ctx.ImageDefinition.Kubernetes.Manifests.URLs
+	var manifestPaths []string
 
-	for _, manifestURL := range manifestURLs {
-		if err := http.DownloadFile(context.Background(), manifestURL, destPath); err != nil {
-			return fmt.Errorf("downloading manifest '%s': %w", manifestURL, err)
+	for index, manifestURL := range manifests {
+		filePath := filepath.Join(destPath, fmt.Sprintf("manifest-%d.yaml", index+1))
+		manifestPaths = append(manifestPaths, filePath)
+
+		if err := http.DownloadFile(context.Background(), manifestURL, filePath); err != nil {
+			return nil, fmt.Errorf("downloading manifest '%s': %w", manifestURL, err)
 		}
 	}
 
-	return nil
+	return manifestPaths, nil
+}
+
+func removeDuplicateImages(images []string) []string {
+	imagesSet := make(map[string]bool)
+	var formattedImages []string
+	for _, item := range images {
+		if _, value := imagesSet[item]; !value {
+			imagesSet[item] = true
+			formattedImages = append(formattedImages, item)
+		}
+	}
+
+	return formattedImages
+}
+
+func addImagesToRegistryDefinition(ctx *image.Context, manifestImages []string) {
+	for _, imageName := range manifestImages {
+		if !isInRegistry(ctx, imageName) {
+			containerImageDef := image.ContainerImage{
+				Name: imageName,
+			}
+			ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages = append(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages, containerImageDef)
+		}
+	}
+}
+
+func isInRegistry(ctx *image.Context, imageName string) bool {
+	for _, containerImage := range ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages {
+		if imageName == containerImage.Name {
+			return true
+		}
+	}
+
+	return false
 }
