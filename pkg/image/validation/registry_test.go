@@ -67,8 +67,8 @@ func TestValidateEmbeddedArtifactRegistry(t *testing.T) {
 
 			var foundMessages []string
 			for _, foundValidation := range failures {
-				foundMessages = append(foundMessages, foundValidation.userMessage)
-				assert.Equal(t, registryComponent, foundValidation.component)
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+				assert.Equal(t, registryComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -136,8 +136,8 @@ func TestValidateContainerImages(t *testing.T) {
 
 			var foundMessages []string
 			for _, foundValidation := range failures {
-				foundMessages = append(foundMessages, foundValidation.userMessage)
-				assert.Equal(t, registryComponent, foundValidation.component)
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+				assert.Equal(t, registryComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -226,8 +226,8 @@ func TestValidateHelmCharts(t *testing.T) {
 
 			var foundMessages []string
 			for _, foundValidation := range failures {
-				foundMessages = append(foundMessages, foundValidation.userMessage)
-				assert.Equal(t, registryComponent, foundValidation.component)
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+				assert.Equal(t, registryComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {

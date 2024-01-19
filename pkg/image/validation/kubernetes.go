@@ -44,15 +44,15 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 
 	if k8s.Network.APIVIP == "" {
 		failures = append(failures, FailedValidation{
-			userMessage: "The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
-			component:   k8sComponent,
+			UserMessage: "The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
+			Component:   k8sComponent,
 		})
 	}
 
 	if k8s.Network.APIHost == "" {
 		failures = append(failures, FailedValidation{
-			userMessage: "The 'apiHost' field is required in the 'network' section when defining entries under 'nodes'.",
-			component:   k8sComponent,
+			UserMessage: "The 'apiHost' field is required in the 'network' section when defining entries under 'nodes'.",
+			Component:   k8sComponent,
 		})
 	}
 
@@ -63,8 +63,8 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 	for _, node := range k8s.Nodes {
 		if node.Hostname == "" {
 			failures = append(failures, FailedValidation{
-				userMessage: "The 'hostname' field is required for entries in the 'nodes' section.",
-				component:   k8sComponent,
+				UserMessage: "The 'hostname' field is required for entries in the 'nodes' section.",
+				Component:   k8sComponent,
 			})
 		}
 
@@ -72,8 +72,8 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 			options := strings.Join(validNodeTypes, ", ")
 			msg := fmt.Sprintf("The 'type' field for entries in the 'nodes' section must be one of: %s", options)
 			failures = append(failures, FailedValidation{
-				userMessage: msg,
-				component:   k8sComponent,
+				UserMessage: msg,
+				Component:   k8sComponent,
 			})
 		}
 
@@ -85,8 +85,8 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 				_ = node.First // Jan 19, 2024: The word "first" is being discussed; tf this field gets renamed, update the text below
 				msg := fmt.Sprintf("The node labeled with 'firstNode' must be of type '%s'.", image.KubernetesNodeTypeServer)
 				failures = append(failures, FailedValidation{
-					userMessage: msg,
-					component:   k8sComponent,
+					UserMessage: msg,
+					Component:   k8sComponent,
 				})
 			}
 		}
@@ -99,24 +99,24 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 		duplicateValues := strings.Join(duplicates, ", ")
 		msg := fmt.Sprintf("The 'nodes' section contains duplicate entries: %s", duplicateValues)
 		failures = append(failures, FailedValidation{
-			userMessage: msg,
-			component:   k8sComponent,
+			UserMessage: msg,
+			Component:   k8sComponent,
 		})
 	}
 
 	if !slices.Contains(nodeTypes, image.KubernetesNodeTypeServer) {
 		msg := fmt.Sprintf("There must be at least one node of type '%s' defined.", image.KubernetesNodeTypeServer)
 		failures = append(failures, FailedValidation{
-			userMessage: msg,
-			component:   k8sComponent,
+			UserMessage: msg,
+			Component:   k8sComponent,
 		})
 	}
 
 	if len(firstNodes) > 1 {
 		_ = firstNodes[0].First // Jan 19, 2024: The word "first" is being discussed; tf this field gets renamed, update the text below
 		failures = append(failures, FailedValidation{
-			userMessage: "Only one node may be specified as the cluster initializer (by including the 'firstNode' field).",
-			component:   k8sComponent,
+			UserMessage: "Only one node may be specified as the cluster initializer (by including the 'firstNode' field).",
+			Component:   k8sComponent,
 		})
 	}
 
@@ -134,16 +134,16 @@ func validateManifestURLs(k8s *image.Kubernetes) []FailedValidation {
 	for _, manifest := range k8s.Manifests.URLs {
 		if !strings.HasPrefix(manifest, "http") {
 			failures = append(failures, FailedValidation{
-				userMessage: "Entries in 'urls' must begin with either 'http://' or 'https://'.",
-				component:   k8sComponent,
+				UserMessage: "Entries in 'urls' must begin with either 'http://' or 'https://'.",
+				Component:   k8sComponent,
 			})
 		}
 
 		if _, exists := seenManifests[manifest]; exists {
 			msg := fmt.Sprintf("The 'urls' field contains duplicate entries: %s", manifest)
 			failures = append(failures, FailedValidation{
-				userMessage: msg,
-				component:   k8sComponent,
+				UserMessage: msg,
+				Component:   k8sComponent,
 			})
 		}
 
