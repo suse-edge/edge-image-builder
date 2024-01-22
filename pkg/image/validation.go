@@ -361,8 +361,20 @@ func validatePackages(os *OperatingSystem) error {
 		return fmt.Errorf("package list contains duplicate: %s", duplicate)
 	}
 
-	if duplicate := checkForDuplicates(os.Packages.AdditionalRepos); duplicate != "" {
-		return fmt.Errorf("additional repository list contains duplicate: %s", duplicate)
+	if len(os.Packages.AdditionalRepos) > 0 {
+		urlSlice := []string{}
+
+		for _, repo := range os.Packages.AdditionalRepos {
+			if repo.URL == "" {
+				return fmt.Errorf("additional repository list contains an entry with empty 'url' field")
+			}
+
+			urlSlice = append(urlSlice, repo.URL)
+		}
+
+		if duplicate := checkForDuplicates(urlSlice); duplicate != "" {
+			return fmt.Errorf("additional repository list contains duplicate: %s", duplicate)
+		}
 	}
 
 	if len(os.Packages.PKGList) > 0 && len(os.Packages.AdditionalRepos) == 0 && os.Packages.RegCode == "" {

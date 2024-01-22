@@ -1079,10 +1079,33 @@ func TestValidatePackages(t *testing.T) {
 			name: "Additional repository with duplicate",
 			os: &OperatingSystem{
 				Packages: Packages{
-					AdditionalRepos: []string{"https://foo.bar", "https://bar.foo", "https://foo.bar"},
+					AdditionalRepos: []AddRepo{
+						{
+							URL: "https://foo.bar",
+						},
+						{
+							URL: "https://bar.foo",
+						},
+						{
+							URL: "https://foo.bar",
+						},
+					},
 				},
 			},
 			expectedErr: "additional repository list contains duplicate: https://foo.bar",
+		},
+		{
+			name: "Additional repository with empty URL",
+			os: &OperatingSystem{
+				Packages: Packages{
+					AdditionalRepos: []AddRepo{
+						{
+							URL: "",
+						},
+					},
+				},
+			},
+			expectedErr: "additional repository list contains an entry with empty 'url' field",
 		},
 		{
 			name: "Package list defined without registration code or third party repo",
@@ -1106,8 +1129,12 @@ func TestValidatePackages(t *testing.T) {
 			name: "Configuring package from third party repo",
 			os: &OperatingSystem{
 				Packages: Packages{
-					PKGList:         []string{"foo", "bar"},
-					AdditionalRepos: []string{"https://foo.bar"},
+					PKGList: []string{"foo", "bar"},
+					AdditionalRepos: []AddRepo{
+						{
+							URL: "https://foo.bar",
+						},
+					},
 				},
 			},
 		},

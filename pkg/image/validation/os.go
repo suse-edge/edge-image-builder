@@ -166,12 +166,27 @@ func validatePackages(os *image.OperatingSystem) []FailedValidation {
 		})
 	}
 
-	if duplicates := findDuplicates(os.Packages.AdditionalRepos); len(duplicates) > 0 {
-		duplicateValues := strings.Join(duplicates, ", ")
-		msg := fmt.Sprintf("The 'additionalRepos' field contains duplicate repos: %s", duplicateValues)
-		failures = append(failures, FailedValidation{
-			UserMessage: msg,
-		})
+	if len(os.Packages.AdditionalRepos) > 0 {
+		urlSlice := []string{}
+
+		for _, repo := range os.Packages.AdditionalRepos {
+			if repo.URL == "" {
+				msg := "Additional repository list contains an entry with empty 'url' field."
+				failures = append(failures, FailedValidation{
+					UserMessage: msg,
+				})
+			}
+
+			urlSlice = append(urlSlice, repo.URL)
+		}
+
+		if duplicates := findDuplicates(urlSlice); len(duplicates) > 0 {
+			duplicateValues := strings.Join(duplicates, ", ")
+			msg := fmt.Sprintf("The 'additionalRepos' field contains duplicate repos: %s", duplicateValues)
+			failures = append(failures, FailedValidation{
+				UserMessage: msg,
+			})
+		}
 	}
 
 	if len(os.Packages.PKGList) > 0 && len(os.Packages.AdditionalRepos) == 0 && os.Packages.RegCode == "" {
