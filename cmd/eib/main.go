@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
@@ -77,14 +78,27 @@ func processArgs() (*image.Context, error) {
 
 		logMessageBuilder := strings.Builder{}
 
-		for componentName, failures := range failedValidations {
+		orderedComponentNames := make([]string, 0, len(failedValidations))
+		for c := range failedValidations{
+			orderedComponentNames = append(orderedComponentNames, c)
+		}
+		sort.Sort(sort.StringSlice(orderedComponentNames))
+
+		for _, componentName := range orderedComponentNames {
+			failures := failedValidations[componentName]
 			audit.Audit(fmt.Sprintf("  %s", componentName))
 			for _, cf := range failures {
 				audit.Audit(fmt.Sprintf("    %s", cf.UserMessage))
+				logMessageBuilder.WriteString(cf.UserMessage + "\n")
+				if cf.Error != nil {
+					logMessageBuilder.WriteString("\t" + cf.Error.Error() + "\n")
+				}
 			}
 		}
 
-		zap.S().Fatalf(logMessageBuilder.String())
+		if s := logMessageBuilder.String(); s != "" {
+			zap.S().Fatalf("Image definition validation failures:\n%s", s)
+		}
 	}
 
 	if validate {
