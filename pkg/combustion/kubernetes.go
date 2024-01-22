@@ -99,11 +99,9 @@ func configureRKE2(ctx *image.Context) (string, error) {
 	}
 
 	if len(ctx.ImageDefinition.Kubernetes.Nodes) > 1 {
-		zap.S().Info("Configuring multi node RKE2 cluster...")
 		return configureMultiNodeRKE2(ctx)
 	}
 
-	zap.S().Info("Configuring single node RKE2 cluster...")
 	return configureSingleNodeRKE2(ctx)
 }
 
@@ -141,9 +139,9 @@ func configureSingleNodeRKE2(ctx *image.Context) (string, error) {
 }
 
 func configureMultiNodeRKE2(ctx *image.Context) (string, error) {
-	firstNode := findKubernetesInitialiserNode(&ctx.ImageDefinition.Kubernetes)
-	if firstNode == "" {
-		return "", fmt.Errorf("failed to determine first node in cluster")
+	initialiser := findKubernetesInitialiserNode(&ctx.ImageDefinition.Kubernetes)
+	if initialiser == "" {
+		return "", fmt.Errorf("failed to determine cluster initialiser")
 	}
 
 	serverConfig, err := parseKubernetesConfig(ctx, k8sServerConfigFile)
@@ -180,9 +178,9 @@ func configureMultiNodeRKE2(ctx *image.Context) (string, error) {
 	delete(serverConfig, tlsSANKey)
 	delete(serverConfig, serverKey)
 
-	serverConfigFile := fmt.Sprintf("first_%s", k8sServerConfigFile)
+	initialiserConfigFile := fmt.Sprintf("init_%s", k8sServerConfigFile)
 
-	if err = storeKubernetesConfig(ctx, serverConfig, serverConfigFile); err != nil {
+	if err = storeKubernetesConfig(ctx, serverConfig, initialiserConfigFile); err != nil {
 		return "", fmt.Errorf("storing RKE2 initialising server config file: %w", err)
 	}
 
@@ -198,16 +196,18 @@ func configureMultiNodeRKE2(ctx *image.Context) (string, error) {
 
 	rke2 := struct {
 		image.Kubernetes
-		FirstNode   string
-		HAManifest  string
-		InstallPath string
-		ImagesPath  string
+		Initialiser           string
+		InitialiserConfigFile string
+		HAManifest            string
+		InstallPath           string
+		ImagesPath            string
 	}{
-		Kubernetes:  ctx.ImageDefinition.Kubernetes,
-		FirstNode:   firstNode,
-		HAManifest:  haManifest,
-		InstallPath: installPath,
-		ImagesPath:  imagesPath,
+		Kubernetes:            ctx.ImageDefinition.Kubernetes,
+		Initialiser:           initialiser,
+		InitialiserConfigFile: initialiserConfigFile,
+		HAManifest:            haManifest,
+		InstallPath:           installPath,
+		ImagesPath:            imagesPath,
 	}
 
 	return storeRKE2Installer(ctx, "multi-node-rke2", rke2MultiNodeInstaller, &rke2)
@@ -244,7 +244,7 @@ func downloadRKE2Artefacts(ctx *image.Context, clusterConfig map[string]any) (in
 
 func findKubernetesInitialiserNode(kubernetes *image.Kubernetes) string {
 	for _, node := range kubernetes.Nodes {
-		if node.First {
+		if node.Initialiser {
 			return node.Hostname
 		}
 	}
@@ -275,7 +275,7 @@ func storeHighAvailabilityRKE2Manifest(ctx *image.Context) (string, error) {
 	}
 
 	installScript := filepath.Join(ctx.CombustionDir, haManifest)
-	if err = os.WriteFile(installScript, []byte(data), fileio.ExecutablePerms); err != nil {
+	if err = os.WriteFile(installScript, []byte(data), fileio.NonExecutablePerms); err != nil {
 		return "", fmt.Errorf("writing RKE2 HA API manifest: %w", err)
 	}
 
@@ -331,7 +331,7 @@ func setClusterCNI(config map[string]any) {
 
 func setClusterAPIHost(config map[string]any, apiHost string) {
 	if apiHost == "" {
-		zap.S().Warnf("Attempted to set an empty cluster API host")
+		zap.S().Warn("Attempted to set an empty cluster API host")
 		return
 	}
 
@@ -351,14 +351,14 @@ func setClusterAPIHost(config map[string]any, apiHost string) {
 		v = append(v, apiHost)
 		config[tlsSANKey] = v
 	default:
-		zap.S().Warnf("Ignoring invalid 'tls-san' value: %s", v)
+		zap.S().Warnf("Ignoring invalid 'tls-san' value: %v", v)
 		config[tlsSANKey] = []string{apiHost}
 	}
 }
 
 func setClusterAPIAddress(config map[string]any, apiAddress string) {
 	if apiAddress == "" {
-		zap.S().Warnf("Attempted to set an empty cluster API address")
+		zap.S().Warn("Attempted to set an empty cluster API address")
 		return
 	}
 

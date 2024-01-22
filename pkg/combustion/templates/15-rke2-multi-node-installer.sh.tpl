@@ -21,8 +21,8 @@ cp {{ .ImagesPath }}/* /var/lib/rancher/rke2/agent/images/
 
 CONFIGFILE=$NODETYPE.yaml
 
-if [ "$HOSTNAME" = {{ .FirstNode }} ]; then
-    CONFIGFILE=first_server.yaml
+if [ "$HOSTNAME" = {{ .Initialiser }} ]; then
+    CONFIGFILE={{ .InitialiserConfigFile }}
 
     mkdir -p /var/lib/rancher/rke2/server/manifests/
     cp {{ .HAManifest }} /var/lib/rancher/rke2/server/manifests/{{ .HAManifest }}

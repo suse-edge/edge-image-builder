@@ -27,9 +27,9 @@ func TestValidateKubernetes(t *testing.T) {
 				Network: validNetwork,
 				Nodes: []image.Node{
 					{
-						Hostname: "server",
-						Type:     image.KubernetesNodeTypeServer,
-						First:    true,
+						Hostname:    "server",
+						Type:        image.KubernetesNodeTypeServer,
+						Initialiser: true,
 					},
 					{
 						Hostname: "agent1",
@@ -44,8 +44,8 @@ func TestValidateKubernetes(t *testing.T) {
 				Network: validNetwork,
 				Nodes: []image.Node{
 					{
-						Type:  image.KubernetesNodeTypeServer,
-						First: true,
+						Type:        image.KubernetesNodeTypeServer,
+						Initialiser: true,
 					},
 					{
 						Hostname: "valid",
@@ -116,9 +116,9 @@ func TestValidateNodes(t *testing.T) {
 						Type:     image.KubernetesNodeTypeAgent,
 					},
 					{
-						Hostname: "server",
-						Type:     image.KubernetesNodeTypeServer,
-						First:    true,
+						Hostname:    "server",
+						Type:        image.KubernetesNodeTypeServer,
+						Initialiser: true,
 					},
 				},
 			},
@@ -199,7 +199,7 @@ func TestValidateNodes(t *testing.T) {
 				fmt.Sprintf("The 'type' field for entries in the 'nodes' section must be one of: %s", strings.Join(validNodeTypes, ", ")),
 			},
 		},
-		`first node incorrect type`: {
+		`incorrect initialiser type`: {
 			K8s: image.Kubernetes{
 				Network: validNetwork,
 				Nodes: []image.Node{
@@ -208,14 +208,14 @@ func TestValidateNodes(t *testing.T) {
 						Type:     image.KubernetesNodeTypeServer,
 					},
 					{
-						Hostname: "invalid",
-						First:    true,
-						Type:     image.KubernetesNodeTypeAgent,
+						Hostname:    "invalid",
+						Initialiser: true,
+						Type:        image.KubernetesNodeTypeAgent,
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				fmt.Sprintf("The node labeled with 'firstNode' must be of type '%s'.", image.KubernetesNodeTypeServer),
+				fmt.Sprintf("The node labeled with 'initialiser' must be of type '%s'.", image.KubernetesNodeTypeServer),
 			},
 		},
 		`duplicate entries`: {
@@ -223,9 +223,9 @@ func TestValidateNodes(t *testing.T) {
 				Network: validNetwork,
 				Nodes: []image.Node{
 					{
-						Hostname: "foo",
-						Type:     image.KubernetesNodeTypeServer,
-						First:    true,
+						Hostname:    "foo",
+						Type:        image.KubernetesNodeTypeServer,
+						Initialiser: true,
 					},
 					{
 						Hostname: "bar",
@@ -263,24 +263,24 @@ func TestValidateNodes(t *testing.T) {
 				fmt.Sprintf("There must be at least one node of type '%s' defined.", image.KubernetesNodeTypeServer),
 			},
 		},
-		`multiple first nodes`: {
+		`multiple initialisers`: {
 			K8s: image.Kubernetes{
 				Network: validNetwork,
 				Nodes: []image.Node{
 					{
-						Hostname: "foo",
-						Type:     image.KubernetesNodeTypeServer,
-						First:    true,
+						Hostname:    "foo",
+						Type:        image.KubernetesNodeTypeServer,
+						Initialiser: true,
 					},
 					{
-						Hostname: "bar",
-						Type:     image.KubernetesNodeTypeServer,
-						First:    true,
+						Hostname:    "bar",
+						Type:        image.KubernetesNodeTypeServer,
+						Initialiser: true,
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Only one node may be specified as the cluster initializer (by including the 'firstNode' field).",
+				"Only one node may be specified as the cluster initializer.",
 			},
 		},
 	}

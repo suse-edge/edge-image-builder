@@ -276,7 +276,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	assert.Equal(t, []any{"192.168.122.100.sslip.io", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
 
 	// Initialising server config file assertions
-	configPath = filepath.Join(ctx.CombustionDir, "first_server.yaml")
+	configPath = filepath.Join(ctx.CombustionDir, "init_server.yaml")
 
 	b, err = os.ReadFile(configPath)
 	require.NoError(t, err)
@@ -447,7 +447,7 @@ func TestFindKubernetesInitialiserNode(t *testing.T) {
 			expectedNode: "",
 		},
 		{
-			name: "Server node labeled as first",
+			name: "Server node labeled as initialiser",
 			nodes: []image.Node{
 				{
 					Hostname: "host1",
@@ -458,15 +458,15 @@ func TestFindKubernetesInitialiserNode(t *testing.T) {
 					Type:     "server",
 				},
 				{
-					Hostname: "host3",
-					Type:     "server",
-					First:    true,
+					Hostname:    "host3",
+					Type:        "server",
+					Initialiser: true,
 				},
 			},
 			expectedNode: "host3",
 		},
 		{
-			name: "Server node first in list",
+			name: "Initialiser as first server node in list",
 			nodes: []image.Node{
 				{
 					Hostname: "host1",
