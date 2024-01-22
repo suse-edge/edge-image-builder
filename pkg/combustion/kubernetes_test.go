@@ -253,6 +253,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	assert.Contains(t, contents, "cp $CONFIGFILE /etc/rancher/rke2/config.yaml")
 	assert.Contains(t, contents, "if [ \"$HOSTNAME\" = node1.suse.com ]; then")
 	assert.Contains(t, contents, "cp rke2-ha-api.yaml /var/lib/rancher/rke2/server/manifests/rke2-ha-api.yaml")
+	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
 	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=server-installer")
 	assert.Contains(t, contents, "systemctl enable rke2-$NODETYPE.service")
 

@@ -30,6 +30,8 @@ fi
 
 umount /var
 
+echo "{{ .APIVIP }} {{ .APIHost }}" >> /etc/hosts
+
 mkdir -p /etc/rancher/rke2/
 cp $CONFIGFILE /etc/rancher/rke2/config.yaml
 

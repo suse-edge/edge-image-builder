@@ -201,6 +201,8 @@ func configureMultiNodeRKE2(ctx *image.Context) (string, error) {
 		HAManifest            string
 		InstallPath           string
 		ImagesPath            string
+		APIVIP                string
+		APIHost               string
 	}{
 		Kubernetes:            ctx.ImageDefinition.Kubernetes,
 		Initialiser:           initialiser,
@@ -208,6 +210,8 @@ func configureMultiNodeRKE2(ctx *image.Context) (string, error) {
 		HAManifest:            haManifest,
 		InstallPath:           installPath,
 		ImagesPath:            imagesPath,
+		APIVIP:                ctx.ImageDefinition.Kubernetes.Network.APIVIP,
+		APIHost:               ctx.ImageDefinition.Kubernetes.Network.APIHost,
 	}
 
 	return storeRKE2Installer(ctx, "multi-node-rke2", rke2MultiNodeInstaller, &rke2)
