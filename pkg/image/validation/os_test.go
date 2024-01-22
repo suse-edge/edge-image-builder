@@ -94,6 +94,16 @@ func TestValidateOperatingSystem(t *testing.T) {
 			}
 			failures := validateOperatingSystem(&ctx)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+
+			var foundMessages []string
+			for _, foundValidation := range failures {
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+				assert.Equal(t, osComponent, foundValidation.Component)
+			}
+
+			for _, expectedMessage := range test.ExpectedFailedMessages {
+				assert.Contains(t, foundMessages, expectedMessage)
+			}
 		})
 	}
 }

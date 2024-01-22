@@ -12,8 +12,8 @@ type FailedValidation struct {
 
 type validateComponent func(ctx *image.Context) []FailedValidation
 
-func ValidateDefinition(ctx *image.Context) []FailedValidation {
-	var failures []FailedValidation
+func ValidateDefinition(ctx *image.Context) map[string][]FailedValidation {
+	failures := map[string][]FailedValidation{}
 
 	validations := []validateComponent{
 		validateImage,
@@ -23,7 +23,10 @@ func ValidateDefinition(ctx *image.Context) []FailedValidation {
 	}
 	for _, v := range validations {
 		componentFailures := v(ctx)
-		failures = append(failures, componentFailures...)
+
+		if len(componentFailures) > 0 {
+			failures[componentFailures[0].Component] = componentFailures
+		}
 	}
 
 	return failures

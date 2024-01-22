@@ -75,19 +75,9 @@ func processArgs() (*image.Context, error) {
 	if len(failedValidations) > 0 {
 		audit.Audit("Image definition validation found the following errors:")
 
-		failuresByComponent := map[string][]validation.FailedValidation{}
 		logMessageBuilder := strings.Builder{}
 
-		for _, fv := range failedValidations {
-			failuresByComponent[fv.Component] = append(failuresByComponent[fv.Component], fv)
-
-			logMessageBuilder.WriteString(fv.UserMessage)
-			if fv.Error != nil {
-				logMessageBuilder.WriteString(fv.Error.Error())
-			}
-		}
-
-		for componentName, failures := range failuresByComponent {
+		for componentName, failures := range failedValidations {
 			audit.Audit(fmt.Sprintf("  %s", componentName))
 			for _, cf := range failures {
 				audit.Audit(fmt.Sprintf("    %s", cf.UserMessage))
