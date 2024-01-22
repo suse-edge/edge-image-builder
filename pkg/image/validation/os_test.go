@@ -94,6 +94,15 @@ func TestValidateOperatingSystem(t *testing.T) {
 			}
 			failures := validateOperatingSystem(&ctx)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+
+			var foundMessages []string
+			for _, foundValidation := range failures {
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+			}
+
+			for _, expectedMessage := range test.ExpectedFailedMessages {
+				assert.Contains(t, foundMessages, expectedMessage)
+			}
 		})
 	}
 }
@@ -193,7 +202,6 @@ func TestValidateKernelArgs(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.UserMessage)
-				assert.Equal(t, osComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -250,7 +258,6 @@ func TestValidateSystemd(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.UserMessage)
-				assert.Equal(t, osComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -323,7 +330,6 @@ func TestValidateUsers(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.UserMessage)
-				assert.Equal(t, osComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -385,7 +391,6 @@ func TestValidateSuma(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.UserMessage)
-				assert.Equal(t, osComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -448,7 +453,6 @@ func TestPackages(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.UserMessage)
-				assert.Equal(t, osComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -514,7 +518,6 @@ func TestValidateUnattended(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.UserMessage)
-				assert.Equal(t, osComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {

@@ -28,7 +28,6 @@ func validateContainerImages(ear *image.EmbeddedArtifactRegistry) []FailedValida
 		if cImage.Name == "" {
 			failures = append(failures, FailedValidation{
 				UserMessage: "The 'name' field is required for each entry in 'images'.",
-				Component:   registryComponent,
 			})
 		}
 
@@ -36,7 +35,6 @@ func validateContainerImages(ear *image.EmbeddedArtifactRegistry) []FailedValida
 			msg := fmt.Sprintf("Duplicate image name '%s' found in the 'images' section.", cImage.Name)
 			failures = append(failures, FailedValidation{
 				UserMessage: msg,
-				Component:   registryComponent,
 			})
 		}
 		seenContainerImages[cImage.Name] = true
@@ -54,26 +52,22 @@ func validateHelmCharts(ear *image.EmbeddedArtifactRegistry) []FailedValidation 
 		if chart.Name == "" {
 			failures = append(failures, FailedValidation{
 				UserMessage: "The 'name' field is required for each entry in 'charts'.",
-				Component:   registryComponent,
 			})
 		}
 
 		if chart.RepoURL == "" {
 			failures = append(failures, FailedValidation{
 				UserMessage: "The 'repoURL' field is required for each entry in 'charts'.",
-				Component:   registryComponent,
 			})
 		} else if !strings.HasPrefix(chart.RepoURL, "http") {
 			failures = append(failures, FailedValidation{
 				UserMessage: "The 'repoURL' field must begin with either 'http://' or 'https://'.",
-				Component:   registryComponent,
 			})
 		}
 
 		if chart.Version == "" {
 			failures = append(failures, FailedValidation{
 				UserMessage: "The 'version' field is required for each entry in 'charts'.",
-				Component:   registryComponent,
 			})
 		}
 
@@ -81,7 +75,6 @@ func validateHelmCharts(ear *image.EmbeddedArtifactRegistry) []FailedValidation 
 			msg := fmt.Sprintf("Duplicate chart name '%s' found in the 'charts' section.", chart.Name)
 			failures = append(failures, FailedValidation{
 				UserMessage: msg,
-				Component:   registryComponent,
 			})
 		}
 		seenCharts[chart.Name] = true

@@ -5,25 +5,27 @@ import (
 )
 
 type FailedValidation struct {
-	Component   string
 	UserMessage string
 	Error       error
 }
 
 type validateComponent func(ctx *image.Context) []FailedValidation
 
-func ValidateDefinition(ctx *image.Context) []FailedValidation {
-	var failures []FailedValidation
+func ValidateDefinition(ctx *image.Context) map[string][]FailedValidation {
+	failures := map[string][]FailedValidation{}
 
-	validations := []validateComponent{
-		validateImage,
-		validateOperatingSystem,
-		validateEmbeddedArtifactRegistry,
-		validateKubernetes,
+	validations := map[string]validateComponent{
+		imageComponent:    validateImage,
+		osComponent:       validateOperatingSystem,
+		registryComponent: validateEmbeddedArtifactRegistry,
+		k8sComponent:      validateKubernetes,
 	}
-	for _, v := range validations {
+	for componentName, v := range validations {
 		componentFailures := v(ctx)
-		failures = append(failures, componentFailures...)
+
+		if len(componentFailures) > 0 {
+			failures[componentName] = componentFailures
+		}
 	}
 
 	return failures
