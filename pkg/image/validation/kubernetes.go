@@ -45,14 +45,12 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 	if k8s.Network.APIVIP == "" {
 		failures = append(failures, FailedValidation{
 			UserMessage: "The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
-			Component:   k8sComponent,
 		})
 	}
 
 	if k8s.Network.APIHost == "" {
 		failures = append(failures, FailedValidation{
 			UserMessage: "The 'apiHost' field is required in the 'network' section when defining entries under 'nodes'.",
-			Component:   k8sComponent,
 		})
 	}
 
@@ -64,7 +62,6 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 		if node.Hostname == "" {
 			failures = append(failures, FailedValidation{
 				UserMessage: "The 'hostname' field is required for entries in the 'nodes' section.",
-				Component:   k8sComponent,
 			})
 		}
 
@@ -73,7 +70,6 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 			msg := fmt.Sprintf("The 'type' field for entries in the 'nodes' section must be one of: %s", options)
 			failures = append(failures, FailedValidation{
 				UserMessage: msg,
-				Component:   k8sComponent,
 			})
 		}
 
@@ -86,7 +82,6 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 				msg := fmt.Sprintf("The node labeled with 'firstNode' must be of type '%s'.", image.KubernetesNodeTypeServer)
 				failures = append(failures, FailedValidation{
 					UserMessage: msg,
-					Component:   k8sComponent,
 				})
 			}
 		}
@@ -100,7 +95,6 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 		msg := fmt.Sprintf("The 'nodes' section contains duplicate entries: %s", duplicateValues)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
-			Component:   k8sComponent,
 		})
 	}
 
@@ -108,7 +102,6 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 		msg := fmt.Sprintf("There must be at least one node of type '%s' defined.", image.KubernetesNodeTypeServer)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
-			Component:   k8sComponent,
 		})
 	}
 
@@ -116,7 +109,6 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 		_ = firstNodes[0].First // Jan 19, 2024: The word "first" is being discussed; tf this field gets renamed, update the text below
 		failures = append(failures, FailedValidation{
 			UserMessage: "Only one node may be specified as the cluster initializer (by including the 'firstNode' field).",
-			Component:   k8sComponent,
 		})
 	}
 
@@ -135,7 +127,6 @@ func validateManifestURLs(k8s *image.Kubernetes) []FailedValidation {
 		if !strings.HasPrefix(manifest, "http") {
 			failures = append(failures, FailedValidation{
 				UserMessage: "Entries in 'urls' must begin with either 'http://' or 'https://'.",
-				Component:   k8sComponent,
 			})
 		}
 
@@ -143,7 +134,6 @@ func validateManifestURLs(k8s *image.Kubernetes) []FailedValidation {
 			msg := fmt.Sprintf("The 'urls' field contains duplicate entries: %s", manifest)
 			failures = append(failures, FailedValidation{
 				UserMessage: msg,
-				Component:   k8sComponent,
 			})
 		}
 

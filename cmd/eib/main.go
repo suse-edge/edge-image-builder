@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
@@ -79,10 +79,10 @@ func processArgs() (*image.Context, error) {
 		logMessageBuilder := strings.Builder{}
 
 		orderedComponentNames := make([]string, 0, len(failedValidations))
-		for c := range failedValidations{
+		for c := range failedValidations {
 			orderedComponentNames = append(orderedComponentNames, c)
 		}
-		sort.Sort(sort.StringSlice(orderedComponentNames))
+		slices.Sort(orderedComponentNames)
 
 		for _, componentName := range orderedComponentNames {
 			failures := failedValidations[componentName]
