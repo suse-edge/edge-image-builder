@@ -113,7 +113,9 @@ func configureSingleNodeRKE2(ctx *image.Context) (string, error) {
 
 	// Establish sane default values
 	setClusterCNI(serverConfig)
-	delete(serverConfig, tlsSANKey) // TODO: Figure out whether tls-san is fine to keep
+	if ctx.ImageDefinition.Kubernetes.Network.APIHost != "" {
+		appendClusterTLSSAN(serverConfig, ctx.ImageDefinition.Kubernetes.Network.APIHost)
+	}
 	delete(serverConfig, serverKey)
 
 	if err = storeKubernetesConfig(ctx, serverConfig, k8sServerConfigFile); err != nil {
@@ -152,8 +154,11 @@ func configureMultiNodeRKE2(ctx *image.Context) (string, error) {
 	// Establish sane default values
 	setClusterCNI(serverConfig)
 	setClusterToken(serverConfig)
-	setClusterAPIHost(serverConfig, ctx.ImageDefinition.Kubernetes.Network.APIHost)
 	setClusterAPIAddress(serverConfig, ctx.ImageDefinition.Kubernetes.Network.APIVIP)
+	appendClusterTLSSAN(serverConfig, ctx.ImageDefinition.Kubernetes.Network.APIVIP)
+	if ctx.ImageDefinition.Kubernetes.Network.APIHost != "" {
+		appendClusterTLSSAN(serverConfig, ctx.ImageDefinition.Kubernetes.Network.APIHost)
+	}
 
 	if err = storeKubernetesConfig(ctx, serverConfig, k8sServerConfigFile); err != nil {
 		return "", fmt.Errorf("storing RKE2 server config file: %w", err)
@@ -255,7 +260,7 @@ func findKubernetesInitialiserNode(kubernetes *image.Kubernetes) string {
 	// Use the first server node as an initialiser
 	for _, node := range kubernetes.Nodes {
 		if node.Type == image.KubernetesNodeTypeServer {
-			zap.S().Infof("Using '%s' for cluster initialiser since none of the nodes was explicitly configured", node.Hostname)
+			zap.S().Infof("Using '%s' as the cluster initialiser, as one wasn't explicitly selected", node.Hostname)
 			return node.Hostname
 		}
 	}
@@ -297,6 +302,8 @@ func parseKubernetesConfig(ctx *image.Context, configFile string) (map[string]an
 			return nil, fmt.Errorf("reading kubernetes config file '%s': %w", configFile, err)
 		}
 
+		zap.S().Warnf("RKE2 config file '%s' was not provided", configFile)
+
 		// Use an empty config which will be automatically populated later
 		return config, nil
 	}
@@ -332,33 +339,6 @@ func setClusterCNI(config map[string]any) {
 	config[cniKey] = cniDefaultValue
 }
 
-func setClusterAPIHost(config map[string]any, apiHost string) {
-	if apiHost == "" {
-		zap.S().Warn("Attempted to set an empty cluster API host")
-		return
-	}
-
-	tlsSAN, ok := config[tlsSANKey]
-	if !ok {
-		config[tlsSANKey] = []string{apiHost}
-		return
-	}
-
-	switch v := tlsSAN.(type) {
-	case string:
-		config[tlsSANKey] = []string{v, apiHost}
-	case []string:
-		v = append(v, apiHost)
-		config[tlsSANKey] = v
-	case []any:
-		v = append(v, apiHost)
-		config[tlsSANKey] = v
-	default:
-		zap.S().Warnf("Ignoring invalid 'tls-san' value: %v", v)
-		config[tlsSANKey] = []string{apiHost}
-	}
-}
-
 func setClusterAPIAddress(config map[string]any, apiAddress string) {
 	if apiAddress == "" {
 		zap.S().Warn("Attempted to set an empty cluster API address")
@@ -366,6 +346,33 @@ func setClusterAPIAddress(config map[string]any, apiAddress string) {
 	}
 
 	config[serverKey] = fmt.Sprintf("https://%s:9345", apiAddress)
+}
+
+func appendClusterTLSSAN(config map[string]any, address string) {
+	if address == "" {
+		zap.S().Warn("Attempted to append TLS SAN with an empty address")
+		return
+	}
+
+	tlsSAN, ok := config[tlsSANKey]
+	if !ok {
+		config[tlsSANKey] = []string{address}
+		return
+	}
+
+	switch v := tlsSAN.(type) {
+	case string:
+		config[tlsSANKey] = []string{v, address}
+	case []string:
+		v = append(v, address)
+		config[tlsSANKey] = v
+	case []any:
+		v = append(v, address)
+		config[tlsSANKey] = v
+	default:
+		zap.S().Warnf("Ignoring invalid 'tls-san' value: %v", v)
+		config[tlsSANKey] = []string{address}
+	}
 }
 
 func extractCNI(config map[string]any) (cni string, multusEnabled bool, err error) {

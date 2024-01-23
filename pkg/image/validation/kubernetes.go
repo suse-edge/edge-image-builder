@@ -48,12 +48,6 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 		})
 	}
 
-	if k8s.Network.APIHost == "" {
-		failures = append(failures, FailedValidation{
-			UserMessage: "The 'apiHost' field is required in the 'network' section when defining entries under 'nodes'.",
-		})
-	}
-
 	var nodeTypes []string
 	var nodeNames []string
 	var initialisers []*image.Node

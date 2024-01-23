@@ -133,6 +133,9 @@ func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
 
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
 		Version: "v1.29.0+rke2r1",
+		Network: image.Network{
+			APIHost: "api.cluster01.hosted.on.edge.suse.com",
+		},
 	}
 	ctx.KubernetesScriptInstaller = mockKubernetesScriptInstaller{
 		installScript: func(distribution, sourcePath, destPath string) error {
@@ -182,6 +185,8 @@ func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
 
 	require.Contains(t, configContents, "cni")
 	assert.Equal(t, "cilium", configContents["cni"], "default CNI is not set")
+	assert.Equal(t, nil, configContents["server"])
+	assert.Equal(t, []any{"api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
 }
 
 func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
@@ -274,7 +279,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	assert.Equal(t, "canal", configContents["cni"])
 	assert.Equal(t, "123", configContents["token"])
 	assert.Equal(t, "https://192.168.122.100:9345", configContents["server"])
-	assert.Equal(t, []any{"192.168.122.100.sslip.io", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
+	assert.Equal(t, []any{"192.168.122.100.sslip.io", "192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
 
 	// Initialising server config file assertions
 	configPath = filepath.Join(ctx.CombustionDir, "init_server.yaml")
@@ -288,7 +293,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	assert.Equal(t, "canal", configContents["cni"])
 	assert.Equal(t, "123", configContents["token"])
 	assert.Equal(t, nil, configContents["server"])
-	assert.Equal(t, []any{"192.168.122.100.sslip.io", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
+	assert.Equal(t, []any{"192.168.122.100.sslip.io", "192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
 
 	// Agent config file assertions
 	configPath = filepath.Join(ctx.CombustionDir, "agent.yaml")
@@ -302,7 +307,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	assert.Equal(t, "canal", configContents["cni"])
 	assert.Equal(t, "123", configContents["token"])
 	assert.Equal(t, "https://192.168.122.100:9345", configContents["server"])
-	assert.Equal(t, []any{"192.168.122.100.sslip.io", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
+	assert.Equal(t, []any{"192.168.122.100.sslip.io", "192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
 }
 
 func TestExtractCNI(t *testing.T) {
@@ -494,7 +499,7 @@ func TestFindKubernetesInitialiserNode(t *testing.T) {
 	}
 }
 
-func TestSetClusterAPIHost(t *testing.T) {
+func TestAppendClusterTLSSAN(t *testing.T) {
 	tests := []struct {
 		name           string
 		config         map[string]any
@@ -549,7 +554,7 @@ func TestSetClusterAPIHost(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			setClusterAPIHost(test.config, test.apiHost)
+			appendClusterTLSSAN(test.config, test.apiHost)
 			assert.Equal(t, test.expectedTLSSAN, test.config["tls-san"])
 		})
 	}

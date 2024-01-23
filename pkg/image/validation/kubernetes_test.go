@@ -144,7 +144,6 @@ func TestValidateNodes(t *testing.T) {
 			},
 			ExpectedFailedMessages: []string{
 				"The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
-				"The 'apiHost' field is required in the 'network' section when defining entries under 'nodes'.",
 			},
 		},
 		`no hostname`: {
