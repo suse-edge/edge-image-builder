@@ -8,11 +8,15 @@ hosts[{{ .Hostname }}]={{ .Type }}
 {{- end }}
 
 HOSTNAME=$(cat /etc/hostname)
-NODETYPE=${hosts[$HOSTNAME]}
+if [ ! "$HOSTNAME" ]; then
+    echo "ERROR: Could not identify whether the host is an RKE2 server or agent due to missing hostname"
+    exit 1
+fi
 
-if [ ! "$NODETYPE" ]; then
-    echo "Could not identify whether host '$HOSTNAME' is an RKE2 server or agent";
-    exit 1;
+NODETYPE="${hosts[$HOSTNAME]:-none}"
+if [ "$NODETYPE" = "none" ]; then
+    echo "ERROR: Could not identify whether host '$HOSTNAME' is an RKE2 server or agent"
+    exit 1
 fi
 
 mount /var
