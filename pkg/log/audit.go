@@ -23,8 +23,8 @@ func Audit(message string) {
 	doAudit(message, nil)
 }
 
-func Auditf(message string, args ...string) {
-	auditMe := fmt.Sprintf(message, args)
+func Auditf(message string, args ...any) {
+	auditMe := fmt.Sprintf(message, args...)
 	doAudit(auditMe, nil)
 }
 
@@ -36,8 +36,8 @@ func AuditAndLog(message string) {
 	doAudit(message, zap.S().Info)
 }
 
-func AuditfAndLog(message string, args ...string) {
-	auditMe := fmt.Sprintf(message, args)
+func AuditfAndLog(message string, args ...any) {
+	auditMe := fmt.Sprintf(message, args...)
 	doAudit(auditMe, zap.S().Info)
 }
 
