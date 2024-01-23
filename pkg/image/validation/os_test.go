@@ -467,7 +467,7 @@ func TestPackages(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"additional repository list contains an entry with empty 'url' field",
+				"Additional repository list contains an entry with empty 'url' field.",
 			},
 		},
 	}
