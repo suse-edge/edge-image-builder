@@ -49,6 +49,17 @@ type CLIArguments struct {
 func main() {
 	cliArguments := parseCliArguments()
 
+	buildDir, combustionDir, err := build.SetupBuildDirectory(cliArguments.rootBuildDir)
+	if err != nil {
+		audit.Auditf("The build directory could not be setup under the configuration directory '%s'.", cliArguments.configDir)
+		audit.Audit("Reason:")
+		audit.AuditError(err)
+		os.Exit(exitCodeBuildDir)
+	}
+
+	// This needs to occur as early as possible so that the subsequent calls can use the log
+	setupLogging(buildDir)
+
 	configDirExists := doesImageConfigDirExist(cliArguments)
 	if !configDirExists {
 		os.Exit(exitCodeConfigDir)
@@ -59,16 +70,6 @@ func main() {
 		os.Exit(exitCodeDefinitionParse)
 	}
 
-	buildDir, combustionDir, err := build.SetupBuildDirectory(cliArguments.rootBuildDir)
-	if err != nil {
-		audit.Auditf("The build directory could not be setup under the configuration directory '%s'.", cliArguments.configDir)
-		audit.Audit("Reason:")
-		audit.AuditError(err)
-		os.Exit(exitCodeBuildDir)
-	}
-
-	setupLogging(buildDir)
-
 	ctx := buildContext(buildDir, combustionDir, cliArguments.configDir, imageDefinition)
 
 	isDefinitionValid := isImageDefinitionValid(ctx)
@@ -78,7 +79,7 @@ func main() {
 
 	if cliArguments.validate {
 		// If we got this far, the image is valid. If we're in this block, the user wants execution to stop.
-		audit.Audit("The specified image definition is valid.")
+		audit.AuditAndLog("The specified image definition is valid.")
 		os.Exit(0)
 	}
 
@@ -89,7 +90,7 @@ func main() {
 
 	defer func() {
 		if r := recover(); r != nil {
-			audit.Audit("Build failed unexpectedly, check the logs under the build directory for more information.")
+			audit.AuditAndLog("Build failed unexpectedly, check the logs under the build directory for more information.")
 			zap.S().Fatalf("Unexpected error occurred: %s", r)
 		}
 	}()
@@ -113,68 +114,6 @@ func parseCliArguments() CLIArguments {
 	return cliArguments
 }
 
-// Returns whether the image configuration directory was specified and can be read, displaying
-// the appropriate messages to the user. Returns 'true' if the directory exists and execution can proceed,
-// 'false' otherwise.
-func doesImageConfigDirExist(cliArguments CLIArguments) bool {
-	configDir := cliArguments.configDir
-
-	if configDir == "" {
-		audit.Auditf("The '%s' argument must be specified.", argConfigDir)
-		return false
-	}
-
-	_, err := os.Stat(configDir)
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			audit.Auditf("The specified image configuration directory '%s' could not be found.", configDir)
-			return false
-		}
-		audit.Auditf("Unable to check the filesystem for the image configuration directory '%s'.", configDir)
-		audit.Audit("Reason:")
-		audit.AuditError(err)
-		return false
-	}
-
-	return true
-}
-
-// Attempts to parse the specified image definition file, displaying the appropriate messages to the user.
-// Returns a populated `image.Context` struct if successful, `nil` if the definition could not be parsed.
-func parseImageDefinition(cliArguments CLIArguments) *image.Definition {
-	definitionFilePath := filepath.Join(cliArguments.configDir, cliArguments.definitionFile)
-
-	_, err := os.Stat(definitionFilePath)
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			audit.Auditf("The specified definition file '%s' could not be found.", definitionFilePath)
-		} else {
-			audit.Auditf("Unable to check the filesystem for the image definition file '%s'.", definitionFilePath)
-			audit.Audit("Reason:")
-			audit.AuditError(err)
-		}
-		return nil
-	}
-
-	configData, err := os.ReadFile(definitionFilePath)
-	if err != nil {
-		audit.Auditf("The specified definition file '%s' could be read.", definitionFilePath)
-		audit.Audit("Reason:")
-		audit.AuditError(err)
-		return nil
-	}
-
-	imageDefinition, err := image.ParseDefinition(configData)
-	if err != nil {
-		audit.Auditf("The image definition file '%s' could not be parsed.", definitionFilePath)
-		audit.Audit("Reason:")
-		audit.AuditError(err)
-		return nil
-	}
-
-	return imageDefinition
-}
-
 // Configures the global logger.
 func setupLogging(buildDir string) {
 	logFilename := filepath.Join(buildDir, "eib-build.log")
@@ -190,6 +129,68 @@ func setupLogging(buildDir string) {
 
 	// Set our configured logger to be accessed globally by zap.L()
 	zap.ReplaceGlobals(logger)
+}
+
+// Returns whether the image configuration directory was specified and can be read, displaying
+// the appropriate messages to the user. Returns 'true' if the directory exists and execution can proceed,
+// 'false' otherwise.
+func doesImageConfigDirExist(cliArguments CLIArguments) bool {
+	configDir := cliArguments.configDir
+
+	if configDir == "" {
+		audit.AuditfAndLog("The '%s' argument must be specified.", argConfigDir)
+		return false
+	}
+
+	_, err := os.Stat(configDir)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			audit.AuditfAndLog("The specified image configuration directory '%s' could not be found.", configDir)
+			return false
+		}
+		audit.AuditfAndLog("Unable to check the filesystem for the image configuration directory '%s'.", configDir)
+		audit.Audit("Reason:")
+		audit.AuditErrorAndLog(err)
+		return false
+	}
+
+	return true
+}
+
+// Attempts to parse the specified image definition file, displaying the appropriate messages to the user.
+// Returns a populated `image.Context` struct if successful, `nil` if the definition could not be parsed.
+func parseImageDefinition(cliArguments CLIArguments) *image.Definition {
+	definitionFilePath := filepath.Join(cliArguments.configDir, cliArguments.definitionFile)
+
+	_, err := os.Stat(definitionFilePath)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			audit.AuditfAndLog("The specified definition file '%s' could not be found.", definitionFilePath)
+		} else {
+			audit.AuditfAndLog("Unable to check the filesystem for the image definition file '%s'.", definitionFilePath)
+			audit.Audit("Reason:")
+			audit.AuditErrorAndLog(err)
+		}
+		return nil
+	}
+
+	configData, err := os.ReadFile(definitionFilePath)
+	if err != nil {
+		audit.AuditfAndLog("The specified definition file '%s' could be read.", definitionFilePath)
+		audit.Audit("Reason:")
+		audit.AuditErrorAndLog(err)
+		return nil
+	}
+
+	imageDefinition, err := image.ParseDefinition(configData)
+	if err != nil {
+		audit.AuditfAndLog("The image definition file '%s' could not be parsed.", definitionFilePath)
+		audit.Audit("Reason:")
+		audit.AuditErrorAndLog(err)
+		return nil
+	}
+
+	return imageDefinition
 }
 
 // Assembles the image build context with user-provided values and implementation defaults.
@@ -251,10 +252,9 @@ func bootstrapRpmDependencyServices(ctx *image.Context) bool {
 	if !combustion.SkipRPMComponent(ctx) {
 		p, err := podman.New(ctx.BuildDir)
 		if err != nil {
-			audit.Audit("The services for RPM dependency resolution failed to start.")
+			audit.AuditAndLog("The services for RPM dependency resolution failed to start.")
 			audit.Audit("Reason:")
-			audit.AuditError(err)
-			zap.S().Errorf("starting podman client: %s", err)
+			audit.AuditErrorAndLog(err)
 			return false
 		}
 
