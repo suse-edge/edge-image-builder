@@ -51,14 +51,22 @@ func TestSkipRPMComponentTrue(t *testing.T) {
 		{
 			name: "Additional repository without an RPM directory or package list",
 			packages: image.Packages{
-				AdditionalRepos: []string{"https://foo.bar"},
+				AdditionalRepos: []image.AddRepo{
+					{
+						URL: "https://foo.bar",
+					},
+				},
 			},
 		},
 		{
 			name: "Additional repository and registration code without RPM directory or package list",
 			packages: image.Packages{
-				AdditionalRepos: []string{"https://foo.bar"},
-				RegCode:         "foo.bar",
+				AdditionalRepos: []image.AddRepo{
+					{
+						URL: "https://foo.bar",
+					},
+				},
+				RegCode: "foo.bar",
 			},
 		},
 	}
@@ -107,9 +115,13 @@ func TestSkipRPMComponentFullConfig(t *testing.T) {
 	}()
 
 	ctx.ImageDefinition.OperatingSystem.Packages = image.Packages{
-		PKGList:         []string{"pkg1", "pkg2"},
-		AdditionalRepos: []string{"https://foo.bar"},
-		RegCode:         "foo.bar",
+		PKGList: []string{"pkg1", "pkg2"},
+		AdditionalRepos: []image.AddRepo{
+			{
+				URL: "https://foo.bar",
+			},
+		},
+		RegCode: "foo.bar",
 	}
 
 	assert.False(t, SkipRPMComponent(ctx))
@@ -131,8 +143,12 @@ func TestConfigureRPMSError(t *testing.T) {
 
 	// do not skip RPM component
 	ctx.ImageDefinition.OperatingSystem.Packages = image.Packages{
-		PKGList:         []string{"foo", "bar"},
-		AdditionalRepos: []string{"https://foo.bar"},
+		PKGList: []string{"foo", "bar"},
+		AdditionalRepos: []image.AddRepo{
+			{
+				URL: "https://foo.bar",
+			},
+		},
 	}
 
 	tests := []struct {
@@ -215,8 +231,12 @@ func TestConfigureRPMSSuccessfulConfig(t *testing.T) {
 	defer teardown()
 
 	ctx.ImageDefinition.OperatingSystem.Packages = image.Packages{
-		PKGList:         []string{"foo", "bar"},
-		AdditionalRepos: []string{"https://foo.bar"},
+		PKGList: []string{"foo", "bar"},
+		AdditionalRepos: []image.AddRepo{
+			{
+				URL: "https://foo.bar",
+			},
+		},
 	}
 
 	rpmDir := filepath.Join(ctx.ImageConfigDir, userRPMsDir)

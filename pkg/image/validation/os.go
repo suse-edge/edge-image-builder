@@ -52,7 +52,6 @@ func validateKernelArgs(os *image.OperatingSystem) []FailedValidation {
 			if key == "" || value == "" {
 				failures = append(failures, FailedValidation{
 					UserMessage: "Kernel arguments must be specified as 'key=value'.",
-					Component:   osComponent,
 				})
 			}
 		}
@@ -60,7 +59,6 @@ func validateKernelArgs(os *image.OperatingSystem) []FailedValidation {
 		if _, exists := seenKeys[key]; exists {
 			failures = append(failures, FailedValidation{
 				UserMessage: fmt.Sprintf("Duplicate kernel argument found: %s", key),
-				Component:   osComponent,
 			})
 		}
 		seenKeys[key] = true
@@ -77,7 +75,6 @@ func validateSystemd(os *image.OperatingSystem) []FailedValidation {
 		msg := fmt.Sprintf("Systemd enable list contains duplicate entries: %s", duplicateValues)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
-			Component:   osComponent,
 		})
 	}
 
@@ -86,7 +83,6 @@ func validateSystemd(os *image.OperatingSystem) []FailedValidation {
 		msg := fmt.Sprintf("Systemd disable list contains duplicate entries: %s", duplicateValues)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
-			Component:   osComponent,
 		})
 	}
 
@@ -96,7 +92,6 @@ func validateSystemd(os *image.OperatingSystem) []FailedValidation {
 				msg := fmt.Sprintf("Systemd conflict found, '%s' is both enabled and disabled.", enableItem)
 				failures = append(failures, FailedValidation{
 					UserMessage: msg,
-					Component:   osComponent,
 				})
 			}
 		}
@@ -113,7 +108,6 @@ func validateUsers(os *image.OperatingSystem) []FailedValidation {
 		if user.Username == "" {
 			failures = append(failures, FailedValidation{
 				UserMessage: "The 'username' field is required for all entries under 'users'.",
-				Component:   osComponent,
 			})
 		}
 
@@ -121,7 +115,6 @@ func validateUsers(os *image.OperatingSystem) []FailedValidation {
 			msg := fmt.Sprintf("User '%s' must have either a password or SSH key.", user.Username)
 			failures = append(failures, FailedValidation{
 				UserMessage: msg,
-				Component:   osComponent,
 			})
 		}
 
@@ -129,7 +122,6 @@ func validateUsers(os *image.OperatingSystem) []FailedValidation {
 			msg := fmt.Sprintf("Duplicate username found: %s", user.Username)
 			failures = append(failures, FailedValidation{
 				UserMessage: msg,
-				Component:   osComponent,
 			})
 		}
 		seenUsernames[user.Username] = true
@@ -147,19 +139,16 @@ func validateSuma(os *image.OperatingSystem) []FailedValidation {
 	if os.Suma.Host == "" {
 		failures = append(failures, FailedValidation{
 			UserMessage: "The 'host' field is required for the 'suma' section.",
-			Component:   osComponent,
 		})
 	}
 	if strings.HasPrefix(os.Suma.Host, "http") {
 		failures = append(failures, FailedValidation{
 			UserMessage: "The suma 'host' field may not contain 'http://' or 'https://'",
-			Component:   osComponent,
 		})
 	}
 	if os.Suma.ActivationKey == "" {
 		failures = append(failures, FailedValidation{
 			UserMessage: "The 'activationKey' field is required for the 'suma' section.",
-			Component:   osComponent,
 		})
 	}
 
@@ -174,23 +163,35 @@ func validatePackages(os *image.OperatingSystem) []FailedValidation {
 		msg := fmt.Sprintf("The 'packageList' field contains duplicate packages: %s", duplicateValues)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
-			Component:   osComponent,
 		})
 	}
 
-	if duplicates := findDuplicates(os.Packages.AdditionalRepos); len(duplicates) > 0 {
-		duplicateValues := strings.Join(duplicates, ", ")
-		msg := fmt.Sprintf("The 'additionalRepos' field contains duplicate repos: %s", duplicateValues)
-		failures = append(failures, FailedValidation{
-			UserMessage: msg,
-			Component:   osComponent,
-		})
+	if len(os.Packages.AdditionalRepos) > 0 {
+		urlSlice := []string{}
+
+		for _, repo := range os.Packages.AdditionalRepos {
+			if repo.URL == "" {
+				msg := "Additional repository list contains an entry with empty 'url' field."
+				failures = append(failures, FailedValidation{
+					UserMessage: msg,
+				})
+			}
+
+			urlSlice = append(urlSlice, repo.URL)
+		}
+
+		if duplicates := findDuplicates(urlSlice); len(duplicates) > 0 {
+			duplicateValues := strings.Join(duplicates, ", ")
+			msg := fmt.Sprintf("The 'additionalRepos' field contains duplicate repos: %s", duplicateValues)
+			failures = append(failures, FailedValidation{
+				UserMessage: msg,
+			})
+		}
 	}
 
 	if len(os.Packages.PKGList) > 0 && len(os.Packages.AdditionalRepos) == 0 && os.Packages.RegCode == "" {
 		failures = append(failures, FailedValidation{
 			UserMessage: "When including the 'packageList' field, either additional repositories or a registration code must be included.",
-			Component:   osComponent,
 		})
 	}
 
@@ -204,7 +205,6 @@ func validateUnattended(def *image.Definition) []FailedValidation {
 		msg := fmt.Sprintf("The 'unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
-			Component:   osComponent,
 		})
 	}
 
@@ -212,7 +212,6 @@ func validateUnattended(def *image.Definition) []FailedValidation {
 		msg := fmt.Sprintf("The 'installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
-			Component:   osComponent,
 		})
 	}
 

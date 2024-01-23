@@ -39,9 +39,13 @@ func TestValidateOperatingSystem(t *testing.T) {
 						ActivationKey: "please?",
 					},
 					Packages: image.Packages{
-						PKGList:         []string{"zsh", "git"},
-						AdditionalRepos: []string{"myrepo.com"},
-						RegCode:         "letMeIn",
+						PKGList: []string{"zsh", "git"},
+						AdditionalRepos: []image.AddRepo{
+							{
+								URL: "myrepo.com",
+							},
+						},
+						RegCode: "letMeIn",
 					},
 					Unattended:    true,
 					InstallDevice: "/dev/sda",
@@ -94,6 +98,15 @@ func TestValidateOperatingSystem(t *testing.T) {
 			}
 			failures := validateOperatingSystem(&ctx)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+
+			var foundMessages []string
+			for _, foundValidation := range failures {
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+			}
+
+			for _, expectedMessage := range test.ExpectedFailedMessages {
+				assert.Contains(t, foundMessages, expectedMessage)
+			}
 		})
 	}
 }
@@ -193,7 +206,6 @@ func TestValidateKernelArgs(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.UserMessage)
-				assert.Equal(t, osComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -250,7 +262,6 @@ func TestValidateSystemd(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.UserMessage)
-				assert.Equal(t, osComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -323,7 +334,6 @@ func TestValidateUsers(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.UserMessage)
-				assert.Equal(t, osComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -385,7 +395,6 @@ func TestValidateSuma(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.UserMessage)
-				assert.Equal(t, osComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -405,9 +414,13 @@ func TestPackages(t *testing.T) {
 		},
 		`valid`: {
 			Packages: image.Packages{
-				PKGList:         []string{"foo"},
-				AdditionalRepos: []string{"myrepo"},
-				RegCode:         "regcode",
+				PKGList: []string{"foo"},
+				AdditionalRepos: []image.AddRepo{
+					{
+						URL: "myrepo",
+					},
+				},
+				RegCode: "regcode",
 			},
 		},
 		`package list only`: {
@@ -429,10 +442,32 @@ func TestPackages(t *testing.T) {
 		},
 		`duplicate repos`: {
 			Packages: image.Packages{
-				AdditionalRepos: []string{"foo", "bar", "foo"},
+				AdditionalRepos: []image.AddRepo{
+					{
+						URL: "foo",
+					},
+					{
+						URL: "bar",
+					},
+					{
+						URL: "foo",
+					},
+				},
 			},
 			ExpectedFailedMessages: []string{
 				"The 'additionalRepos' field contains duplicate repos: foo",
+			},
+		},
+		`missing repo url`: {
+			Packages: image.Packages{
+				AdditionalRepos: []image.AddRepo{
+					{
+						URL: "",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Additional repository list contains an entry with empty 'url' field.",
 			},
 		},
 	}
@@ -448,7 +483,6 @@ func TestPackages(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.UserMessage)
-				assert.Equal(t, osComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {
@@ -514,7 +548,6 @@ func TestValidateUnattended(t *testing.T) {
 			var foundMessages []string
 			for _, foundValidation := range failures {
 				foundMessages = append(foundMessages, foundValidation.UserMessage)
-				assert.Equal(t, osComponent, foundValidation.Component)
 			}
 
 			for _, expectedMessage := range test.ExpectedFailedMessages {

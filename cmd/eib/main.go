@@ -6,10 +6,13 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"github.com/suse-edge/edge-image-builder/pkg/image/validation"
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
 	audit "github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/network"
@@ -24,6 +27,7 @@ const (
 	argConfigFile = "config-file"
 	argConfigDir  = "config-dir"
 	argBuildDir   = "build-dir"
+	argValidate   = "validate"
 )
 
 func processArgs() (*image.Context, error) {
@@ -31,11 +35,13 @@ func processArgs() (*image.Context, error) {
 		configFile   string
 		configDir    string
 		rootBuildDir string
+		validate     bool
 	)
 
 	flag.StringVar(&configFile, argConfigFile, "", "name of the image configuration file")
 	flag.StringVar(&configDir, argConfigDir, "", "full path to the image configuration directory")
 	flag.StringVar(&rootBuildDir, argBuildDir, "", "full path to the directory to store build artifacts")
+	flag.BoolVar(&validate, argValidate, false, "if specified, the image definition will be validated but not built")
 	flag.Parse()
 
 	imageDefinition, err := parseImageDefinition(configFile, configDir)
@@ -64,6 +70,40 @@ func processArgs() (*image.Context, error) {
 		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
 		KubernetesScriptInstaller:    kubernetes.ScriptInstaller{},
 		KubernetesArtefactDownloader: kubernetes.ArtefactDownloader{},
+	}
+
+	failedValidations := validation.ValidateDefinition(ctx)
+	if len(failedValidations) > 0 {
+		audit.Audit("Image definition validation found the following errors:")
+
+		logMessageBuilder := strings.Builder{}
+
+		orderedComponentNames := make([]string, 0, len(failedValidations))
+		for c := range failedValidations {
+			orderedComponentNames = append(orderedComponentNames, c)
+		}
+		slices.Sort(orderedComponentNames)
+
+		for _, componentName := range orderedComponentNames {
+			failures := failedValidations[componentName]
+			audit.Audit(fmt.Sprintf("  %s", componentName))
+			for _, cf := range failures {
+				audit.Audit(fmt.Sprintf("    %s", cf.UserMessage))
+				logMessageBuilder.WriteString(cf.UserMessage + "\n")
+				if cf.Error != nil {
+					logMessageBuilder.WriteString("\t" + cf.Error.Error() + "\n")
+				}
+			}
+		}
+
+		if s := logMessageBuilder.String(); s != "" {
+			zap.S().Fatalf("Image definition validation failures:\n%s", s)
+		}
+	}
+
+	if validate {
+		audit.Audit("The specified image definition is valid.")
+		os.Exit(0)
 	}
 
 	if !combustion.SkipRPMComponent(ctx) {
@@ -107,11 +147,6 @@ func parseImageDefinition(configFile string, configDir string) (*image.Definitio
 	imageDefinition, err := image.ParseDefinition(configData)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing definition file \"%s\": %w", configFile, err)
-	}
-
-	err = image.ValidateDefinition(imageDefinition)
-	if err != nil {
-		return nil, fmt.Errorf("error validating definition file: %w", err)
 	}
 
 	return imageDefinition, nil

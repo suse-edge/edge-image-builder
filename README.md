@@ -46,6 +46,8 @@ podman run --rm -it \
   volume to make the build artifacts available after the container completes. In this example, a directory named
   `_build` will be created in the image configuration directory and will persist after EIB finishes. This directory
   will contain subdirectories storing the respective artifacts of the different builds.
+* `-validate` - If specified, the specified image definition and configuration directory will be checked to ensure
+  the build can proceed, however the image will not actually be built.
 
 ## Testing Images
 
