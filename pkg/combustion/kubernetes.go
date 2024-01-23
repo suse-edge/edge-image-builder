@@ -175,7 +175,6 @@ func configureMultiNodeRKE2(ctx *image.Context) (string, error) {
 	}
 
 	// Drop values not applicable to the initialiser
-	delete(serverConfig, tlsSANKey)
 	delete(serverConfig, serverKey)
 
 	initialiserConfigFile := fmt.Sprintf("init_%s", k8sServerConfigFile)

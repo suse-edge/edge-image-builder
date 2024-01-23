@@ -288,7 +288,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	assert.Equal(t, "canal", configContents["cni"])
 	assert.Equal(t, "123", configContents["token"])
 	assert.Equal(t, nil, configContents["server"])
-	assert.Equal(t, nil, configContents["tls-san"])
+	assert.Equal(t, []any{"192.168.122.100.sslip.io", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
 
 	// Agent config file assertions
 	configPath = filepath.Join(ctx.CombustionDir, "agent.yaml")
