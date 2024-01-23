@@ -135,7 +135,7 @@ func (r *Resolver) writeDockerfile(localPackagesPath string, packages *image.Pac
 	}{
 		BaseImage: baseImageRef,
 		RegCode:   packages.RegCode,
-		AddRepo:   strings.Join(packages.AdditionalRepos, " "),
+		AddRepo:   r.generateAddRepoStr(packages.AdditionalRepos),
 		CacheDir:  r.generateRPMRepoPath(),
 		PkgList:   strings.Join(r.getPKGForResolve(packages), " "),
 	}
@@ -156,6 +156,15 @@ func (r *Resolver) writeDockerfile(localPackagesPath string, packages *image.Pac
 	}
 
 	return nil
+}
+
+func (r *Resolver) generateAddRepoStr(repos []image.AddRepo) string {
+	list := []string{}
+	for _, repo := range repos {
+		list = append(list, repo.URL)
+	}
+
+	return strings.Join(list, " ")
 }
 
 func (r *Resolver) getPKGForResolve(packages *image.Packages) []string {

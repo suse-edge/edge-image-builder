@@ -77,9 +77,13 @@ func TestParse(t *testing.T) {
 		"libbpf0",
 	}
 	assert.Equal(t, expectedPKGList, pkgConfig.PKGList)
-	expectedAddRepos := []string{
-		"https://download.nvidia.com/suse/sle15sp5/",
-		"https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/",
+	expectedAddRepos := []AddRepo{
+		{
+			URL: "https://download.nvidia.com/suse/sle15sp5/",
+		},
+		{
+			URL: "https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/",
+		},
 	}
 	assert.Equal(t, expectedAddRepos, pkgConfig.AdditionalRepos)
 	assert.Equal(t, "INTERNAL-USE-ONLY-foo-bar", pkgConfig.RegCode)

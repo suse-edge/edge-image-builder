@@ -50,8 +50,8 @@ operatingSystem:
       - libatomic1
       - libbpf0
     additionalRepos:
-      - https://download.nvidia.com/suse/sle15sp5/
-      - https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/
+      - url: https://download.nvidia.com/suse/sle15sp5/
+      - url: https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/
     registrationCode: INTERNAL-USE-ONLY-foo-bar
 embeddedArtifactRegistry:
   images:

@@ -69,9 +69,13 @@ type OperatingSystem struct {
 }
 
 type Packages struct {
-	PKGList         []string `yaml:"packageList"`
-	AdditionalRepos []string `yaml:"additionalRepos"`
-	RegCode         string   `yaml:"registrationCode"`
+	PKGList         []string  `yaml:"packageList"`
+	AdditionalRepos []AddRepo `yaml:"additionalRepos"`
+	RegCode         string    `yaml:"registrationCode"`
+}
+
+type AddRepo struct {
+	URL string `yaml:"url"`
 }
 
 type OperatingSystemUser struct {
