@@ -22,6 +22,15 @@ func Audit(message string) {
 	fmt.Println(message)
 }
 
+func Auditf(message string, args ...string) {
+	auditMe := fmt.Sprintf(message, args)
+	Audit(auditMe)
+}
+
+func AuditError(err error) {
+	Audit(err.Error())
+}
+
 func AuditComponentSuccessful(component string) {
 	message := formatComponentStatus(component, messageSuccess)
 	Audit(message)
