@@ -14,6 +14,7 @@ import (
 
 func TestWriteHaulerManifestValidManifest(t *testing.T) {
 	// Setup
+	haulerManifestYamlName := "hauler-manifest.yaml"
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -39,7 +40,7 @@ func TestWriteHaulerManifestValidManifest(t *testing.T) {
 	}
 
 	// Test
-	err := writeHaulerManifest(ctx)
+	err := writeHaulerManifest(ctx, ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages, ctx.ImageDefinition.EmbeddedArtifactRegistry.HelmCharts, haulerManifestYamlName)
 
 	// Verify
 	require.NoError(t, err)
@@ -100,10 +101,10 @@ func TestWriteRegistryScript(t *testing.T) {
 	foundBytes, err := os.ReadFile(registryScriptPath)
 	require.NoError(t, err)
 	found := string(foundBytes)
-	assert.Contains(t, found, registryTarName)
+	assert.Contains(t, found, "mv ./registry/* /opt/hauler/")
 	assert.Contains(t, found, "mv hauler /usr/local/bin/hauler")
 	assert.Contains(t, found, "systemctl enable eib-embedded-registry.service")
-	assert.Contains(t, found, "ExecStartPre=/usr/local/bin/hauler store load")
+	assert.Contains(t, found, "  ExecStartPre=/bin/bash -c 'for file in /opt/hauler/*.tar.zst; do /usr/local/bin/hauler store load \\$file; done'\n")
 }
 
 func TestCopyHaulerBinary(t *testing.T) {
@@ -196,7 +197,13 @@ func TestIsEmbeddedArtifactRegistryEmpty(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := IsEmbeddedArtifactRegistryEmpty(test.registry)
+			ctx := image.Context{
+				ImageDefinition: &image.Definition{
+					Kubernetes:               image.Kubernetes{HelmCharts: test.registry.HelmCharts},
+					EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{ContainerImages: test.registry.ContainerImages},
+				},
+			}
+			result := IsEmbeddedArtifactRegistryAndKubernetesManifestsEmpty(&ctx)
 			assert.Equal(t, test.isEmpty, result)
 		})
 	}

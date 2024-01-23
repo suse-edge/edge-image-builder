@@ -25,6 +25,7 @@ func validateKubernetes(ctx *image.Context) []FailedValidation {
 
 	failures = append(failures, validateNodes(&def.Kubernetes)...)
 	failures = append(failures, validateManifestURLs(&def.Kubernetes)...)
+	failures = append(failures, validateHelmCharts(&def.Kubernetes.HelmCharts)...)
 
 	return failures
 }
@@ -138,6 +139,45 @@ func validateManifestURLs(k8s *image.Kubernetes) []FailedValidation {
 		}
 
 		seenManifests[manifest] = true
+	}
+
+	return failures
+}
+
+func validateHelmCharts(charts *[]image.HelmChart) []FailedValidation {
+	var failures []FailedValidation
+
+	seenCharts := make(map[string]bool)
+	for _, chart := range *charts {
+		if chart.Name == "" {
+			failures = append(failures, FailedValidation{
+				UserMessage: "The 'name' field is required for each entry in 'charts'.",
+			})
+		}
+
+		if chart.RepoURL == "" {
+			failures = append(failures, FailedValidation{
+				UserMessage: "The 'repoURL' field is required for each entry in 'charts'.",
+			})
+		} else if !strings.HasPrefix(chart.RepoURL, "http") {
+			failures = append(failures, FailedValidation{
+				UserMessage: "The 'repoURL' field must begin with either 'http://' or 'https://'.",
+			})
+		}
+
+		if chart.Version == "" {
+			failures = append(failures, FailedValidation{
+				UserMessage: "The 'version' field is required for each entry in 'charts'.",
+			})
+		}
+
+		if seenCharts[chart.Name] {
+			msg := fmt.Sprintf("Duplicate chart name '%s' found in the 'charts' section.", chart.Name)
+			failures = append(failures, FailedValidation{
+				UserMessage: msg,
+			})
+		}
+		seenCharts[chart.Name] = true
 	}
 
 	return failures
