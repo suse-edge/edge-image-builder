@@ -1,4 +1,4 @@
-package manifests
+package registry
 
 import (
 	"os"
@@ -101,7 +101,7 @@ func TestFindImagesInManifest(t *testing.T) {
 	sort.Strings(expectedImages)
 
 	// Test
-	extractedImagesSet, err = findImagesInManifest(manifestData, extractedImagesSet)
+	err = storeManifestImageNames(manifestData, extractedImagesSet)
 	allImages := make([]string, 0, len(extractedImagesSet))
 	for uniqueImage := range extractedImagesSet {
 		allImages = append(allImages, uniqueImage)
@@ -119,7 +119,7 @@ func TestFindImagesInManifestEmptyManifest(t *testing.T) {
 	var manifestData interface{}
 
 	// Test
-	extractedImagesSet, err := findImagesInManifest(manifestData, extractedImagesSet)
+	err := storeManifestImageNames(manifestData, extractedImagesSet)
 	allImages := make([]string, 0, len(extractedImagesSet))
 	for uniqueImage := range extractedImagesSet {
 		allImages = append(allImages, uniqueImage)

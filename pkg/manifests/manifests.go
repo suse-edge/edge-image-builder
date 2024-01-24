@@ -1,4 +1,4 @@
-package manifests
+package registry
 
 import (
 	"context"
@@ -14,29 +14,28 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func GetAllImagesAndCharts(ctx *image.Context) ([]image.ContainerImage, []image.HelmChart, error) {
+func GetAllImagesAndCharts(ctx *image.Context) ([]image.ContainerImage, error) {
 	var downloadedManifestPaths []string
 	var combinedManifestPaths []string
 	var extractedImagesSet = make(map[string]string)
 	var err error
-	helmCharts := ctx.ImageDefinition.Kubernetes.HelmCharts
 
 	if len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0 {
 		downloadDestination := filepath.Join(ctx.BuildDir, "downloaded-manifests")
 		if err = os.MkdirAll(downloadDestination, os.ModePerm); err != nil {
-			return nil, nil, fmt.Errorf("creating %s dir: %w", downloadDestination, err)
+			return nil, fmt.Errorf("creating %s dir: %w", downloadDestination, err)
 		}
 
 		downloadedManifestPaths, err = downloadManifests(ctx, downloadDestination)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error downloading manifests: %w", err)
+			return nil, fmt.Errorf("error downloading manifests: %w", err)
 		}
 	}
 
 	localManifestSrcDir := filepath.Join(ctx.ImageConfigDir, "kubernetes", "manifests")
 	localManifestPaths, err := getLocalManifestPaths(localManifestSrcDir)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error getting local manifest paths: %w", err)
+		return nil, fmt.Errorf("error getting local manifest paths: %w", err)
 	}
 
 	combinedManifestPaths = append(localManifestPaths, downloadedManifestPaths...)
@@ -44,12 +43,12 @@ func GetAllImagesAndCharts(ctx *image.Context) ([]image.ContainerImage, []image.
 	for _, manifestPath := range combinedManifestPaths {
 		manifestData, err := readManifest(manifestPath)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error reading manifest %w", err)
+			return nil, fmt.Errorf("error reading manifest %w", err)
 		}
 
-		extractedImagesSet, err = findImagesInManifest(manifestData, extractedImagesSet)
+		err = storeManifestImageNames(manifestData, extractedImagesSet)
 		if err != nil {
-			return nil, nil, fmt.Errorf("error finding images in manifest '%s': %w", manifestPath, err)
+			return nil, fmt.Errorf("error finding images in manifest '%s': %w", manifestPath, err)
 		}
 	}
 
@@ -58,15 +57,15 @@ func GetAllImagesAndCharts(ctx *image.Context) ([]image.ContainerImage, []image.
 	}
 
 	allImages := make([]image.ContainerImage, 0, len(extractedImagesSet))
-	for uniqueImage := range extractedImagesSet {
+	for imageName, supplyChainKey := range extractedImagesSet {
 		containerImage := image.ContainerImage{
-			Name:           uniqueImage,
-			SupplyChainKey: extractedImagesSet[uniqueImage],
+			Name:           imageName,
+			SupplyChainKey: supplyChainKey,
 		}
 		allImages = append(allImages, containerImage)
 	}
 
-	return allImages, helmCharts, nil
+	return allImages, nil
 }
 
 func readManifest(manifestPath string) (interface{}, error) {
@@ -88,7 +87,7 @@ func readManifest(manifestPath string) (interface{}, error) {
 	return manifest, nil
 }
 
-func findImagesInManifest(data interface{}, imageSet map[string]string) (map[string]string, error) {
+func storeManifestImageNames(data interface{}, imageSet map[string]string) error {
 
 	var findImages func(data interface{})
 	findImages = func(data interface{}) {
@@ -111,7 +110,7 @@ func findImagesInManifest(data interface{}, imageSet map[string]string) (map[str
 
 	findImages(data)
 
-	return imageSet, nil
+	return nil
 }
 
 func getLocalManifestPaths(src string) ([]string, error) {

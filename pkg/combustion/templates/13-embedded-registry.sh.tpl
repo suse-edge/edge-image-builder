@@ -17,7 +17,7 @@ cat <<- EOF > /etc/systemd/system/eib-embedded-registry.service
   Type=simple
   User=root
   WorkingDirectory=/opt/hauler
-  ExecStartPre=/bin/bash -c 'for file in /opt/hauler/*.tar.zst; do /usr/local/bin/hauler store load \$file; done'
+  ExecStartPre=/usr/local/bin/hauler store load {{ .EmbeddedRegistryTar }}
   ExecStart=/usr/local/bin/hauler store serve -p {{ .Port }}
   Restart=on-failure
 

@@ -45,13 +45,13 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("creating registry dir: %w", err)
 	}
 
-	containerImages, helmCharts, err := manifests.GetAllImagesAndCharts(ctx)
+	containerImages, err := registry.GetAllImagesAndCharts(ctx)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("getting all container images and helm charts: %w", err)
 	}
 
-	err = writeHaulerManifest(ctx, containerImages, helmCharts)
+	err = writeHaulerManifest(ctx, containerImages, ctx.ImageDefinition.Kubernetes.HelmCharts)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("writing hauler manifest: %w", err)
@@ -88,7 +88,10 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 
 func writeHaulerManifest(ctx *image.Context, images []image.ContainerImage, charts []image.HelmChart) error {
 	haulerManifestYamlFile := filepath.Join(ctx.BuildDir, haulerManifestYamlName)
-	haulerDef := image.EmbeddedArtifactRegistry{
+	haulerDef := struct {
+		ContainerImages []image.ContainerImage
+		HelmCharts      []image.HelmChart
+	}{
 		ContainerImages: images,
 		HelmCharts:      charts,
 	}
@@ -159,11 +162,13 @@ func copyHaulerBinary(ctx *image.Context, haulerBinaryPath string) error {
 
 func writeRegistryScript(ctx *image.Context) (string, error) {
 	values := struct {
-		Port        string
-		RegistryDir string
+		Port                string
+		RegistryDir         string
+		EmbeddedRegistryTar string
 	}{
-		Port:        registryPort,
-		RegistryDir: registryDir,
+		Port:                registryPort,
+		RegistryDir:         registryDir,
+		EmbeddedRegistryTar: registryTarName,
 	}
 
 	data, err := template.Parse(registryScriptName, registryScript, &values)

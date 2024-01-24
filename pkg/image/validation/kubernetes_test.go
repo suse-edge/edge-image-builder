@@ -450,7 +450,7 @@ func TestValidateHelmCharts(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			ear := test.Kubernetes
-			failures := ValidateHelmCharts(&ear.HelmCharts)
+			failures := validateHelmCharts(&ear.HelmCharts)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
 
 			var foundMessages []string

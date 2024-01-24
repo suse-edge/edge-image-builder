@@ -23,33 +23,18 @@ func TestValidateEmbeddedArtifactRegistry(t *testing.T) {
 						SupplyChainKey: "key",
 					},
 				},
-				HelmCharts: []image.HelmChart{
-					{
-						Name:    "bar",
-						RepoURL: "http://bar.com",
-						Version: "3.14",
-					},
-				},
 			},
 		},
-		`failures in both sections`: {
+		`image definition failure`: {
 			Registry: image.EmbeddedArtifactRegistry{
 				ContainerImages: []image.ContainerImage{
 					{
 						Name: "", // trips the missing name validation
 					},
 				},
-				HelmCharts: []image.HelmChart{
-					{
-						Name:    "", // trips the missing name validation
-						RepoURL: "http://doesntmatter.com",
-						Version: "31",
-					},
-				},
 			},
 			ExpectedFailedMessages: []string{
 				"The 'name' field is required for each entry in 'images'.",
-				"The 'name' field is required for each entry in 'charts'.",
 			},
 		},
 	}

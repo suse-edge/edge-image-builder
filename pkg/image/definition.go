@@ -109,7 +109,6 @@ type Proxy struct {
 
 type EmbeddedArtifactRegistry struct {
 	ContainerImages []ContainerImage `yaml:"images"`
-	HelmCharts      []HelmChart
 }
 
 type ContainerImage struct {
