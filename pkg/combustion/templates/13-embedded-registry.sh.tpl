@@ -4,7 +4,7 @@ set -euo pipefail
 mkdir /opt/hauler
 
 mount /usr/local
-mv ./{{ .RegistryDir }}/* /opt/hauler/
+mv ./{{ .RegistryDir }}/{{ .EmbeddedRegistryTar }} /opt/hauler/
 mv hauler /usr/local/bin/hauler
 umount /usr/local
 
