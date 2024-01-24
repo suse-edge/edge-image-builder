@@ -85,7 +85,7 @@ func SetupBuildDirectory(rootDir string) (buildDir string, combustionDir string,
 	}
 
 	combustionDir = filepath.Join(buildDir, "combustion")
-	if err = os.Mkdir(combustionDir, os.ModePerm); err != nil {
+	if err = os.MkdirAll(combustionDir, os.ModePerm); err != nil {
 		return "", "", fmt.Errorf("creating a combustion directory: %w", err)
 	}
 
