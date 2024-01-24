@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"go.uber.org/zap"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
@@ -19,7 +20,21 @@ const (
 // Audit displays a message to the user. This shouldn't be used for debug logging purposes; all
 // messages passed in here should be user-readable.
 func Audit(message string) {
-	fmt.Println(message)
+	doAudit(message, nil)
+}
+
+func Auditf(message string, args ...any) {
+	auditMe := fmt.Sprintf(message, args...)
+	doAudit(auditMe, nil)
+}
+
+func AuditInfo(message string) {
+	doAudit(message, zap.S().Info)
+}
+
+func AuditInfof(message string, args ...any) {
+	auditMe := fmt.Sprintf(message, args...)
+	doAudit(auditMe, zap.S().Info)
 }
 
 func AuditComponentSuccessful(component string) {
@@ -35,6 +50,13 @@ func AuditComponentSkipped(component string) {
 func AuditComponentFailed(component string) {
 	message := formatComponentStatus(component, messageFailed)
 	Audit(message)
+}
+
+func doAudit(message string, logFunc func(args ...any)) {
+	fmt.Println(message)
+	if logFunc != nil {
+		logFunc(message)
+	}
 }
 
 func formatComponentStatus(component, status string) string {

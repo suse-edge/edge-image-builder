@@ -1,9 +1,10 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
-	"log"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -24,43 +25,170 @@ import (
 )
 
 const (
-	argConfigFile = "config-file"
-	argConfigDir  = "config-dir"
-	argBuildDir   = "build-dir"
-	argValidate   = "validate"
+	argDefinitionFile = "config-file"
+	argConfigDir      = "config-dir"
+	argBuildDir       = "build-dir"
+	argValidate       = "validate"
 )
 
-func processArgs() (*image.Context, error) {
-	var (
-		configFile   string
-		configDir    string
-		rootBuildDir string
-		validate     bool
-	)
+const (
+	logFilename     = "eib-build.log"
+	checkLogMessage = "Please check the eib-build.log file under the build directory for more information."
+)
 
-	flag.StringVar(&configFile, argConfigFile, "", "name of the image configuration file")
-	flag.StringVar(&configDir, argConfigDir, "", "full path to the image configuration directory")
-	flag.StringVar(&rootBuildDir, argBuildDir, "", "full path to the directory to store build artifacts")
-	flag.BoolVar(&validate, argValidate, false, "if specified, the image definition will be validated but not built")
-	flag.Parse()
+type CLIArguments struct {
+	definitionFile string
+	configDir      string
+	rootBuildDir   string
+	validate       bool
+}
 
-	imageDefinition, err := parseImageDefinition(configFile, configDir)
+func main() {
+	cliArguments := parseCliArguments()
+
+	buildDir, combustionDir, err := build.SetupBuildDirectory(cliArguments.rootBuildDir)
 	if err != nil {
-		return nil, fmt.Errorf("parsing image definition file %s: %w", configFile, err)
+		audit.Auditf("The build directory could not be setup under the configuration directory '%s'.", cliArguments.configDir)
+		audit.AuditInfo(err.Error())
+		os.Exit(1)
 	}
 
-	err = validateImageConfigDir(configDir)
-	if err != nil {
-		return nil, fmt.Errorf("validating the config dir %s: %w", configDir, err)
-	}
-
-	buildDir, combustionDir, err := build.SetupBuildDirectory(rootBuildDir)
-	if err != nil {
-		return nil, fmt.Errorf("setting up build directory: %w", err)
-	}
-
+	// This needs to occur as early as possible so that the subsequent calls can use the log
 	setupLogging(buildDir)
 
+	configDirExists := doesImageConfigDirExist(cliArguments)
+	if !configDirExists {
+		os.Exit(1)
+	}
+
+	imageDefinition := parseImageDefinition(cliArguments)
+	if imageDefinition == nil {
+		os.Exit(1)
+	}
+
+	ctx := buildContext(buildDir, combustionDir, cliArguments.configDir, imageDefinition)
+
+	isDefinitionValid := isImageDefinitionValid(ctx)
+	if !isDefinitionValid {
+		os.Exit(1)
+	}
+
+	if cliArguments.validate {
+		// If we got this far, the image is valid. If we're in this block, the user wants execution to stop.
+		audit.AuditInfo("The specified image definition is valid.")
+		os.Exit(0)
+	}
+
+	podmanOk := bootstrapRpmDependencyServices(ctx)
+	if !podmanOk {
+		os.Exit(1)
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			audit.AuditInfo("Build failed unexpectedly, check the logs under the build directory for more information.")
+			zap.S().Fatalf("Unexpected error occurred: %s", r)
+		}
+	}()
+
+	builder := build.NewBuilder(ctx)
+	if err := builder.Build(); err != nil {
+		zap.S().Fatalf("An error occurred building the image: %s", err)
+	}
+}
+
+// Extract the user's CLI arguments into their own struct.
+func parseCliArguments() CLIArguments {
+	cliArguments := CLIArguments{}
+
+	flag.StringVar(&cliArguments.definitionFile, argDefinitionFile, "", "name of the image definition file")
+	flag.StringVar(&cliArguments.configDir, argConfigDir, "", "full path to the image configuration directory")
+	flag.StringVar(&cliArguments.rootBuildDir, argBuildDir, "", "full path to the directory to store build artifacts")
+	flag.BoolVar(&cliArguments.validate, argValidate, false, "if specified, the image definition will be validated but not built")
+	flag.Parse()
+
+	return cliArguments
+}
+
+// Configures the global logger.
+func setupLogging(buildDir string) {
+	logFilename := filepath.Join(buildDir, logFilename)
+
+	logConfig := zap.NewProductionConfig()
+	logConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	logConfig.Encoding = "console"
+	logConfig.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	logConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	logConfig.OutputPaths = []string{logFilename}
+
+	logger := zap.Must(logConfig.Build())
+
+	// Set our configured logger to be accessed globally by zap.L()
+	zap.ReplaceGlobals(logger)
+}
+
+// Returns whether the image configuration directory was specified and can be read, displaying
+// the appropriate messages to the user. Returns 'true' if the directory exists and execution can proceed,
+// 'false' otherwise.
+func doesImageConfigDirExist(cliArguments CLIArguments) bool {
+	configDir := cliArguments.configDir
+
+	if configDir == "" {
+		audit.AuditInfof("The '%s' argument must be specified.", argConfigDir)
+		return false
+	}
+
+	_, err := os.Stat(configDir)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			audit.AuditInfof("The specified image configuration directory '%s' could not be found.", configDir)
+			return false
+		}
+		audit.AuditInfof("Unable to check the filesystem for the image configuration directory '%s'. %s",
+			configDir, checkLogMessage)
+		zap.S().Error(err)
+		return false
+	}
+
+	return true
+}
+
+// Attempts to parse the specified image definition file, displaying the appropriate messages to the user.
+// Returns a populated `image.Context` struct if successful, `nil` if the definition could not be parsed.
+func parseImageDefinition(cliArguments CLIArguments) *image.Definition {
+	definitionFilePath := filepath.Join(cliArguments.configDir, cliArguments.definitionFile)
+
+	_, err := os.Stat(definitionFilePath)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			audit.AuditInfof("The specified definition file '%s' could not be found.", definitionFilePath)
+		} else {
+			audit.AuditInfof("Unable to check the filesystem for the image definition file '%s'. %s",
+				definitionFilePath, checkLogMessage)
+			zap.S().Error(err)
+		}
+		return nil
+	}
+
+	configData, err := os.ReadFile(definitionFilePath)
+	if err != nil {
+		audit.AuditInfof("The specified definition file '%s' could not be read. %s", definitionFilePath, checkLogMessage)
+		zap.S().Error(err)
+		return nil
+	}
+
+	imageDefinition, err := image.ParseDefinition(configData)
+	if err != nil {
+		audit.AuditInfof("The image definition file '%s' could not be parsed. %s", definitionFilePath, checkLogMessage)
+		zap.S().Error(err)
+		return nil
+	}
+
+	return imageDefinition
+}
+
+// Assembles the image build context with user-provided values and implementation defaults.
+func buildContext(buildDir, combustionDir, configDir string, imageDefinition *image.Definition) *image.Context {
 	ctx := &image.Context{
 		ImageConfigDir:               configDir,
 		BuildDir:                     buildDir,
@@ -71,7 +199,12 @@ func processArgs() (*image.Context, error) {
 		KubernetesScriptInstaller:    kubernetes.ScriptInstaller{},
 		KubernetesArtefactDownloader: kubernetes.ArtefactDownloader{},
 	}
+	return ctx
+}
 
+// Runs the image definition validation, displaying the appropriate messages to the user in the event
+// of a failure. Returns 'true' if the definition is valid; 'false' otherwise.
+func isImageDefinitionValid(ctx *image.Context) bool {
 	failedValidations := validation.ValidateDefinition(ctx)
 	if len(failedValidations) > 0 {
 		audit.Audit("Image definition validation found the following errors:")
@@ -97,88 +230,34 @@ func processArgs() (*image.Context, error) {
 		}
 
 		if s := logMessageBuilder.String(); s != "" {
-			zap.S().Fatalf("Image definition validation failures:\n%s", s)
+			zap.S().Errorf("image definition validation failures:\n%s", s)
 		}
+
+		audit.AuditInfo(checkLogMessage)
+
+		return false
 	}
 
-	if validate {
-		audit.Audit("The specified image definition is valid.")
-		os.Exit(0)
-	}
+	return true
+}
 
+// If the image definition requires it, starts the necessary services, displaying appropriate messages
+// to users in the event of an error. Returns 'true' if execution should proceed (either podman successfully
+// started or is not required for the image build); 'false' otherwise.
+func bootstrapRpmDependencyServices(ctx *image.Context) bool {
 	if !combustion.SkipRPMComponent(ctx) {
-		p, err := podman.New(buildDir)
+		p, err := podman.New(ctx.BuildDir)
 		if err != nil {
-			return nil, fmt.Errorf("starting podman client: %w", err)
+			audit.AuditInfof("The services for RPM dependency resolution failed to start. %s", checkLogMessage)
+			zap.S().Error(err)
+			return false
 		}
 
-		imgPath := filepath.Join(configDir, "images", imageDefinition.Image.BaseImage)
-		rpmResolver := resolver.New(buildDir, imgPath, imageDefinition.Image.ImageType, p)
+		imgPath := filepath.Join(ctx.ImageConfigDir, "images", ctx.ImageDefinition.Image.BaseImage)
+		rpmResolver := resolver.New(ctx.BuildDir, imgPath, ctx.ImageDefinition.Image.ImageType, p)
 		ctx.RPMResolver = rpmResolver
-		ctx.RPMRepoCreator = rpm.NewRepoCreator(buildDir)
+		ctx.RPMRepoCreator = rpm.NewRepoCreator(ctx.BuildDir)
 	}
 
-	return ctx, nil
-}
-
-func setupLogging(buildDir string) {
-	logFilename := filepath.Join(buildDir, "eib-build.log")
-
-	logConfig := zap.NewProductionConfig()
-	logConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
-	logConfig.Encoding = "console"
-	logConfig.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
-	logConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	logConfig.OutputPaths = []string{logFilename}
-
-	logger := zap.Must(logConfig.Build())
-
-	// Set our configured logger to be accessed globally by zap.L()
-	zap.ReplaceGlobals(logger)
-}
-
-func parseImageDefinition(configFile string, configDir string) (*image.Definition, error) {
-	configFilePath := filepath.Join(configDir, configFile)
-	configData, err := os.ReadFile(configFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("image definition file \"%s\" cannot be read: %w", configFile, err)
-	}
-
-	imageDefinition, err := image.ParseDefinition(configData)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing definition file \"%s\": %w", configFile, err)
-	}
-
-	return imageDefinition, nil
-}
-
-func validateImageConfigDir(configDir string) error {
-	if configDir == "" {
-		return fmt.Errorf("-%s must be specified", argConfigDir)
-	}
-
-	if _, err := os.Stat(configDir); os.IsNotExist(err) {
-		return err
-	}
-	return nil
-}
-
-func main() {
-	ctx, err := processArgs()
-	if err != nil {
-		// use standard logger, zap is not yet configured
-		log.Fatalf("CLI arguments could not be parsed: %s", err)
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			audit.Audit("Build failed unexpectedly, check the logs under the build directory for more information.")
-			zap.S().Fatalf("Unexpected error occurred: %s", r)
-		}
-	}()
-
-	builder := build.NewBuilder(ctx)
-	if err = builder.Build(); err != nil {
-		zap.S().Fatalf("An error occurred building the image: %s", err)
-	}
+	return true
 }
