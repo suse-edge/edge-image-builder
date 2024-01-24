@@ -1,42 +1,13 @@
 package registry
 
 import (
-	"os"
 	"path/filepath"
 	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
-
-func setupContext(t *testing.T) (ctx *image.Context, teardown func()) {
-	// Copied from combustion_test due to time. This should eventually be refactored
-	// to something cleaner.
-
-	configDir, err := os.MkdirTemp("", "eib-config-")
-	require.NoError(t, err)
-
-	buildDir, err := os.MkdirTemp("", "eib-build-")
-	require.NoError(t, err)
-
-	combustionDir, err := os.MkdirTemp("", "eib-combustion-")
-	require.NoError(t, err)
-
-	ctx = &image.Context{
-		ImageConfigDir:  configDir,
-		BuildDir:        buildDir,
-		CombustionDir:   combustionDir,
-		ImageDefinition: &image.Definition{},
-	}
-
-	return ctx, func() {
-		assert.NoError(t, os.RemoveAll(combustionDir))
-		assert.NoError(t, os.RemoveAll(buildDir))
-		assert.NoError(t, os.RemoveAll(configDir))
-	}
-}
 
 func TestReadManifest(t *testing.T) {
 	// Setup
@@ -76,7 +47,7 @@ func TestReadManifestInvalidManifest(t *testing.T) {
 	_, err := readManifest(manifestPath)
 
 	// Verify
-	require.NoError(t, err)
+	require.ErrorContains(t, err, "error unmarshalling manifest yaml")
 }
 
 func TestReadManifestEmptyManifest(t *testing.T) {
@@ -126,4 +97,39 @@ func TestFindImagesInManifestEmptyManifest(t *testing.T) {
 
 	// Verify
 	assert.Equal(t, []string{}, allImages)
+}
+
+func TestGetLocalManifestPaths(t *testing.T) {
+	// Setup
+	manifestSrcDir := "testdata"
+	expectedPaths := []string{"testdata/empty-crd.yaml", "testdata/invalid-crd.yaml", "testdata/sample-crd.yaml"}
+
+	// Test
+	manifestPaths, err := getLocalManifestPaths(manifestSrcDir)
+
+	// Verify
+	require.NoError(t, err)
+	assert.Equal(t, expectedPaths, manifestPaths)
+}
+
+func TestGetLocalManifestPathsEmptySrc(t *testing.T) {
+	// Setup
+	manifestSrcDir := ""
+
+	// Test
+	_, err := getLocalManifestPaths(manifestSrcDir)
+
+	// Verify
+	require.ErrorContains(t, err, "manifest source directory not defined")
+}
+
+func TestGetLocalManifestPathsInvalidSrc(t *testing.T) {
+	// Setup
+	manifestSrcDir := "not-real"
+
+	// Test
+	_, err := getLocalManifestPaths(manifestSrcDir)
+
+	// Verify
+	require.ErrorContains(t, err, "reading manifest source dir")
 }

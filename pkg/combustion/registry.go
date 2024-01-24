@@ -45,7 +45,7 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("creating registry dir: %w", err)
 	}
 
-	containerImages, err := registry.GetAllImagesAndCharts(ctx)
+	containerImages, err := registry.GetAllImages(ctx)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("getting all container images and helm charts: %w", err)

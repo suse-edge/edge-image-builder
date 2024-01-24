@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func GetAllImagesAndCharts(ctx *image.Context) ([]image.ContainerImage, error) {
+func GetAllImages(ctx *image.Context) ([]image.ContainerImage, error) {
 	var downloadedManifestPaths []string
 	var combinedManifestPaths []string
 	var extractedImagesSet = make(map[string]string)
@@ -128,7 +128,6 @@ func getLocalManifestPaths(src string) ([]string, error) {
 
 		sourcePath := filepath.Join(src, manifest.Name())
 		manifestPaths = append(manifestPaths, sourcePath)
-
 	}
 
 	return manifestPaths, nil

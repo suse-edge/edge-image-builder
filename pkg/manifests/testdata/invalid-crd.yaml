@@ -1,1 +1,2 @@
-this is not a real yaml file
+apiVersion: v1
+              - kind: invalid manifest
