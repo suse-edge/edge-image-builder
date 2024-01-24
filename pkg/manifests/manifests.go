@@ -16,11 +16,10 @@ import (
 func GetAllImages(ctx *image.Context) ([]image.ContainerImage, error) {
 	var combinedManifestPaths []string
 	var extractedImagesSet = make(map[string]string)
-	var err error
 
 	if len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0 {
 		downloadDestination := filepath.Join(ctx.BuildDir, "downloaded-manifests")
-		if err = os.MkdirAll(downloadDestination, os.ModePerm); err != nil {
+		if err := os.MkdirAll(downloadDestination, os.ModePerm); err != nil {
 			return nil, fmt.Errorf("creating %s dir: %w", downloadDestination, err)
 		}
 
