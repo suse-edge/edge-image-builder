@@ -4,7 +4,7 @@ set -euo pipefail
 mkdir /opt/hauler
 
 mount /usr/local
-mv ./{{ .RegistryDir }}/{{ .EmbeddedRegistryTar }} /opt/hauler/
+mv {{ .RegistryDir }}/{{ .EmbeddedRegistryTar }} /opt/hauler/
 mv hauler /usr/local/bin/hauler
 umount /usr/local
 
@@ -24,6 +24,5 @@ cat <<- EOF > /etc/systemd/system/eib-embedded-registry.service
   [Install]
   WantedBy=multi-user.target
 EOF
-
 
 systemctl enable eib-embedded-registry.service

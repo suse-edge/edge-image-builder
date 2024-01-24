@@ -13,17 +13,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func GetAllImages(ctx *image.Context) ([]image.ContainerImage, error) {
+func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs []string, localManifestSrcDir string, manifestDownloadDest string) ([]image.ContainerImage, error) {
 	var combinedManifestPaths []string
 	var extractedImagesSet = make(map[string]string)
 
-	if len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0 {
-		downloadDestination := filepath.Join(ctx.BuildDir, "downloaded-manifests")
-		if err := os.MkdirAll(downloadDestination, os.ModePerm); err != nil {
-			return nil, fmt.Errorf("creating %s dir: %w", downloadDestination, err)
+	if len(manifestURLs) != 0 {
+		if manifestDownloadDest == "" {
+			return nil, fmt.Errorf("manifest download destination directory not defined")
 		}
 
-		downloadedManifestPaths, err := downloadManifests(ctx, downloadDestination)
+		downloadedManifestPaths, err := downloadManifests(manifestURLs, manifestDownloadDest)
 		if err != nil {
 			return nil, fmt.Errorf("error downloading manifests: %w", err)
 		}
@@ -31,13 +30,14 @@ func GetAllImages(ctx *image.Context) ([]image.ContainerImage, error) {
 		combinedManifestPaths = append(combinedManifestPaths, downloadedManifestPaths...)
 	}
 
-	localManifestSrcDir := filepath.Join(ctx.ImageConfigDir, "kubernetes", "manifests")
-	localManifestPaths, err := getLocalManifestPaths(localManifestSrcDir)
-	if err != nil {
-		return nil, fmt.Errorf("error getting local manifest paths: %w", err)
-	}
+	if localManifestSrcDir != "" {
+		localManifestPaths, err := getLocalManifestPaths(localManifestSrcDir)
+		if err != nil {
+			return nil, fmt.Errorf("error getting local manifest paths: %w", err)
+		}
 
-	combinedManifestPaths = append(combinedManifestPaths, localManifestPaths...)
+		combinedManifestPaths = append(combinedManifestPaths, localManifestPaths...)
+	}
 
 	for _, manifestPath := range combinedManifestPaths {
 		manifestData, err := readManifest(manifestPath)
@@ -48,8 +48,8 @@ func GetAllImages(ctx *image.Context) ([]image.ContainerImage, error) {
 		storeManifestImageNames(manifestData, extractedImagesSet)
 	}
 
-	for _, definedImage := range ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages {
-		extractedImagesSet[definedImage.Name] = definedImage.SupplyChainKey
+	for _, containerImage := range embeddedContainerImages {
+		extractedImagesSet[containerImage.Name] = containerImage.SupplyChainKey
 	}
 
 	allImages := make([]image.ContainerImage, 0, len(extractedImagesSet))
@@ -84,8 +84,8 @@ func readManifest(manifestPath string) (any, error) {
 }
 
 func storeManifestImageNames(data any, imageSet map[string]string) {
-
 	var findImages func(data any)
+
 	findImages = func(data any) {
 		switch t := data.(type) {
 		case map[string]any:
@@ -116,7 +116,7 @@ func getLocalManifestPaths(src string) ([]string, error) {
 
 	manifests, err := os.ReadDir(src)
 	if err != nil {
-		return nil, fmt.Errorf("reading manifest source dir: %w", err)
+		return nil, fmt.Errorf("reading manifest source dir '%s': %w", src, err)
 	}
 
 	for _, manifest := range manifests {
@@ -133,11 +133,10 @@ func getLocalManifestPaths(src string) ([]string, error) {
 	return manifestPaths, nil
 }
 
-func downloadManifests(ctx *image.Context, destPath string) ([]string, error) {
-	manifests := ctx.ImageDefinition.Kubernetes.Manifests.URLs
+func downloadManifests(manifestURLs []string, destPath string) ([]string, error) {
 	var manifestPaths []string
 
-	for index, manifestURL := range manifests {
+	for index, manifestURL := range manifestURLs {
 		filePath := filepath.Join(destPath, fmt.Sprintf("manifest-%d.yaml", index+1))
 		manifestPaths = append(manifestPaths, filePath)
 

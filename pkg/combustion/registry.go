@@ -10,7 +10,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
-	registry "github.com/suse-edge/edge-image-builder/pkg/manifests"
+	"github.com/suse-edge/edge-image-builder/pkg/registry"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
 )
@@ -45,10 +45,33 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("creating registry dir: %w", err)
 	}
 
-	containerImages, err := registry.GetAllImages(ctx)
+	var localManifestSrcDir = filepath.Join(ctx.ImageConfigDir, "kubernetes", "manifests")
+
+	configured, err := localManifestsConfigured(localManifestSrcDir)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
-		return nil, fmt.Errorf("getting all container images and helm charts: %w", err)
+		return nil, fmt.Errorf("checking if local manifests dir configured: %w", err)
+	}
+	if !configured {
+		localManifestSrcDir = ""
+	}
+
+	embeddedContainerImages := ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages
+	manifestURLs := ctx.ImageDefinition.Kubernetes.Manifests.URLs
+	manifestDownloadDest := ""
+	if len(manifestURLs) != 0 {
+		manifestDownloadDest = filepath.Join(ctx.BuildDir, "downloaded-manifests")
+		err = os.Mkdir(manifestDownloadDest, os.ModePerm)
+		if err != nil {
+			log.AuditComponentFailed(registryComponentName)
+			return nil, fmt.Errorf("creating manifest download dir: %w", err)
+		}
+	}
+
+	containerImages, err := registry.GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, manifestDownloadDest)
+	if err != nil {
+		log.AuditComponentFailed(registryComponentName)
+		return nil, fmt.Errorf("getting all container images: %w", err)
 	}
 
 	err = writeHaulerManifest(ctx, containerImages, ctx.ImageDefinition.Kubernetes.HelmCharts)
@@ -203,4 +226,15 @@ func IsEmbeddedArtifactRegistryConfigured(ctx *image.Context) bool {
 	return len(ctx.ImageDefinition.Kubernetes.HelmCharts) != 0 ||
 		len(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages) != 0 ||
 		len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0
+}
+
+func localManifestsConfigured(localManifestSrcDir string) (bool, error) {
+	_, err := os.Stat(localManifestSrcDir)
+	if os.IsNotExist(err) {
+		return false, nil
+	} else if err != nil {
+		return false, fmt.Errorf("checking if directory exists: %w", err)
+	}
+
+	return true, nil
 }
