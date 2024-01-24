@@ -377,7 +377,12 @@ func appendClusterTLSSAN(config map[string]any, address string) {
 
 	switch v := tlsSAN.(type) {
 	case string:
-		config[tlsSANKey] = []string{v, address}
+		var tlsSANs []string
+		for _, san := range strings.Split(v, ",") {
+			tlsSANs = append(tlsSANs, strings.TrimSpace(san))
+		}
+		tlsSANs = append(tlsSANs, address)
+		config[tlsSANKey] = tlsSANs
 	case []string:
 		v = append(v, address)
 		config[tlsSANKey] = v

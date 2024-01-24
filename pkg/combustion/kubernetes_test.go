@@ -532,26 +532,26 @@ func TestAppendClusterTLSSAN(t *testing.T) {
 		{
 			name: "Existing TLS SAN string",
 			config: map[string]any{
-				"tls-san": "random",
+				"tls-san": "api.edge1.com, api.edge2.com",
 			},
 			apiHost:        "api.cluster01.hosted.on.edge.suse.com",
-			expectedTLSSAN: []string{"random", "api.cluster01.hosted.on.edge.suse.com"},
+			expectedTLSSAN: []string{"api.edge1.com", "api.edge2.com", "api.cluster01.hosted.on.edge.suse.com"},
 		},
 		{
 			name: "Existing TLS SAN string list",
 			config: map[string]any{
-				"tls-san": []string{"random"},
+				"tls-san": []string{"api.edge1.com", "api.edge2.com"},
 			},
 			apiHost:        "api.cluster01.hosted.on.edge.suse.com",
-			expectedTLSSAN: []string{"random", "api.cluster01.hosted.on.edge.suse.com"},
+			expectedTLSSAN: []string{"api.edge1.com", "api.edge2.com", "api.cluster01.hosted.on.edge.suse.com"},
 		},
 		{
 			name: "Existing TLS SAN list",
 			config: map[string]any{
-				"tls-san": []any{"random"},
+				"tls-san": []any{"api.edge1.com", "api.edge2.com"},
 			},
 			apiHost:        "api.cluster01.hosted.on.edge.suse.com",
-			expectedTLSSAN: []any{"random", "api.cluster01.hosted.on.edge.suse.com"},
+			expectedTLSSAN: []any{"api.edge1.com", "api.edge2.com", "api.cluster01.hosted.on.edge.suse.com"},
 		},
 	}
 
