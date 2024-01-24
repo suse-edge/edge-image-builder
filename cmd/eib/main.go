@@ -172,7 +172,7 @@ func parseImageDefinition(cliArguments CLIArguments) *image.Definition {
 
 	configData, err := os.ReadFile(definitionFilePath)
 	if err != nil {
-		audit.AuditInfof("The specified definition file '%s' could be read. %s", definitionFilePath, checkLogMessage)
+		audit.AuditInfof("The specified definition file '%s' could not be read. %s", definitionFilePath, checkLogMessage)
 		zap.S().Error(err)
 		return nil
 	}
