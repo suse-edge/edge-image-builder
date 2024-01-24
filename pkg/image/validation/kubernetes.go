@@ -25,7 +25,7 @@ func validateKubernetes(ctx *image.Context) []FailedValidation {
 
 	failures = append(failures, validateNodes(&def.Kubernetes)...)
 	failures = append(failures, validateManifestURLs(&def.Kubernetes)...)
-	failures = append(failures, validateHelmCharts(&def.Kubernetes.HelmCharts)...)
+	failures = append(failures, validateHelmCharts(def.Kubernetes.HelmCharts)...)
 
 	return failures
 }
@@ -144,11 +144,11 @@ func validateManifestURLs(k8s *image.Kubernetes) []FailedValidation {
 	return failures
 }
 
-func validateHelmCharts(charts *[]image.HelmChart) []FailedValidation {
+func validateHelmCharts(charts []image.HelmChart) []FailedValidation {
 	var failures []FailedValidation
 
 	seenCharts := make(map[string]bool)
-	for _, chart := range *charts {
+	for _, chart := range charts {
 		if chart.Name == "" {
 			failures = append(failures, FailedValidation{
 				UserMessage: "The 'name' field is required for each entry in 'charts'.",
