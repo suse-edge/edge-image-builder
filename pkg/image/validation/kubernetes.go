@@ -25,6 +25,7 @@ func validateKubernetes(ctx *image.Context) []FailedValidation {
 
 	failures = append(failures, validateNodes(&def.Kubernetes)...)
 	failures = append(failures, validateManifestURLs(&def.Kubernetes)...)
+	failures = append(failures, ValidateHelmCharts(&def.Kubernetes.HelmCharts)...)
 
 	return failures
 }

@@ -375,3 +375,92 @@ func TestValidateManifestURLs(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateHelmCharts(t *testing.T) {
+	tests := map[string]struct {
+		Kubernetes             image.Kubernetes
+		ExpectedFailedMessages []string
+	}{
+		`no helm charts`: {
+			Kubernetes: image.Kubernetes{},
+		},
+		`valid charts`: {
+			Kubernetes: image.Kubernetes{
+				HelmCharts: []image.HelmChart{
+					{
+						Name:    "foo",
+						RepoURL: "http://valid.com", // shows http:// is allowed
+						Version: "1.0",
+					},
+					{
+						Name:    "bar",
+						RepoURL: "https://valid.com", // shows https:// is allowed
+						Version: "2.0",
+					},
+				},
+			},
+		},
+		`missing fields`: {
+			Kubernetes: image.Kubernetes{
+				HelmCharts: []image.HelmChart{
+					{},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"The 'name' field is required for each entry in 'charts'.",
+				"The 'repoURL' field is required for each entry in 'charts'.",
+				"The 'version' field is required for each entry in 'charts'.",
+			},
+		},
+		`duplicate chart`: {
+			Kubernetes: image.Kubernetes{
+				HelmCharts: []image.HelmChart{
+					{
+						Name:    "foo",
+						RepoURL: "http://foo.com",
+						Version: "1.0",
+					},
+					{
+						Name:    "foo",
+						RepoURL: "https://bar.com",
+						Version: "2.0",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Duplicate chart name 'foo' found in the 'charts' section.",
+			},
+		},
+		`invalid repo`: {
+			Kubernetes: image.Kubernetes{
+				HelmCharts: []image.HelmChart{
+					{
+						Name:    "foo",
+						RepoURL: "example.com",
+						Version: "1.0",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"The 'repoURL' field must begin with either 'http://' or 'https://'.",
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			ear := test.Kubernetes
+			failures := ValidateHelmCharts(&ear.HelmCharts)
+			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+
+			var foundMessages []string
+			for _, foundValidation := range failures {
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+			}
+
+			for _, expectedMessage := range test.ExpectedFailedMessages {
+				assert.Contains(t, foundMessages, expectedMessage)
+			}
+		})
+	}
+}

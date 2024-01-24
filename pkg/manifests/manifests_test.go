@@ -92,6 +92,7 @@ func TestReadManifestEmptyManifest(t *testing.T) {
 
 func TestFindImagesInManifest(t *testing.T) {
 	// Setup
+	var extractedImagesSet = make(map[string]string)
 	manifestPath := filepath.Join("testdata", "sample-crd.yaml")
 	manifestData, err := readManifest(manifestPath)
 	require.NoError(t, err)
@@ -100,48 +101,31 @@ func TestFindImagesInManifest(t *testing.T) {
 	sort.Strings(expectedImages)
 
 	// Test
-	foundImages, err := findImagesInManifest(manifestData)
-	sort.Strings(foundImages)
+	extractedImagesSet, err = findImagesInManifest(manifestData, extractedImagesSet)
+	allImages := make([]string, 0, len(extractedImagesSet))
+	for uniqueImage := range extractedImagesSet {
+		allImages = append(allImages, uniqueImage)
+	}
+	sort.Strings(allImages)
 
 	// Verify
-	assert.Equal(t, expectedImages, foundImages)
+	require.NoError(t, err)
+	assert.Equal(t, expectedImages, allImages)
 }
 
 func TestFindImagesInManifestEmptyManifest(t *testing.T) {
 	// Setup
+	var extractedImagesSet = make(map[string]string)
 	var manifestData interface{}
 
 	// Test
-	foundImages, err := findImagesInManifest(manifestData)
+	extractedImagesSet, err := findImagesInManifest(manifestData, extractedImagesSet)
+	allImages := make([]string, 0, len(extractedImagesSet))
+	for uniqueImage := range extractedImagesSet {
+		allImages = append(allImages, uniqueImage)
+	}
 
 	// Verify
 	require.NoError(t, err)
-	assert.Equal(t, []string{}, foundImages)
-}
-
-func TestFindImagesInManifestInvalidManifest(t *testing.T) {
-	// Setup
-	manifestPath := filepath.Join("testdata", "invalid-crd.yaml")
-	manifestData, err := readManifest(manifestPath)
-	require.NoError(t, err)
-
-	// Test
-	foundImages, err := findImagesInManifest(manifestData)
-	require.NoError(t, err)
-
-	// Verify
-	assert.Equal(t, []string{}, foundImages)
-}
-
-func TestDownloadManifests(t *testing.T) {
-	// Setup
-	ctx, teardown := setupContext(t)
-	defer teardown()
-
-	// Test
-	foundImages, err := findImagesInManifest(manifestData)
-	require.NoError(t, err)
-
-	// Verify
-	assert.Equal(t, []string{}, foundImages)
+	assert.Equal(t, []string{}, allImages)
 }

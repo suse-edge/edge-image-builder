@@ -15,7 +15,7 @@ func validateEmbeddedArtifactRegistry(ctx *image.Context) []FailedValidation {
 	var failures []FailedValidation
 
 	failures = append(failures, validateContainerImages(&ctx.ImageDefinition.EmbeddedArtifactRegistry)...)
-	failures = append(failures, validateHelmCharts(&ctx.ImageDefinition.EmbeddedArtifactRegistry)...)
+	failures = append(failures, ValidateHelmCharts(&ctx.ImageDefinition.EmbeddedArtifactRegistry.HelmCharts)...)
 
 	return failures
 }
@@ -43,12 +43,11 @@ func validateContainerImages(ear *image.EmbeddedArtifactRegistry) []FailedValida
 	return failures
 }
 
-func validateHelmCharts(ear *image.EmbeddedArtifactRegistry) []FailedValidation {
+func ValidateHelmCharts(charts *[]image.HelmChart) []FailedValidation {
 	var failures []FailedValidation
 
-	charts := ear.HelmCharts
 	seenCharts := make(map[string]bool)
-	for _, chart := range charts {
+	for _, chart := range *charts {
 		if chart.Name == "" {
 			failures = append(failures, FailedValidation{
 				UserMessage: "The 'name' field is required for each entry in 'charts'.",
