@@ -145,12 +145,12 @@ func TestCopyHaulerBinaryNoFile(t *testing.T) {
 func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 	tests := []struct {
 		name         string
-		ctx          image.Context
+		ctx          *image.Context
 		isConfigured bool
 	}{
 		{
 			name: "Everything Defined",
-			ctx: image.Context{
+			ctx: &image.Context{
 				ImageDefinition: &image.Definition{
 					EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{
 						ContainerImages: []image.ContainerImage{
@@ -180,7 +180,7 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		},
 		{
 			name: "Chart Defined",
-			ctx: image.Context{
+			ctx: &image.Context{
 				ImageDefinition: &image.Definition{
 					Kubernetes: image.Kubernetes{
 						HelmCharts: []image.HelmChart{
@@ -197,7 +197,7 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		},
 		{
 			name: "Image Defined",
-			ctx: image.Context{
+			ctx: &image.Context{
 				ImageDefinition: &image.Definition{
 					EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{
 						ContainerImages: []image.ContainerImage{
@@ -213,7 +213,7 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		},
 		{
 			name: "Manifest URL Defined",
-			ctx: image.Context{
+			ctx: &image.Context{
 				ImageDefinition: &image.Definition{
 					Kubernetes: image.Kubernetes{
 						Manifests: image.Manifests{
@@ -228,7 +228,7 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		},
 		{
 			name: "None Defined",
-			ctx: image.Context{
+			ctx: &image.Context{
 				ImageDefinition: &image.Definition{
 					EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{},
 					Kubernetes:               image.Kubernetes{},
@@ -240,7 +240,7 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := IsEmbeddedArtifactRegistryConfigured(&test.ctx)
+			result := IsEmbeddedArtifactRegistryConfigured(test.ctx)
 			assert.Equal(t, test.isConfigured, result)
 		})
 	}

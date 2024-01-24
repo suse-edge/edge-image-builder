@@ -48,7 +48,7 @@ func TestReadManifest(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	data, ok := manifestData.(map[string]interface{})
+	data, ok := manifestData.(map[string]any)
 	require.True(t, ok)
 
 	apiVersion, ok := data["apiVersion"].(string)
@@ -101,7 +101,7 @@ func TestFindImagesInManifest(t *testing.T) {
 	sort.Strings(expectedImages)
 
 	// Test
-	err = storeManifestImageNames(manifestData, extractedImagesSet)
+	storeManifestImageNames(manifestData, extractedImagesSet)
 	allImages := make([]string, 0, len(extractedImagesSet))
 	for uniqueImage := range extractedImagesSet {
 		allImages = append(allImages, uniqueImage)
@@ -109,23 +109,21 @@ func TestFindImagesInManifest(t *testing.T) {
 	sort.Strings(allImages)
 
 	// Verify
-	require.NoError(t, err)
 	assert.Equal(t, expectedImages, allImages)
 }
 
 func TestFindImagesInManifestEmptyManifest(t *testing.T) {
 	// Setup
 	var extractedImagesSet = make(map[string]string)
-	var manifestData interface{}
+	var manifestData any
 
 	// Test
-	err := storeManifestImageNames(manifestData, extractedImagesSet)
+	storeManifestImageNames(manifestData, extractedImagesSet)
 	allImages := make([]string, 0, len(extractedImagesSet))
 	for uniqueImage := range extractedImagesSet {
 		allImages = append(allImages, uniqueImage)
 	}
 
 	// Verify
-	require.NoError(t, err)
 	assert.Equal(t, []string{}, allImages)
 }

@@ -46,10 +46,7 @@ func GetAllImagesAndCharts(ctx *image.Context) ([]image.ContainerImage, error) {
 			return nil, fmt.Errorf("error reading manifest %w", err)
 		}
 
-		err = storeManifestImageNames(manifestData, extractedImagesSet)
-		if err != nil {
-			return nil, fmt.Errorf("error finding images in manifest '%s': %w", manifestPath, err)
-		}
+		storeManifestImageNames(manifestData, extractedImagesSet)
 	}
 
 	for _, definedImage := range ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages {
@@ -68,7 +65,7 @@ func GetAllImagesAndCharts(ctx *image.Context) ([]image.ContainerImage, error) {
 	return allImages, nil
 }
 
-func readManifest(manifestPath string) (interface{}, error) {
+func readManifest(manifestPath string) (any, error) {
 	manifestData, err := os.ReadFile(manifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("error reading manifest: %w", err)
@@ -78,7 +75,7 @@ func readManifest(manifestPath string) (interface{}, error) {
 		return nil, fmt.Errorf("invalid manifest")
 	}
 
-	var manifest interface{}
+	var manifest any
 	err = yaml.Unmarshal(manifestData, &manifest)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling manifest yaml '%s': %w", manifestPath, err)
@@ -87,12 +84,12 @@ func readManifest(manifestPath string) (interface{}, error) {
 	return manifest, nil
 }
 
-func storeManifestImageNames(data interface{}, imageSet map[string]string) error {
+func storeManifestImageNames(data any, imageSet map[string]string) {
 
-	var findImages func(data interface{})
-	findImages = func(data interface{}) {
+	var findImages func(data any)
+	findImages = func(data any) {
 		switch t := data.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			for k, v := range t {
 				if k == "image" {
 					if imageName, ok := v.(string); ok {
@@ -101,7 +98,7 @@ func storeManifestImageNames(data interface{}, imageSet map[string]string) error
 				}
 				findImages(v)
 			}
-		case []interface{}:
+		case []any:
 			for _, v := range t {
 				findImages(v)
 			}
@@ -109,8 +106,6 @@ func storeManifestImageNames(data interface{}, imageSet map[string]string) error
 	}
 
 	findImages(data)
-
-	return nil
 }
 
 func getLocalManifestPaths(src string) ([]string, error) {
