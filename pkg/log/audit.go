@@ -28,21 +28,13 @@ func Auditf(message string, args ...any) {
 	doAudit(auditMe, nil)
 }
 
-func AuditError(err error) {
-	doAudit(err.Error(), nil)
-}
-
-func AuditAndLog(message string) {
+func AuditInfo(message string) {
 	doAudit(message, zap.S().Info)
 }
 
-func AuditfAndLog(message string, args ...any) {
+func AuditInfof(message string, args ...any) {
 	auditMe := fmt.Sprintf(message, args...)
 	doAudit(auditMe, zap.S().Info)
-}
-
-func AuditErrorAndLog(err error) {
-	doAudit(err.Error(), zap.S().Error)
 }
 
 func AuditComponentSuccessful(component string) {

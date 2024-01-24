@@ -32,11 +32,8 @@ const (
 )
 
 const (
-	exitCodeDefinitionParse   = 10
-	exitCodeDefinitionInvalid = 11
-	exitCodeConfigDir         = 12
-	exitCodeBuildDir          = 13
-	exitCodeRpmDependencies   = 14
+	logFilename     = "eib-build.log"
+	checkLogMessage = "Please check the eib-build.log file under the build directory for more information."
 )
 
 type CLIArguments struct {
@@ -52,9 +49,8 @@ func main() {
 	buildDir, combustionDir, err := build.SetupBuildDirectory(cliArguments.rootBuildDir)
 	if err != nil {
 		audit.Auditf("The build directory could not be setup under the configuration directory '%s'.", cliArguments.configDir)
-		audit.Audit("Reason:")
-		audit.AuditError(err)
-		os.Exit(exitCodeBuildDir)
+		audit.AuditInfo(err.Error())
+		os.Exit(1)
 	}
 
 	// This needs to occur as early as possible so that the subsequent calls can use the log
@@ -62,35 +58,35 @@ func main() {
 
 	configDirExists := doesImageConfigDirExist(cliArguments)
 	if !configDirExists {
-		os.Exit(exitCodeConfigDir)
+		os.Exit(1)
 	}
 
 	imageDefinition := parseImageDefinition(cliArguments)
 	if imageDefinition == nil {
-		os.Exit(exitCodeDefinitionParse)
+		os.Exit(1)
 	}
 
 	ctx := buildContext(buildDir, combustionDir, cliArguments.configDir, imageDefinition)
 
 	isDefinitionValid := isImageDefinitionValid(ctx)
 	if !isDefinitionValid {
-		os.Exit(exitCodeDefinitionInvalid)
+		os.Exit(1)
 	}
 
 	if cliArguments.validate {
 		// If we got this far, the image is valid. If we're in this block, the user wants execution to stop.
-		audit.AuditAndLog("The specified image definition is valid.")
+		audit.AuditInfo("The specified image definition is valid.")
 		os.Exit(0)
 	}
 
 	podmanOk := bootstrapRpmDependencyServices(ctx)
 	if !podmanOk {
-		os.Exit(exitCodeRpmDependencies)
+		os.Exit(1)
 	}
 
 	defer func() {
 		if r := recover(); r != nil {
-			audit.AuditAndLog("Build failed unexpectedly, check the logs under the build directory for more information.")
+			audit.AuditInfo("Build failed unexpectedly, check the logs under the build directory for more information.")
 			zap.S().Fatalf("Unexpected error occurred: %s", r)
 		}
 	}()
@@ -116,7 +112,7 @@ func parseCliArguments() CLIArguments {
 
 // Configures the global logger.
 func setupLogging(buildDir string) {
-	logFilename := filepath.Join(buildDir, "eib-build.log")
+	logFilename := filepath.Join(buildDir, logFilename)
 
 	logConfig := zap.NewProductionConfig()
 	logConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
@@ -138,19 +134,19 @@ func doesImageConfigDirExist(cliArguments CLIArguments) bool {
 	configDir := cliArguments.configDir
 
 	if configDir == "" {
-		audit.AuditfAndLog("The '%s' argument must be specified.", argConfigDir)
+		audit.AuditInfof("The '%s' argument must be specified.", argConfigDir)
 		return false
 	}
 
 	_, err := os.Stat(configDir)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			audit.AuditfAndLog("The specified image configuration directory '%s' could not be found.", configDir)
+			audit.AuditInfof("The specified image configuration directory '%s' could not be found.", configDir)
 			return false
 		}
-		audit.AuditfAndLog("Unable to check the filesystem for the image configuration directory '%s'.", configDir)
-		audit.Audit("Reason:")
-		audit.AuditErrorAndLog(err)
+		audit.AuditInfof("Unable to check the filesystem for the image configuration directory '%s'. %s",
+			configDir, checkLogMessage)
+		zap.S().Error(err)
 		return false
 	}
 
@@ -165,28 +161,26 @@ func parseImageDefinition(cliArguments CLIArguments) *image.Definition {
 	_, err := os.Stat(definitionFilePath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			audit.AuditfAndLog("The specified definition file '%s' could not be found.", definitionFilePath)
+			audit.AuditInfof("The specified definition file '%s' could not be found.", definitionFilePath)
 		} else {
-			audit.AuditfAndLog("Unable to check the filesystem for the image definition file '%s'.", definitionFilePath)
-			audit.Audit("Reason:")
-			audit.AuditErrorAndLog(err)
+			audit.AuditInfof("Unable to check the filesystem for the image definition file '%s'. %s",
+				definitionFilePath, checkLogMessage)
+			zap.S().Error(err)
 		}
 		return nil
 	}
 
 	configData, err := os.ReadFile(definitionFilePath)
 	if err != nil {
-		audit.AuditfAndLog("The specified definition file '%s' could be read.", definitionFilePath)
-		audit.Audit("Reason:")
-		audit.AuditErrorAndLog(err)
+		audit.AuditInfof("The specified definition file '%s' could be read. %s", definitionFilePath, checkLogMessage)
+		zap.S().Error(err)
 		return nil
 	}
 
 	imageDefinition, err := image.ParseDefinition(configData)
 	if err != nil {
-		audit.AuditfAndLog("The image definition file '%s' could not be parsed.", definitionFilePath)
-		audit.Audit("Reason:")
-		audit.AuditErrorAndLog(err)
+		audit.AuditInfof("The image definition file '%s' could not be parsed. %s", definitionFilePath, checkLogMessage)
+		zap.S().Error(err)
 		return nil
 	}
 
@@ -239,6 +233,8 @@ func isImageDefinitionValid(ctx *image.Context) bool {
 			zap.S().Errorf("image definition validation failures:\n%s", s)
 		}
 
+		audit.AuditInfo(checkLogMessage)
+
 		return false
 	}
 
@@ -252,9 +248,8 @@ func bootstrapRpmDependencyServices(ctx *image.Context) bool {
 	if !combustion.SkipRPMComponent(ctx) {
 		p, err := podman.New(ctx.BuildDir)
 		if err != nil {
-			audit.AuditAndLog("The services for RPM dependency resolution failed to start.")
-			audit.Audit("Reason:")
-			audit.AuditErrorAndLog(err)
+			audit.AuditInfof("The services for RPM dependency resolution failed to start. %s", checkLogMessage)
+			zap.S().Error(err)
 			return false
 		}
 
