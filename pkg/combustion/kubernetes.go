@@ -39,8 +39,8 @@ var (
 	//go:embed templates/15-rke2-multi-node-installer.sh.tpl
 	rke2MultiNodeInstaller string
 
-	//go:embed templates/rke2-ha-api.yaml.tpl
-	rke2HAAPIManifest string
+	//go:embed templates/rke2-vip.yaml.tpl
+	rke2VIPManifest string
 )
 
 func configureKubernetes(ctx *image.Context) ([]string, error) {
@@ -106,6 +106,8 @@ func configureRKE2(ctx *image.Context) (string, error) {
 }
 
 func configureSingleNodeRKE2(ctx *image.Context) (string, error) {
+	zap.S().Info("Configuring single node RKE2 cluster")
+
 	serverConfig, err := parseKubernetesConfig(ctx, k8sServerConfigFile)
 	if err != nil {
 		return "", fmt.Errorf("parsing RKE2 server config: %w", err)
@@ -113,6 +115,9 @@ func configureSingleNodeRKE2(ctx *image.Context) (string, error) {
 
 	// Establish sane default values
 	setClusterCNI(serverConfig)
+	if ctx.ImageDefinition.Kubernetes.Network.APIVIP != "" {
+		appendClusterTLSSAN(serverConfig, ctx.ImageDefinition.Kubernetes.Network.APIVIP)
+	}
 	if ctx.ImageDefinition.Kubernetes.Network.APIHost != "" {
 		appendClusterTLSSAN(serverConfig, ctx.ImageDefinition.Kubernetes.Network.APIHost)
 	}
@@ -127,20 +132,34 @@ func configureSingleNodeRKE2(ctx *image.Context) (string, error) {
 		return "", fmt.Errorf("downloading RKE2 artefacts: %w", err)
 	}
 
+	var vipManifest string
+
+	if ctx.ImageDefinition.Kubernetes.Network.APIVIP == "" {
+		zap.S().Info("Virtual IP address for RKE2 cluster is not provided and will not be configured")
+	} else if vipManifest, err = storeRKE2VIPManifest(ctx); err != nil {
+		return "", fmt.Errorf("storing RKE2 VIP manifest: %w", err)
+	}
+
 	rke2 := struct {
+		image.Kubernetes
 		ConfigFile  string
 		InstallPath string
 		ImagesPath  string
+		VIPManifest string
 	}{
+		Kubernetes:  ctx.ImageDefinition.Kubernetes,
 		ConfigFile:  k8sServerConfigFile,
 		InstallPath: installPath,
 		ImagesPath:  imagesPath,
+		VIPManifest: vipManifest,
 	}
 
 	return storeRKE2Installer(ctx, "single-node-rke2", rke2SingleNodeInstaller, &rke2)
 }
 
 func configureMultiNodeRKE2(ctx *image.Context) (string, error) {
+	zap.S().Info("Configuring multi node RKE2 cluster")
+
 	initialiser := findKubernetesInitialiserNode(&ctx.ImageDefinition.Kubernetes)
 	if initialiser == "" {
 		return "", fmt.Errorf("failed to determine cluster initialiser")
@@ -193,29 +212,25 @@ func configureMultiNodeRKE2(ctx *image.Context) (string, error) {
 		return "", fmt.Errorf("downloading RKE2 artefacts: %w", err)
 	}
 
-	haManifest, err := storeHighAvailabilityRKE2Manifest(ctx)
+	vipManifest, err := storeRKE2VIPManifest(ctx)
 	if err != nil {
-		return "", fmt.Errorf("storing RKE2 HA API manifest: %w", err)
+		return "", fmt.Errorf("storing RKE2 VIP manifest: %w", err)
 	}
 
 	rke2 := struct {
 		image.Kubernetes
 		Initialiser           string
 		InitialiserConfigFile string
-		HAManifest            string
+		VIPManifest           string
 		InstallPath           string
 		ImagesPath            string
-		APIVIP                string
-		APIHost               string
 	}{
 		Kubernetes:            ctx.ImageDefinition.Kubernetes,
 		Initialiser:           initialiser,
 		InitialiserConfigFile: initialiserConfigFile,
-		HAManifest:            haManifest,
+		VIPManifest:           vipManifest,
 		InstallPath:           installPath,
 		ImagesPath:            imagesPath,
-		APIVIP:                ctx.ImageDefinition.Kubernetes.Network.APIVIP,
-		APIHost:               ctx.ImageDefinition.Kubernetes.Network.APIHost,
 	}
 
 	return storeRKE2Installer(ctx, "multi-node-rke2", rke2MultiNodeInstaller, &rke2)
@@ -268,8 +283,8 @@ func findKubernetesInitialiserNode(kubernetes *image.Kubernetes) string {
 	return ""
 }
 
-func storeHighAvailabilityRKE2Manifest(ctx *image.Context) (string, error) {
-	const haManifest = "rke2-ha-api.yaml"
+func storeRKE2VIPManifest(ctx *image.Context) (string, error) {
+	const vipManifest = "rke2-vip.yaml"
 
 	manifest := struct {
 		APIAddress string
@@ -277,17 +292,17 @@ func storeHighAvailabilityRKE2Manifest(ctx *image.Context) (string, error) {
 		APIAddress: ctx.ImageDefinition.Kubernetes.Network.APIVIP,
 	}
 
-	data, err := template.Parse("rke2-ha-api", rke2HAAPIManifest, &manifest)
+	data, err := template.Parse("rke2-vip", rke2VIPManifest, &manifest)
 	if err != nil {
-		return "", fmt.Errorf("parsing RKE2 HA API template: %w", err)
+		return "", fmt.Errorf("parsing RKE2 VIP template: %w", err)
 	}
 
-	installScript := filepath.Join(ctx.CombustionDir, haManifest)
+	installScript := filepath.Join(ctx.CombustionDir, vipManifest)
 	if err = os.WriteFile(installScript, []byte(data), fileio.NonExecutablePerms); err != nil {
-		return "", fmt.Errorf("writing RKE2 HA API manifest: %w", err)
+		return "", fmt.Errorf("writing RKE2 VIP manifest: %w", err)
 	}
 
-	return haManifest, nil
+	return vipManifest, nil
 }
 
 func parseKubernetesConfig(ctx *image.Context, configFile string) (map[string]any, error) {

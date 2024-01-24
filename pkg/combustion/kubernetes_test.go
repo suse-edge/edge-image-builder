@@ -134,6 +134,7 @@ func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
 		Version: "v1.29.0+rke2r1",
 		Network: image.Network{
+			APIVIP:  "192.168.122.100",
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 		},
 	}
@@ -166,6 +167,8 @@ func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
 	contents := string(b)
 	assert.Contains(t, contents, "cp server-images/* /var/lib/rancher/rke2/agent/images/")
 	assert.Contains(t, contents, "cp server.yaml /etc/rancher/rke2/config.yaml")
+	assert.Contains(t, contents, "cp rke2-vip.yaml /var/lib/rancher/rke2/server/manifests/rke2-vip.yaml")
+	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
 	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=server-installer")
 	assert.Contains(t, contents, "systemctl enable rke2-server.service")
 
@@ -186,7 +189,7 @@ func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
 	require.Contains(t, configContents, "cni")
 	assert.Equal(t, "cilium", configContents["cni"], "default CNI is not set")
 	assert.Equal(t, nil, configContents["server"])
-	assert.Equal(t, []any{"api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
+	assert.Equal(t, []any{"192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
 }
 
 func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
@@ -257,7 +260,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	assert.Contains(t, contents, "cp server-images/* /var/lib/rancher/rke2/agent/images/")
 	assert.Contains(t, contents, "cp $CONFIGFILE /etc/rancher/rke2/config.yaml")
 	assert.Contains(t, contents, "if [ \"$HOSTNAME\" = node1.suse.com ]; then")
-	assert.Contains(t, contents, "cp rke2-ha-api.yaml /var/lib/rancher/rke2/server/manifests/rke2-ha-api.yaml")
+	assert.Contains(t, contents, "cp rke2-vip.yaml /var/lib/rancher/rke2/server/manifests/rke2-vip.yaml")
 	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
 	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=server-installer")
 	assert.Contains(t, contents, "systemctl enable rke2-$NODETYPE.service")

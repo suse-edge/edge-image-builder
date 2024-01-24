@@ -29,13 +29,13 @@ if [ "$HOSTNAME" = {{ .Initialiser }} ]; then
     CONFIGFILE={{ .InitialiserConfigFile }}
 
     mkdir -p /var/lib/rancher/rke2/server/manifests/
-    cp {{ .HAManifest }} /var/lib/rancher/rke2/server/manifests/{{ .HAManifest }}
+    cp {{ .VIPManifest }} /var/lib/rancher/rke2/server/manifests/{{ .VIPManifest }}
 fi
 
 umount /var
 
-{{ if .APIHost -}}
-echo "{{ .APIVIP }} {{ .APIHost }}" >> /etc/hosts
+{{- if .Network.APIHost }}
+echo "{{ .Network.APIVIP }} {{ .Network.APIHost }}" >> /etc/hosts
 {{- end }}
 
 mkdir -p /etc/rancher/rke2/
