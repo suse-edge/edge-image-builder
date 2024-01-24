@@ -14,7 +14,6 @@ import (
 )
 
 func GetAllImages(ctx *image.Context) ([]image.ContainerImage, error) {
-	var downloadedManifestPaths []string
 	var combinedManifestPaths []string
 	var extractedImagesSet = make(map[string]string)
 	var err error
@@ -25,10 +24,12 @@ func GetAllImages(ctx *image.Context) ([]image.ContainerImage, error) {
 			return nil, fmt.Errorf("creating %s dir: %w", downloadDestination, err)
 		}
 
-		downloadedManifestPaths, err = downloadManifests(ctx, downloadDestination)
+		downloadedManifestPaths, err := downloadManifests(ctx, downloadDestination)
 		if err != nil {
 			return nil, fmt.Errorf("error downloading manifests: %w", err)
 		}
+
+		combinedManifestPaths = append(combinedManifestPaths, downloadedManifestPaths...)
 	}
 
 	localManifestSrcDir := filepath.Join(ctx.ImageConfigDir, "kubernetes", "manifests")
@@ -37,7 +38,7 @@ func GetAllImages(ctx *image.Context) ([]image.ContainerImage, error) {
 		return nil, fmt.Errorf("error getting local manifest paths: %w", err)
 	}
 
-	combinedManifestPaths = append(localManifestPaths, downloadedManifestPaths...)
+	combinedManifestPaths = append(combinedManifestPaths, localManifestPaths...)
 
 	for _, manifestPath := range combinedManifestPaths {
 		manifestData, err := readManifest(manifestPath)
