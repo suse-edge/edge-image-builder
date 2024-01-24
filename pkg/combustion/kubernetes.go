@@ -61,6 +61,11 @@ func configureKubernetes(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("cannot configure kubernetes version: %s", version)
 	}
 
+	if kubernetesServersCount(ctx.ImageDefinition.Kubernetes.Nodes) == 2 {
+		log.Audit("WARNING: Kubernetes clusters consisting of two server nodes cannot form a highly available architecture")
+		zap.S().Warn("Kubernetes cluster of two server nodes has been requested")
+	}
+
 	script, err := configureFunc(ctx)
 	if err != nil {
 		log.AuditComponentFailed(k8sComponentName)
@@ -80,6 +85,18 @@ func kubernetesConfigurator(version string) func(*image.Context) (string, error)
 	default:
 		return nil
 	}
+}
+
+func kubernetesServersCount(nodes []image.Node) int {
+	var servers int
+
+	for _, node := range nodes {
+		if node.Type == image.KubernetesNodeTypeServer {
+			servers++
+		}
+	}
+
+	return servers
 }
 
 func installKubernetesScript(ctx *image.Context, distribution string) error {
