@@ -158,22 +158,14 @@ func doesImageConfigDirExist(cliArguments CLIArguments) bool {
 func parseImageDefinition(cliArguments CLIArguments) *image.Definition {
 	definitionFilePath := filepath.Join(cliArguments.configDir, cliArguments.definitionFile)
 
-	_, err := os.Stat(definitionFilePath)
+	configData, err := os.ReadFile(definitionFilePath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			audit.AuditInfof("The specified definition file '%s' could not be found.", definitionFilePath)
 		} else {
-			audit.AuditInfof("Unable to check the filesystem for the image definition file '%s'. %s",
-				definitionFilePath, checkLogMessage)
+			audit.AuditInfof("The specified definition file '%s' could not be read. %s", definitionFilePath, checkLogMessage)
 			zap.S().Error(err)
 		}
-		return nil
-	}
-
-	configData, err := os.ReadFile(definitionFilePath)
-	if err != nil {
-		audit.AuditInfof("The specified definition file '%s' could not be read. %s", definitionFilePath, checkLogMessage)
-		zap.S().Error(err)
 		return nil
 	}
 
