@@ -10,7 +10,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
-	"github.com/suse-edge/edge-image-builder/pkg/manifests"
+	registry "github.com/suse-edge/edge-image-builder/pkg/manifests"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
 )
