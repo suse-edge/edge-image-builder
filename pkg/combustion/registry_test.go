@@ -28,10 +28,12 @@ func TestWriteHaulerManifestValidManifest(t *testing.T) {
 					SupplyChainKey: "carbide-key.pub",
 				},
 			},
+		},
+		Kubernetes: image.Kubernetes{
 			HelmCharts: []image.HelmChart{
 				{
 					Name:    "rancher",
-					RepoURL: "https://releases.rancher.com/server-charts/stable",
+					RepoURL: "https://releases.rancher.com/server-charts/latest",
 					Version: "2.8.0",
 				},
 			},
@@ -39,7 +41,7 @@ func TestWriteHaulerManifestValidManifest(t *testing.T) {
 	}
 
 	// Test
-	err := writeHaulerManifest(ctx)
+	err := writeHaulerManifest(ctx, ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages, ctx.ImageDefinition.Kubernetes.HelmCharts)
 
 	// Verify
 	require.NoError(t, err)
@@ -53,7 +55,7 @@ func TestWriteHaulerManifestValidManifest(t *testing.T) {
 	found := string(foundBytes)
 	assert.Contains(t, found, "- name: hello-world:latest")
 	assert.Contains(t, found, "- name: rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1")
-	assert.Contains(t, found, "repoURL: https://releases.rancher.com/server-charts/stable")
+	assert.Contains(t, found, "repoURL: https://releases.rancher.com/server-charts/latest")
 }
 
 func TestCreateRegistryCommand(t *testing.T) {
@@ -100,6 +102,8 @@ func TestWriteRegistryScript(t *testing.T) {
 	foundBytes, err := os.ReadFile(registryScriptPath)
 	require.NoError(t, err)
 	found := string(foundBytes)
+	assert.Contains(t, found, registryDir)
+	assert.Contains(t, found, registryPort)
 	assert.Contains(t, found, registryTarName)
 	assert.Contains(t, found, "mv hauler /usr/local/bin/hauler")
 	assert.Contains(t, found, "systemctl enable eib-embedded-registry.service")
@@ -138,66 +142,106 @@ func TestCopyHaulerBinaryNoFile(t *testing.T) {
 	require.ErrorContains(t, err, "no such file")
 }
 
-func TestIsEmbeddedArtifactRegistryEmpty(t *testing.T) {
+func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 	tests := []struct {
-		name     string
-		registry image.EmbeddedArtifactRegistry
-		isEmpty  bool
+		name         string
+		ctx          *image.Context
+		isConfigured bool
 	}{
 		{
-			name: "Both Defined",
-			registry: image.EmbeddedArtifactRegistry{
-				HelmCharts: []image.HelmChart{
-					{
-						Name:    "rancher",
-						RepoURL: "https://releases.rancher.com/server-charts/stable",
-						Version: "2.8.0",
+			name: "Everything Defined",
+			ctx: &image.Context{
+				ImageDefinition: &image.Definition{
+					EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{
+						ContainerImages: []image.ContainerImage{
+							{
+								Name:           "nginx",
+								SupplyChainKey: "sample-key",
+							},
+						},
 					},
-				},
-				ContainerImages: []image.ContainerImage{
-					{
-						Name:           "hello-world:latest",
-						SupplyChainKey: "",
+					Kubernetes: image.Kubernetes{
+						Manifests: image.Manifests{
+							URLs: []string{
+								"https://k8s.io/examples/application/nginx-app.yaml",
+							},
+						},
+						HelmCharts: []image.HelmChart{
+							{
+								Name:    "rancher",
+								RepoURL: "https://releases.rancher.com/server-charts/latest",
+								Version: "2.8.0",
+							},
+						},
 					},
 				},
 			},
-			isEmpty: false,
+			isConfigured: true,
 		},
 		{
 			name: "Chart Defined",
-			registry: image.EmbeddedArtifactRegistry{
-				HelmCharts: []image.HelmChart{
-					{
-						Name:    "rancher",
-						RepoURL: "https://releases.rancher.com/server-charts/stable",
-						Version: "2.8.0",
+			ctx: &image.Context{
+				ImageDefinition: &image.Definition{
+					Kubernetes: image.Kubernetes{
+						HelmCharts: []image.HelmChart{
+							{
+								Name:    "rancher",
+								RepoURL: "https://releases.rancher.com/server-charts/latest",
+								Version: "2.8.0",
+							},
+						},
 					},
 				},
 			},
-			isEmpty: false,
+			isConfigured: true,
 		},
 		{
 			name: "Image Defined",
-			registry: image.EmbeddedArtifactRegistry{
-				ContainerImages: []image.ContainerImage{
-					{
-						Name:           "hello-world:latest",
-						SupplyChainKey: "",
+			ctx: &image.Context{
+				ImageDefinition: &image.Definition{
+					EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{
+						ContainerImages: []image.ContainerImage{
+							{
+								Name:           "nginx",
+								SupplyChainKey: "sample-key",
+							},
+						},
 					},
 				},
 			},
-			isEmpty: false,
+			isConfigured: true,
 		},
 		{
-			name:    "None Defined",
-			isEmpty: true,
+			name: "Manifest URL Defined",
+			ctx: &image.Context{
+				ImageDefinition: &image.Definition{
+					Kubernetes: image.Kubernetes{
+						Manifests: image.Manifests{
+							URLs: []string{
+								"https://k8s.io/examples/application/nginx-app.yaml",
+							},
+						},
+					},
+				},
+			},
+			isConfigured: true,
+		},
+		{
+			name: "None Defined",
+			ctx: &image.Context{
+				ImageDefinition: &image.Definition{
+					EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{},
+					Kubernetes:               image.Kubernetes{},
+				},
+			},
+			isConfigured: false,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := IsEmbeddedArtifactRegistryEmpty(test.registry)
-			assert.Equal(t, test.isEmpty, result)
+			result := IsEmbeddedArtifactRegistryConfigured(test.ctx)
+			assert.Equal(t, test.isConfigured, result)
 		})
 	}
 }

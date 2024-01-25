@@ -10,6 +10,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
+	"github.com/suse-edge/edge-image-builder/pkg/registry"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
 )
@@ -21,6 +22,8 @@ const (
 	registryComponentName  = "embedded artifact registry"
 	registryLogFileName    = "embedded-registry.log"
 	hauler                 = "hauler"
+	registryDir            = "registry"
+	registryPort           = "6545"
 )
 
 //go:embed templates/hauler-manifest.yaml.tpl
@@ -30,12 +33,44 @@ var haulerManifest string
 var registryScript string
 
 func configureRegistry(ctx *image.Context) ([]string, error) {
-	if IsEmbeddedArtifactRegistryEmpty(ctx.ImageDefinition.EmbeddedArtifactRegistry) {
+	if !IsEmbeddedArtifactRegistryConfigured(ctx) {
 		log.AuditComponentSkipped(registryComponentName)
 		return nil, nil
 	}
 
-	err := writeHaulerManifest(ctx)
+	registriesDir := filepath.Join(ctx.CombustionDir, registryDir)
+	err := os.Mkdir(registriesDir, os.ModePerm)
+	if err != nil {
+		log.AuditComponentFailed(registryComponentName)
+		return nil, fmt.Errorf("creating registry dir: %w", err)
+	}
+
+	var localManifestSrcDir = filepath.Join(ctx.ImageConfigDir, "kubernetes", "manifests")
+
+	configured := isComponentConfigured(ctx, localManifestSrcDir)
+	if !configured {
+		localManifestSrcDir = ""
+	}
+
+	embeddedContainerImages := ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages
+	manifestURLs := ctx.ImageDefinition.Kubernetes.Manifests.URLs
+	manifestDownloadDest := ""
+	if len(manifestURLs) != 0 {
+		manifestDownloadDest = filepath.Join(ctx.BuildDir, "downloaded-manifests")
+		err = os.Mkdir(manifestDownloadDest, os.ModePerm)
+		if err != nil {
+			log.AuditComponentFailed(registryComponentName)
+			return nil, fmt.Errorf("creating manifest download dir: %w", err)
+		}
+	}
+
+	containerImages, err := registry.GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, manifestDownloadDest)
+	if err != nil {
+		log.AuditComponentFailed(registryComponentName)
+		return nil, fmt.Errorf("getting all container images: %w", err)
+	}
+
+	err = writeHaulerManifest(ctx, containerImages, ctx.ImageDefinition.Kubernetes.HelmCharts)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("writing hauler manifest: %w", err)
@@ -70,10 +105,16 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 	return []string{registryScriptNameResult}, nil
 }
 
-func writeHaulerManifest(ctx *image.Context) error {
+func writeHaulerManifest(ctx *image.Context, images []image.ContainerImage, charts []image.HelmChart) error {
 	haulerManifestYamlFile := filepath.Join(ctx.BuildDir, haulerManifestYamlName)
-
-	data, err := template.Parse(haulerManifestYamlName, haulerManifest, ctx.ImageDefinition.EmbeddedArtifactRegistry)
+	haulerDef := struct {
+		ContainerImages []image.ContainerImage
+		HelmCharts      []image.HelmChart
+	}{
+		ContainerImages: images,
+		HelmCharts:      charts,
+	}
+	data, err := template.Parse(haulerManifestYamlName, haulerManifest, haulerDef)
 	if err != nil {
 		return fmt.Errorf("applying template to %s: %w", haulerManifestYamlName, err)
 	}
@@ -107,7 +148,7 @@ func populateHaulerStore(ctx *image.Context) error {
 }
 
 func generateRegistryTar(ctx *image.Context) error {
-	haulerTarDest := filepath.Join(ctx.CombustionDir, registryTarName)
+	haulerTarDest := filepath.Join(ctx.CombustionDir, registryDir, registryTarName)
 	args := []string{"store", "save", "--filename", haulerTarDest}
 
 	cmd, registryLog, err := createRegistryCommand(ctx, hauler, args)
@@ -140,8 +181,12 @@ func copyHaulerBinary(ctx *image.Context, haulerBinaryPath string) error {
 
 func writeRegistryScript(ctx *image.Context) (string, error) {
 	values := struct {
+		Port                string
+		RegistryDir         string
 		EmbeddedRegistryTar string
 	}{
+		Port:                registryPort,
+		RegistryDir:         registryDir,
 		EmbeddedRegistryTar: registryTarName,
 	}
 
@@ -173,6 +218,8 @@ func createRegistryCommand(ctx *image.Context, commandName string, args []string
 	return cmd, logFile, nil
 }
 
-func IsEmbeddedArtifactRegistryEmpty(registry image.EmbeddedArtifactRegistry) bool {
-	return len(registry.HelmCharts) == 0 && len(registry.ContainerImages) == 0
+func IsEmbeddedArtifactRegistryConfigured(ctx *image.Context) bool {
+	return len(ctx.ImageDefinition.Kubernetes.HelmCharts) != 0 ||
+		len(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages) != 0 ||
+		len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0
 }

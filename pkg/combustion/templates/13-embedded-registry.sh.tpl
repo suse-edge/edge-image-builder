@@ -4,7 +4,7 @@ set -euo pipefail
 mkdir /opt/hauler
 
 mount /usr/local
-mv {{ .EmbeddedRegistryTar }} /opt/hauler/{{ .EmbeddedRegistryTar }}
+mv {{ .RegistryDir }}/{{ .EmbeddedRegistryTar }} /opt/hauler/
 mv hauler /usr/local/bin/hauler
 umount /usr/local
 
@@ -18,7 +18,7 @@ cat <<- EOF > /etc/systemd/system/eib-embedded-registry.service
   User=root
   WorkingDirectory=/opt/hauler
   ExecStartPre=/usr/local/bin/hauler store load {{ .EmbeddedRegistryTar }}
-  ExecStart=/usr/local/bin/hauler store serve
+  ExecStart=/usr/local/bin/hauler store serve -p {{ .Port }}
   Restart=on-failure
 
   [Install]

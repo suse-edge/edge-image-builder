@@ -109,7 +109,6 @@ type Proxy struct {
 
 type EmbeddedArtifactRegistry struct {
 	ContainerImages []ContainerImage `yaml:"images"`
-	HelmCharts      []HelmChart      `yaml:"charts"`
 }
 
 type ContainerImage struct {
@@ -124,10 +123,11 @@ type HelmChart struct {
 }
 
 type Kubernetes struct {
-	Version   string    `yaml:"version"`
-	Network   Network   `yaml:"network"`
-	Nodes     []Node    `yaml:"nodes"`
-	Manifests Manifests `yaml:"manifests"`
+	Version    string      `yaml:"version"`
+	Network    Network     `yaml:"network"`
+	Nodes      []Node      `yaml:"nodes"`
+	Manifests  Manifests   `yaml:"manifests"`
+	HelmCharts []HelmChart `yaml:"charts"`
 }
 
 type Network struct {
