@@ -3,7 +3,7 @@ set -euo pipefail
 
 declare -A hosts
 
-{{- range .Nodes }}
+{{- range .nodes }}
 hosts[{{ .Hostname }}]={{ .Type }}
 {{- end }}
 
@@ -21,28 +21,28 @@ fi
 
 mount /var
 mkdir -p /var/lib/rancher/rke2/agent/images/
-cp {{ .ImagesPath }}/* /var/lib/rancher/rke2/agent/images/
+cp {{ .imagesPath }}/* /var/lib/rancher/rke2/agent/images/
 
 CONFIGFILE=$NODETYPE.yaml
 
-if [ "$HOSTNAME" = {{ .Initialiser }} ]; then
-    CONFIGFILE={{ .InitialiserConfigFile }}
+if [ "$HOSTNAME" = {{ .initialiser }} ]; then
+    CONFIGFILE={{ .initialiserConfigFile }}
 
     mkdir -p /var/lib/rancher/rke2/server/manifests/
-    cp {{ .VIPManifest }} /var/lib/rancher/rke2/server/manifests/{{ .VIPManifest }}
+    cp {{ .vipManifest }} /var/lib/rancher/rke2/server/manifests/{{ .vipManifest }}
 fi
 
 umount /var
 
-{{- if .Network.APIHost }}
-echo "{{ .Network.APIVIP }} {{ .Network.APIHost }}" >> /etc/hosts
+{{- if .apiHost }}
+echo "{{ .apiVIP }} {{ .apiHost }}" >> /etc/hosts
 {{- end }}
 
 mkdir -p /etc/rancher/rke2/
 cp $CONFIGFILE /etc/rancher/rke2/config.yaml
 
 export INSTALL_RKE2_TAR_PREFIX=/opt/rke2
-export INSTALL_RKE2_ARTIFACT_PATH={{ .InstallPath }}
+export INSTALL_RKE2_ARTIFACT_PATH={{ .installPath }}
 
 ./rke2_installer.sh
 
