@@ -12,6 +12,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
+	"github.com/suse-edge/edge-image-builder/pkg/registry"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
@@ -55,6 +56,24 @@ func configureKubernetes(ctx *image.Context) ([]string, error) {
 	if err != nil {
 		log.AuditComponentFailed(k8sComponentName)
 		return nil, fmt.Errorf("configuring kubernetes components: %w", err)
+	}
+
+	manifestURLs := ctx.ImageDefinition.Kubernetes.Manifests.URLs
+	localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, "kubernetes", "manifests")
+	localManifestsConfigured := isComponentConfigured(ctx, localManifestsSrcDir)
+	if localManifestsConfigured || len(manifestURLs) != 0 {
+		k8sCombustionDir := filepath.Join(ctx.CombustionDir, k8sDir, "manifests")
+		err = os.MkdirAll(k8sCombustionDir, os.ModePerm)
+		if err != nil {
+			log.AuditComponentFailed(k8sComponentName)
+			return nil, fmt.Errorf("creating kubernetes combustion dir: %w", err)
+		}
+
+		err = configureManifests(k8sCombustionDir, localManifestsConfigured, localManifestsSrcDir, manifestURLs)
+		if err != nil {
+			log.AuditComponentFailed(k8sComponentName)
+			return nil, fmt.Errorf("configuring kubernetes manifests: %w", err)
+		}
 	}
 
 	log.AuditComponentSuccessful(k8sComponentName)
@@ -248,4 +267,29 @@ func storeKubernetesConfig(ctx *image.Context, config map[string]any, distributi
 	}
 
 	return configFile, nil
+}
+
+func configureManifests(k8sCombustionDir string, localManifestsConfigured bool, localManifestsSrcDir string, manifestURLs []string) error {
+	if localManifestsConfigured {
+		localManifestsDestDir := filepath.Join(k8sCombustionDir, "local-manifests")
+		err := os.Mkdir(localManifestsDestDir, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("creating local manifests destination dir: %w", err)
+		}
+
+		_, err = registry.CopyManifests(localManifestsSrcDir, localManifestsDestDir)
+		if err != nil {
+			return fmt.Errorf("copying local manifests to combustion dir: %w", err)
+		}
+	}
+
+	if len(manifestURLs) != 0 {
+		manifestDownloadDest := filepath.Join(k8sCombustionDir, "downloaded-manifests")
+		_, err := registry.DownloadManifests(manifestURLs, manifestDownloadDest)
+		if err != nil {
+			return fmt.Errorf("downloading manifests to combustion dir: %w", err)
+		}
+	}
+
+	return nil
 }

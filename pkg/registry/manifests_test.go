@@ -202,7 +202,7 @@ func TestDownloadManifestsNoManifest(t *testing.T) {
 	manifestDownloadDest := ""
 
 	// Test
-	manifestPaths, err := downloadManifests(nil, manifestDownloadDest)
+	manifestPaths, err := DownloadManifests(nil, manifestDownloadDest)
 
 	// Verify
 	require.NoError(t, err)
@@ -215,7 +215,7 @@ func TestDownloadManifestsInvalidURL(t *testing.T) {
 	manifestDownloadDest := ""
 
 	// Test
-	manifestPaths, err := downloadManifests(manifestURLs, manifestDownloadDest)
+	manifestPaths, err := DownloadManifests(manifestURLs, manifestDownloadDest)
 
 	// Verify
 	require.ErrorContains(t, err, "downloading manifest 'k8s.io/examples/application/nginx-app.yaml': executing request: Get \"k8s.io/examples/application/nginx-app.yaml\": unsupported protocol scheme \"")

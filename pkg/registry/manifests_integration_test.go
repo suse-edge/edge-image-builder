@@ -29,7 +29,7 @@ func TestDownloadManifests(t *testing.T) {
 	}
 
 	// Test
-	manifestPaths, err := downloadManifests(manifestURLs, manifestDownloadDest)
+	manifestPaths, err := DownloadManifests(manifestURLs, manifestDownloadDest)
 
 	// Verify
 	require.NoError(t, err)

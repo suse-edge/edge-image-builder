@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/http"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"go.uber.org/zap"
@@ -22,7 +23,7 @@ func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs [
 			return nil, fmt.Errorf("manifest download destination directory not defined")
 		}
 
-		downloadedManifestPaths, err := downloadManifests(manifestURLs, manifestDownloadDest)
+		downloadedManifestPaths, err := DownloadManifests(manifestURLs, manifestDownloadDest)
 		if err != nil {
 			return nil, fmt.Errorf("error downloading manifests: %w", err)
 		}
@@ -133,7 +134,7 @@ func getLocalManifestPaths(src string) ([]string, error) {
 	return manifestPaths, nil
 }
 
-func downloadManifests(manifestURLs []string, destPath string) ([]string, error) {
+func DownloadManifests(manifestURLs []string, destPath string) ([]string, error) {
 	var manifestPaths []string
 
 	for index, manifestURL := range manifestURLs {
@@ -146,4 +147,36 @@ func downloadManifests(manifestURLs []string, destPath string) ([]string, error)
 	}
 
 	return manifestPaths, nil
+}
+
+func CopyManifests(src string, dest string) ([]string, error) {
+	if dest == "" {
+		return nil, fmt.Errorf("manifest destination directory not defined")
+	}
+
+	var list []string
+
+	manifests, err := os.ReadDir(src)
+	if err != nil {
+		return nil, fmt.Errorf("reading manifest source dir: %w", err)
+	}
+
+	for _, manifest := range manifests {
+		manifestName := strings.ToLower(manifest.Name())
+		if filepath.Ext(manifestName) != ".yaml" && filepath.Ext(manifestName) != ".yml" {
+			zap.S().Warnf("Skipping %s as it is not a yaml file", manifest.Name())
+			continue
+		}
+
+		sourcePath := filepath.Join(src, manifest.Name())
+		destPath := filepath.Join(dest, manifest.Name())
+		err := fileio.CopyFile(sourcePath, destPath, fileio.NonExecutablePerms)
+		if err != nil {
+			return nil, fmt.Errorf("copying manifest file %s: %w", sourcePath, err)
+		}
+		list = append(list, manifest.Name())
+
+	}
+
+	return list, nil
 }
