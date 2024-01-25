@@ -1,3 +1,5 @@
+//go:build integration
+
 package registry
 
 import (
@@ -95,11 +97,11 @@ func TestGetAllImages(t *testing.T) {
 
 	// Test
 	containerImages, err := GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, manifestDownloadDest)
-	sort.Slice(containerImages, func(i, j int) bool {
-		return containerImages[i].Name < containerImages[j].Name
-	})
 
 	// Verify
 	require.NoError(t, err)
+	sort.Slice(containerImages, func(i, j int) bool {
+		return containerImages[i].Name < containerImages[j].Name
+	})
 	assert.Equal(t, expectedContainerImages, containerImages)
 }

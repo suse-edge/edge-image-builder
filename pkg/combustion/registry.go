@@ -47,11 +47,7 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 
 	var localManifestSrcDir = filepath.Join(ctx.ImageConfigDir, "kubernetes", "manifests")
 
-	configured, err := localManifestsConfigured(localManifestSrcDir)
-	if err != nil {
-		log.AuditComponentFailed(registryComponentName)
-		return nil, fmt.Errorf("checking if local manifests dir configured: %w", err)
-	}
+	configured := isComponentConfigured(ctx, localManifestSrcDir)
 	if !configured {
 		localManifestSrcDir = ""
 	}
@@ -226,15 +222,4 @@ func IsEmbeddedArtifactRegistryConfigured(ctx *image.Context) bool {
 	return len(ctx.ImageDefinition.Kubernetes.HelmCharts) != 0 ||
 		len(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages) != 0 ||
 		len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0
-}
-
-func localManifestsConfigured(localManifestSrcDir string) (bool, error) {
-	_, err := os.Stat(localManifestSrcDir)
-	if os.IsNotExist(err) {
-		return false, nil
-	} else if err != nil {
-		return false, fmt.Errorf("checking if directory exists: %w", err)
-	}
-
-	return true, nil
 }

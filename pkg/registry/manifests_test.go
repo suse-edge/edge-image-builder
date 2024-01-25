@@ -144,7 +144,7 @@ func TestGetLocalManifestPathsNoManifests(t *testing.T) {
 
 	// Verify
 	require.NoError(t, err)
-	assert.Equal(t, []string(nil), manifestPaths)
+	assert.Nil(t, manifestPaths)
 }
 
 func TestGetAllImagesInvalidURL(t *testing.T) {
@@ -179,10 +179,11 @@ func TestGetAllImagesInvalidDownloadDestination(t *testing.T) {
 
 func TestGetAllImagesLocalManifestDirNotDefined(t *testing.T) {
 	// Test
-	_, err := GetAllImages(nil, nil, "", "")
+	containerImages, err := GetAllImages(nil, nil, "", "")
 
 	// Verify
 	require.NoError(t, err)
+	assert.Empty(t, containerImages)
 }
 
 func TestGetAllImagesInvalidLocalManifestsDir(t *testing.T) {
