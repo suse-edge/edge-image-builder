@@ -16,18 +16,26 @@ func TestReadManifest(t *testing.T) {
 	manifestPath := filepath.Join("testdata", "sample-crd.yaml")
 
 	// Test
-	manifestData, err := readManifest(manifestPath)
+	manifests, err := readManifest(manifestPath)
 
 	// Verify
 	require.NoError(t, err)
 
-	data, ok := manifestData.(map[string]any)
+	// First manifest in sample-crd.yaml
+	data, ok := manifests[0].(map[string]any)
 	require.True(t, ok)
 
 	apiVersion, ok := data["apiVersion"].(string)
 	require.True(t, ok)
-
 	assert.Equal(t, "custom.example.com/v1", apiVersion)
+
+	// Second manifest in sample-crd.yaml
+	data, ok = manifests[1].(map[string]any)
+	require.True(t, ok)
+
+	apiVersion, ok = data["apiVersion"].(string)
+	require.True(t, ok)
+	assert.Equal(t, "apps/v1", apiVersion)
 }
 
 func TestReadManifestNoManifest(t *testing.T) {
@@ -70,7 +78,7 @@ func TestFindImagesInManifest(t *testing.T) {
 	manifestData, err := readManifest(manifestPath)
 	require.NoError(t, err)
 
-	expectedImages := []string{"nginx:latest", "node:14", "custom-api:1.2.3", "mysql:5.7", "redis:6.0"}
+	expectedImages := []string{"nginx:latest", "node:14", "custom-api:1.2.3", "mysql:5.7", "redis:6.0", "nginx:1.14.2"}
 	sort.Strings(expectedImages)
 
 	// Test

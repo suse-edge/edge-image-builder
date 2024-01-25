@@ -66,6 +66,9 @@ func TestGetAllImages(t *testing.T) {
 		{
 			Name: "node:14",
 		},
+		{
+			Name: "nginx:1.14.2",
+		},
 	}
 	sort.Slice(expectedContainerImages, func(i, j int) bool {
 		return expectedContainerImages[i].Name < expectedContainerImages[j].Name

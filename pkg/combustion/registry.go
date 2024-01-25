@@ -45,9 +45,9 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("creating registry dir: %w", err)
 	}
 
-	var localManifestSrcDir = filepath.Join(ctx.ImageConfigDir, "kubernetes", "manifests")
-
-	configured := isComponentConfigured(ctx, localManifestSrcDir)
+	localManifestSrcDir := filepath.Join(ctx.ImageConfigDir, "kubernetes", "manifests")
+	localManifestComponentDir := filepath.Join("kubernetes", "manifests")
+	configured := isComponentConfigured(ctx, localManifestComponentDir)
 	if !configured {
 		localManifestSrcDir = ""
 	}
