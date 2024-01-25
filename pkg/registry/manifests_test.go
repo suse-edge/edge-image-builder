@@ -43,7 +43,7 @@ func TestReadManifestNoManifest(t *testing.T) {
 
 func TestReadManifestInvalidManifest(t *testing.T) {
 	// Setup
-	manifestPath := filepath.Join("testdata", "invalid-crd.yaml")
+	manifestPath := filepath.Join("testdata", "invalid-crd.yml")
 
 	// Test
 	_, err := readManifest(manifestPath)
@@ -100,7 +100,7 @@ func TestFindImagesInManifestEmptyManifest(t *testing.T) {
 func TestGetLocalManifestPaths(t *testing.T) {
 	// Setup
 	manifestSrcDir := "testdata"
-	expectedPaths := []string{"testdata/empty-crd.yaml", "testdata/invalid-crd.yaml", "testdata/sample-crd.yaml"}
+	expectedPaths := []string{"testdata/empty-crd.yaml", "testdata/invalid-crd.yml", "testdata/sample-crd.yaml"}
 
 	// Test
 	manifestPaths, err := getLocalManifestPaths(manifestSrcDir)
@@ -230,8 +230,8 @@ func TestGetAllImagesInvalidLocalManifest(t *testing.T) {
 		require.NoError(t, os.RemoveAll(localManifestSrcDir))
 	}()
 
-	localSampleManifestPath := filepath.Join("testdata", "invalid-crd.yaml")
-	err := fileio.CopyFile(localSampleManifestPath, filepath.Join(localManifestSrcDir, "invalid-crd.yaml"), fileio.NonExecutablePerms)
+	localSampleManifestPath := filepath.Join("testdata", "invalid-crd.yml")
+	err := fileio.CopyFile(localSampleManifestPath, filepath.Join(localManifestSrcDir, "invalid-crd.yml"), fileio.NonExecutablePerms)
 	require.NoError(t, err)
 
 	// Test
