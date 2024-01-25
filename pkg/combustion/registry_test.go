@@ -95,7 +95,7 @@ func TestWriteRegistryScript(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	registryScriptPath := filepath.Join(ctx.CombustionDir, "13-embedded-registry.sh")
+	registryScriptPath := filepath.Join(ctx.CombustionDir, registryScriptName)
 	_, err = os.Stat(registryScriptPath)
 	require.NoError(t, err)
 

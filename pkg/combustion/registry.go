@@ -17,7 +17,7 @@ import (
 
 const (
 	haulerManifestYamlName = "hauler-manifest.yaml"
-	registryScriptName     = "13-embedded-registry.sh"
+	registryScriptName     = "14-embedded-registry.sh"
 	registryTarName        = "embedded-registry.tar.zst"
 	registryComponentName  = "embedded artifact registry"
 	registryLogFileName    = "embedded-registry.log"
@@ -29,7 +29,7 @@ const (
 //go:embed templates/hauler-manifest.yaml.tpl
 var haulerManifest string
 
-//go:embed templates/13-embedded-registry.sh.tpl
+//go:embed templates/14-embedded-registry.sh.tpl
 var registryScript string
 
 func configureRegistry(ctx *image.Context) ([]string, error) {
