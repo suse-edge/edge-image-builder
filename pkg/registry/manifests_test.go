@@ -16,18 +16,26 @@ func TestReadManifest(t *testing.T) {
 	manifestPath := filepath.Join("testdata", "sample-crd.yaml")
 
 	// Test
-	manifestData, err := readManifest(manifestPath)
+	manifests, err := readManifest(manifestPath)
 
 	// Verify
 	require.NoError(t, err)
 
-	data, ok := manifestData.(map[string]any)
+	// First manifest in sample-crd.yaml
+	data, ok := manifests[0].(map[string]any)
 	require.True(t, ok)
 
 	apiVersion, ok := data["apiVersion"].(string)
 	require.True(t, ok)
-
 	assert.Equal(t, "custom.example.com/v1", apiVersion)
+
+	// Second manifest in sample-crd.yaml
+	data, ok = manifests[1].(map[string]any)
+	require.True(t, ok)
+
+	apiVersion, ok = data["apiVersion"].(string)
+	require.True(t, ok)
+	assert.Equal(t, "apps/v1", apiVersion)
 }
 
 func TestReadManifestNoManifest(t *testing.T) {
@@ -43,7 +51,7 @@ func TestReadManifestNoManifest(t *testing.T) {
 
 func TestReadManifestInvalidManifest(t *testing.T) {
 	// Setup
-	manifestPath := filepath.Join("testdata", "invalid-crd.yaml")
+	manifestPath := filepath.Join("testdata", "invalid-crd.yml")
 
 	// Test
 	_, err := readManifest(manifestPath)
@@ -70,7 +78,7 @@ func TestFindImagesInManifest(t *testing.T) {
 	manifestData, err := readManifest(manifestPath)
 	require.NoError(t, err)
 
-	expectedImages := []string{"nginx:latest", "node:14", "custom-api:1.2.3", "mysql:5.7", "redis:6.0"}
+	expectedImages := []string{"nginx:latest", "node:14", "custom-api:1.2.3", "mysql:5.7", "redis:6.0", "nginx:1.14.2"}
 	sort.Strings(expectedImages)
 
 	// Test
@@ -100,7 +108,7 @@ func TestFindImagesInManifestEmptyManifest(t *testing.T) {
 func TestGetLocalManifestPaths(t *testing.T) {
 	// Setup
 	manifestSrcDir := "testdata"
-	expectedPaths := []string{"testdata/empty-crd.yaml", "testdata/invalid-crd.yaml", "testdata/sample-crd.yaml"}
+	expectedPaths := []string{"testdata/empty-crd.yaml", "testdata/invalid-crd.yml", "testdata/sample-crd.yaml"}
 
 	// Test
 	manifestPaths, err := getLocalManifestPaths(manifestSrcDir)
@@ -230,8 +238,8 @@ func TestGetAllImagesInvalidLocalManifest(t *testing.T) {
 		require.NoError(t, os.RemoveAll(localManifestSrcDir))
 	}()
 
-	localSampleManifestPath := filepath.Join("testdata", "invalid-crd.yaml")
-	err := fileio.CopyFile(localSampleManifestPath, filepath.Join(localManifestSrcDir, "invalid-crd.yaml"), fileio.NonExecutablePerms)
+	localSampleManifestPath := filepath.Join("testdata", "invalid-crd.yml")
+	err := fileio.CopyFile(localSampleManifestPath, filepath.Join(localManifestSrcDir, "invalid-crd.yml"), fileio.NonExecutablePerms)
 	require.NoError(t, err)
 
 	// Test

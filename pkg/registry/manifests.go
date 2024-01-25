@@ -2,7 +2,9 @@ package registry
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,12 +43,14 @@ func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs [
 	}
 
 	for _, manifestPath := range combinedManifestPaths {
-		manifestData, err := readManifest(manifestPath)
+		manifests, err := readManifest(manifestPath)
 		if err != nil {
 			return nil, fmt.Errorf("error reading manifest %w", err)
 		}
 
-		storeManifestImageNames(manifestData, extractedImagesSet)
+		for _, manifestData := range manifests {
+			storeManifestImageNames(manifestData, extractedImagesSet)
+		}
 	}
 
 	for _, containerImage := range embeddedContainerImages {
@@ -65,23 +69,31 @@ func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs [
 	return allImages, nil
 }
 
-func readManifest(manifestPath string) (any, error) {
-	manifestData, err := os.ReadFile(manifestPath)
+func readManifest(manifestPath string) ([]any, error) {
+	manifestFile, err := os.Open(manifestPath)
 	if err != nil {
-		return nil, fmt.Errorf("error reading manifest: %w", err)
+		return nil, fmt.Errorf("error opening manifest: %w", err)
 	}
 
-	if len(manifestData) == 0 {
+	var manifests []any
+	decoder := yaml.NewDecoder(manifestFile)
+	for {
+		var manifest any
+		err = decoder.Decode(&manifest)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error unmarshalling manifest yaml '%s': %w", manifestPath, err)
+		}
+		manifests = append(manifests, manifest)
+	}
+
+	if len(manifests) == 0 {
 		return nil, fmt.Errorf("invalid manifest")
 	}
 
-	var manifest any
-	err = yaml.Unmarshal(manifestData, &manifest)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling manifest yaml '%s': %w", manifestPath, err)
-	}
-
-	return manifest, nil
+	return manifests, nil
 }
 
 func storeManifestImageNames(data any, imageSet map[string]string) {
