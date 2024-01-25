@@ -17,12 +17,13 @@ import (
 )
 
 const (
-	k8sComponentName    = "kubernetes"
-	k8sDir              = "kubernetes"
-	k8sConfigDir        = "config"
-	k8sServerConfigFile = "server.yaml"
-	k8sAgentConfigFile  = "agent.yaml"
-	rke2InstallScript   = "15-rke2-install.sh"
+	k8sComponentName        = "kubernetes"
+	k8sDir                  = "kubernetes"
+	k8sConfigDir            = "config"
+	k8sInitServerConfigFile = "init_server.yaml"
+	k8sServerConfigFile     = "server.yaml"
+	k8sAgentConfigFile      = "agent.yaml"
+	rke2InstallScript       = "15-rke2-install.sh"
 )
 
 var (
@@ -106,8 +107,8 @@ func configureRKE2(ctx *image.Context) (string, error) {
 		return "", fmt.Errorf("initialising kubernetes cluster config: %w", err)
 	}
 
-	if err = storeKubernetesConfig(ctx, cluster.ServerConfig, k8sServerConfigFile); err != nil {
-		return "", fmt.Errorf("storing RKE2 server config file: %w", err)
+	if err = storeKubernetesClusterConfig(cluster, ctx.CombustionDir); err != nil {
+		return "", fmt.Errorf("storing RKE2 cluster config: %w", err)
 	}
 
 	installPath, imagesPath, err := downloadRKE2Artefacts(ctx, cluster)
@@ -138,15 +139,6 @@ func configureRKE2(ctx *image.Context) (string, error) {
 		return storeRKE2Installer(ctx, "single-node-rke2", rke2SingleNodeInstaller, templateValues)
 	}
 
-	if err = storeKubernetesConfig(ctx, cluster.AgentConfig, k8sAgentConfigFile); err != nil {
-		return "", fmt.Errorf("storing RKE2 agent config file: %w", err)
-	}
-
-	initialiserConfigFile := fmt.Sprintf("init_%s", k8sServerConfigFile)
-	if err = storeKubernetesConfig(ctx, cluster.InitialiserConfig, initialiserConfigFile); err != nil {
-		return "", fmt.Errorf("storing RKE2 initialising server config file: %w", err)
-	}
-
 	vipManifest, err := storeRKE2VIPManifest(ctx)
 	if err != nil {
 		return "", fmt.Errorf("storing RKE2 VIP manifest: %w", err)
@@ -154,7 +146,7 @@ func configureRKE2(ctx *image.Context) (string, error) {
 
 	templateValues["nodes"] = ctx.ImageDefinition.Kubernetes.Nodes
 	templateValues["initialiser"] = cluster.Initialiser
-	templateValues["initialiserConfigFile"] = initialiserConfigFile
+	templateValues["initialiserConfigFile"] = k8sInitServerConfigFile
 	templateValues["vipManifest"] = vipManifest
 
 	return storeRKE2Installer(ctx, "multi-node-rke2", rke2MultiNodeInstaller, templateValues)
@@ -211,17 +203,36 @@ func storeRKE2VIPManifest(ctx *image.Context) (string, error) {
 	return vipManifest, nil
 }
 
-func storeKubernetesConfig(ctx *image.Context, config map[string]any, filename string) error {
+func storeKubernetesClusterConfig(cluster *kubernetes.Cluster, destPath string) error {
+	serverConfig := filepath.Join(destPath, k8sServerConfigFile)
+	if err := storeKubernetesConfig(cluster.ServerConfig, serverConfig); err != nil {
+		return fmt.Errorf("storing server config file: %w", err)
+	}
+
+	if cluster.InitialiserConfig != nil {
+		initialiserConfig := filepath.Join(destPath, k8sInitServerConfigFile)
+
+		if err := storeKubernetesConfig(cluster.InitialiserConfig, initialiserConfig); err != nil {
+			return fmt.Errorf("storing init server config file: %w", err)
+		}
+	}
+
+	if cluster.AgentConfig != nil {
+		agentConfig := filepath.Join(destPath, k8sAgentConfigFile)
+
+		if err := storeKubernetesConfig(cluster.AgentConfig, agentConfig); err != nil {
+			return fmt.Errorf("storing agent config file: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func storeKubernetesConfig(config map[string]any, configPath string) error {
 	data, err := yaml.Marshal(config)
 	if err != nil {
 		return fmt.Errorf("serializing kubernetes config: %w", err)
 	}
 
-	configPath := filepath.Join(ctx.CombustionDir, filename)
-
-	if err = os.WriteFile(configPath, data, fileio.NonExecutablePerms); err != nil {
-		return fmt.Errorf("storing kubernetes config file: %w", err)
-	}
-
-	return nil
+	return os.WriteFile(configPath, data, fileio.NonExecutablePerms)
 }
