@@ -26,7 +26,7 @@ func TestNewCluster_SingleNode_MissingConfig(t *testing.T) {
 	assert.Nil(t, cluster.ServerConfig["server"])
 	assert.Nil(t, cluster.ServerConfig["selinux"])
 
-	assert.Empty(t, cluster.Initialiser)
+	assert.Empty(t, cluster.InitialiserName)
 	assert.Nil(t, cluster.InitialiserConfig)
 	assert.Nil(t, cluster.AgentConfig)
 }
@@ -49,7 +49,7 @@ func TestNewCluster_SingleNode_ExistingConfig(t *testing.T) {
 	assert.Equal(t, true, cluster.ServerConfig["selinux"])
 	assert.Nil(t, cluster.ServerConfig["server"])
 
-	assert.Empty(t, cluster.Initialiser)
+	assert.Empty(t, cluster.InitialiserName)
 	assert.Nil(t, cluster.InitialiserConfig)
 	assert.Nil(t, cluster.AgentConfig)
 }
@@ -75,7 +75,7 @@ func TestNewCluster_MultiNode_MissingConfig(t *testing.T) {
 	cluster, err := NewCluster(kubernetes, "")
 	require.NoError(t, err)
 
-	assert.Equal(t, "node1.suse.com", cluster.Initialiser)
+	assert.Equal(t, "node1.suse.com", cluster.InitialiserName)
 
 	require.NotNil(t, cluster.InitialiserConfig)
 	assert.Equal(t, "cilium", cluster.InitialiserConfig["cni"])
@@ -120,7 +120,7 @@ func TestNewCluster_MultiNode_ExistingConfig(t *testing.T) {
 	cluster, err := NewCluster(kubernetes, "testdata")
 	require.NoError(t, err)
 
-	assert.Equal(t, "node1.suse.com", cluster.Initialiser)
+	assert.Equal(t, "node1.suse.com", cluster.InitialiserName)
 
 	require.NotNil(t, cluster.InitialiserConfig)
 	assert.Equal(t, "calico", cluster.InitialiserConfig["cni"])

@@ -26,9 +26,9 @@ const (
 )
 
 type Cluster struct {
-	// Initialiser is the hostname of the initialiser node.
+	// InitialiserName is the hostname of the initialiser node.
 	// Defaults to the first configured server if not explicitly selected.
-	Initialiser string
+	InitialiserName string
 	// InitialiserConfig contains the server configuration for the node initialising a multi node cluster.
 	InitialiserConfig map[string]any
 	// ServerConfig contains the server configurations for a single node cluster
@@ -77,7 +77,7 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 	}
 
 	return &Cluster{
-		Initialiser:       initialiser,
+		InitialiserName:   initialiser,
 		InitialiserConfig: initialiserConfig,
 		ServerConfig:      serverConfig,
 		AgentConfig:       agentConfig,
@@ -161,7 +161,7 @@ func setClusterCNI(config map[string]any) {
 		return
 	}
 
-	auditMessage := fmt.Sprintf("Kubernetes CNI not explicitly set, defaulting to: %s", cniDefaultValue)
+	auditMessage := fmt.Sprintf("The Kubernetes CNI is not explicitly set, defaulting to '%s'.", cniDefaultValue)
 	log.Audit(auditMessage)
 
 	zap.S().Infof("CNI not set in config file, proceeding with CNI: %s", cniDefaultValue)

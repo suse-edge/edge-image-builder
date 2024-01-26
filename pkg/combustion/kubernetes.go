@@ -145,7 +145,7 @@ func configureRKE2(ctx *image.Context) (string, error) {
 	}
 
 	templateValues["nodes"] = ctx.ImageDefinition.Kubernetes.Nodes
-	templateValues["initialiser"] = cluster.Initialiser
+	templateValues["initialiser"] = cluster.InitialiserName
 	templateValues["initialiserConfigFile"] = k8sInitServerConfigFile
 	templateValues["vipManifest"] = vipManifest
 
