@@ -120,7 +120,7 @@ func downloadArtefacts(artefacts []string, releaseURL, version, destinationPath 
 		url := fmt.Sprintf(releaseURL, version, artefact)
 		path := filepath.Join(destinationPath, artefact)
 
-		if err := http.DownloadFile(context.Background(), url, path); err != nil {
+		if err := http.DownloadFile(context.Background(), url, path, nil); err != nil {
 			return fmt.Errorf("downloading artefact '%s': %w", artefact, err)
 		}
 	}
