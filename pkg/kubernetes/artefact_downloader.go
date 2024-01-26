@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -19,10 +18,6 @@ import (
 )
 
 const (
-	kubernetesDir = "kubernetes"
-	installDir    = "install"
-	imagesDir     = "images"
-
 	rke2ReleaseURL = "https://github.com/rancher/rke2/releases/download/%s/%s"
 
 	rke2Binary     = "rke2.linux-%s.tar.gz"
@@ -44,42 +39,30 @@ type ArtefactDownloader struct {
 	Cache cache
 }
 
-func (d ArtefactDownloader) DownloadRKE2Artefacts(arch image.Arch, version, cni string, multusEnabled bool, destinationPath string) (installPath, imagesPath string, err error) {
+func (d ArtefactDownloader) DownloadRKE2Artefacts(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
 	if !strings.Contains(version, image.KubernetesDistroRKE2) {
-		return "", "", fmt.Errorf("invalid RKE2 version: '%s'", version)
+		return fmt.Errorf("invalid RKE2 version: '%s'", version)
 	}
 
 	if arch == image.ArchTypeARM {
 		log.Audit("WARNING: RKE2 support for aarch64 platforms is limited and experimental")
 	}
 
-	imagesPath = filepath.Join(kubernetesDir, imagesDir)
-	imagesDestination := filepath.Join(destinationPath, imagesPath)
-	if err = os.MkdirAll(imagesDestination, os.ModePerm); err != nil {
-		return "", "", fmt.Errorf("creating kubernetes images dir: %w", err)
-	}
-
-	installPath = filepath.Join(kubernetesDir, installDir)
-	installDestination := filepath.Join(destinationPath, installPath)
-	if err = os.MkdirAll(installDestination, os.ModePerm); err != nil {
-		return "", "", fmt.Errorf("creating kubernetes install dir: %w", err)
-	}
-
 	artefacts, err := rke2ImageArtefacts(cni, multusEnabled, arch)
 	if err != nil {
-		return "", "", fmt.Errorf("gathering RKE2 image artefacts: %w", err)
+		return fmt.Errorf("gathering RKE2 image artefacts: %w", err)
 	}
 
-	if err = d.downloadArtefacts(artefacts, rke2ReleaseURL, version, imagesDestination); err != nil {
-		return "", "", fmt.Errorf("downloading RKE2 image artefacts: %w", err)
+	if err = d.downloadArtefacts(artefacts, rke2ReleaseURL, version, imagesPath); err != nil {
+		return fmt.Errorf("downloading RKE2 image artefacts: %w", err)
 	}
 
 	artefacts = rke2InstallerArtefacts(arch)
-	if err = d.downloadArtefacts(artefacts, rke2ReleaseURL, version, installDestination); err != nil {
-		return "", "", fmt.Errorf("downloading RKE2 install artefacts: %w", err)
+	if err = d.downloadArtefacts(artefacts, rke2ReleaseURL, version, installPath); err != nil {
+		return fmt.Errorf("downloading RKE2 install artefacts: %w", err)
 	}
 
-	return installPath, imagesPath, nil
+	return nil
 }
 
 func rke2InstallerArtefacts(arch image.Arch) []string {

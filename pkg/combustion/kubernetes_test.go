@@ -13,11 +13,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const (
-	serverInstaller = "server-installer"
-	serverImages    = "server-images"
-)
-
 type mockKubernetesScriptInstaller struct {
 	installScript func(distribution, sourcePath, destPath string) error
 }
@@ -31,7 +26,7 @@ func (m mockKubernetesScriptInstaller) InstallScript(distribution, sourcePath, d
 }
 
 type mockKubernetesArtefactDownloader struct {
-	downloadArtefacts func(arch image.Arch, version, cni string, multusEnabled bool, destPath string) (string, string, error)
+	downloadArtefacts func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error
 }
 
 func (m mockKubernetesArtefactDownloader) DownloadRKE2Artefacts(
@@ -39,10 +34,11 @@ func (m mockKubernetesArtefactDownloader) DownloadRKE2Artefacts(
 	version string,
 	cni string,
 	multusEnabled bool,
-	destPath string,
-) (installPath string, imagesPath string, err error) {
+	installPath string,
+	imagesPath string,
+) error {
 	if m.downloadArtefacts != nil {
-		return m.downloadArtefacts(arch, version, cni, multusEnabled, destPath)
+		return m.downloadArtefacts(arch, version, cni, multusEnabled, installPath, imagesPath)
 	}
 
 	panic("not implemented")
@@ -121,14 +117,14 @@ func TestConfigureKubernetes_ArtefactDownloaderErrorRKE2(t *testing.T) {
 		},
 	}
 	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
-		downloadArtefacts: func(arch image.Arch, version, cni string, multusEnabled bool, destPath string) (string, string, error) {
-			return "", "", fmt.Errorf("some error")
+		downloadArtefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+			return fmt.Errorf("some error")
 		},
 	}
 
 	scripts, err := configureKubernetes(ctx)
 	require.Error(t, err)
-	assert.EqualError(t, err, "configuring kubernetes components: downloading RKE2 artefacts: some error")
+	assert.EqualError(t, err, "configuring kubernetes components: downloading RKE2 artefacts: downloading artefacts: some error")
 	assert.Nil(t, scripts)
 }
 
@@ -149,8 +145,8 @@ func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
 		},
 	}
 	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
-		downloadArtefacts: func(arch image.Arch, version, cni string, multusEnabled bool, destPath string) (string, string, error) {
-			return serverInstaller, serverImages, nil
+		downloadArtefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+			return nil
 		},
 	}
 
@@ -170,11 +166,11 @@ func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
 	require.NoError(t, err)
 
 	contents := string(b)
-	assert.Contains(t, contents, "cp server-images/* /var/lib/rancher/rke2/agent/images/")
+	assert.Contains(t, contents, "cp kubernetes/images/* /var/lib/rancher/rke2/agent/images/")
 	assert.Contains(t, contents, "cp server.yaml /etc/rancher/rke2/config.yaml")
 	assert.Contains(t, contents, "cp rke2-vip.yaml /var/lib/rancher/rke2/server/manifests/rke2-vip.yaml")
 	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
-	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=server-installer")
+	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=kubernetes/install")
 	assert.Contains(t, contents, "systemctl enable rke2-server.service")
 
 	// Config file assertions
@@ -224,8 +220,8 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 		},
 	}
 	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
-		downloadArtefacts: func(arch image.Arch, version, cni string, multusEnabled bool, destPath string) (string, string, error) {
-			return "server-installer", "server-images", nil
+		downloadArtefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+			return nil
 		},
 	}
 
@@ -262,12 +258,12 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	contents := string(b)
 	assert.Contains(t, contents, "hosts[node1.suse.com]=server")
 	assert.Contains(t, contents, "hosts[node2.suse.com]=agent")
-	assert.Contains(t, contents, "cp server-images/* /var/lib/rancher/rke2/agent/images/")
+	assert.Contains(t, contents, "cp kubernetes/images/* /var/lib/rancher/rke2/agent/images/")
 	assert.Contains(t, contents, "cp $CONFIGFILE /etc/rancher/rke2/config.yaml")
 	assert.Contains(t, contents, "if [ \"$HOSTNAME\" = node1.suse.com ]; then")
 	assert.Contains(t, contents, "cp rke2-vip.yaml /var/lib/rancher/rke2/server/manifests/rke2-vip.yaml")
 	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
-	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=server-installer")
+	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=kubernetes/install")
 	assert.Contains(t, contents, "systemctl enable rke2-$NODETYPE.service")
 
 	// Server config file assertions
@@ -331,8 +327,8 @@ func TestConfigureKubernetes_InvalidManifestURL(t *testing.T) {
 		},
 	}
 	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
-		downloadArtefacts: func(arch image.Arch, version, cni string, multusEnabled bool, destPath string) (string, string, error) {
-			return serverInstaller, serverImages, nil
+		downloadArtefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installpath, imagesPath string) error {
+			return nil
 		},
 	}
 	ctx.ImageDefinition.Kubernetes.Manifests.URLs = []string{

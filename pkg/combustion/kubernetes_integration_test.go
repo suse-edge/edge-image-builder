@@ -26,8 +26,8 @@ func TestConfigureManifestsValidDownload(t *testing.T) {
 	k8sCombDir := filepath.Join(ctx.CombustionDir, k8sDir)
 	require.NoError(t, os.Mkdir(k8sCombDir, os.ModePerm))
 
-	downloadedManifestsPath := filepath.Join(k8sDir, manifestsDir)
-	downloadedManifestsDestDir := filepath.Join(k8sCombDir, manifestsDir)
+	downloadedManifestsPath := filepath.Join(k8sDir, k8sManifestsDir)
+	downloadedManifestsDestDir := filepath.Join(k8sCombDir, k8sManifestsDir)
 	expectedDownloadedFilePath := filepath.Join(downloadedManifestsDestDir, "dl-manifest-1.yaml")
 
 	// Test
@@ -65,8 +65,8 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 		},
 	}
 	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
-		downloadArtefacts: func(arch image.Arch, version, cni string, multusEnabled bool, destPath string) (string, string, error) {
-			return serverInstaller, serverImages, nil
+		downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+			return nil
 		},
 	}
 
@@ -77,7 +77,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	k8sCombDir := filepath.Join(ctx.CombustionDir, k8sDir)
 	require.NoError(t, os.Mkdir(k8sCombDir, os.ModePerm))
 
-	localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, manifestsDir)
+	localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sManifestsDir)
 	require.NoError(t, os.MkdirAll(localManifestsSrcDir, 0o755))
 
 	localSampleManifestPath := filepath.Join("..", "registry", "testdata", "sample-crd.yaml")
@@ -100,11 +100,11 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	require.NoError(t, err)
 
 	contents := string(b)
-	assert.Contains(t, contents, "cp server-images/* /var/lib/rancher/rke2/agent/images/")
+	assert.Contains(t, contents, "cp kubernetes/images/* /var/lib/rancher/rke2/agent/images/")
 	assert.Contains(t, contents, "cp server.yaml /etc/rancher/rke2/config.yaml")
 	assert.Contains(t, contents, "cp rke2-vip.yaml /var/lib/rancher/rke2/server/manifests/rke2-vip.yaml")
 	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
-	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=server-installer")
+	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=kubernetes/install")
 	assert.Contains(t, contents, "systemctl enable rke2-server.service")
 	assert.Contains(t, contents, "mkdir -p /var/lib/rancher/rke2/server/manifests/")
 	assert.Contains(t, contents, "cp kubernetes/manifests/* /var/lib/rancher/rke2/server/manifests/")
@@ -129,7 +129,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	assert.Equal(t, []any{"192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
 
 	// Downloaded manifest assertions
-	manifestPath := filepath.Join(k8sCombDir, manifestsDir, "dl-manifest-1.yaml")
+	manifestPath := filepath.Join(k8sCombDir, k8sManifestsDir, "dl-manifest-1.yaml")
 	info, err = os.Stat(manifestPath)
 	require.NoError(t, err)
 	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
@@ -144,7 +144,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	assert.Contains(t, contents, "image: nginx:1.14.2")
 
 	// Local manifest assertions
-	manifest := filepath.Join(k8sCombDir, manifestsDir, "sample-crd.yaml")
+	manifest := filepath.Join(k8sCombDir, k8sManifestsDir, "sample-crd.yaml")
 	info, err = os.Stat(manifest)
 	require.NoError(t, err)
 	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
