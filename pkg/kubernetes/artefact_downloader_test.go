@@ -134,3 +134,19 @@ func TestRKE2ImageArtefacts(t *testing.T) {
 		})
 	}
 }
+
+func TestK3sInstallerArtefacts(t *testing.T) {
+	x86Artefacts := []string{"k3s"}
+	assert.Equal(t, x86Artefacts, k3sInstallerArtefacts(image.ArchTypeX86))
+
+	armArtefacts := []string{"k3s-arm64"}
+	assert.Equal(t, armArtefacts, k3sInstallerArtefacts(image.ArchTypeARM))
+}
+
+func TestK3sImageArtefacts(t *testing.T) {
+	x86Artefacts := []string{"k3s-airgap-images-amd64.tar.zst"}
+	assert.Equal(t, x86Artefacts, k3sImageArtefacts(image.ArchTypeX86))
+
+	armArtefacts := []string{"k3s-airgap-images-arm64.tar.zst"}
+	assert.Equal(t, armArtefacts, k3sImageArtefacts(image.ArchTypeARM))
+}

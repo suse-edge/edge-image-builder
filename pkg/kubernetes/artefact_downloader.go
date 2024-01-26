@@ -19,6 +19,7 @@ import (
 
 const (
 	rke2ReleaseURL = "https://github.com/rancher/rke2/releases/download/%s/%s"
+	k3sReleaseURL  = "https://github.com/k3s-io/k3s/releases/download/%s/%s"
 
 	rke2Binary     = "rke2.linux-%s.tar.gz"
 	rke2CoreImages = "rke2-images-core.linux-%s.tar.zst"
@@ -28,6 +29,9 @@ const (
 	rke2CanalImages  = "rke2-images-canal.linux-%s.tar.zst"
 	rke2CiliumImages = "rke2-images-cilium.linux-%s.tar.zst"
 	rke2MultusImages = "rke2-images-multus.linux-%s.tar.zst"
+
+	k3sBinary = "k3s"
+	k3sImages = "k3s-airgap-images-%s.tar.zst"
 )
 
 type cache interface {
@@ -109,6 +113,45 @@ func rke2ImageArtefacts(cni string, multusEnabled bool, arch image.Arch) ([]stri
 	}
 
 	return artefacts, nil
+}
+
+func (d ArtefactDownloader) DownloadK3sArtefacts(arch image.Arch, version, installPath, imagesPath string) error {
+	if !strings.Contains(version, image.KubernetesDistroK3S) {
+		return fmt.Errorf("invalid k3s version: '%s'", version)
+	}
+
+	artefacts := k3sImageArtefacts(arch)
+	if err := d.downloadArtefacts(artefacts, k3sReleaseURL, version, imagesPath); err != nil {
+		return fmt.Errorf("downloading k3s image artefacts: %w", err)
+	}
+
+	artefacts = k3sInstallerArtefacts(arch)
+	if err := d.downloadArtefacts(artefacts, k3sReleaseURL, version, installPath); err != nil {
+		return fmt.Errorf("downloading k3s install artefacts: %w", err)
+	}
+
+	return nil
+}
+
+func k3sInstallerArtefacts(arch image.Arch) []string {
+	artefactArch := arch.Short()
+
+	binary := k3sBinary
+	if arch == image.ArchTypeARM {
+		binary = fmt.Sprintf("%s-%s", k3sBinary, artefactArch)
+	}
+
+	return []string{
+		binary,
+	}
+}
+
+func k3sImageArtefacts(arch image.Arch) []string {
+	artefactArch := arch.Short()
+
+	return []string{
+		fmt.Sprintf(k3sImages, artefactArch),
+	}
 }
 
 func (d ArtefactDownloader) downloadArtefacts(artefacts []string, releaseURL, version, destinationPath string) error {
