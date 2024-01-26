@@ -69,16 +69,17 @@ func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs [
 	return allImages, nil
 }
 
-func readManifest(manifestPath string) ([]any, error) {
+func readManifest(manifestPath string) ([]map[string]any, error) {
 	manifestFile, err := os.Open(manifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("error opening manifest: %w", err)
 	}
 
-	var manifests []any
+	var manifests []map[string]any
 	decoder := yaml.NewDecoder(manifestFile)
 	for {
-		var manifest any
+		var manifest map[string]any
+   
 		err = decoder.Decode(&manifest)
 		if errors.Is(err, io.EOF) {
 			break
@@ -96,7 +97,7 @@ func readManifest(manifestPath string) ([]any, error) {
 	return manifests, nil
 }
 
-func storeManifestImageNames(data any, imageSet map[string]string) {
+func storeManifestImageNames(data map[string]any, imageSet map[string]string) {
 	var findImages func(data any)
 
 	findImages = func(data any) {

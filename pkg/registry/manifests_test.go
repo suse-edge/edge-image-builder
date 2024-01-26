@@ -26,17 +26,13 @@ func TestReadManifest(t *testing.T) {
 	require.NoError(t, err)
 
 	// First manifest in sample-crd.yaml
-	data, ok := manifests[0].(map[string]any)
-	require.True(t, ok)
-
+	data := manifests[0]
 	apiVersion, ok := data["apiVersion"].(string)
 	require.True(t, ok)
 	assert.Equal(t, "custom.example.com/v1", apiVersion)
 
 	// Second manifest in sample-crd.yaml
-	data, ok = manifests[1].(map[string]any)
-	require.True(t, ok)
-
+	data = manifests[1]
 	apiVersion, ok = data["apiVersion"].(string)
 	require.True(t, ok)
 	assert.Equal(t, "apps/v1", apiVersion)
@@ -86,7 +82,9 @@ func TestFindImagesInManifest(t *testing.T) {
 	sort.Strings(expectedImages)
 
 	// Test
-	storeManifestImageNames(manifestData, extractedImagesSet)
+	for _, manifest := range manifestData {
+		storeManifestImageNames(manifest, extractedImagesSet)
+	}
 	allImages := make([]string, 0, len(extractedImagesSet))
 	for uniqueImage := range extractedImagesSet {
 		allImages = append(allImages, uniqueImage)
@@ -100,7 +98,7 @@ func TestFindImagesInManifest(t *testing.T) {
 func TestFindImagesInManifestEmptyManifest(t *testing.T) {
 	// Setup
 	var extractedImagesSet = make(map[string]string)
-	var manifestData any
+	var manifestData map[string]any
 
 	// Test
 	storeManifestImageNames(manifestData, extractedImagesSet)
