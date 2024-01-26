@@ -152,7 +152,7 @@ func downloadManifests(manifestURLs []string, destPath string) ([]string, error)
 		filePath := filepath.Join(destPath, fmt.Sprintf("manifest-%d.yaml", index+1))
 		manifestPaths = append(manifestPaths, filePath)
 
-		if err := http.DownloadFile(context.Background(), manifestURL, filePath); err != nil {
+		if err := http.DownloadFile(context.Background(), manifestURL, filePath, nil); err != nil {
 			return nil, fmt.Errorf("downloading manifest '%s': %w", manifestURL, err)
 		}
 	}
