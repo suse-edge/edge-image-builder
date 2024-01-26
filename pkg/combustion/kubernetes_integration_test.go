@@ -27,12 +27,13 @@ func TestConfigureManifestsValidDownload(t *testing.T) {
 	expectedDownloadedFilePath := filepath.Join(downloadedManifestsDestDir, "dl-manifest-1.yaml")
 
 	// Test
-	err := configureManifests(ctx)
+	manifestsPath, err := configureManifests(ctx)
 
 	// Verify
 	require.NoError(t, err)
-	assert.FileExists(t, expectedDownloadedFilePath)
+	assert.Equal(t, downloadedManifestsDestDir, manifestsPath)
 
+	assert.FileExists(t, expectedDownloadedFilePath)
 	b, err := os.ReadFile(expectedDownloadedFilePath)
 	require.NoError(t, err)
 
@@ -43,7 +44,7 @@ func TestConfigureManifestsValidDownload(t *testing.T) {
 	assert.Contains(t, contents, "image: nginx:1.14.2")
 }
 
-func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifestURLs(t *testing.T) {
+func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -64,6 +65,17 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifestURLs(t *testing.T) 
 	ctx.ImageDefinition.Kubernetes.Manifests.URLs = []string{
 		"https://k8s.io/examples/application/nginx-app.yaml",
 	}
+
+	localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, "kubernetes", "manifests")
+	require.NoError(t, os.MkdirAll(localManifestsSrcDir, 0o755))
+
+	localSampleManifestPath1 := filepath.Join("..", "registry", "testdata", "sample-crd.yaml")
+	err := fileio.CopyFile(localSampleManifestPath1, filepath.Join(localManifestsSrcDir, "sample-crd.yaml"), fileio.NonExecutablePerms)
+	require.NoError(t, err)
+
+	localSampleManifestPath2 := filepath.Join("..", "registry", "testdata", "invalid-crd.yml")
+	err = fileio.CopyFile(localSampleManifestPath2, filepath.Join(localManifestsSrcDir, "invalid-crd.yml"), fileio.NonExecutablePerms)
+	require.NoError(t, err)
 
 	scripts, err := configureKubernetes(ctx)
 	require.NoError(t, err)
@@ -119,4 +131,30 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifestURLs(t *testing.T) 
 	assert.Contains(t, contents, "name: my-nginx-svc")
 	assert.Contains(t, contents, "type: LoadBalancer")
 	assert.Contains(t, contents, "image: nginx:1.14.2")
+
+	// Local manifest assertions
+	manifestPath1 := filepath.Join(ctx.CombustionDir, manifestsDir, "sample-crd.yaml")
+	info, err = os.Stat(manifestPath1)
+	require.NoError(t, err)
+	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
+
+	b, err = os.ReadFile(manifestPath1)
+	require.NoError(t, err)
+
+	contents = string(b)
+	assert.Contains(t, contents, "apiVersion: \"custom.example.com/v1\"")
+	assert.Contains(t, contents, "app: complex-application")
+	assert.Contains(t, contents, "- name: redis-container")
+
+	manifestPath2 := filepath.Join(ctx.CombustionDir, manifestsDir, "invalid-crd.yml")
+	info, err = os.Stat(manifestPath2)
+	require.NoError(t, err)
+	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
+
+	b, err = os.ReadFile(manifestPath2)
+	require.NoError(t, err)
+
+	contents = string(b)
+	assert.Contains(t, contents, "apiVersion: v1")
+	assert.Contains(t, contents, "- kind: invalid manifest")
 }

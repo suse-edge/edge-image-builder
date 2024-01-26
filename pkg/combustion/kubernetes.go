@@ -59,11 +59,6 @@ func configureKubernetes(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("configuring kubernetes components: %w", err)
 	}
 
-	if err = configureManifests(ctx); err != nil {
-		log.AuditComponentFailed(k8sComponentName)
-		return nil, fmt.Errorf("configuring kubernetes manifests: %w", err)
-	}
-
 	log.AuditComponentSuccessful(k8sComponentName)
 	return []string{script}, nil
 }
@@ -121,9 +116,9 @@ func configureRKE2(ctx *image.Context) (string, error) {
 		return "", fmt.Errorf("downloading RKE2 artefacts: %w", err)
 	}
 
-	manifestsPath := ""
-	if isComponentConfigured(ctx, filepath.Join(k8sDir, "manifests")) {
-		manifestsPath = manifestsDir
+	manifestsPath, err := configureManifests(ctx)
+	if err != nil {
+		return "", fmt.Errorf("configuring kubernetes manifests: %w", err)
 	}
 
 	rke2 := struct {
@@ -264,34 +259,38 @@ func storeKubernetesConfig(ctx *image.Context, config map[string]any, distributi
 	return configFile, nil
 }
 
-func configureManifests(ctx *image.Context) error {
+func configureManifests(ctx *image.Context) (string, error) {
 	manifestURLs := ctx.ImageDefinition.Kubernetes.Manifests.URLs
 	localManifestsConfigured := isComponentConfigured(ctx, filepath.Join(k8sDir, manifestsDir))
 
 	if !localManifestsConfigured && len(manifestURLs) == 0 {
-		return nil
+		return "", nil
 	}
 
 	manifestDestDir := filepath.Join(ctx.CombustionDir, manifestsDir)
 	err := os.Mkdir(manifestDestDir, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("creating manifests destination dir: %w", err)
+		return "", fmt.Errorf("creating manifests destination dir: %w", err)
 	}
 
 	if localManifestsConfigured {
 		localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, manifestsDir)
-		_, err = registry.CopyManifests(localManifestsSrcDir, manifestDestDir)
+		err = fileio.CopyFiles(localManifestsSrcDir, manifestDestDir, ".yaml", false)
 		if err != nil {
-			return fmt.Errorf("copying local manifests to combustion dir: %w", err)
+			return "", fmt.Errorf("copying local manifests to combustion dir: %w", err)
+		}
+		err = fileio.CopyFiles(localManifestsSrcDir, manifestDestDir, ".yml", false)
+		if err != nil {
+			return "", fmt.Errorf("copying local manifests to combustion dir: %w", err)
 		}
 	}
 
 	if len(manifestURLs) != 0 {
 		_, err = registry.DownloadManifests(manifestURLs, manifestDestDir)
 		if err != nil {
-			return fmt.Errorf("downloading manifests to combustion dir: %w", err)
+			return "", fmt.Errorf("downloading manifests to combustion dir: %w", err)
 		}
 	}
 
-	return nil
+	return manifestDestDir, nil
 }
