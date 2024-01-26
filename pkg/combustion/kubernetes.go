@@ -95,8 +95,43 @@ func installKubernetesScript(ctx *image.Context, distribution string) error {
 	return ctx.KubernetesScriptInstaller.InstallScript(distribution, sourcePath, destPath)
 }
 
-func configureK3S(_ *image.Context) (string, error) {
+func configureK3S(ctx *image.Context) (string, error) {
+	zap.S().Info("Configuring K3s cluster")
+
+	installPath, imagesPath, err := downloadK3sArtefacts(ctx)
+	if err != nil {
+		return "", fmt.Errorf("downloading k3s artefacts: %w", err)
+	}
+
+	_ = installPath
+	_ = imagesPath
+
 	return "", fmt.Errorf("not implemented yet")
+}
+
+func downloadK3sArtefacts(ctx *image.Context) (installPath, imagesPath string, err error) {
+	imagesPath = filepath.Join(k8sDir, k8sImagesDir)
+	imagesDestination := filepath.Join(ctx.CombustionDir, imagesPath)
+	if err = os.MkdirAll(imagesDestination, os.ModePerm); err != nil {
+		return "", "", fmt.Errorf("creating kubernetes images dir: %w", err)
+	}
+
+	installPath = filepath.Join(k8sDir, k8sInstallDir)
+	installDestination := filepath.Join(ctx.CombustionDir, installPath)
+	if err = os.MkdirAll(installDestination, os.ModePerm); err != nil {
+		return "", "", fmt.Errorf("creating kubernetes install dir: %w", err)
+	}
+
+	if err = ctx.KubernetesArtefactDownloader.DownloadK3sArtefacts(
+		ctx.ImageDefinition.Image.Arch,
+		ctx.ImageDefinition.Kubernetes.Version,
+		installDestination,
+		imagesDestination,
+	); err != nil {
+		return "", "", fmt.Errorf("downloading artefacts: %w", err)
+	}
+
+	return installPath, imagesPath, nil
 }
 
 func configureRKE2(ctx *image.Context) (string, error) {

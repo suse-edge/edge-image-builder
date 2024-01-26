@@ -78,21 +78,6 @@ func TestConfigureKubernetes_UnsupportedVersion(t *testing.T) {
 	assert.Nil(t, scripts)
 }
 
-func TestConfigureKubernetes_UnimplementedK3S(t *testing.T) {
-	ctx := &image.Context{
-		ImageDefinition: &image.Definition{
-			Kubernetes: image.Kubernetes{
-				Version: "v1.29.0+k3s1",
-			},
-		},
-	}
-
-	scripts, err := configureKubernetes(ctx)
-	require.Error(t, err)
-	assert.EqualError(t, err, "configuring kubernetes components: not implemented yet")
-	assert.Nil(t, scripts)
-}
-
 func TestConfigureKubernetes_ScriptInstallerErrorRKE2(t *testing.T) {
 	ctx := &image.Context{
 		ImageDefinition: &image.Definition{
