@@ -30,7 +30,7 @@ const (
 	k8sServerConfigFile     = "server.yaml"
 	k8sAgentConfigFile      = "agent.yaml"
 
-	rke2InstallScript = "15-rke2-install.sh"
+	k8sInstallScript = "15-k8s-install.sh"
 )
 
 var (
@@ -42,6 +42,9 @@ var (
 
 	//go:embed templates/rke2-vip.yaml.tpl
 	rke2VIPManifest string
+
+	//go:embed templates/15-k3s-single-node-installer.sh.tpl
+	k3sSingleNodeInstaller string
 )
 
 func configureKubernetes(ctx *image.Context) ([]string, error) {
@@ -102,25 +105,27 @@ func configureK3S(ctx *image.Context) (string, error) {
 		return "", fmt.Errorf("copying k3s installer script: %w", err)
 	}
 
-	installPath, imagesPath, err := downloadK3sArtefacts(ctx)
+	binaryPath, imagesPath, err := downloadK3sArtefacts(ctx)
 	if err != nil {
 		return "", fmt.Errorf("downloading k3s artefacts: %w", err)
 	}
 
-	_ = installPath
-	_ = imagesPath
+	templateValues := map[string]any{
+		"binaryPath": binaryPath,
+		"imagesPath": imagesPath,
+	}
 
-	return "", fmt.Errorf("not implemented yet")
+	return storeKubernetesInstaller(ctx, "single-node-k3s", k3sSingleNodeInstaller, templateValues)
 }
 
-func downloadK3sArtefacts(ctx *image.Context) (installPath, imagesPath string, err error) {
+func downloadK3sArtefacts(ctx *image.Context) (binaryPath, imagesPath string, err error) {
 	imagesPath = filepath.Join(k8sDir, k8sImagesDir)
 	imagesDestination := filepath.Join(ctx.CombustionDir, imagesPath)
 	if err = os.MkdirAll(imagesDestination, os.ModePerm); err != nil {
 		return "", "", fmt.Errorf("creating kubernetes images dir: %w", err)
 	}
 
-	installPath = filepath.Join(k8sDir, k8sInstallDir)
+	installPath := filepath.Join(k8sDir, k8sInstallDir)
 	installDestination := filepath.Join(ctx.CombustionDir, installPath)
 	if err = os.MkdirAll(installDestination, os.ModePerm); err != nil {
 		return "", "", fmt.Errorf("creating kubernetes install dir: %w", err)
@@ -135,7 +140,23 @@ func downloadK3sArtefacts(ctx *image.Context) (installPath, imagesPath string, e
 		return "", "", fmt.Errorf("downloading artefacts: %w", err)
 	}
 
-	return installPath, imagesPath, nil
+	// As of Jan 2024 / k3s 1.29, the only install artefact is the k3s binary itself.
+	// However, the release page has different names for it depending on the architecture:
+	// "k3s" for x86_64 and "k3s-arm64" for aarch64.
+	// It is too inconvenient to rename it in the artefact downloader and since technically
+	// aarch64 is not supported yet, building abstractions around this only scenario is not worth it.
+	// Can (and probably should) be revisited later.
+	entries, err := os.ReadDir(installDestination)
+	if err != nil {
+		return "", "", fmt.Errorf("reading k3s install path: %w", err)
+	}
+
+	if len(entries) != 1 || entries[0].IsDir() {
+		return "", "", fmt.Errorf("k3s install path contains unexpected entries: %v", entries)
+	}
+
+	binaryPath = filepath.Join(installPath, entries[0].Name())
+	return binaryPath, imagesPath, nil
 }
 
 func configureRKE2(ctx *image.Context) (string, error) {
@@ -188,7 +209,7 @@ func configureRKE2(ctx *image.Context) (string, error) {
 		templateValues["configFile"] = k8sServerConfigFile
 		templateValues["vipManifest"] = vipManifest
 
-		return storeRKE2Installer(ctx, "single-node-rke2", rke2SingleNodeInstaller, templateValues)
+		return storeKubernetesInstaller(ctx, "single-node-rke2", rke2SingleNodeInstaller, templateValues)
 	}
 
 	vipManifest, err := storeRKE2VIPManifest(ctx)
@@ -201,21 +222,21 @@ func configureRKE2(ctx *image.Context) (string, error) {
 	templateValues["initialiserConfigFile"] = k8sInitServerConfigFile
 	templateValues["vipManifest"] = vipManifest
 
-	return storeRKE2Installer(ctx, "multi-node-rke2", rke2MultiNodeInstaller, templateValues)
+	return storeKubernetesInstaller(ctx, "multi-node-rke2", rke2MultiNodeInstaller, templateValues)
 }
 
-func storeRKE2Installer(ctx *image.Context, templateName, templateContents string, templateValues any) (string, error) {
+func storeKubernetesInstaller(ctx *image.Context, templateName, templateContents string, templateValues any) (string, error) {
 	data, err := template.Parse(templateName, templateContents, templateValues)
 	if err != nil {
-		return "", fmt.Errorf("parsing RKE2 install template: %w", err)
+		return "", fmt.Errorf("parsing '%s' template: %w", templateName, err)
 	}
 
-	installScript := filepath.Join(ctx.CombustionDir, rke2InstallScript)
+	installScript := filepath.Join(ctx.CombustionDir, k8sInstallScript)
 	if err = os.WriteFile(installScript, []byte(data), fileio.ExecutablePerms); err != nil {
-		return "", fmt.Errorf("writing RKE2 install script: %w", err)
+		return "", fmt.Errorf("writing kubernetes install script: %w", err)
 	}
 
-	return rke2InstallScript, nil
+	return k8sInstallScript, nil
 }
 
 func downloadRKE2Artefacts(ctx *image.Context, cluster *kubernetes.Cluster) (installPath, imagesPath string, err error) {
