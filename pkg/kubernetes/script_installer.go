@@ -10,8 +10,8 @@ import (
 type ScriptInstaller struct{}
 
 func (i ScriptInstaller) InstallScript(distribution, sourcePath, destinationPath string) error {
-	const rke2InstallerScript = "%s_installer.sh"
-	installer := fmt.Sprintf(rke2InstallerScript, distribution)
+	const k8sInstallerScript = "%s_installer.sh"
+	installer := fmt.Sprintf(k8sInstallerScript, distribution)
 
 	sourcePath = filepath.Join(sourcePath, installer)
 	destinationPath = filepath.Join(destinationPath, installer)

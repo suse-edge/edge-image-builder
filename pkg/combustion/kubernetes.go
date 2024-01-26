@@ -98,6 +98,10 @@ func installKubernetesScript(ctx *image.Context, distribution string) error {
 func configureK3S(ctx *image.Context) (string, error) {
 	zap.S().Info("Configuring K3s cluster")
 
+	if err := installKubernetesScript(ctx, image.KubernetesDistroK3S); err != nil {
+		return "", fmt.Errorf("copying k3s installer script: %w", err)
+	}
+
 	installPath, imagesPath, err := downloadK3sArtefacts(ctx)
 	if err != nil {
 		return "", fmt.Errorf("downloading k3s artefacts: %w", err)
