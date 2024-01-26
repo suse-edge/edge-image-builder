@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
+	"github.com/suse-edge/edge-image-builder/pkg/cache"
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/image/validation"
@@ -79,8 +80,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	podmanOk := bootstrapRpmDependencyServices(ctx)
-	if !podmanOk {
+	if !bootstrapDependencyServices(ctx, cliArguments.rootBuildDir) {
 		os.Exit(1)
 	}
 
@@ -188,8 +188,6 @@ func buildContext(buildDir, combustionDir, configDir string, imageDefinition *im
 		ImageDefinition:              imageDefinition,
 		NetworkConfigGenerator:       network.ConfigGenerator{},
 		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
-		KubernetesScriptInstaller:    kubernetes.ScriptInstaller{},
-		KubernetesArtefactDownloader: kubernetes.ArtefactDownloader{},
 	}
 	return ctx
 }
@@ -234,9 +232,9 @@ func isImageDefinitionValid(ctx *image.Context) bool {
 }
 
 // If the image definition requires it, starts the necessary services, displaying appropriate messages
-// to users in the event of an error. Returns 'true' if execution should proceed (either podman successfully
-// started or is not required for the image build); 'false' otherwise.
-func bootstrapRpmDependencyServices(ctx *image.Context) bool {
+// to users in the event of an error. Returns 'true' if execution should proceed given that all dependencies
+// are satisfied; 'false' otherwise.
+func bootstrapDependencyServices(ctx *image.Context, rootDir string) bool {
 	if !combustion.SkipRPMComponent(ctx) {
 		p, err := podman.New(ctx.BuildDir)
 		if err != nil {
@@ -249,6 +247,20 @@ func bootstrapRpmDependencyServices(ctx *image.Context) bool {
 		rpmResolver := resolver.New(ctx.BuildDir, imgPath, ctx.ImageDefinition.Image.ImageType, p)
 		ctx.RPMResolver = rpmResolver
 		ctx.RPMRepoCreator = rpm.NewRepoCreator(ctx.BuildDir)
+	}
+
+	if ctx.ImageDefinition.Kubernetes.Version != "" {
+		c, err := cache.New(rootDir)
+		if err != nil {
+			audit.AuditInfof("Failed to initialise file caching. %s", checkLogMessage)
+			zap.S().Error(err)
+			return false
+		}
+
+		ctx.KubernetesScriptInstaller = kubernetes.ScriptInstaller{}
+		ctx.KubernetesArtefactDownloader = kubernetes.ArtefactDownloader{
+			Cache: c,
+		}
 	}
 
 	return true
