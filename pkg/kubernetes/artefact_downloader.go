@@ -132,14 +132,15 @@ func (d ArtefactDownloader) downloadArtefacts(artefacts []string, releaseURL, ve
 	for _, artefact := range artefacts {
 		url := fmt.Sprintf(releaseURL, version, artefact)
 		path := filepath.Join(destinationPath, artefact)
+		cacheKey := cacheIdentifier(version, artefact)
 
-		copied, err := d.copyArtefactFromCache(artefact, path)
+		copied, err := d.copyArtefactFromCache(cacheKey, path)
 		if err != nil {
 			return fmt.Errorf("retrieving artefact '%s' from cache: %w", artefact, err)
 		}
 
 		if !copied {
-			if err = d.downloadArtefact(url, path, artefact); err != nil {
+			if err = d.downloadArtefact(url, path, cacheKey); err != nil {
 				return fmt.Errorf("downloading artefact '%s': %w", artefact, err)
 			}
 		}
@@ -148,8 +149,8 @@ func (d ArtefactDownloader) downloadArtefacts(artefacts []string, releaseURL, ve
 	return nil
 }
 
-func (d ArtefactDownloader) copyArtefactFromCache(artefact, destPath string) (bool, error) {
-	sourcePath, err := d.Cache.Get(artefact)
+func (d ArtefactDownloader) copyArtefactFromCache(cacheKey, destPath string) (bool, error) {
+	sourcePath, err := d.Cache.Get(cacheKey)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return false, nil
@@ -158,7 +159,7 @@ func (d ArtefactDownloader) copyArtefactFromCache(artefact, destPath string) (bo
 		return false, fmt.Errorf("querying cache: %w", err)
 	}
 
-	zap.S().Infof("Copying artefact '%s' from cache", artefact)
+	zap.S().Infof("Copying artefact with identifier '%s' from cache", cacheKey)
 
 	if err = fileio.CopyFile(sourcePath, destPath, fileio.NonExecutablePerms); err != nil {
 		return false, fmt.Errorf("copying from cache: %w", err)
@@ -167,7 +168,7 @@ func (d ArtefactDownloader) copyArtefactFromCache(artefact, destPath string) (bo
 	return true, nil
 }
 
-func (d ArtefactDownloader) downloadArtefact(url, path, artefact string) error {
+func (d ArtefactDownloader) downloadArtefact(url, path, cacheKey string) error {
 	reader, writer := io.Pipe()
 
 	errGroup, ctx := errgroup.WithContext(context.Background())
@@ -186,7 +187,7 @@ func (d ArtefactDownloader) downloadArtefact(url, path, artefact string) error {
 	})
 
 	errGroup.Go(func() error {
-		if err := d.Cache.Put(artefact, reader); err != nil {
+		if err := d.Cache.Put(cacheKey, reader); err != nil {
 			return fmt.Errorf("caching artefact: %w", err)
 		}
 
@@ -194,4 +195,8 @@ func (d ArtefactDownloader) downloadArtefact(url, path, artefact string) error {
 	})
 
 	return errGroup.Wait()
+}
+
+func cacheIdentifier(version, artefact string) string {
+	return fmt.Sprintf("%s/%s", version, artefact)
 }
