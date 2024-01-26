@@ -16,19 +16,18 @@ import (
 
 func TestConfigureManifestsValidDownload(t *testing.T) {
 	// Setup
-	manifestURLs := []string{
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.Kubernetes.Manifests.URLs = []string{
 		"https://k8s.io/examples/application/nginx-app.yaml",
 	}
 
-	require.NoError(t, os.Mkdir(k8sCombustionDir, 0o755))
-	defer func() {
-		require.NoError(t, os.RemoveAll(k8sCombustionDir))
-	}()
-	downloadedManifestsDestDir := filepath.Join(k8sCombustionDir, "manifests")
+	downloadedManifestsDestDir := filepath.Join(ctx.CombustionDir, manifestsDir)
 	expectedDownloadedFilePath := filepath.Join(downloadedManifestsDestDir, "dl-manifest-1.yaml")
 
 	// Test
-	err := configureManifests(k8sCombustionDir, false, "", manifestURLs)
+	err := configureManifests(ctx)
 
 	// Verify
 	require.NoError(t, err)
@@ -107,7 +106,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifestURLs(t *testing.T) 
 	assert.Equal(t, "cilium", configContents["cni"], "default CNI is not set")
 
 	// Downloaded manifest assertions
-	manifestPath := filepath.Join(ctx.CombustionDir, "kubernetes", "manifests", "dl-manifest-1.yaml")
+	manifestPath := filepath.Join(ctx.CombustionDir, manifestsDir, "dl-manifest-1.yaml")
 	info, err = os.Stat(manifestPath)
 	require.NoError(t, err)
 	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())

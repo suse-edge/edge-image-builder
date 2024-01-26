@@ -79,7 +79,6 @@ func readManifest(manifestPath string) ([]map[string]any, error) {
 	decoder := yaml.NewDecoder(manifestFile)
 	for {
 		var manifest map[string]any
-   
 		err = decoder.Decode(&manifest)
 		if errors.Is(err, io.EOF) {
 			break

@@ -24,6 +24,7 @@ const (
 	k8sConfigDir        = "config"
 	k8sServerConfigFile = "server.yaml"
 	rke2InstallScript   = "15-rke2-install.sh"
+	manifestsDir        = "manifests"
 
 	cniKey          = "cni"
 	cniDefaultValue = image.CNITypeCilium
@@ -58,23 +59,9 @@ func configureKubernetes(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("configuring kubernetes components: %w", err)
 	}
 
-	manifestURLs := ctx.ImageDefinition.Kubernetes.Manifests.URLs
-	localManifestsComponentDir := filepath.Join("kubernetes", "manifests")
-	localManifestsConfigured := isComponentConfigured(ctx, localManifestsComponentDir)
-	if localManifestsConfigured || len(manifestURLs) != 0 {
-		localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, "kubernetes", "manifests")
-		k8sCombustionDir := filepath.Join(ctx.CombustionDir, k8sDir)
-		err = os.MkdirAll(k8sCombustionDir, os.ModePerm)
-		if err != nil {
-			log.AuditComponentFailed(k8sComponentName)
-			return nil, fmt.Errorf("creating kubernetes combustion dir: %w", err)
-		}
-
-		err = configureManifests(k8sCombustionDir, localManifestsConfigured, localManifestsSrcDir, manifestURLs)
-		if err != nil {
-			log.AuditComponentFailed(k8sComponentName)
-			return nil, fmt.Errorf("configuring kubernetes manifests: %w", err)
-		}
+	if err = configureManifests(ctx); err != nil {
+		log.AuditComponentFailed(k8sComponentName)
+		return nil, fmt.Errorf("configuring kubernetes manifests: %w", err)
 	}
 
 	log.AuditComponentSuccessful(k8sComponentName)
@@ -136,7 +123,7 @@ func configureRKE2(ctx *image.Context) (string, error) {
 
 	manifestsPath := ""
 	if isComponentConfigured(ctx, filepath.Join(k8sDir, "manifests")) {
-		manifestsPath = filepath.Join(k8sDir, "manifests")
+		manifestsPath = manifestsDir
 	}
 
 	rke2 := struct {
@@ -277,14 +264,22 @@ func storeKubernetesConfig(ctx *image.Context, config map[string]any, distributi
 	return configFile, nil
 }
 
-func configureManifests(k8sCombustionDir string, localManifestsConfigured bool, localManifestsSrcDir string, manifestURLs []string) error {
-	manifestDestDir := filepath.Join(k8sCombustionDir, "manifests")
+func configureManifests(ctx *image.Context) error {
+	manifestURLs := ctx.ImageDefinition.Kubernetes.Manifests.URLs
+	localManifestsConfigured := isComponentConfigured(ctx, filepath.Join(k8sDir, manifestsDir))
+
+	if !localManifestsConfigured && len(manifestURLs) == 0 {
+		return nil
+	}
+
+	manifestDestDir := filepath.Join(ctx.CombustionDir, manifestsDir)
 	err := os.Mkdir(manifestDestDir, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("creating manifests destination dir: %w", err)
 	}
 
 	if localManifestsConfigured {
+		localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, manifestsDir)
 		_, err = registry.CopyManifests(localManifestsSrcDir, manifestDestDir)
 		if err != nil {
 			return fmt.Errorf("copying local manifests to combustion dir: %w", err)

@@ -14,9 +14,8 @@ import (
 )
 
 const (
-	k8sCombustionDir = "kubernetes"
-	serverInstaller  = "server-installer"
-	serverImages     = "server-images"
+	serverInstaller = "server-installer"
+	serverImages    = "server-images"
 )
 
 type mockKubernetesScriptInstaller struct {
@@ -262,7 +261,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithLocalManifests(t *testing.T
 	assert.Equal(t, "cilium", configContents["cni"], "default CNI is not set")
 
 	// Local manifest assertions
-	manifestPath1 := filepath.Join(ctx.CombustionDir, "kubernetes", "manifests", "lc-sample-crd.yaml")
+	manifestPath1 := filepath.Join(ctx.CombustionDir, manifestsDir, "lc-sample-crd.yaml")
 	info, err = os.Stat(manifestPath1)
 	require.NoError(t, err)
 	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
@@ -275,7 +274,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithLocalManifests(t *testing.T
 	assert.Contains(t, contents, "app: complex-application")
 	assert.Contains(t, contents, "- name: redis-container")
 
-	manifestPath2 := filepath.Join(ctx.CombustionDir, "kubernetes", "manifests", "lc-invalid-crd.yml")
+	manifestPath2 := filepath.Join(ctx.CombustionDir, manifestsDir, "lc-invalid-crd.yml")
 	info, err = os.Stat(manifestPath2)
 	require.NoError(t, err)
 	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
@@ -407,28 +406,18 @@ func TestExtractCNI(t *testing.T) {
 
 func TestConfigureManifestsInvalidURL(t *testing.T) {
 	// Setup
-	manifestURLs := []string{
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.Kubernetes.Manifests.URLs = []string{
 		"k8s.io/examples/application/nginx-app.yaml",
 	}
 
-	require.NoError(t, os.Mkdir(k8sCombustionDir, 0o755))
-	defer func() {
-		require.NoError(t, os.RemoveAll(k8sCombustionDir))
-	}()
-
 	// Test
-	err := configureManifests(k8sCombustionDir, false, "", manifestURLs)
+	err := configureManifests(ctx)
 
 	// Verify
 	require.ErrorContains(t, err, "downloading manifests to combustion dir: downloading manifest 'k8s.io/examples/application/nginx-app.yaml': executing request: Get \"k8s.io/examples/application/nginx-app.yaml\": unsupported protocol scheme \"\"")
-}
-
-func TestConfigureManifestsInvalidManifestDestDir(t *testing.T) {
-	// Test
-	err := configureManifests(k8sCombustionDir, false, "", nil)
-
-	// Verify
-	require.ErrorContains(t, err, "creating manifests destination dir: mkdir kubernetes/manifests: no such file or directory")
 }
 
 func TestConfigureKubernetes_InvalidManifestURL(t *testing.T) {
@@ -457,16 +446,14 @@ func TestConfigureKubernetes_InvalidManifestURL(t *testing.T) {
 	require.ErrorContains(t, err, "configuring kubernetes manifests: downloading manifests to combustion dir: downloading manifest 'k8s.io/examples/application/nginx-app.yaml': executing request: Get \"k8s.io/examples/application/nginx-app.yaml\": unsupported protocol scheme \"\"")
 }
 
-func TestConfigureManifestsNoLocalManifestSrcDir(t *testing.T) {
+func TestConfigureManifestsNoSetup(t *testing.T) {
 	// Setup
-	require.NoError(t, os.Mkdir(k8sCombustionDir, 0o755))
-	defer func() {
-		require.NoError(t, os.RemoveAll(k8sCombustionDir))
-	}()
+	ctx, teardown := setupContext(t)
+	defer teardown()
 
 	// Test
-	err := configureManifests(k8sCombustionDir, true, "invalid", nil)
+	err := configureManifests(ctx)
 
 	// Verify
-	require.ErrorContains(t, err, "copying local manifests to combustion dir: reading manifest source dir 'invalid': open invalid: no such file or directory")
+	require.NoError(t, err)
 }
