@@ -49,15 +49,9 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 		})
 	}
 
-	if k8s.Network.APIHost == "" {
-		failures = append(failures, FailedValidation{
-			UserMessage: "The 'apiHost' field is required in the 'network' section when defining entries under 'nodes'.",
-		})
-	}
-
 	var nodeTypes []string
 	var nodeNames []string
-	var firstNodes []*image.Node
+	var initialisers []*image.Node
 
 	for _, node := range k8s.Nodes {
 		if node.Hostname == "" {
@@ -74,13 +68,12 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 			})
 		}
 
-		if node.First {
+		if node.Initialiser {
 			n := node
-			firstNodes = append(firstNodes, &n)
+			initialisers = append(initialisers, &n)
 
 			if node.Type == image.KubernetesNodeTypeAgent {
-				_ = node.First // Jan 19, 2024: The word "first" is being discussed; tf this field gets renamed, update the text below
-				msg := fmt.Sprintf("The node labeled with 'firstNode' must be of type '%s'.", image.KubernetesNodeTypeServer)
+				msg := fmt.Sprintf("The node labeled with 'initialiser' must be of type '%s'.", image.KubernetesNodeTypeServer)
 				failures = append(failures, FailedValidation{
 					UserMessage: msg,
 				})
@@ -106,10 +99,9 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 		})
 	}
 
-	if len(firstNodes) > 1 {
-		_ = firstNodes[0].First // Jan 19, 2024: The word "first" is being discussed; tf this field gets renamed, update the text below
+	if len(initialisers) > 1 {
 		failures = append(failures, FailedValidation{
-			UserMessage: "Only one node may be specified as the cluster initializer (by including the 'firstNode' field).",
+			UserMessage: "Only one node may be specified as the cluster initializer.",
 		})
 	}
 

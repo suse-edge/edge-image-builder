@@ -2,15 +2,14 @@ package combustion
 
 import (
 	_ "embed"
-	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
@@ -18,19 +17,24 @@ import (
 )
 
 const (
-	k8sComponentName    = "kubernetes"
-	k8sDir              = "kubernetes"
-	k8sConfigDir        = "config"
-	k8sServerConfigFile = "server.yaml"
-	rke2InstallScript   = "15-rke2-install.sh"
-
-	cniKey          = "cni"
-	cniDefaultValue = image.CNITypeCilium
+	k8sComponentName        = "kubernetes"
+	k8sDir                  = "kubernetes"
+	k8sConfigDir            = "config"
+	k8sInitServerConfigFile = "init_server.yaml"
+	k8sServerConfigFile     = "server.yaml"
+	k8sAgentConfigFile      = "agent.yaml"
+	rke2InstallScript       = "15-rke2-install.sh"
 )
 
 var (
 	//go:embed templates/15-rke2-single-node-installer.sh.tpl
 	rke2SingleNodeInstaller string
+
+	//go:embed templates/15-rke2-multi-node-installer.sh.tpl
+	rke2MultiNodeInstaller string
+
+	//go:embed templates/rke2-vip.yaml.tpl
+	rke2VIPManifest string
 )
 
 func configureKubernetes(ctx *image.Context) ([]string, error) {
@@ -49,6 +53,11 @@ func configureKubernetes(ctx *image.Context) ([]string, error) {
 	if configureFunc == nil {
 		log.AuditComponentFailed(k8sComponentName)
 		return nil, fmt.Errorf("cannot configure kubernetes version: %s", version)
+	}
+
+	if kubernetes.ServersCount(ctx.ImageDefinition.Kubernetes.Nodes) == 2 {
+		log.Audit("WARNING: Kubernetes clusters consisting of two server nodes cannot form a highly available architecture")
+		zap.S().Warn("Kubernetes cluster of two server nodes has been requested")
 	}
 
 	script, err := configureFunc(ctx)
@@ -84,49 +93,67 @@ func configureK3S(_ *image.Context) (string, error) {
 }
 
 func configureRKE2(ctx *image.Context) (string, error) {
+	zap.S().Info("Configuring RKE2 cluster")
+
 	if err := installKubernetesScript(ctx, image.KubernetesDistroRKE2); err != nil {
 		return "", fmt.Errorf("copying RKE2 installer script: %w", err)
 	}
 
-	config, err := parseKubernetesConfig(ctx)
+	configDir := generateComponentPath(ctx, k8sDir)
+	configPath := filepath.Join(configDir, k8sConfigDir)
+
+	cluster, err := kubernetes.NewCluster(&ctx.ImageDefinition.Kubernetes, configPath)
 	if err != nil {
-		return "", fmt.Errorf("parsing RKE2 config: %w", err)
+		return "", fmt.Errorf("initialising kubernetes cluster config: %w", err)
 	}
 
-	cni, multusEnabled, err := extractCNI(config)
-	if err != nil {
-		return "", fmt.Errorf("extracting CNI from RKE2 config: %w", err)
+	if err = storeKubernetesClusterConfig(cluster, ctx.CombustionDir); err != nil {
+		return "", fmt.Errorf("storing RKE2 cluster config: %w", err)
 	}
 
-	configFile, err := storeKubernetesConfig(ctx, config, image.KubernetesDistroRKE2)
-	if err != nil {
-		return "", fmt.Errorf("storing RKE2 config file: %w", err)
-	}
-
-	installPath, imagesPath, err := ctx.KubernetesArtefactDownloader.DownloadArtefacts(
-		ctx.ImageDefinition.Image.Arch,
-		ctx.ImageDefinition.Kubernetes.Version,
-		cni,
-		multusEnabled,
-		ctx.CombustionDir,
-	)
+	installPath, imagesPath, err := downloadRKE2Artefacts(ctx, cluster)
 	if err != nil {
 		return "", fmt.Errorf("downloading RKE2 artefacts: %w", err)
 	}
 
-	rke2 := struct {
-		image.Kubernetes
-		ConfigFile  string
-		InstallPath string
-		ImagesPath  string
-	}{
-		Kubernetes:  ctx.ImageDefinition.Kubernetes,
-		ConfigFile:  configFile,
-		InstallPath: installPath,
-		ImagesPath:  imagesPath,
+	templateValues := map[string]any{
+		"apiVIP":      ctx.ImageDefinition.Kubernetes.Network.APIVIP,
+		"apiHost":     ctx.ImageDefinition.Kubernetes.Network.APIHost,
+		"installPath": installPath,
+		"imagesPath":  imagesPath,
 	}
 
-	data, err := template.Parse(rke2InstallScript, rke2SingleNodeInstaller, &rke2)
+	singleNode := len(ctx.ImageDefinition.Kubernetes.Nodes) < 2
+	if singleNode {
+		var vipManifest string
+
+		if ctx.ImageDefinition.Kubernetes.Network.APIVIP == "" {
+			zap.S().Info("Virtual IP address for RKE2 cluster is not provided and will not be configured")
+		} else if vipManifest, err = storeRKE2VIPManifest(ctx); err != nil {
+			return "", fmt.Errorf("storing RKE2 VIP manifest: %w", err)
+		}
+
+		templateValues["configFile"] = k8sServerConfigFile
+		templateValues["vipManifest"] = vipManifest
+
+		return storeRKE2Installer(ctx, "single-node-rke2", rke2SingleNodeInstaller, templateValues)
+	}
+
+	vipManifest, err := storeRKE2VIPManifest(ctx)
+	if err != nil {
+		return "", fmt.Errorf("storing RKE2 VIP manifest: %w", err)
+	}
+
+	templateValues["nodes"] = ctx.ImageDefinition.Kubernetes.Nodes
+	templateValues["initialiser"] = cluster.InitialiserName
+	templateValues["initialiserConfigFile"] = k8sInitServerConfigFile
+	templateValues["vipManifest"] = vipManifest
+
+	return storeRKE2Installer(ctx, "multi-node-rke2", rke2MultiNodeInstaller, templateValues)
+}
+
+func storeRKE2Installer(ctx *image.Context, templateName, templateContents string, templateValues any) (string, error) {
+	data, err := template.Parse(templateName, templateContents, templateValues)
 	if err != nil {
 		return "", fmt.Errorf("parsing RKE2 install template: %w", err)
 	}
@@ -139,113 +166,73 @@ func configureRKE2(ctx *image.Context) (string, error) {
 	return rke2InstallScript, nil
 }
 
-func parseKubernetesConfig(ctx *image.Context) (map[string]any, error) {
-	auditDefaultCNI := func() {
-		auditMessage := fmt.Sprintf("Kubernetes CNI not explicitly set, defaulting to: %s", cniDefaultValue)
-		log.Audit(auditMessage)
-	}
-
-	config := map[string]any{}
-
-	configDir := generateComponentPath(ctx, k8sDir)
-	configFile := filepath.Join(configDir, k8sConfigDir, k8sServerConfigFile)
-
-	b, err := os.ReadFile(configFile)
+func downloadRKE2Artefacts(ctx *image.Context, cluster *kubernetes.Cluster) (installPath, imagesPath string, err error) {
+	cni, multusEnabled, err := cluster.ExtractCNI()
 	if err != nil {
-		if !errors.Is(err, fs.ErrNotExist) {
-			return nil, fmt.Errorf("reading kubernetes config file: %w", err)
-		}
-
-		auditDefaultCNI()
-		zap.S().Infof("Kubernetes server config file not provided, proceeding with CNI: %s", cniDefaultValue)
-
-		config[cniKey] = cniDefaultValue
-		return config, nil
+		return "", "", fmt.Errorf("extracting CNI from cluster config: %w", err)
 	}
 
-	if err = yaml.Unmarshal(b, &config); err != nil {
-		return nil, fmt.Errorf("parsing kubernetes config file: %w", err)
-	}
-
-	if _, ok := config[cniKey]; !ok {
-		auditDefaultCNI()
-		zap.S().Infof("CNI not set in config file, proceeding with CNI: %s", cniDefaultValue)
-
-		config[cniKey] = cniDefaultValue
-	}
-
-	return config, nil
+	return ctx.KubernetesArtefactDownloader.DownloadArtefacts(
+		ctx.ImageDefinition.Image.Arch,
+		ctx.ImageDefinition.Kubernetes.Version,
+		cni,
+		multusEnabled,
+		ctx.CombustionDir,
+	)
 }
 
-func extractCNI(config map[string]any) (cni string, multusEnabled bool, err error) {
-	switch configuredCNI := config[cniKey].(type) {
-	case string:
-		if configuredCNI == "" {
-			return "", false, fmt.Errorf("cni not configured")
-		}
+func storeRKE2VIPManifest(ctx *image.Context) (string, error) {
+	const vipManifest = "rke2-vip.yaml"
 
-		var cnis []string
-		for _, cni = range strings.Split(configuredCNI, ",") {
-			cnis = append(cnis, strings.TrimSpace(cni))
-		}
-
-		return parseCNIs(cnis)
-
-	case []string:
-		return parseCNIs(configuredCNI)
-
-	case []any:
-		var cnis []string
-		for _, cni := range configuredCNI {
-			c, ok := cni.(string)
-			if !ok {
-				return "", false, fmt.Errorf("invalid cni value: %v", cni)
-			}
-			cnis = append(cnis, c)
-		}
-
-		return parseCNIs(cnis)
-
-	default:
-		return "", false, fmt.Errorf("invalid cni: %v", configuredCNI)
-	}
-}
-
-func parseCNIs(cnis []string) (cni string, multusEnabled bool, err error) {
-	const multusPlugin = "multus"
-
-	switch len(cnis) {
-	case 1:
-		cni = cnis[0]
-		if cni == multusPlugin {
-			return "", false, fmt.Errorf("multus must be used alongside another primary cni selection")
-		}
-	case 2:
-		if cnis[0] == multusPlugin {
-			cni = cnis[1]
-			multusEnabled = true
-		} else {
-			return "", false, fmt.Errorf("multiple cni values are only allowed if multus is the first one")
-		}
-	default:
-		return "", false, fmt.Errorf("invalid cni value: %v", cnis)
+	manifest := struct {
+		APIAddress string
+	}{
+		APIAddress: ctx.ImageDefinition.Kubernetes.Network.APIVIP,
 	}
 
-	return cni, multusEnabled, nil
+	data, err := template.Parse("rke2-vip", rke2VIPManifest, &manifest)
+	if err != nil {
+		return "", fmt.Errorf("parsing RKE2 VIP template: %w", err)
+	}
+
+	installScript := filepath.Join(ctx.CombustionDir, vipManifest)
+	if err = os.WriteFile(installScript, []byte(data), fileio.NonExecutablePerms); err != nil {
+		return "", fmt.Errorf("writing RKE2 VIP manifest: %w", err)
+	}
+
+	return vipManifest, nil
 }
 
-func storeKubernetesConfig(ctx *image.Context, config map[string]any, distribution string) (string, error) {
+func storeKubernetesClusterConfig(cluster *kubernetes.Cluster, destPath string) error {
+	serverConfig := filepath.Join(destPath, k8sServerConfigFile)
+	if err := storeKubernetesConfig(cluster.ServerConfig, serverConfig); err != nil {
+		return fmt.Errorf("storing server config file: %w", err)
+	}
+
+	if cluster.InitialiserConfig != nil {
+		initialiserConfig := filepath.Join(destPath, k8sInitServerConfigFile)
+
+		if err := storeKubernetesConfig(cluster.InitialiserConfig, initialiserConfig); err != nil {
+			return fmt.Errorf("storing init server config file: %w", err)
+		}
+	}
+
+	if cluster.AgentConfig != nil {
+		agentConfig := filepath.Join(destPath, k8sAgentConfigFile)
+
+		if err := storeKubernetesConfig(cluster.AgentConfig, agentConfig); err != nil {
+			return fmt.Errorf("storing agent config file: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func storeKubernetesConfig(config map[string]any, configPath string) error {
 	data, err := yaml.Marshal(config)
 	if err != nil {
-		return "", fmt.Errorf("serializing kubernetes config: %w", err)
+		return fmt.Errorf("serializing kubernetes config: %w", err)
 	}
 
-	configFile := fmt.Sprintf("%s_config.yaml", distribution)
-	configPath := filepath.Join(ctx.CombustionDir, configFile)
-
-	if err = os.WriteFile(configPath, data, fileio.NonExecutablePerms); err != nil {
-		return "", fmt.Errorf("storing kubernetes config file: %w", err)
-	}
-
-	return configFile, nil
+	return os.WriteFile(configPath, data, fileio.NonExecutablePerms)
 }
