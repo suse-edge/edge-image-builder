@@ -150,7 +150,7 @@ func DownloadManifests(manifestURLs []string, destPath string) ([]string, error)
 	var manifestPaths []string
 
 	for index, manifestURL := range manifestURLs {
-		filePath := filepath.Join(destPath, fmt.Sprintf("manifest-%d.yaml", index+1))
+		filePath := filepath.Join(destPath, fmt.Sprintf("dl-manifest-%d.yaml", index+1))
 		manifestPaths = append(manifestPaths, filePath)
 
 		if err := http.DownloadFile(context.Background(), manifestURL, filePath); err != nil {
@@ -170,7 +170,7 @@ func CopyManifests(src string, dest string) ([]string, error) {
 
 	manifests, err := os.ReadDir(src)
 	if err != nil {
-		return nil, fmt.Errorf("reading manifest source dir: %w", err)
+		return nil, fmt.Errorf("reading manifest source dir '%s': %w", src, err)
 	}
 
 	for _, manifest := range manifests {
@@ -181,7 +181,7 @@ func CopyManifests(src string, dest string) ([]string, error) {
 		}
 
 		sourcePath := filepath.Join(src, manifest.Name())
-		destPath := filepath.Join(dest, manifest.Name())
+		destPath := filepath.Join(dest, fmt.Sprintf("lc-%s", manifest.Name()))
 		err := fileio.CopyFile(sourcePath, destPath, fileio.NonExecutablePerms)
 		if err != nil {
 			return nil, fmt.Errorf("copying manifest file %s: %w", sourcePath, err)

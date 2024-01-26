@@ -2,8 +2,13 @@
 set -euo pipefail
 
 mount /var
+
 mkdir -p /var/lib/rancher/rke2/agent/images/
 cp {{ .ImagesPath }}/* /var/lib/rancher/rke2/agent/images/
+{{ if .ManifestsPath }}
+mkdir -p /var/lib/rancher/rke2/server/manifests/
+cp {{ .ManifestsPath }}/* /var/lib/rancher/rke2/server/manifests/
+{{ end }}
 umount /var
 
 mkdir -p /etc/rancher/rke2/

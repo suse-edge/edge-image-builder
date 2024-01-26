@@ -11,6 +11,10 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
+const (
+	localManifestsSrcDir = "local-manifests"
+)
+
 func TestReadManifest(t *testing.T) {
 	// Setup
 	manifestPath := filepath.Join("testdata", "sample-crd.yaml")
@@ -232,19 +236,80 @@ func TestDownloadManifestsInvalidURL(t *testing.T) {
 
 func TestGetAllImagesInvalidLocalManifest(t *testing.T) {
 	// Setup
-	localManifestSrcDir := "local-manifests"
-	require.NoError(t, os.Mkdir(localManifestSrcDir, 0o755))
+	require.NoError(t, os.Mkdir(localManifestsSrcDir, 0o755))
 	defer func() {
-		require.NoError(t, os.RemoveAll(localManifestSrcDir))
+		require.NoError(t, os.RemoveAll(localManifestsSrcDir))
 	}()
 
 	localSampleManifestPath := filepath.Join("testdata", "invalid-crd.yml")
-	err := fileio.CopyFile(localSampleManifestPath, filepath.Join(localManifestSrcDir, "invalid-crd.yml"), fileio.NonExecutablePerms)
+	err := fileio.CopyFile(localSampleManifestPath, filepath.Join(localManifestsSrcDir, "invalid-crd.yml"), fileio.NonExecutablePerms)
 	require.NoError(t, err)
 
 	// Test
-	_, err = GetAllImages(nil, nil, localManifestSrcDir, "")
+	_, err = GetAllImages(nil, nil, localManifestsSrcDir, "")
 
 	// Verify
 	require.ErrorContains(t, err, "error reading manifest error unmarshalling manifest yaml")
+}
+
+func TestCopyManifests(t *testing.T) {
+	// Setup
+	require.NoError(t, os.Mkdir(localManifestsSrcDir, 0o755))
+	defer func() {
+		require.NoError(t, os.RemoveAll(localManifestsSrcDir))
+	}()
+
+	localManifestDestDir := "local-manifests-dest"
+	require.NoError(t, os.Mkdir(localManifestDestDir, 0o755))
+	defer func() {
+		require.NoError(t, os.RemoveAll(localManifestDestDir))
+	}()
+
+	localSampleManifestPath1 := filepath.Join("testdata", "sample-crd.yaml")
+	err := fileio.CopyFile(localSampleManifestPath1, filepath.Join(localManifestsSrcDir, "sample-crd.yaml"), fileio.NonExecutablePerms)
+	require.NoError(t, err)
+
+	localSampleManifestPath2 := filepath.Join("testdata", "invalid-crd.yml")
+	err = fileio.CopyFile(localSampleManifestPath2, filepath.Join(localManifestsSrcDir, "invalid-crd.yml"), fileio.NonExecutablePerms)
+	require.NoError(t, err)
+
+	localNonManifestPath := filepath.Join("testdata", "invalid-crd.yml")
+	err = fileio.CopyFile(localNonManifestPath, filepath.Join(localManifestsSrcDir, "crd.notyaml"), fileio.NonExecutablePerms)
+	require.NoError(t, err)
+
+	// Test
+	manifestsCopied, err := CopyManifests(localManifestsSrcDir, localManifestDestDir)
+
+	// Verify
+	require.NoError(t, err)
+	assert.Equal(t, []string{"invalid-crd.yml", "sample-crd.yaml"}, manifestsCopied)
+}
+
+func TestCopyManifestsNoSrcDir(t *testing.T) {
+	// Setup
+	localManifestSrcDir := ""
+
+	// Test
+	manifestsCopied, err := CopyManifests(localManifestSrcDir, "random")
+
+	// Verify
+	require.ErrorContains(t, err, "manifest source dir '': open : no such file or directory")
+	assert.Empty(t, manifestsCopied)
+}
+
+func TestCopyManifestsNoDestDir(t *testing.T) {
+	// Setup
+	require.NoError(t, os.Mkdir(localManifestsSrcDir, 0o755))
+	defer func() {
+		require.NoError(t, os.RemoveAll(localManifestsSrcDir))
+	}()
+
+	localManifestDestDir := ""
+
+	// Test
+	manifestsCopied, err := CopyManifests(localManifestsSrcDir, localManifestDestDir)
+
+	// Verify
+	require.ErrorContains(t, err, "manifest destination directory not defined")
+	assert.Empty(t, manifestsCopied)
 }

@@ -13,6 +13,12 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	k8sCombustionDir = "kubernetes"
+	serverInstaller  = "server-installer"
+	serverImages     = "server-images"
+)
+
 type mockKubernetesScriptInstaller struct {
 	installScript func(distribution, sourcePath, destPath string) error
 }
@@ -141,7 +147,7 @@ func TestConfigureKubernetes_SuccessfulRKE2Server(t *testing.T) {
 	}
 	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
 		downloadArtefacts: func(arch image.Arch, version, cni string, multusEnabled bool, destPath string) (string, string, error) {
-			return "server-installer", "server-images", nil
+			return serverInstaller, serverImages, nil
 		},
 	}
 
@@ -184,6 +190,102 @@ func TestConfigureKubernetes_SuccessfulRKE2Server(t *testing.T) {
 
 	require.Contains(t, configContents, "cni")
 	assert.Equal(t, "cilium", configContents["cni"], "default CNI is not set")
+}
+
+func TestConfigureKubernetes_SuccessfulRKE2ServerWithLocalManifests(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
+		Version: "v1.29.0+rke2r1",
+	}
+	ctx.KubernetesScriptInstaller = mockKubernetesScriptInstaller{
+		installScript: func(distribution, sourcePath, destPath string) error {
+			return nil
+		},
+	}
+	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
+		downloadArtefacts: func(arch image.Arch, version, cni string, multusEnabled bool, destPath string) (string, string, error) {
+			return serverInstaller, serverImages, nil
+		},
+	}
+
+	localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, "kubernetes", "manifests")
+	require.NoError(t, os.MkdirAll(localManifestsSrcDir, 0o755))
+
+	localSampleManifestPath1 := filepath.Join("..", "registry", "testdata", "sample-crd.yaml")
+	err := fileio.CopyFile(localSampleManifestPath1, filepath.Join(localManifestsSrcDir, "sample-crd.yaml"), fileio.NonExecutablePerms)
+	require.NoError(t, err)
+
+	localSampleManifestPath2 := filepath.Join("..", "registry", "testdata", "invalid-crd.yml")
+	err = fileio.CopyFile(localSampleManifestPath2, filepath.Join(localManifestsSrcDir, "invalid-crd.yml"), fileio.NonExecutablePerms)
+	require.NoError(t, err)
+
+	scripts, err := configureKubernetes(ctx)
+	require.NoError(t, err)
+	require.Len(t, scripts, 1)
+
+	// Script file assertions
+	scriptPath := filepath.Join(ctx.CombustionDir, scripts[0])
+
+	info, err := os.Stat(scriptPath)
+	require.NoError(t, err)
+
+	assert.Equal(t, fileio.ExecutablePerms, info.Mode())
+
+	b, err := os.ReadFile(scriptPath)
+	require.NoError(t, err)
+
+	contents := string(b)
+	assert.NotContains(t, contents, "export INSTALL_RKE2_TYPE=server",
+		"INSTALL_RKE2_TYPE is set when the definition file does not explicitly set it")
+	assert.Contains(t, contents, "cp server-images/* /var/lib/rancher/rke2/agent/images/")
+	assert.Contains(t, contents, "cp rke2_config.yaml /etc/rancher/rke2/config.yaml")
+	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=server-installer")
+	assert.Contains(t, contents, "systemctl enable rke2-server.service")
+
+	// Config file assertions
+	configPath := filepath.Join(ctx.CombustionDir, "rke2_config.yaml")
+
+	info, err = os.Stat(configPath)
+	require.NoError(t, err)
+
+	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
+
+	b, err = os.ReadFile(configPath)
+	require.NoError(t, err)
+
+	var configContents map[string]any
+	require.NoError(t, yaml.Unmarshal(b, &configContents))
+
+	require.Contains(t, configContents, "cni")
+	assert.Equal(t, "cilium", configContents["cni"], "default CNI is not set")
+
+	// Local manifest assertions
+	manifestPath1 := filepath.Join(ctx.CombustionDir, "kubernetes", "manifests", "lc-sample-crd.yaml")
+	info, err = os.Stat(manifestPath1)
+	require.NoError(t, err)
+	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
+
+	b, err = os.ReadFile(manifestPath1)
+	require.NoError(t, err)
+
+	contents = string(b)
+	assert.Contains(t, contents, "apiVersion: \"custom.example.com/v1\"")
+	assert.Contains(t, contents, "app: complex-application")
+	assert.Contains(t, contents, "- name: redis-container")
+
+	manifestPath2 := filepath.Join(ctx.CombustionDir, "kubernetes", "manifests", "lc-invalid-crd.yml")
+	info, err = os.Stat(manifestPath2)
+	require.NoError(t, err)
+	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
+
+	b, err = os.ReadFile(manifestPath2)
+	require.NoError(t, err)
+
+	contents = string(b)
+	assert.Contains(t, contents, "apiVersion: v1")
+	assert.Contains(t, contents, "- kind: invalid manifest")
 }
 
 func TestExtractCNI(t *testing.T) {
@@ -301,4 +403,70 @@ func TestExtractCNI(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestConfigureManifestsInvalidURL(t *testing.T) {
+	// Setup
+	manifestURLs := []string{
+		"k8s.io/examples/application/nginx-app.yaml",
+	}
+
+	require.NoError(t, os.Mkdir(k8sCombustionDir, 0o755))
+	defer func() {
+		require.NoError(t, os.RemoveAll(k8sCombustionDir))
+	}()
+
+	// Test
+	err := configureManifests(k8sCombustionDir, false, "", manifestURLs)
+
+	// Verify
+	require.ErrorContains(t, err, "downloading manifests to combustion dir: downloading manifest 'k8s.io/examples/application/nginx-app.yaml': executing request: Get \"k8s.io/examples/application/nginx-app.yaml\": unsupported protocol scheme \"\"")
+}
+
+func TestConfigureManifestsInvalidManifestDestDir(t *testing.T) {
+	// Test
+	err := configureManifests(k8sCombustionDir, false, "", nil)
+
+	// Verify
+	require.ErrorContains(t, err, "creating manifests destination dir: mkdir kubernetes/manifests: no such file or directory")
+}
+
+func TestConfigureKubernetes_InvalidManifestURL(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
+		Version: "v1.29.0+rke2r1",
+	}
+	ctx.KubernetesScriptInstaller = mockKubernetesScriptInstaller{
+		installScript: func(distribution, sourcePath, destPath string) error {
+			return nil
+		},
+	}
+	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
+		downloadArtefacts: func(arch image.Arch, version, cni string, multusEnabled bool, destPath string) (string, string, error) {
+			return serverInstaller, serverImages, nil
+		},
+	}
+	ctx.ImageDefinition.Kubernetes.Manifests.URLs = []string{
+		"k8s.io/examples/application/nginx-app.yaml",
+	}
+
+	_, err := configureKubernetes(ctx)
+
+	require.ErrorContains(t, err, "configuring kubernetes manifests: downloading manifests to combustion dir: downloading manifest 'k8s.io/examples/application/nginx-app.yaml': executing request: Get \"k8s.io/examples/application/nginx-app.yaml\": unsupported protocol scheme \"\"")
+}
+
+func TestConfigureManifestsNoLocalManifestSrcDir(t *testing.T) {
+	// Setup
+	require.NoError(t, os.Mkdir(k8sCombustionDir, 0o755))
+	defer func() {
+		require.NoError(t, os.RemoveAll(k8sCombustionDir))
+	}()
+
+	// Test
+	err := configureManifests(k8sCombustionDir, true, "invalid", nil)
+
+	// Verify
+	require.ErrorContains(t, err, "copying local manifests to combustion dir: reading manifest source dir 'invalid': open invalid: no such file or directory")
 }

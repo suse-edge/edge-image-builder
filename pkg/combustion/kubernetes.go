@@ -59,10 +59,11 @@ func configureKubernetes(ctx *image.Context) ([]string, error) {
 	}
 
 	manifestURLs := ctx.ImageDefinition.Kubernetes.Manifests.URLs
-	localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, "kubernetes", "manifests")
-	localManifestsConfigured := isComponentConfigured(ctx, localManifestsSrcDir)
+	localManifestsComponentDir := filepath.Join("kubernetes", "manifests")
+	localManifestsConfigured := isComponentConfigured(ctx, localManifestsComponentDir)
 	if localManifestsConfigured || len(manifestURLs) != 0 {
-		k8sCombustionDir := filepath.Join(ctx.CombustionDir, k8sDir, "manifests")
+		localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, "kubernetes", "manifests")
+		k8sCombustionDir := filepath.Join(ctx.CombustionDir, k8sDir)
 		err = os.MkdirAll(k8sCombustionDir, os.ModePerm)
 		if err != nil {
 			log.AuditComponentFailed(k8sComponentName)
@@ -133,16 +134,23 @@ func configureRKE2(ctx *image.Context) (string, error) {
 		return "", fmt.Errorf("downloading RKE2 artefacts: %w", err)
 	}
 
+	manifestsPath := ""
+	if isComponentConfigured(ctx, filepath.Join(k8sDir, "manifests")) {
+		manifestsPath = filepath.Join(k8sDir, "manifests")
+	}
+
 	rke2 := struct {
 		image.Kubernetes
-		ConfigFile  string
-		InstallPath string
-		ImagesPath  string
+		ConfigFile    string
+		InstallPath   string
+		ImagesPath    string
+		ManifestsPath string
 	}{
-		Kubernetes:  ctx.ImageDefinition.Kubernetes,
-		ConfigFile:  configFile,
-		InstallPath: installPath,
-		ImagesPath:  imagesPath,
+		Kubernetes:    ctx.ImageDefinition.Kubernetes,
+		ConfigFile:    configFile,
+		InstallPath:   installPath,
+		ImagesPath:    imagesPath,
+		ManifestsPath: manifestsPath,
 	}
 
 	data, err := template.Parse(rke2InstallScript, rke2SingleNodeInstaller, &rke2)
@@ -270,22 +278,21 @@ func storeKubernetesConfig(ctx *image.Context, config map[string]any, distributi
 }
 
 func configureManifests(k8sCombustionDir string, localManifestsConfigured bool, localManifestsSrcDir string, manifestURLs []string) error {
-	if localManifestsConfigured {
-		localManifestsDestDir := filepath.Join(k8sCombustionDir, "local-manifests")
-		err := os.Mkdir(localManifestsDestDir, os.ModePerm)
-		if err != nil {
-			return fmt.Errorf("creating local manifests destination dir: %w", err)
-		}
+	manifestDestDir := filepath.Join(k8sCombustionDir, "manifests")
+	err := os.Mkdir(manifestDestDir, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("creating manifests destination dir: %w", err)
+	}
 
-		_, err = registry.CopyManifests(localManifestsSrcDir, localManifestsDestDir)
+	if localManifestsConfigured {
+		_, err = registry.CopyManifests(localManifestsSrcDir, manifestDestDir)
 		if err != nil {
 			return fmt.Errorf("copying local manifests to combustion dir: %w", err)
 		}
 	}
 
 	if len(manifestURLs) != 0 {
-		manifestDownloadDest := filepath.Join(k8sCombustionDir, "downloaded-manifests")
-		_, err := registry.DownloadManifests(manifestURLs, manifestDownloadDest)
+		_, err = registry.DownloadManifests(manifestURLs, manifestDestDir)
 		if err != nil {
 			return fmt.Errorf("downloading manifests to combustion dir: %w", err)
 		}
