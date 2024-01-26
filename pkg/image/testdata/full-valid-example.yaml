@@ -68,7 +68,7 @@ kubernetes:
       type: server
     - hostname: node2.suse.com
       type: server
-      firstNode: true
+      initialiser: true
     - hostname: node3.suse.com
       type: agent
     - hostname: node4.suse.com
