@@ -81,7 +81,10 @@ func identifierHash(identifier string) (string, error) {
 		return "", err
 	}
 
-	return strconv.FormatUint(h.Sum64(), 10), nil
+	hash := strconv.FormatUint(h.Sum64(), 10)
+
+	zap.S().Debugf("Generated hash '%s' from identifier '%s'", hash, identifier)
+	return hash, nil
 }
 
 func exists(path string) bool {
