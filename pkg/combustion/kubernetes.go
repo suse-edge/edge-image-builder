@@ -180,7 +180,7 @@ func downloadRKE2Artefacts(ctx *image.Context, cluster *kubernetes.Cluster) (ins
 		return "", "", fmt.Errorf("extracting CNI from cluster config: %w", err)
 	}
 
-	return ctx.KubernetesArtefactDownloader.DownloadArtefacts(
+	return ctx.KubernetesArtefactDownloader.DownloadRKE2Artefacts(
 		ctx.ImageDefinition.Image.Arch,
 		ctx.ImageDefinition.Kubernetes.Version,
 		cni,

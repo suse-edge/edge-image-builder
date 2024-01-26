@@ -44,9 +44,9 @@ type ArtefactDownloader struct {
 	Cache cache
 }
 
-func (d ArtefactDownloader) DownloadArtefacts(arch image.Arch, version, cni string, multusEnabled bool, destinationPath string) (installPath, imagesPath string, err error) {
+func (d ArtefactDownloader) DownloadRKE2Artefacts(arch image.Arch, version, cni string, multusEnabled bool, destinationPath string) (installPath, imagesPath string, err error) {
 	if !strings.Contains(version, image.KubernetesDistroRKE2) {
-		return "", "", fmt.Errorf("kubernetes version '%s' is not supported", version)
+		return "", "", fmt.Errorf("invalid RKE2 version: '%s'", version)
 	}
 
 	if arch == image.ArchTypeARM {
@@ -65,7 +65,7 @@ func (d ArtefactDownloader) DownloadArtefacts(arch image.Arch, version, cni stri
 		return "", "", fmt.Errorf("creating kubernetes install dir: %w", err)
 	}
 
-	artefacts, err := imageArtefacts(cni, multusEnabled, arch)
+	artefacts, err := rke2ImageArtefacts(cni, multusEnabled, arch)
 	if err != nil {
 		return "", "", fmt.Errorf("gathering RKE2 image artefacts: %w", err)
 	}
@@ -74,7 +74,7 @@ func (d ArtefactDownloader) DownloadArtefacts(arch image.Arch, version, cni stri
 		return "", "", fmt.Errorf("downloading RKE2 image artefacts: %w", err)
 	}
 
-	artefacts = installerArtefacts(arch)
+	artefacts = rke2InstallerArtefacts(arch)
 	if err = d.downloadArtefacts(artefacts, rke2ReleaseURL, version, installDestination); err != nil {
 		return "", "", fmt.Errorf("downloading RKE2 install artefacts: %w", err)
 	}
@@ -82,7 +82,7 @@ func (d ArtefactDownloader) DownloadArtefacts(arch image.Arch, version, cni stri
 	return installPath, imagesPath, nil
 }
 
-func installerArtefacts(arch image.Arch) []string {
+func rke2InstallerArtefacts(arch image.Arch) []string {
 	artefactArch := arch.Short()
 
 	return []string{
@@ -91,7 +91,7 @@ func installerArtefacts(arch image.Arch) []string {
 	}
 }
 
-func imageArtefacts(cni string, multusEnabled bool, arch image.Arch) ([]string, error) {
+func rke2ImageArtefacts(cni string, multusEnabled bool, arch image.Arch) ([]string, error) {
 	artefactArch := arch.Short()
 
 	var artefacts []string

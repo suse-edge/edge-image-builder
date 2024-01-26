@@ -34,7 +34,7 @@ type mockKubernetesArtefactDownloader struct {
 	downloadArtefacts func(arch image.Arch, version, cni string, multusEnabled bool, destPath string) (string, string, error)
 }
 
-func (m mockKubernetesArtefactDownloader) DownloadArtefacts(
+func (m mockKubernetesArtefactDownloader) DownloadRKE2Artefacts(
 	arch image.Arch,
 	version string,
 	cni string,
