@@ -42,6 +42,7 @@ operatingSystem:
     activationKey: slemicro55
     getSSL: false
   packages:
+    noGPGCheck: true
     packageList:
       - wget2
       - dpdk22
