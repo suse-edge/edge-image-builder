@@ -32,13 +32,16 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 
 	zap.L().Info("Configuring RPM component...")
 
-	var rpmDir string
+	var localRPMConfig *image.LocalRPMConfig
 	if isComponentConfigured(ctx, userRPMsDir) {
-		rpmDir = generateComponentPath(ctx, userRPMsDir)
+		rpmDir := generateComponentPath(ctx, userRPMsDir)
+		localRPMConfig = &image.LocalRPMConfig{
+			RPMPath: rpmDir,
+		}
 	}
 
 	log.Audit("Resolving package dependencies...")
-	repoPath, packages, err := ctx.RPMResolver.Resolve(&ctx.ImageDefinition.OperatingSystem.Packages, rpmDir, ctx.CombustionDir)
+	repoPath, packages, err := ctx.RPMResolver.Resolve(&ctx.ImageDefinition.OperatingSystem.Packages, localRPMConfig, ctx.CombustionDir)
 	if err != nil {
 		log.AuditComponentFailed(rpmComponentName)
 		return nil, fmt.Errorf("resolving rpm/package dependencies: %w", err)

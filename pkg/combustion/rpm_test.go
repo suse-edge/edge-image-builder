@@ -14,12 +14,12 @@ import (
 )
 
 type mockRPMResolver struct {
-	resolveFunc func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error)
+	resolveFunc func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error)
 }
 
-func (m mockRPMResolver) Resolve(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+func (m mockRPMResolver) Resolve(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
 	if m.resolveFunc != nil {
-		return m.resolveFunc(packages, localPackagesPath, outputDir)
+		return m.resolveFunc(packages, localRPMConfig, outputDir)
 	}
 
 	panic("not implemented")
@@ -160,7 +160,7 @@ func TestConfigureRPMSError(t *testing.T) {
 		{
 			name: "Resolving RPM dependencies fails",
 			rpmResolver: mockRPMResolver{
-				resolveFunc: func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+				resolveFunc: func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
 					return "", nil, fmt.Errorf("resolution failed")
 				},
 			},
@@ -169,7 +169,7 @@ func TestConfigureRPMSError(t *testing.T) {
 		{
 			name: "Creating RPM repository fails",
 			rpmResolver: mockRPMResolver{
-				resolveFunc: func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+				resolveFunc: func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
 					return "rpm-repo", []string{"foo", "bar"}, nil
 				},
 			},
@@ -183,7 +183,7 @@ func TestConfigureRPMSError(t *testing.T) {
 		{
 			name: "Writing RPM script with empty package list",
 			rpmResolver: mockRPMResolver{
-				resolveFunc: func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+				resolveFunc: func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
 					return "rpm-repo", []string{}, nil
 				},
 			},
@@ -197,7 +197,7 @@ func TestConfigureRPMSError(t *testing.T) {
 		{
 			name: "Writing RPM script with empty repo path",
 			rpmResolver: mockRPMResolver{
-				resolveFunc: func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+				resolveFunc: func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
 					return "", []string{"foo", "bar"}, nil
 				},
 			},
@@ -252,7 +252,7 @@ func TestConfigureRPMSSuccessfulConfig(t *testing.T) {
 	}
 
 	ctx.RPMResolver = mockRPMResolver{
-		resolveFunc: func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+		resolveFunc: func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (string, []string, error) {
 			return expectedDir, expectedPkg, nil
 		},
 	}

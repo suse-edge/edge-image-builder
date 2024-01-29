@@ -63,14 +63,14 @@ func New(workDir, imgPath, imgType string, podman Podman) *Resolver {
 // - localPackagesPath - path to a directory containing local rpm packages. Will not be considered if left empty.
 //
 // - outputDir - directory in which the resolver will create a directory containing the resolved rpms.
-func (r *Resolver) Resolve(packages *image.Packages, localPackagesPath, outputDir string) (rpmDirPath string, pkgList []string, err error) {
+func (r *Resolver) Resolve(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDirPath string, pkgList []string, err error) {
 	zap.L().Info("Resolving package dependencies...")
 
 	if err = r.buildBase(); err != nil {
 		return "", nil, fmt.Errorf("building base resolver image: %w", err)
 	}
 
-	if err = r.prepare(localPackagesPath, packages); err != nil {
+	if err = r.prepare(localRPMConfig.RPMPath, packages); err != nil {
 		return "", nil, fmt.Errorf("generating context for the resolver image: %w", err)
 	}
 
