@@ -2,14 +2,20 @@ package kubernetes
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/http"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
+	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -29,7 +35,14 @@ const (
 	rke2MultusImages = "rke2-images-multus.linux-%s.tar.zst"
 )
 
-type ArtefactDownloader struct{}
+type cache interface {
+	Get(artefact string) (filepath string, err error)
+	Put(artefact string, reader io.Reader) error
+}
+
+type ArtefactDownloader struct {
+	Cache cache
+}
 
 func (d ArtefactDownloader) DownloadArtefacts(arch image.Arch, version, cni string, multusEnabled bool, destinationPath string) (installPath, imagesPath string, err error) {
 	if !strings.Contains(version, image.KubernetesDistroRKE2) {
@@ -57,12 +70,12 @@ func (d ArtefactDownloader) DownloadArtefacts(arch image.Arch, version, cni stri
 		return "", "", fmt.Errorf("gathering RKE2 image artefacts: %w", err)
 	}
 
-	if err = downloadArtefacts(artefacts, rke2ReleaseURL, version, imagesDestination); err != nil {
+	if err = d.downloadArtefacts(artefacts, rke2ReleaseURL, version, imagesDestination); err != nil {
 		return "", "", fmt.Errorf("downloading RKE2 image artefacts: %w", err)
 	}
 
 	artefacts = installerArtefacts(arch)
-	if err = downloadArtefacts(artefacts, rke2ReleaseURL, version, installDestination); err != nil {
+	if err = d.downloadArtefacts(artefacts, rke2ReleaseURL, version, installDestination); err != nil {
 		return "", "", fmt.Errorf("downloading RKE2 install artefacts: %w", err)
 	}
 
@@ -115,15 +128,75 @@ func imageArtefacts(cni string, multusEnabled bool, arch image.Arch) ([]string, 
 	return artefacts, nil
 }
 
-func downloadArtefacts(artefacts []string, releaseURL, version, destinationPath string) error {
+func (d ArtefactDownloader) downloadArtefacts(artefacts []string, releaseURL, version, destinationPath string) error {
 	for _, artefact := range artefacts {
 		url := fmt.Sprintf(releaseURL, version, artefact)
 		path := filepath.Join(destinationPath, artefact)
+		cacheKey := cacheIdentifier(version, artefact)
 
-		if err := http.DownloadFile(context.Background(), url, path); err != nil {
-			return fmt.Errorf("downloading artefact '%s': %w", artefact, err)
+		copied, err := d.copyArtefactFromCache(cacheKey, path)
+		if err != nil {
+			return fmt.Errorf("retrieving artefact '%s' from cache: %w", artefact, err)
+		}
+
+		if !copied {
+			if err = d.downloadArtefact(url, path, cacheKey); err != nil {
+				return fmt.Errorf("downloading artefact '%s': %w", artefact, err)
+			}
 		}
 	}
 
 	return nil
+}
+
+func (d ArtefactDownloader) copyArtefactFromCache(cacheKey, destPath string) (bool, error) {
+	sourcePath, err := d.Cache.Get(cacheKey)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("querying cache: %w", err)
+	}
+
+	zap.S().Infof("Copying artefact with identifier '%s' from cache", cacheKey)
+
+	if err = fileio.CopyFile(sourcePath, destPath, fileio.NonExecutablePerms); err != nil {
+		return false, fmt.Errorf("copying from cache: %w", err)
+	}
+
+	return true, nil
+}
+
+func (d ArtefactDownloader) downloadArtefact(url, path, cacheKey string) error {
+	reader, writer := io.Pipe()
+
+	errGroup, ctx := errgroup.WithContext(context.Background())
+
+	errGroup.Go(func() error {
+		defer func() {
+			if err := writer.Close(); err != nil {
+				zap.S().Warnf("Closing pipe writer failed unexpectedly: %v", err)
+			}
+		}()
+
+		if err := http.DownloadFile(ctx, url, path, writer); err != nil {
+			return fmt.Errorf("downloading artefact: %w", err)
+		}
+		return nil
+	})
+
+	errGroup.Go(func() error {
+		if err := d.Cache.Put(cacheKey, reader); err != nil {
+			return fmt.Errorf("caching artefact: %w", err)
+		}
+
+		return nil
+	})
+
+	return errGroup.Wait()
+}
+
+func cacheIdentifier(version, artefact string) string {
+	return fmt.Sprintf("%s/%s", version, artefact)
 }

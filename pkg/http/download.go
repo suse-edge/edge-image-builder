@@ -13,7 +13,10 @@ import (
 )
 
 // DownloadFile downloads a file from the specified URL and stores it to the given path.
-func DownloadFile(ctx context.Context, url, path string) error {
+//
+// Optionally provide an additional cache writer in cases where the pending download
+// must be stored to other locations alongside the given path.
+func DownloadFile(ctx context.Context, url, path string, cache io.Writer) error {
 	filename := filepath.Base(path)
 
 	zap.S().Infof("Downloading file '%s' from '%s' to '%s'...", filename, url, filepath.Dir(path))
@@ -41,7 +44,14 @@ func DownloadFile(ctx context.Context, url, path string) error {
 
 	bar := progressbar.DefaultBytes(resp.ContentLength, fmt.Sprintf("Downloading file: %s", filename))
 
-	if _, err = io.Copy(io.MultiWriter(file, bar), resp.Body); err != nil {
+	var w io.Writer
+	if cache == nil {
+		w = io.MultiWriter(file, bar)
+	} else {
+		w = io.MultiWriter(file, cache, bar)
+	}
+
+	if _, err = io.Copy(w, resp.Body); err != nil {
 		return fmt.Errorf("storing response: %w", err)
 	}
 

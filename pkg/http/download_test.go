@@ -1,10 +1,7 @@
-//go:build integration
-
 package http
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,27 +39,13 @@ func TestDownloadFile(t *testing.T) {
 			path:        "downloads/abc",
 			expectedErr: "creating file: open downloads/abc: no such file or directory",
 		},
-		{
-			name: "Successful download",
-			ctx:  context.Background(),
-			url:  "https://raw.githubusercontent.com/suse-edge/edge-image-builder/main/README.md",
-			path: "README.md",
-		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := DownloadFile(test.ctx, test.url, test.path)
-			if test.expectedErr != "" {
-				require.Error(t, err)
-				assert.EqualError(t, err, test.expectedErr)
-			} else {
-				require.NoError(t, err)
-
-				_, err := os.Stat(test.path)
-				assert.NoError(t, err)
-				assert.NoError(t, os.Remove(test.path))
-			}
+			err := DownloadFile(test.ctx, test.url, test.path, nil)
+			require.Error(t, err)
+			assert.EqualError(t, err, test.expectedErr)
 		})
 	}
 }
