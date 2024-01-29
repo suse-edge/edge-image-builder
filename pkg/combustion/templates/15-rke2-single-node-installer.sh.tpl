@@ -11,10 +11,10 @@ mkdir -p /var/lib/rancher/rke2/server/manifests/
 cp {{ .vipManifest }} /var/lib/rancher/rke2/server/manifests/{{ .vipManifest }}
 {{- end }}
 
-{{ - if .manifestsPath }}
+{{- if .manifestsPath }}
 mkdir -p /var/lib/rancher/rke2/server/manifests/
 cp {{ .manifestsPath }}/* /var/lib/rancher/rke2/server/manifests/
-{{ - end }}
+{{- end }}
 
 umount /var
 

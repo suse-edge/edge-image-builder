@@ -32,10 +32,9 @@ if [ "$HOSTNAME" = {{ .initialiser }} ]; then
     mkdir -p /var/lib/rancher/rke2/server/manifests/
     cp {{ .vipManifest }} /var/lib/rancher/rke2/server/manifests/{{ .vipManifest }}
 
-    {{ - if .manifestsPath }}
-    mkdir -p /var/lib/rancher/rke2/server/manifests/
+    {{- if .manifestsPath }}
     cp {{ .manifestsPath }}/* /var/lib/rancher/rke2/server/manifests/
-    {{ - end }}
+    {{- end }}
 
 fi
 
