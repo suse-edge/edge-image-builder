@@ -112,7 +112,7 @@ func (r *Resolver) prepare(localRPMConfig *image.LocalRPMConfig, packages *image
 		}
 	}
 
-	if err := r.writeDockerfile(localPackagesPath, packages); err != nil {
+	if err := r.writeDockerfile(localRPMConfig, packages); err != nil {
 		return fmt.Errorf("writing dockerfile: %w", err)
 	}
 
@@ -151,26 +151,42 @@ func (r *Resolver) prepareLocalRPMs(localRPMConfig *image.LocalRPMConfig) error 
 	return nil
 }
 
-func (r *Resolver) writeDockerfile(localPackagesPath string, packages *image.Packages) error {
+func (r *Resolver) writeDockerfile(localRPMConfig *image.LocalRPMConfig, packages *image.Packages) error {
 	values := struct {
-		BaseImage   string
-		RegCode     string
-		AddRepo     string
-		CacheDir    string
-		PkgList     string
-		FromRPMPath string
-		ToRPMPath   string
+		BaseImage    string
+		RegCode      string
+		AddRepo      string
+		CacheDir     string
+		PKGList      string
+		LocalRPMList string
+		LocalGPGList string
+		FromRPMPath  string
+		ToRPMPath    string
+		FromGPGPath  string
+		ToGPGPath    string
+		NoGPGCheck   bool
 	}{
-		BaseImage: baseImageRef,
-		RegCode:   packages.RegCode,
-		AddRepo:   r.generateAddRepoStr(packages.AdditionalRepos),
-		CacheDir:  r.generateResolverImgRPMRepoPath(),
-		PkgList:   strings.Join(r.generatePKGForResolve(packages), " "),
+		BaseImage:  baseImageRef,
+		RegCode:    packages.RegCode,
+		AddRepo:    r.generateAddRepoStr(packages.AdditionalRepos),
+		CacheDir:   r.generateResolverImgRPMRepoPath(),
+		NoGPGCheck: packages.NoGPGCheck,
 	}
 
-	if localPackagesPath != "" {
+	if len(packages.PKGList) > 0 {
+		values.PKGList = strings.Join(packages.PKGList, " ")
+	}
+
+	if localRPMConfig != nil {
 		values.FromRPMPath = filepath.Base(r.generateRPMPathInBuildContext())
 		values.ToRPMPath = r.generateResolverImgLocalRPMDirPath()
+		values.LocalRPMList = strings.Join(r.rpmPaths, " ")
+
+		if localRPMConfig.GPGKeysPath != "" {
+			values.FromGPGPath = filepath.Base(r.generateGPGPathInBuildContext())
+			values.ToGPGPath = r.generateResolverImgGPGKeysPath()
+			values.LocalGPGList = strings.Join(r.gpgKeyPaths, " ")
+		}
 	}
 
 	data, err := template.Parse(dockerfileName, dockerfileTemplate, &values)
@@ -193,23 +209,6 @@ func (r *Resolver) generateAddRepoStr(repos []image.AddRepo) string {
 	}
 
 	return strings.Join(list, " ")
-}
-
-func (r *Resolver) generatePKGForResolve(packages *image.Packages) []string {
-	list := []string{}
-
-	if len(packages.PKGList) > 0 {
-		list = append(list, packages.PKGList...)
-	}
-
-	if len(r.rpmPaths) > 0 {
-		// generate RPM paths as seen in the resolver image,
-		// needed so that 'zypper install' can locate the rpms
-		for _, name := range r.rpmPaths {
-			list = append(list, filepath.Join(r.generateResolverImgLocalRPMDirPath(), name))
-		}
-	}
-	return list
 }
 
 func (r *Resolver) generatePKGInstallList(packages *image.Packages) []string {
