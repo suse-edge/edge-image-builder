@@ -24,7 +24,7 @@ func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs [
 			return nil, fmt.Errorf("manifest download destination directory not defined")
 		}
 
-		downloadedManifestPaths, err := downloadManifests(manifestURLs, manifestDownloadDest)
+		downloadedManifestPaths, err := DownloadManifests(manifestURLs, manifestDownloadDest)
 		if err != nil {
 			return nil, fmt.Errorf("error downloading manifests: %w", err)
 		}
@@ -145,11 +145,11 @@ func getLocalManifestPaths(src string) ([]string, error) {
 	return manifestPaths, nil
 }
 
-func downloadManifests(manifestURLs []string, destPath string) ([]string, error) {
+func DownloadManifests(manifestURLs []string, destPath string) ([]string, error) {
 	var manifestPaths []string
 
 	for index, manifestURL := range manifestURLs {
-		filePath := filepath.Join(destPath, fmt.Sprintf("manifest-%d.yaml", index+1))
+		filePath := filepath.Join(destPath, fmt.Sprintf("dl-manifest-%d.yaml", index+1))
 		manifestPaths = append(manifestPaths, filePath)
 
 		if err := http.DownloadFile(context.Background(), manifestURL, filePath, nil); err != nil {

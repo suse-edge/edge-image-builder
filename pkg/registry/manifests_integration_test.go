@@ -22,14 +22,14 @@ func TestDownloadManifests(t *testing.T) {
 		require.NoError(t, os.RemoveAll(manifestDownloadDest))
 	}()
 
-	expectedFilePath := filepath.Join(manifestDownloadDest, "manifest-1.yaml")
+	expectedFilePath := filepath.Join(manifestDownloadDest, "dl-manifest-1.yaml")
 
 	manifestURLs := []string{
 		"https://k8s.io/examples/application/nginx-app.yaml",
 	}
 
 	// Test
-	manifestPaths, err := downloadManifests(manifestURLs, manifestDownloadDest)
+	manifestPaths, err := DownloadManifests(manifestURLs, manifestDownloadDest)
 
 	// Verify
 	require.NoError(t, err)

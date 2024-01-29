@@ -11,6 +11,10 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
+const (
+	localManifestsSrcDir = "local-manifests"
+)
+
 func TestReadManifest(t *testing.T) {
 	// Setup
 	manifestPath := filepath.Join("testdata", "sample-crd.yaml")
@@ -23,7 +27,6 @@ func TestReadManifest(t *testing.T) {
 
 	// First manifest in sample-crd.yaml
 	data := manifests[0]
-
 	apiVersion, ok := data["apiVersion"].(string)
 	require.True(t, ok)
 	assert.Equal(t, "custom.example.com/v1", apiVersion)
@@ -209,7 +212,7 @@ func TestDownloadManifestsNoManifest(t *testing.T) {
 	manifestDownloadDest := ""
 
 	// Test
-	manifestPaths, err := downloadManifests(nil, manifestDownloadDest)
+	manifestPaths, err := DownloadManifests(nil, manifestDownloadDest)
 
 	// Verify
 	require.NoError(t, err)
@@ -222,7 +225,7 @@ func TestDownloadManifestsInvalidURL(t *testing.T) {
 	manifestDownloadDest := ""
 
 	// Test
-	manifestPaths, err := downloadManifests(manifestURLs, manifestDownloadDest)
+	manifestPaths, err := DownloadManifests(manifestURLs, manifestDownloadDest)
 
 	// Verify
 	require.ErrorContains(t, err, "downloading manifest 'k8s.io/examples/application/nginx-app.yaml': executing request: Get \"k8s.io/examples/application/nginx-app.yaml\": unsupported protocol scheme \"")
@@ -231,18 +234,17 @@ func TestDownloadManifestsInvalidURL(t *testing.T) {
 
 func TestGetAllImagesInvalidLocalManifest(t *testing.T) {
 	// Setup
-	localManifestSrcDir := "local-manifests"
-	require.NoError(t, os.Mkdir(localManifestSrcDir, 0o755))
+	require.NoError(t, os.Mkdir(localManifestsSrcDir, 0o755))
 	defer func() {
-		require.NoError(t, os.RemoveAll(localManifestSrcDir))
+		require.NoError(t, os.RemoveAll(localManifestsSrcDir))
 	}()
 
 	localSampleManifestPath := filepath.Join("testdata", "invalid-crd.yml")
-	err := fileio.CopyFile(localSampleManifestPath, filepath.Join(localManifestSrcDir, "invalid-crd.yml"), fileio.NonExecutablePerms)
+	err := fileio.CopyFile(localSampleManifestPath, filepath.Join(localManifestsSrcDir, "invalid-crd.yml"), fileio.NonExecutablePerms)
 	require.NoError(t, err)
 
 	// Test
-	_, err = GetAllImages(nil, nil, localManifestSrcDir, "")
+	_, err = GetAllImages(nil, nil, localManifestsSrcDir, "")
 
 	// Verify
 	require.ErrorContains(t, err, "error reading manifest error unmarshalling manifest yaml")

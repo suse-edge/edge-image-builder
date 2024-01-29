@@ -13,6 +13,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	serverInstaller = "server-installer"
+	serverImages    = "server-images"
+)
+
 type mockKubernetesScriptInstaller struct {
 	installScript func(distribution, sourcePath, destPath string) error
 }
@@ -145,7 +150,7 @@ func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
 	}
 	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
 		downloadArtefacts: func(arch image.Arch, version, cni string, multusEnabled bool, destPath string) (string, string, error) {
-			return "server-installer", "server-images", nil
+			return serverInstaller, serverImages, nil
 		},
 	}
 
@@ -311,4 +316,45 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	assert.Equal(t, "123", configContents["token"])
 	assert.Equal(t, "https://192.168.122.100:9345", configContents["server"])
 	assert.Equal(t, []any{"192-168-122-100.sslip.io", "192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
+}
+
+func TestConfigureKubernetes_InvalidManifestURL(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
+		Version: "v1.29.0+rke2r1",
+	}
+	ctx.KubernetesScriptInstaller = mockKubernetesScriptInstaller{
+		installScript: func(distribution, sourcePath, destPath string) error {
+			return nil
+		},
+	}
+	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
+		downloadArtefacts: func(arch image.Arch, version, cni string, multusEnabled bool, destPath string) (string, string, error) {
+			return serverInstaller, serverImages, nil
+		},
+	}
+	ctx.ImageDefinition.Kubernetes.Manifests.URLs = []string{
+		"k8s.io/examples/application/nginx-app.yaml",
+	}
+	k8sCombDir := filepath.Join(ctx.CombustionDir, k8sDir)
+	require.NoError(t, os.Mkdir(k8sCombDir, os.ModePerm))
+
+	_, err := configureKubernetes(ctx)
+
+	require.ErrorContains(t, err, "configuring kubernetes manifests: downloading manifests to combustion dir: downloading manifest 'k8s.io/examples/application/nginx-app.yaml': executing request: Get \"k8s.io/examples/application/nginx-app.yaml\": unsupported protocol scheme \"\"")
+}
+
+func TestConfigureManifestsNoSetup(t *testing.T) {
+	// Setup
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	// Test
+	manifestsPath, err := configureManifests(ctx)
+
+	// Verify
+	require.NoError(t, err)
+	assert.Equal(t, "", manifestsPath)
 }

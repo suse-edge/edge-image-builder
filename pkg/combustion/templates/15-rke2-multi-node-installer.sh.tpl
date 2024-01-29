@@ -23,6 +23,7 @@ mount /var
 mkdir -p /var/lib/rancher/rke2/agent/images/
 cp {{ .imagesPath }}/* /var/lib/rancher/rke2/agent/images/
 
+
 CONFIGFILE=$NODETYPE.yaml
 
 if [ "$HOSTNAME" = {{ .initialiser }} ]; then
@@ -30,6 +31,11 @@ if [ "$HOSTNAME" = {{ .initialiser }} ]; then
 
     mkdir -p /var/lib/rancher/rke2/server/manifests/
     cp {{ .vipManifest }} /var/lib/rancher/rke2/server/manifests/{{ .vipManifest }}
+
+    {{- if .manifestsPath }}
+    cp {{ .manifestsPath }}/* /var/lib/rancher/rke2/server/manifests/
+    {{- end }}
+
 fi
 
 umount /var
