@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -78,23 +79,26 @@ func TestNewCluster_MultiNode_MissingConfig(t *testing.T) {
 	assert.Equal(t, "node1.suse.com", cluster.InitialiserName)
 
 	require.NotNil(t, cluster.InitialiserConfig)
+	clusterToken := cluster.InitialiserConfig["token"]
+	require.NotPanics(t, func() {
+		uuid.MustParse(clusterToken.(string))
+	})
 	assert.Equal(t, "cilium", cluster.InitialiserConfig["cni"])
 	assert.Equal(t, []string{"192.168.122.50", "api.suse.edge.com"}, cluster.InitialiserConfig["tls-san"])
-	assert.Equal(t, "foobar", cluster.InitialiserConfig["token"])
 	assert.Nil(t, cluster.InitialiserConfig["server"])
 	assert.Nil(t, cluster.InitialiserConfig["selinux"])
 
 	require.NotNil(t, cluster.ServerConfig)
 	assert.Equal(t, "cilium", cluster.ServerConfig["cni"])
 	assert.Equal(t, []string{"192.168.122.50", "api.suse.edge.com"}, cluster.ServerConfig["tls-san"])
-	assert.Equal(t, "foobar", cluster.ServerConfig["token"])
+	assert.Equal(t, clusterToken, cluster.ServerConfig["token"])
 	assert.Equal(t, "https://192.168.122.50:9345", cluster.ServerConfig["server"])
 	assert.Nil(t, cluster.ServerConfig["selinux"])
 
 	require.NotNil(t, cluster.AgentConfig)
 	assert.Equal(t, "cilium", cluster.AgentConfig["cni"])
 	assert.Equal(t, []string{"192.168.122.50", "api.suse.edge.com"}, cluster.AgentConfig["tls-san"])
-	assert.Equal(t, "foobar", cluster.AgentConfig["token"])
+	assert.Equal(t, clusterToken, cluster.AgentConfig["token"])
 	assert.Equal(t, "https://192.168.122.50:9345", cluster.AgentConfig["server"])
 	assert.Nil(t, cluster.ServerConfig["debug"])
 }

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"go.uber.org/zap"
@@ -150,7 +151,7 @@ func setClusterToken(config map[string]any) {
 		return
 	}
 
-	token := "foobar" // TODO: generate
+	token := uuid.NewString()
 
 	zap.S().Infof("Generated cluster token: %s", token)
 	config[tokenKey] = token
