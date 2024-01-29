@@ -78,6 +78,26 @@ func TestConfigureKubernetes_UnsupportedVersion(t *testing.T) {
 	assert.Nil(t, scripts)
 }
 
+func TestConfigureKubernetes_ScriptInstallerErrorK3s(t *testing.T) {
+	ctx := &image.Context{
+		ImageDefinition: &image.Definition{
+			Kubernetes: image.Kubernetes{
+				Version: "v1.29.0+k3s1",
+			},
+		},
+		KubernetesScriptInstaller: mockKubernetesScriptInstaller{
+			installScript: func(distribution, sourcePath, destPath string) error {
+				return fmt.Errorf("some error")
+			},
+		},
+	}
+
+	scripts, err := configureKubernetes(ctx)
+	require.Error(t, err)
+	assert.EqualError(t, err, "configuring kubernetes components: copying k3s installer script: some error")
+	assert.Nil(t, scripts)
+}
+
 func TestConfigureKubernetes_ScriptInstallerErrorRKE2(t *testing.T) {
 	ctx := &image.Context{
 		ImageDefinition: &image.Definition{
@@ -95,6 +115,30 @@ func TestConfigureKubernetes_ScriptInstallerErrorRKE2(t *testing.T) {
 	scripts, err := configureKubernetes(ctx)
 	require.Error(t, err)
 	assert.EqualError(t, err, "configuring kubernetes components: copying RKE2 installer script: some error")
+	assert.Nil(t, scripts)
+}
+
+func TestConfigureKubernetes_ArtefactDownloaderErrorK3s(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
+		Version: "v1.29.0+k3s1",
+	}
+	ctx.KubernetesScriptInstaller = mockKubernetesScriptInstaller{
+		installScript: func(distribution, sourcePath, destPath string) error {
+			return nil
+		},
+	}
+	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
+		downloadK3sArtefacts: func(arch image.Arch, version string, installPath, imagesPath string) error {
+			return fmt.Errorf("some error")
+		},
+	}
+
+	scripts, err := configureKubernetes(ctx)
+	require.Error(t, err)
+	assert.EqualError(t, err, "configuring kubernetes components: downloading k3s artefacts: downloading artefacts: some error")
 	assert.Nil(t, scripts)
 }
 
@@ -120,6 +164,49 @@ func TestConfigureKubernetes_ArtefactDownloaderErrorRKE2(t *testing.T) {
 	require.Error(t, err)
 	assert.EqualError(t, err, "configuring kubernetes components: downloading RKE2 artefacts: downloading artefacts: some error")
 	assert.Nil(t, scripts)
+}
+
+func TestConfigureKubernetes_SuccessfulSingleNodeK3sCluster(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
+		Version: "v1.29.0+k3s1",
+	}
+	ctx.KubernetesScriptInstaller = mockKubernetesScriptInstaller{
+		installScript: func(distribution, sourcePath, destPath string) error {
+			return nil
+		},
+	}
+	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
+		downloadK3sArtefacts: func(arch image.Arch, version string, installPath, imagesPath string) error {
+			binary := filepath.Join(installPath, "cool-k3s-binary")
+			return os.WriteFile(binary, nil, os.ModePerm)
+		},
+	}
+
+	scripts, err := configureKubernetes(ctx)
+	require.NoError(t, err)
+	require.Len(t, scripts, 1)
+
+	// Script file assertions
+	scriptPath := filepath.Join(ctx.CombustionDir, scripts[0])
+
+	info, err := os.Stat(scriptPath)
+	require.NoError(t, err)
+
+	assert.Equal(t, fileio.ExecutablePerms, info.Mode())
+
+	b, err := os.ReadFile(scriptPath)
+	require.NoError(t, err)
+
+	contents := string(b)
+	assert.Contains(t, contents, "cp kubernetes/images/* /var/lib/rancher/k3s/agent/images/")
+	assert.Contains(t, contents, "export INSTALL_K3S_SKIP_DOWNLOAD=true")
+	assert.Contains(t, contents, "export INSTALL_K3S_SKIP_START=true")
+	assert.Contains(t, contents, "export INSTALL_K3S_BIN_DIR=/opt/k3s")
+	assert.Contains(t, contents, "chmod +x kubernetes/install/cool-k3s-binary")
+	assert.Contains(t, contents, "cp kubernetes/install/cool-k3s-binary $INSTALL_K3S_BIN_DIR/k3s")
 }
 
 func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
