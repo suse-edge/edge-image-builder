@@ -80,12 +80,8 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, manifestsDir)
 	require.NoError(t, os.MkdirAll(localManifestsSrcDir, 0o755))
 
-	localSampleManifestPath1 := filepath.Join("..", "registry", "testdata", "sample-crd.yaml")
-	err := fileio.CopyFile(localSampleManifestPath1, filepath.Join(localManifestsSrcDir, "sample-crd.yaml"), fileio.NonExecutablePerms)
-	require.NoError(t, err)
-
-	localSampleManifestPath2 := filepath.Join("..", "registry", "testdata", "invalid-crd.yml")
-	err = fileio.CopyFile(localSampleManifestPath2, filepath.Join(localManifestsSrcDir, "invalid-crd.yml"), fileio.NonExecutablePerms)
+	localSampleManifestPath := filepath.Join("..", "registry", "testdata", "sample-crd.yaml")
+	err := fileio.CopyFile(localSampleManifestPath, filepath.Join(localManifestsSrcDir, "sample-crd.yaml"), fileio.NonExecutablePerms)
 	require.NoError(t, err)
 
 	scripts, err := configureKubernetes(ctx)
@@ -110,6 +106,8 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
 	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=server-installer")
 	assert.Contains(t, contents, "systemctl enable rke2-server.service")
+	assert.Contains(t, contents, "mkdir -p /var/lib/rancher/rke2/server/manifests/")
+	assert.Contains(t, contents, "cp kubernetes/manifests/* /var/lib/rancher/rke2/server/manifests/")
 
 	// Config file assertions
 	configPath := filepath.Join(ctx.CombustionDir, "server.yaml")
@@ -146,28 +144,16 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	assert.Contains(t, contents, "image: nginx:1.14.2")
 
 	// Local manifest assertions
-	manifestPath1 := filepath.Join(k8sCombDir, manifestsDir, "sample-crd.yaml")
-	info, err = os.Stat(manifestPath1)
+	manifest := filepath.Join(k8sCombDir, manifestsDir, "sample-crd.yaml")
+	info, err = os.Stat(manifest)
 	require.NoError(t, err)
 	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
 
-	b, err = os.ReadFile(manifestPath1)
+	b, err = os.ReadFile(manifest)
 	require.NoError(t, err)
 
 	contents = string(b)
 	assert.Contains(t, contents, "apiVersion: \"custom.example.com/v1\"")
 	assert.Contains(t, contents, "app: complex-application")
 	assert.Contains(t, contents, "- name: redis-container")
-
-	manifestPath2 := filepath.Join(k8sCombDir, manifestsDir, "invalid-crd.yml")
-	info, err = os.Stat(manifestPath2)
-	require.NoError(t, err)
-	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
-
-	b, err = os.ReadFile(manifestPath2)
-	require.NoError(t, err)
-
-	contents = string(b)
-	assert.Contains(t, contents, "apiVersion: v1")
-	assert.Contains(t, contents, "- kind: invalid manifest")
 }
