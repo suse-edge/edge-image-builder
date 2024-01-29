@@ -245,6 +245,9 @@ func TestConfigureRPMSSuccessfulConfig(t *testing.T) {
 		require.NoError(t, os.RemoveAll(rpmDir))
 	}()
 
+	gpgDir := filepath.Join(rpmDir, userGPGsDir)
+	require.NoError(t, os.Mkdir(gpgDir, 0o755))
+
 	ctx.RPMRepoCreator = mockRPMRepoCreator{
 		createFunc: func(path string) error {
 			return nil
@@ -253,6 +256,9 @@ func TestConfigureRPMSSuccessfulConfig(t *testing.T) {
 
 	ctx.RPMResolver = mockRPMResolver{
 		resolveFunc: func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (string, []string, error) {
+			require.NotNil(t, localRPMConfig)
+			assert.Equal(t, rpmDir, localRPMConfig.RPMPath)
+			assert.Equal(t, gpgDir, localRPMConfig.GPGKeysPath)
 			return expectedDir, expectedPkg, nil
 		},
 	}

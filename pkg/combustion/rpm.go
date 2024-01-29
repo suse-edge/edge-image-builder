@@ -16,6 +16,7 @@ import (
 
 const (
 	userRPMsDir         = "rpms"
+	userGPGsDir         = "gpg-keys"
 	modifyRPMScriptName = "10-rpm-install.sh"
 	rpmComponentName    = "RPM"
 )
@@ -37,6 +38,15 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 		rpmDir := generateComponentPath(ctx, userRPMsDir)
 		localRPMConfig = &image.LocalRPMConfig{
 			RPMPath: rpmDir,
+		}
+
+		gpgPath := filepath.Join(rpmDir, userGPGsDir)
+		_, err := os.Stat(gpgPath)
+		if err == nil {
+			localRPMConfig.GPGKeysPath = gpgPath
+		} else if err != nil && !os.IsNotExist(err) {
+			log.AuditComponentFailed(rpmComponentName)
+			return nil, fmt.Errorf("describing GPG directory at '%s': %w", gpgPath, err)
 		}
 	}
 
