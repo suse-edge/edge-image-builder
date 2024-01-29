@@ -21,7 +21,7 @@ const (
 	k8sComponentName        = "kubernetes"
 	k8sDir                  = "kubernetes"
 	k8sConfigDir            = "config"
-  manifestsDir        = "manifests"
+	manifestsDir            = "manifests"
 	k8sInitServerConfigFile = "init_server.yaml"
 	k8sServerConfigFile     = "server.yaml"
 	k8sAgentConfigFile      = "agent.yaml"
@@ -124,11 +124,11 @@ func configureRKE2(ctx *image.Context) (string, error) {
 	}
 
 	templateValues := map[string]any{
-		"apiVIP":      ctx.ImageDefinition.Kubernetes.Network.APIVIP,
-		"apiHost":     ctx.ImageDefinition.Kubernetes.Network.APIHost,
-		"installPath": installPath,
-		"imagesPath":  imagesPath,
-    "manifestsPath": manifestsPath,
+		"apiVIP":        ctx.ImageDefinition.Kubernetes.Network.APIVIP,
+		"apiHost":       ctx.ImageDefinition.Kubernetes.Network.APIHost,
+		"installPath":   installPath,
+		"imagesPath":    imagesPath,
+		"manifestsPath": manifestsPath,
 	}
 
 	singleNode := len(ctx.ImageDefinition.Kubernetes.Nodes) < 2
@@ -253,7 +253,8 @@ func configureManifests(ctx *image.Context) (string, error) {
 		return "", nil
 	}
 
-	manifestDestDir := filepath.Join(ctx.CombustionDir, manifestsDir)
+	manifestsPath := filepath.Join(k8sDir, manifestsDir)
+	manifestDestDir := filepath.Join(ctx.CombustionDir, manifestsPath)
 	err := os.Mkdir(manifestDestDir, os.ModePerm)
 	if err != nil {
 		return "", fmt.Errorf("creating manifests destination dir: %w", err)
@@ -278,5 +279,5 @@ func configureManifests(ctx *image.Context) (string, error) {
 		}
 	}
 
-	return manifestDestDir, nil
+	return manifestsPath, nil
 }

@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/http"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"go.uber.org/zap"
@@ -159,36 +158,4 @@ func DownloadManifests(manifestURLs []string, destPath string) ([]string, error)
 	}
 
 	return manifestPaths, nil
-}
-
-func CopyManifests(src string, dest string) ([]string, error) {
-	if dest == "" {
-		return nil, fmt.Errorf("manifest destination directory not defined")
-	}
-
-	var list []string
-
-	manifests, err := os.ReadDir(src)
-	if err != nil {
-		return nil, fmt.Errorf("reading manifest source dir '%s': %w", src, err)
-	}
-
-	for _, manifest := range manifests {
-		manifestName := strings.ToLower(manifest.Name())
-		if filepath.Ext(manifestName) != ".yaml" && filepath.Ext(manifestName) != ".yml" {
-			zap.S().Warnf("Skipping %s as it is not a yaml file", manifest.Name())
-			continue
-		}
-
-		sourcePath := filepath.Join(src, manifest.Name())
-		destPath := filepath.Join(dest, fmt.Sprintf("lc-%s", manifest.Name()))
-		err := fileio.CopyFile(sourcePath, destPath, fileio.NonExecutablePerms)
-		if err != nil {
-			return nil, fmt.Errorf("copying manifest file %s: %w", sourcePath, err)
-		}
-		list = append(list, manifest.Name())
-
-	}
-
-	return list, nil
 }

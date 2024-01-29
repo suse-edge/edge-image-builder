@@ -338,6 +338,8 @@ func TestConfigureKubernetes_InvalidManifestURL(t *testing.T) {
 	ctx.ImageDefinition.Kubernetes.Manifests.URLs = []string{
 		"k8s.io/examples/application/nginx-app.yaml",
 	}
+	k8sCombDir := filepath.Join(ctx.CombustionDir, k8sDir)
+	require.NoError(t, os.Mkdir(k8sCombDir, os.ModePerm))
 
 	_, err := configureKubernetes(ctx)
 
