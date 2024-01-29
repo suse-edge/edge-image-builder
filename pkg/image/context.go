@@ -17,7 +17,8 @@ type kubernetesScriptInstaller interface {
 }
 
 type kubernetesArtefactDownloader interface {
-	DownloadArtefacts(arch Arch, version, cni string, multusEnabled bool, destinationPath string) (installPath, imagesPath string, err error)
+	DownloadRKE2Artefacts(arch Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error
+	DownloadK3sArtefacts(arch Arch, version, installPath, imagesPath string) error
 }
 
 type rpmResolver interface {

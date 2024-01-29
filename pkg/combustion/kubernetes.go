@@ -18,14 +18,19 @@ import (
 )
 
 const (
-	k8sComponentName        = "kubernetes"
-	k8sDir                  = "kubernetes"
-	k8sConfigDir            = "config"
-	manifestsDir            = "manifests"
+	k8sComponentName = "kubernetes"
+
+	k8sDir          = "kubernetes"
+	k8sConfigDir    = "config"
+	k8sInstallDir   = "install"
+	k8sImagesDir    = "images"
+	k8sManifestsDir = "manifests"
+
 	k8sInitServerConfigFile = "init_server.yaml"
 	k8sServerConfigFile     = "server.yaml"
 	k8sAgentConfigFile      = "agent.yaml"
-	rke2InstallScript       = "15-rke2-install.sh"
+
+	rke2InstallScript = "15-rke2-install.sh"
 )
 
 var (
@@ -180,13 +185,30 @@ func downloadRKE2Artefacts(ctx *image.Context, cluster *kubernetes.Cluster) (ins
 		return "", "", fmt.Errorf("extracting CNI from cluster config: %w", err)
 	}
 
-	return ctx.KubernetesArtefactDownloader.DownloadArtefacts(
+	imagesPath = filepath.Join(k8sDir, k8sImagesDir)
+	imagesDestination := filepath.Join(ctx.CombustionDir, imagesPath)
+	if err = os.MkdirAll(imagesDestination, os.ModePerm); err != nil {
+		return "", "", fmt.Errorf("creating kubernetes images dir: %w", err)
+	}
+
+	installPath = filepath.Join(k8sDir, k8sInstallDir)
+	installDestination := filepath.Join(ctx.CombustionDir, installPath)
+	if err = os.MkdirAll(installDestination, os.ModePerm); err != nil {
+		return "", "", fmt.Errorf("creating kubernetes install dir: %w", err)
+	}
+
+	if err = ctx.KubernetesArtefactDownloader.DownloadRKE2Artefacts(
 		ctx.ImageDefinition.Image.Arch,
 		ctx.ImageDefinition.Kubernetes.Version,
 		cni,
 		multusEnabled,
-		ctx.CombustionDir,
-	)
+		installDestination,
+		imagesDestination,
+	); err != nil {
+		return "", "", fmt.Errorf("downloading artefacts: %w", err)
+	}
+
+	return installPath, imagesPath, nil
 }
 
 func storeRKE2VIPManifest(ctx *image.Context) (string, error) {
@@ -247,13 +269,13 @@ func storeKubernetesConfig(config map[string]any, configPath string) error {
 
 func configureManifests(ctx *image.Context) (string, error) {
 	manifestURLs := ctx.ImageDefinition.Kubernetes.Manifests.URLs
-	localManifestsConfigured := isComponentConfigured(ctx, filepath.Join(k8sDir, manifestsDir))
+	localManifestsConfigured := isComponentConfigured(ctx, filepath.Join(k8sDir, k8sManifestsDir))
 
 	if !localManifestsConfigured && len(manifestURLs) == 0 {
 		return "", nil
 	}
 
-	manifestsPath := filepath.Join(k8sDir, manifestsDir)
+	manifestsPath := filepath.Join(k8sDir, k8sManifestsDir)
 	manifestDestDir := filepath.Join(ctx.CombustionDir, manifestsPath)
 	err := os.Mkdir(manifestDestDir, os.ModePerm)
 	if err != nil {
@@ -261,7 +283,7 @@ func configureManifests(ctx *image.Context) (string, error) {
 	}
 
 	if localManifestsConfigured {
-		localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, manifestsDir)
+		localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sManifestsDir)
 		err = fileio.CopyFiles(localManifestsSrcDir, manifestDestDir, ".yaml", false)
 		if err != nil {
 			return "", fmt.Errorf("copying local manifests to combustion dir: %w", err)

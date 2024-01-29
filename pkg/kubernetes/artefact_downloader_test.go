@@ -8,15 +8,15 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func TestInstallerArtefacts(t *testing.T) {
+func TestRKE2InstallerArtefacts(t *testing.T) {
 	x86Artefacts := []string{"rke2.linux-amd64.tar.gz", "sha256sum-amd64.txt"}
-	assert.Equal(t, x86Artefacts, installerArtefacts(image.ArchTypeX86))
+	assert.Equal(t, x86Artefacts, rke2InstallerArtefacts(image.ArchTypeX86))
 
 	armArtefacts := []string{"rke2.linux-arm64.tar.gz", "sha256sum-arm64.txt"}
-	assert.Equal(t, armArtefacts, installerArtefacts(image.ArchTypeARM))
+	assert.Equal(t, armArtefacts, rke2InstallerArtefacts(image.ArchTypeARM))
 }
 
-func TestImageArtefacts(t *testing.T) {
+func TestRKE2ImageArtefacts(t *testing.T) {
 	tests := []struct {
 		name              string
 		cni               string
@@ -122,7 +122,7 @@ func TestImageArtefacts(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			artefacts, err := imageArtefacts(test.cni, test.multusEnabled, test.arch)
+			artefacts, err := rke2ImageArtefacts(test.cni, test.multusEnabled, test.arch)
 
 			if test.expectedError != "" {
 				require.EqualError(t, err, test.expectedError)
@@ -133,4 +133,20 @@ func TestImageArtefacts(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestK3sInstallerArtefacts(t *testing.T) {
+	x86Artefacts := []string{"k3s"}
+	assert.Equal(t, x86Artefacts, k3sInstallerArtefacts(image.ArchTypeX86))
+
+	armArtefacts := []string{"k3s-arm64"}
+	assert.Equal(t, armArtefacts, k3sInstallerArtefacts(image.ArchTypeARM))
+}
+
+func TestK3sImageArtefacts(t *testing.T) {
+	x86Artefacts := []string{"k3s-airgap-images-amd64.tar.zst"}
+	assert.Equal(t, x86Artefacts, k3sImageArtefacts(image.ArchTypeX86))
+
+	armArtefacts := []string{"k3s-airgap-images-arm64.tar.zst"}
+	assert.Equal(t, armArtefacts, k3sImageArtefacts(image.ArchTypeARM))
 }
