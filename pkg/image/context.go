@@ -21,8 +21,15 @@ type kubernetesArtefactDownloader interface {
 	DownloadK3sArtefacts(arch Arch, version, installPath, imagesPath string) error
 }
 
+type LocalRPMConfig struct {
+	// RPMPath is the path to the directory holding RPMs that will be side-loaded
+	RPMPath string
+	// GPGKeysPath specifies the path to the directory that holds the GPG keys that the side-loaded RPMs have been signed with
+	GPGKeysPath string
+}
+
 type rpmResolver interface {
-	Resolve(packages *Packages, localPackagesPath, outputDir string) (rpmDirPath string, pkgList []string, err error)
+	Resolve(packages *Packages, localRPMConfig *LocalRPMConfig, outputDir string) (rpmDirPath string, pkgList []string, err error)
 }
 
 type rpmRepoCreator interface {
