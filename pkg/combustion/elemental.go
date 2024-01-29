@@ -24,10 +24,9 @@ const (
 var elementalScript string
 
 func configureElemental(ctx *image.Context) ([]string, error) {
-
 	if !isComponentConfigured(ctx, elementalConfigDir) {
 		log.AuditComponentSkipped(elementalComponentName)
-		zap.S().Info("Skipping elemental registration component, configuration is not provided")
+		zap.S().Info("skipping elemental registration component, configuration is not provided")
 		return nil, nil
 	}
 

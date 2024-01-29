@@ -76,7 +76,7 @@ func CopyFileN(src io.Reader, dest string, perms os.FileMode, n int64) error {
 // and copies the directory tree along with all the files.
 //
 // If `copySubDir` is used with 'ext', iterates through all sub-directories
-// and only copies files with the specified extention.
+// and only copies files with the specified extension.
 func CopyFiles(src, dest, ext string, copySubDir bool) error {
 	files, err := os.ReadDir(src)
 	if err != nil {
