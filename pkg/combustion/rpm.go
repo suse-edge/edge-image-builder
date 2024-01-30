@@ -2,7 +2,9 @@ package combustion
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -44,7 +46,7 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 		_, err := os.Stat(gpgPath)
 		if err == nil {
 			localRPMConfig.GPGKeysPath = gpgPath
-		} else if err != nil && !os.IsNotExist(err) {
+		} else if err != nil && !errors.Is(err, fs.ErrNotExist) {
 			log.AuditComponentFailed(rpmComponentName)
 			return nil, fmt.Errorf("describing GPG directory at '%s': %w", gpgPath, err)
 		}
