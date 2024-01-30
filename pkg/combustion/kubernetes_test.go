@@ -172,6 +172,10 @@ func TestConfigureKubernetes_SuccessfulSingleNodeK3sCluster(t *testing.T) {
 
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
 		Version: "v1.29.0+k3s1",
+		Network: image.Network{
+			APIVIP:  "192.168.122.100",
+			APIHost: "api.cluster01.hosted.on.edge.suse.com",
+		},
 	}
 	ctx.KubernetesScriptInstaller = mockKubernetesScriptInstaller{
 		installScript: func(distribution, sourcePath, destPath string) error {
@@ -202,11 +206,33 @@ func TestConfigureKubernetes_SuccessfulSingleNodeK3sCluster(t *testing.T) {
 
 	contents := string(b)
 	assert.Contains(t, contents, "cp kubernetes/images/* /var/lib/rancher/k3s/agent/images/")
+	assert.Contains(t, contents, "cp server.yaml /etc/rancher/k3s/config.yaml")
+	assert.Contains(t, contents, "cp k8s-vip.yaml /var/lib/rancher/k3s/server/manifests/k8s-vip.yaml")
+	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
 	assert.Contains(t, contents, "export INSTALL_K3S_SKIP_DOWNLOAD=true")
 	assert.Contains(t, contents, "export INSTALL_K3S_SKIP_START=true")
 	assert.Contains(t, contents, "export INSTALL_K3S_BIN_DIR=/opt/k3s")
 	assert.Contains(t, contents, "chmod +x kubernetes/install/cool-k3s-binary")
 	assert.Contains(t, contents, "cp kubernetes/install/cool-k3s-binary $INSTALL_K3S_BIN_DIR/k3s")
+
+	// Config file assertions
+	configPath := filepath.Join(ctx.CombustionDir, "server.yaml")
+
+	info, err = os.Stat(configPath)
+	require.NoError(t, err)
+
+	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
+
+	b, err = os.ReadFile(configPath)
+	require.NoError(t, err)
+
+	var configContents map[string]any
+	require.NoError(t, yaml.Unmarshal(b, &configContents))
+
+	assert.Nil(t, configContents["cni"])
+	assert.Nil(t, configContents["server"])
+	assert.Equal(t, []any{"192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
+	assert.Equal(t, []any{"servicelb"}, configContents["disable"])
 }
 
 func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
@@ -249,7 +275,7 @@ func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
 	contents := string(b)
 	assert.Contains(t, contents, "cp kubernetes/images/* /var/lib/rancher/rke2/agent/images/")
 	assert.Contains(t, contents, "cp server.yaml /etc/rancher/rke2/config.yaml")
-	assert.Contains(t, contents, "cp rke2-vip.yaml /var/lib/rancher/rke2/server/manifests/rke2-vip.yaml")
+	assert.Contains(t, contents, "cp k8s-vip.yaml /var/lib/rancher/rke2/server/manifests/k8s-vip.yaml")
 	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
 	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=kubernetes/install")
 	assert.Contains(t, contents, "systemctl enable rke2-server.service")
@@ -342,7 +368,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	assert.Contains(t, contents, "cp kubernetes/images/* /var/lib/rancher/rke2/agent/images/")
 	assert.Contains(t, contents, "cp $CONFIGFILE /etc/rancher/rke2/config.yaml")
 	assert.Contains(t, contents, "if [ \"$HOSTNAME\" = node1.suse.com ]; then")
-	assert.Contains(t, contents, "cp rke2-vip.yaml /var/lib/rancher/rke2/server/manifests/rke2-vip.yaml")
+	assert.Contains(t, contents, "cp k8s-vip.yaml /var/lib/rancher/rke2/server/manifests/k8s-vip.yaml")
 	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
 	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=kubernetes/install")
 	assert.Contains(t, contents, "systemctl enable rke2-$NODETYPE.service")

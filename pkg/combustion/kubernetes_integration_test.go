@@ -102,7 +102,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	contents := string(b)
 	assert.Contains(t, contents, "cp kubernetes/images/* /var/lib/rancher/rke2/agent/images/")
 	assert.Contains(t, contents, "cp server.yaml /etc/rancher/rke2/config.yaml")
-	assert.Contains(t, contents, "cp rke2-vip.yaml /var/lib/rancher/rke2/server/manifests/rke2-vip.yaml")
+	assert.Contains(t, contents, "cp k8s-vip.yaml /var/lib/rancher/rke2/server/manifests/k8s-vip.yaml")
 	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
 	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=kubernetes/install")
 	assert.Contains(t, contents, "systemctl enable rke2-server.service")

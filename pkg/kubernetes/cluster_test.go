@@ -9,8 +9,9 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func TestNewCluster_SingleNode_MissingConfig(t *testing.T) {
+func TestNewCluster_SingleNodeRKE2_MissingConfig(t *testing.T) {
 	kubernetes := &image.Kubernetes{
+		Version: "v1.29.0+rke2r1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP:  "192.168.122.50",
@@ -23,6 +24,32 @@ func TestNewCluster_SingleNode_MissingConfig(t *testing.T) {
 	require.NotNil(t, cluster.ServerConfig)
 	assert.Equal(t, "cilium", cluster.ServerConfig["cni"])
 	assert.Equal(t, []string{"192.168.122.50", "api.suse.edge.com"}, cluster.ServerConfig["tls-san"])
+	assert.Nil(t, cluster.ServerConfig["token"])
+	assert.Nil(t, cluster.ServerConfig["server"])
+	assert.Nil(t, cluster.ServerConfig["selinux"])
+	assert.Nil(t, cluster.ServerConfig["disable"])
+
+	assert.Empty(t, cluster.InitialiserName)
+	assert.Nil(t, cluster.InitialiserConfig)
+	assert.Nil(t, cluster.AgentConfig)
+}
+
+func TestNewCluster_SingleNodeK3s_MissingConfig(t *testing.T) {
+	kubernetes := &image.Kubernetes{
+		Version: "v1.29.0+k3s1",
+		Network: image.Network{
+			APIHost: "api.suse.edge.com",
+			APIVIP:  "192.168.122.50",
+		},
+	}
+
+	cluster, err := NewCluster(kubernetes, "")
+	require.NoError(t, err)
+
+	require.NotNil(t, cluster.ServerConfig)
+	assert.Equal(t, []string{"192.168.122.50", "api.suse.edge.com"}, cluster.ServerConfig["tls-san"])
+	assert.Equal(t, []string{"servicelb"}, cluster.ServerConfig["disable"])
+	assert.Nil(t, cluster.ServerConfig["cni"])
 	assert.Nil(t, cluster.ServerConfig["token"])
 	assert.Nil(t, cluster.ServerConfig["server"])
 	assert.Nil(t, cluster.ServerConfig["selinux"])
@@ -310,6 +337,67 @@ func TestAppendClusterTLSSAN(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			appendClusterTLSSAN(test.config, test.apiHost)
 			assert.Equal(t, test.expectedTLSSAN, test.config["tls-san"])
+		})
+	}
+}
+
+func TestAppendClusterDisabledServices(t *testing.T) {
+	tests := []struct {
+		name             string
+		config           map[string]any
+		service          string
+		expectedServices any
+	}{
+		{
+			name:             "Empty services",
+			config:           map[string]any{},
+			service:          "",
+			expectedServices: nil,
+		},
+		{
+			name:             "Missing service",
+			config:           map[string]any{},
+			service:          "servicelb",
+			expectedServices: []string{"servicelb"},
+		},
+		{
+			name: "Invalid service",
+			config: map[string]any{
+				"disable": 5,
+			},
+			service:          "servicelb",
+			expectedServices: []string{"servicelb"},
+		},
+		{
+			name: "Existing service string",
+			config: map[string]any{
+				"disable": "traefik",
+			},
+			service:          "servicelb",
+			expectedServices: []string{"traefik", "servicelb"},
+		},
+		{
+			name: "Existing service string list",
+			config: map[string]any{
+				"disable": []string{"traefik"},
+			},
+			service:          "servicelb",
+			expectedServices: []string{"traefik", "servicelb"},
+		},
+		{
+			name: "Existing service list",
+			config: map[string]any{
+				"disable": []any{"traefik"},
+			},
+			service:          "servicelb",
+			expectedServices: []any{"traefik", "servicelb"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			appendDisabledServices(test.config, test.service)
+			assert.Equal(t, test.expectedServices, test.config["disable"])
 		})
 	}
 }

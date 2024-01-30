@@ -65,10 +65,12 @@ metadata:
     serviceType: kubernetes-vip
 spec:
   ports:
+{{- if .RKE2 }}
   - name: rke2-api
     port: 9345
     protocol: TCP
     targetPort: 9345
+{{- end }}
   - name: k8s-api
     port: 6443
     protocol: TCP
