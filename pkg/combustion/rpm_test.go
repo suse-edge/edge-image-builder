@@ -222,6 +222,22 @@ func TestConfigureRPMSError(t *testing.T) {
 	}
 }
 
+func TestConfigureRPMSMissingGPGDir(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	rpmDir := filepath.Join(ctx.ImageConfigDir, userRPMsDir)
+	require.NoError(t, os.Mkdir(rpmDir, 0o755))
+	defer func() {
+		require.NoError(t, os.RemoveAll(rpmDir))
+	}()
+
+	_, err := configureRPMs(ctx)
+
+	expectedErr := fmt.Sprintf("GPG validation is enabled, but 'gpg-keys' directory is missing: stat %s/gpg-keys: no such file or directory", rpmDir)
+	assert.EqualError(t, err, expectedErr)
+}
+
 func TestConfigureRPMSSuccessfulConfig(t *testing.T) {
 	expectedRepoName := "bar"
 	expectedDir := "/foo/bar"
