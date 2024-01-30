@@ -222,7 +222,7 @@ func TestConfigureRPMSError(t *testing.T) {
 	}
 }
 
-func TestConfigureRPMSMissingGPGDir(t *testing.T) {
+func TestConfigureRPMSGPGDirError(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -232,10 +232,43 @@ func TestConfigureRPMSMissingGPGDir(t *testing.T) {
 		require.NoError(t, os.RemoveAll(rpmDir))
 	}()
 
-	_, err := configureRPMs(ctx)
+	tests := []struct {
+		name         string
+		expectedErr  string
+		pkgs         image.Packages
+		createGPGDir bool
+	}{
+		{
+			name:         "Disabled GPG validation, but existing GPG dir",
+			createGPGDir: true,
+			pkgs: image.Packages{
+				NoGPGCheck: true,
+			},
+			expectedErr: fmt.Sprintf("found existing '%s' directory, but GPG validaiton is disabled", userGPGsDir),
+		},
+		{
+			name:        "Enabled GPG validation, but missing GPG dir",
+			pkgs:        image.Packages{},
+			expectedErr: "GPG validation is enabled, but 'gpg-keys' directory is missing",
+		},
+	}
 
-	expectedErr := fmt.Sprintf("GPG validation is enabled, but 'gpg-keys' directory is missing: stat %s/gpg-keys: no such file or directory", rpmDir)
-	assert.EqualError(t, err, expectedErr)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctx.ImageDefinition.OperatingSystem.Packages = test.pkgs
+
+			gpgDir := filepath.Join(rpmDir, userGPGsDir)
+			if test.createGPGDir {
+				require.NoError(t, os.Mkdir(gpgDir, 0o755))
+			}
+
+			_, err := configureRPMs(ctx)
+			require.Error(t, err)
+			assert.EqualError(t, err, test.expectedErr)
+
+			require.NoError(t, os.RemoveAll(gpgDir))
+		})
+	}
 }
 
 func TestConfigureRPMSSuccessfulConfig(t *testing.T) {
