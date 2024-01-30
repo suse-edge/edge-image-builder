@@ -18,7 +18,7 @@ func setupCertificatesConfigDir(t *testing.T) (ctx *image.Context, teardown func
 	err := os.Mkdir(testCertsDir, 0o755)
 	require.NoError(t, err)
 
-	testFilenames := []string{"foo", "bar.pem", "baz.pem"}
+	testFilenames := []string{"foo", "bar.pem", "baz.pem", "wombat.crt"}
 	for _, filename := range testFilenames {
 		path := filepath.Join(testCertsDir, filename)
 		err = os.WriteFile(path, []byte(""), 0o600)
@@ -40,7 +40,7 @@ func TestCopyCertificates(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedCertsDir := filepath.Join(ctx.CombustionDir, certsConfigDir)
-	expectedFilenames := []string{"bar.pem", "baz.pem"}
+	expectedFilenames := []string{"bar.pem", "baz.pem", "wombat.crt"}
 	entries, err := os.ReadDir(expectedCertsDir)
 	require.NoError(t, err)
 	assert.Len(t, entries, len(expectedFilenames))

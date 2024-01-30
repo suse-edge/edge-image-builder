@@ -15,11 +15,11 @@ import (
 
 const (
 	certsComponentName = "certificates"
-	certsScriptName    = "30-certificates.sh"
+	certsScriptName    = "07-certificates.sh"
 	certsConfigDir     = "certificates"
 )
 
-//go:embed templates/30-certificates.sh.tpl
+//go:embed templates/07-certificates.sh.tpl
 var certsScriptTemplate string
 
 func configureCertificates(ctx *image.Context) ([]string, error) {
@@ -52,6 +52,10 @@ func copyCertificates(ctx *image.Context) error {
 	}
 
 	if err := fileio.CopyFiles(srcDir, destDir, ".pem", false); err != nil {
+		return fmt.Errorf("copying pem files: %w", err)
+	}
+
+	if err := fileio.CopyFiles(srcDir, destDir, ".crt", false); err != nil {
 		return fmt.Errorf("copying certificates: %w", err)
 	}
 
