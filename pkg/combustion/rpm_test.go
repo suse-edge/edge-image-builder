@@ -274,14 +274,14 @@ func TestConfigureRPMSSuccessfulConfig(t *testing.T) {
 		resolveFunc: func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (string, []string, error) {
 			if localRPMConfig == nil {
 				return "", nil, fmt.Errorf("local rpm config is nil")
-			} else {
-				if rpmDir != localRPMConfig.RPMPath {
-					return "", nil, fmt.Errorf("rpm path mismatch. Expected %s, got %s", rpmDir, localRPMConfig.RPMPath)
-				}
-				if gpgDir != localRPMConfig.GPGKeysPath {
-					return "", nil, fmt.Errorf("gpg path mismatch. Expected %s, got %s", gpgDir, localRPMConfig.GPGKeysPath)
-				}
 			}
+			if rpmDir != localRPMConfig.RPMPath {
+				return "", nil, fmt.Errorf("rpm path mismatch. Expected %s, got %s", rpmDir, localRPMConfig.RPMPath)
+			}
+			if gpgDir != localRPMConfig.GPGKeysPath {
+				return "", nil, fmt.Errorf("gpg path mismatch. Expected %s, got %s", gpgDir, localRPMConfig.GPGKeysPath)
+			}
+
 			return expectedDir, expectedPkg, nil
 		},
 	}
