@@ -44,9 +44,22 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 
 		gpgPath := filepath.Join(rpmDir, userGPGsDir)
 		_, err := os.Stat(gpgPath)
-		if err == nil {
-			localRPMConfig.GPGKeysPath = gpgPath
-		} else if err != nil && !errors.Is(err, fs.ErrNotExist) {
+
+		packages := ctx.ImageDefinition.OperatingSystem.Packages
+		switch {
+		case err == nil:
+			if !packages.NoGPGCheck {
+				localRPMConfig.GPGKeysPath = gpgPath
+			} else {
+				log.Auditf("WARNING: Found %s directory, when GPG validation is disabled", gpgPath)
+				zap.S().Warn("Skipping GPG key inclusion as GPG validation is disabled")
+			}
+		case errors.Is(err, fs.ErrNotExist):
+			if !packages.NoGPGCheck {
+				log.AuditComponentFailed(rpmComponentName)
+				return nil, fmt.Errorf("GPG validation is enabled, but '%s' directory is missing: %w", userGPGsDir, err)
+			}
+		case err != nil:
 			log.AuditComponentFailed(rpmComponentName)
 			return nil, fmt.Errorf("describing GPG directory at '%s': %w", gpgPath, err)
 		}
