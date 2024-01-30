@@ -88,6 +88,10 @@ func Configure(ctx *image.Context) error {
 			name:     k8sComponentName,
 			runnable: configureKubernetes,
 		},
+		{
+			name:     certsComponentName,
+			runnable: configureCertificates,
+		},
 	}
 
 	for _, component := range combustionComponents {
