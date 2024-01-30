@@ -13,9 +13,9 @@
 #  NoGPGCheck   - when set to true skips the GPG validation for all third-party repositories and local RPMs
 FROM {{ .BaseImage }}
 
-{{ if and (ne .FromRPMPath "") (ne .ToRPMPath "") -}}
+{{ if and .FromRPMPath .ToRPMPath -}}
 COPY {{ .FromRPMPath }} {{ .ToRPMPath }}
-{{ if and (ne .FromGPGPath "") (ne .ToGPGPath "") -}}
+{{ if and .FromGPGPath .ToGPGPath -}}
 COPY {{ .FromGPGPath }} {{ .ToGPGPath }}
 {{ end -}}
 {{ end -}}
@@ -39,11 +39,11 @@ RUN counter=1 && \
     done
 {{ end -}}
 
-{{ if and (ne .LocalGPGList "") (not .NoGPGCheck) }}
+{{ if and .LocalGPGList (not .NoGPGCheck) }}
 RUN rpm --import {{ .LocalGPGList }}
 {{ end -}}
 
-{{ if and (ne .LocalRPMList "") (not .NoGPGCheck) }}
+{{ if and .LocalRPMList (not .NoGPGCheck) }}
 RUN rpm -Kv {{ .LocalRPMList }}
 {{ end -}}
 
