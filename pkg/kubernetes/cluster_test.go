@@ -82,8 +82,9 @@ func TestNewCluster_SingleNode_ExistingConfig(t *testing.T) {
 	assert.Nil(t, cluster.AgentConfig)
 }
 
-func TestNewCluster_MultiNode_MissingConfig(t *testing.T) {
+func TestNewCluster_MultiNodeRKE2_MissingConfig(t *testing.T) {
 	kubernetes := &image.Kubernetes{
+		Version: "v1.29.0+rke2r1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP:  "192.168.122.50",
@@ -130,8 +131,9 @@ func TestNewCluster_MultiNode_MissingConfig(t *testing.T) {
 	assert.Nil(t, cluster.ServerConfig["debug"])
 }
 
-func TestNewCluster_MultiNode_ExistingConfig(t *testing.T) {
+func TestNewCluster_MultiNodeRKE2_ExistingConfig(t *testing.T) {
 	kubernetes := &image.Kubernetes{
+		Version: "v1.29.0+rke2r1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP:  "192.168.122.50",
@@ -273,10 +275,10 @@ func TestIdentifyInitialiserNode(t *testing.T) {
 func TestSetClusterAPIAddress(t *testing.T) {
 	config := map[string]any{}
 
-	setClusterAPIAddress(config, "")
+	setClusterAPIAddress(config, "", 9345)
 	assert.NotContains(t, config, "server")
 
-	setClusterAPIAddress(config, "192.168.122.50")
+	setClusterAPIAddress(config, "192.168.122.50", 9345)
 	assert.Equal(t, "https://192.168.122.50:9345", config["server"])
 }
 
