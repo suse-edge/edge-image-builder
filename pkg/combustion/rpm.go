@@ -35,6 +35,12 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 
 	zap.L().Info("Configuring RPM component...")
 
+	packages := &ctx.ImageDefinition.OperatingSystem.Packages
+	if packages.NoGPGCheck {
+		log.Auditf("WARNING: Running EIB with disabled GPG RPM validation is intended for development purposes only")
+		zap.S().Warn("Disabling GPG validation for the EIB RPM resolver")
+	}
+
 	var localRPMConfig *image.LocalRPMConfig
 	if isComponentConfigured(ctx, userRPMsDir) {
 		rpmDir := generateComponentPath(ctx, userRPMsDir)
@@ -44,20 +50,18 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 
 		gpgPath := filepath.Join(rpmDir, userGPGsDir)
 		_, err := os.Stat(gpgPath)
-
-		packages := ctx.ImageDefinition.OperatingSystem.Packages
 		switch {
 		case err == nil:
 			if !packages.NoGPGCheck {
 				localRPMConfig.GPGKeysPath = gpgPath
 			} else {
-				log.Auditf("WARNING: Found %s directory, when GPG validation is disabled", gpgPath)
-				zap.S().Warn("Skipping GPG key inclusion as GPG validation is disabled")
+				log.AuditComponentFailed(rpmComponentName)
+				return nil, fmt.Errorf("found existing '%s' directory, but GPG validaiton is disabled", userGPGsDir)
 			}
 		case errors.Is(err, fs.ErrNotExist):
 			if !packages.NoGPGCheck {
 				log.AuditComponentFailed(rpmComponentName)
-				return nil, fmt.Errorf("GPG validation is enabled, but '%s' directory is missing: %w", userGPGsDir, err)
+				return nil, fmt.Errorf("GPG validation is enabled, but '%s' directory is missing", userGPGsDir)
 			}
 		case err != nil:
 			log.AuditComponentFailed(rpmComponentName)
@@ -66,7 +70,7 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 	}
 
 	log.Audit("Resolving package dependencies...")
-	repoPath, packages, err := ctx.RPMResolver.Resolve(&ctx.ImageDefinition.OperatingSystem.Packages, localRPMConfig, ctx.CombustionDir)
+	repoPath, pkgsList, err := ctx.RPMResolver.Resolve(packages, localRPMConfig, ctx.CombustionDir)
 	if err != nil {
 		log.AuditComponentFailed(rpmComponentName)
 		return nil, fmt.Errorf("resolving rpm/package dependencies: %w", err)
@@ -77,7 +81,7 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("creating resolved rpm repository: %w", err)
 	}
 
-	script, err := writeRPMScript(ctx, repoPath, packages)
+	script, err := writeRPMScript(ctx, repoPath, pkgsList)
 	if err != nil {
 		log.AuditComponentFailed(rpmComponentName)
 		return nil, fmt.Errorf("writing the RPM install script %s: %w", modifyRPMScriptName, err)
