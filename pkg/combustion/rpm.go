@@ -37,7 +37,7 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 
 	packages := &ctx.ImageDefinition.OperatingSystem.Packages
 	if packages.NoGPGCheck {
-		log.Auditf("WARNING: Running EIB with disabled GPG RPM validation is intended for development purposes only")
+		log.Auditf("WARNING: Running EIB with disabled GPG validation is intended for development purposes only")
 		zap.S().Warn("Disabling GPG validation for the EIB RPM resolver")
 	}
 
