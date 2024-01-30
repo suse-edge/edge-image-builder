@@ -256,9 +256,16 @@ func TestConfigureRPMSSuccessfulConfig(t *testing.T) {
 
 	ctx.RPMResolver = mockRPMResolver{
 		resolveFunc: func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (string, []string, error) {
-			require.NotNil(t, localRPMConfig)
-			assert.Equal(t, rpmDir, localRPMConfig.RPMPath)
-			assert.Equal(t, gpgDir, localRPMConfig.GPGKeysPath)
+			if localRPMConfig == nil {
+				return "", nil, fmt.Errorf("local rpm config is nil")
+			} else {
+				if rpmDir != localRPMConfig.RPMPath {
+					return "", nil, fmt.Errorf("rpm path mismatch. Expected %s, got %s", rpmDir, localRPMConfig.RPMPath)
+				}
+				if gpgDir != localRPMConfig.GPGKeysPath {
+					return "", nil, fmt.Errorf("gpg path mismatch. Expected %s, got %s", gpgDir, localRPMConfig.GPGKeysPath)
+				}
+			}
 			return expectedDir, expectedPkg, nil
 		},
 	}
