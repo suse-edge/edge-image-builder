@@ -145,7 +145,7 @@ the structure of this directory will be better fleshed out. For now, the require
 There are a number of optional directories that may be included in the image configuration directory:
 
 * `certificates` - If present, all files with the extension ".pem" will be installed as CA certificates
-  in the built image.
+  in the built image. Note that ".crt" files are permitted, but please ensure they have a ".pem" extension.
 * `custom` - May be included to inject files into the built image. Files are organized by subdirectory as follows:
   * `scripts` - If present, all the files in this directory will be included in the built image and automatically
     executed during the combustion phase.
