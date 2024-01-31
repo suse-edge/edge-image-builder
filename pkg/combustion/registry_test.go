@@ -254,12 +254,12 @@ func TestWriteRegistriesManifestValid(t *testing.T) {
 	hostnames := []string{"hello-world:latest", "rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1", "quay.io"}
 
 	// Test
-	err := writeRegistriesManifest(ctx, hostnames)
+	err := writeRegistryMirrors(ctx, hostnames)
 
 	// Verify
 	require.NoError(t, err)
 
-	manifestFileName := filepath.Join(ctx.CombustionDir, registriesManifestFileName)
+	manifestFileName := filepath.Join(ctx.CombustionDir, registryMirrorsFileName)
 	_, err = os.Stat(manifestFileName)
 	require.NoError(t, err)
 

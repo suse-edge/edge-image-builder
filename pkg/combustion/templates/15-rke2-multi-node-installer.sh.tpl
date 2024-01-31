@@ -48,7 +48,7 @@ mkdir -p /etc/rancher/rke2/
 cp $CONFIGFILE /etc/rancher/rke2/config.yaml
 
 {{- if .manifestsPath }}
-cp {{ .registriesManifest }} /etc/rancher/rke2/registries.yaml
+cp {{ .registryMirrors }} /etc/rancher/rke2/registries.yaml
 {{- end }}
 
 export INSTALL_RKE2_TAR_PREFIX=/opt/rke2

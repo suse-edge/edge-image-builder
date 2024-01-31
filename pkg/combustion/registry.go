@@ -17,15 +17,15 @@ import (
 )
 
 const (
-	haulerManifestYamlName     = "hauler-manifest.yaml"
-	registryScriptName         = "14-embedded-registry.sh"
-	registryTarName            = "embedded-registry.tar.zst"
-	registryComponentName      = "embedded artifact registry"
-	registryLogFileName        = "embedded-registry.log"
-	hauler                     = "hauler"
-	registryDir                = "registry"
-	registryPort               = "6545"
-	registriesManifestFileName = "registries.yaml"
+	haulerManifestYamlName  = "hauler-manifest.yaml"
+	registryScriptName      = "14-embedded-registry.sh"
+	registryTarName         = "embedded-registry.tar.zst"
+	registryComponentName   = "embedded artifact registry"
+	registryLogFileName     = "embedded-registry.log"
+	hauler                  = "hauler"
+	registryDir             = "registry"
+	registryPort            = "6545"
+	registryMirrorsFileName = "registries.yaml"
 )
 
 //go:embed templates/hauler-manifest.yaml.tpl
@@ -73,12 +73,14 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("getting all container images: %w", err)
 	}
 
-	hostnames := getImageHostnames(containerImages)
+	if ctx.ImageDefinition.Kubernetes.Version != "" {
+		hostnames := getImageHostnames(containerImages)
 
-	err = writeRegistriesManifest(ctx, hostnames)
-	if err != nil {
-		log.AuditComponentFailed(registryComponentName)
-		return nil, fmt.Errorf("writing registries manifest: %w", err)
+		err = writeRegistryMirrors(ctx, hostnames)
+		if err != nil {
+			log.AuditComponentFailed(registryComponentName)
+			return nil, fmt.Errorf("writing registry mirrors: %w", err)
+		}
 	}
 
 	err = writeHaulerManifest(ctx, containerImages, ctx.ImageDefinition.Kubernetes.HelmCharts)
@@ -248,8 +250,8 @@ func getImageHostnames(containerImages []image.ContainerImage) []string {
 	return hostnames
 }
 
-func writeRegistriesManifest(ctx *image.Context, hostnames []string) error {
-	registriesYamlFile := filepath.Join(ctx.CombustionDir, registriesManifestFileName)
+func writeRegistryMirrors(ctx *image.Context, hostnames []string) error {
+	registriesYamlFile := filepath.Join(ctx.CombustionDir, registryMirrorsFileName)
 	registriesDef := struct {
 		Hostnames []string
 		Port      string
@@ -258,13 +260,13 @@ func writeRegistriesManifest(ctx *image.Context, hostnames []string) error {
 		Port:      registryPort,
 	}
 
-	data, err := template.Parse(registriesManifestFileName, k8sRegistriesManifest, registriesDef)
+	data, err := template.Parse(registryMirrorsFileName, k8sRegistriesManifest, registriesDef)
 	if err != nil {
-		return fmt.Errorf("applying template to %s: %w", registriesManifestFileName, err)
+		return fmt.Errorf("applying template to %s: %w", registryMirrorsFileName, err)
 	}
 
 	if err := os.WriteFile(registriesYamlFile, []byte(data), fileio.NonExecutablePerms); err != nil {
-		return fmt.Errorf("writing file %s: %w", registriesManifestFileName, err)
+		return fmt.Errorf("writing file %s: %w", registryMirrorsFileName, err)
 	}
 
 	return nil

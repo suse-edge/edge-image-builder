@@ -108,7 +108,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	assert.Contains(t, contents, "systemctl enable rke2-server.service")
 	assert.Contains(t, contents, "mkdir -p /var/lib/rancher/rke2/server/manifests/")
 	assert.Contains(t, contents, "cp kubernetes/manifests/* /var/lib/rancher/rke2/server/manifests/")
-	assert.Contains(t, contents, "cp "+registriesManifestFileName+" /etc/rancher/rke2/registries.yaml")
+	assert.Contains(t, contents, "cp "+registryMirrorsFileName+" /etc/rancher/rke2/registries.yaml")
 
 	// Config file assertions
 	configPath := filepath.Join(ctx.CombustionDir, "server.yaml")
