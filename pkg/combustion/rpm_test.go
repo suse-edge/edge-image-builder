@@ -249,7 +249,7 @@ func TestConfigureRPMSGPGDirError(t *testing.T) {
 		{
 			name:        "Enabled GPG validation, but missing GPG dir",
 			pkgs:        image.Packages{},
-			expectedErr: "GPG validation is enabled, but 'gpg-keys' directory is missing",
+			expectedErr: "GPG validation is enabled, but 'gpg-keys' directory is missing for side-loaded RPMs",
 		},
 	}
 

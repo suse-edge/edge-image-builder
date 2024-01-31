@@ -61,7 +61,7 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 		case errors.Is(err, fs.ErrNotExist):
 			if !packages.NoGPGCheck {
 				log.AuditComponentFailed(rpmComponentName)
-				return nil, fmt.Errorf("GPG validation is enabled, but '%s' directory is missing", userGPGsDir)
+				return nil, fmt.Errorf("GPG validation is enabled, but '%s' directory is missing for side-loaded RPMs", userGPGsDir)
 			}
 		case err != nil:
 			log.AuditComponentFailed(rpmComponentName)
