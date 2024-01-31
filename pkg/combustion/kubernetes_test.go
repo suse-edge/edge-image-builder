@@ -79,16 +79,15 @@ func TestConfigureKubernetes_UnsupportedVersion(t *testing.T) {
 }
 
 func TestConfigureKubernetes_ScriptInstallerErrorK3s(t *testing.T) {
-	ctx := &image.Context{
-		ImageDefinition: &image.Definition{
-			Kubernetes: image.Kubernetes{
-				Version: "v1.29.0+k3s1",
-			},
-		},
-		KubernetesScriptInstaller: mockKubernetesScriptInstaller{
-			installScript: func(distribution, sourcePath, destPath string) error {
-				return fmt.Errorf("some error")
-			},
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
+		Version: "v1.29.0+k3s1",
+	}
+	ctx.KubernetesScriptInstaller = mockKubernetesScriptInstaller{
+		installScript: func(distribution, sourcePath, destPath string) error {
+			return fmt.Errorf("some error")
 		},
 	}
 
@@ -99,16 +98,15 @@ func TestConfigureKubernetes_ScriptInstallerErrorK3s(t *testing.T) {
 }
 
 func TestConfigureKubernetes_ScriptInstallerErrorRKE2(t *testing.T) {
-	ctx := &image.Context{
-		ImageDefinition: &image.Definition{
-			Kubernetes: image.Kubernetes{
-				Version: "v1.29.0+rke2r1",
-			},
-		},
-		KubernetesScriptInstaller: mockKubernetesScriptInstaller{
-			installScript: func(distribution, sourcePath, destPath string) error {
-				return fmt.Errorf("some error")
-			},
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
+		Version: "v1.29.0+rke2r1",
+	}
+	ctx.KubernetesScriptInstaller = mockKubernetesScriptInstaller{
+		installScript: func(distribution, sourcePath, destPath string) error {
+			return fmt.Errorf("some error")
 		},
 	}
 
