@@ -359,7 +359,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sCluster(t *testing.T) {
 	assert.Equal(t, "123", configContents["token"])
 	assert.Equal(t, "https://192.168.122.100:6443", configContents["server"])
 	assert.Equal(t, []any{"192-168-122-100.sslip.io", "192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
-	assert.Equal(t, []any{"servicelb"}, configContents["disable"])
+	assert.Nil(t, configContents["disable"])
 	assert.Nil(t, configContents["cluster-init"])
 }
 
