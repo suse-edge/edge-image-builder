@@ -64,7 +64,6 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 	// Ensure the agent uses the same cluster configuration values as the server
 	agentConfig[tokenKey] = serverConfig[tokenKey]
 	agentConfig[serverKey] = serverConfig[serverKey]
-	agentConfig[tlsSANKey] = serverConfig[tlsSANKey]
 	if strings.Contains(kubernetes.Version, image.KubernetesDistroRKE2) {
 		agentConfig[cniKey] = serverConfig[cniKey]
 	}
