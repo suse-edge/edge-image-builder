@@ -56,7 +56,7 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 				localRPMConfig.GPGKeysPath = gpgPath
 			} else {
 				log.AuditComponentFailed(rpmComponentName)
-				return nil, fmt.Errorf("found existing '%s' directory, but GPG validaiton is disabled", userGPGsDir)
+				return nil, fmt.Errorf("found existing '%s' directory, but GPG validation is disabled", userGPGsDir)
 			}
 		case errors.Is(err, fs.ErrNotExist):
 			if !packages.NoGPGCheck {

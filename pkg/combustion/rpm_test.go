@@ -244,7 +244,7 @@ func TestConfigureRPMSGPGDirError(t *testing.T) {
 			pkgs: image.Packages{
 				NoGPGCheck: true,
 			},
-			expectedErr: fmt.Sprintf("found existing '%s' directory, but GPG validaiton is disabled", userGPGsDir),
+			expectedErr: fmt.Sprintf("found existing '%s' directory, but GPG validation is disabled", userGPGsDir),
 		},
 		{
 			name:        "Enabled GPG validation, but missing GPG dir",
