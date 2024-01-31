@@ -35,7 +35,7 @@ var haulerManifest string
 var registryScript string
 
 //go:embed templates/registries.yaml.tpl
-var k8sRegistriesManifest string
+var k8sRegistryMirrors string
 
 func configureRegistry(ctx *image.Context) ([]string, error) {
 	if !IsEmbeddedArtifactRegistryConfigured(ctx) {
@@ -260,7 +260,7 @@ func writeRegistryMirrors(ctx *image.Context, hostnames []string) error {
 		Port:      registryPort,
 	}
 
-	data, err := template.Parse(registryMirrorsFileName, k8sRegistriesManifest, registriesDef)
+	data, err := template.Parse(registryMirrorsFileName, k8sRegistryMirrors, registriesDef)
 	if err != nil {
 		return fmt.Errorf("applying template to %s: %w", registryMirrorsFileName, err)
 	}

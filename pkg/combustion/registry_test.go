@@ -246,7 +246,7 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 	}
 }
 
-func TestWriteRegistriesManifestValid(t *testing.T) {
+func TestWriteRegistryMirrorsValid(t *testing.T) {
 	// Setup
 	ctx, teardown := setupContext(t)
 	defer teardown()
