@@ -235,6 +235,134 @@ func TestConfigureKubernetes_SuccessfulSingleNodeK3sCluster(t *testing.T) {
 	assert.Equal(t, []any{"servicelb"}, configContents["disable"])
 }
 
+func TestConfigureKubernetes_SuccessfulMultiNodeK3sCluster(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
+		Version: "v1.29.0+k3s1",
+		Network: image.Network{
+			APIHost: "api.cluster01.hosted.on.edge.suse.com",
+			APIVIP:  "192.168.122.100",
+		},
+		Nodes: []image.Node{
+			{
+				Hostname: "node1.suse.com",
+				Type:     "server",
+			},
+			{
+				Hostname: "node2.suse.com",
+				Type:     "agent",
+			},
+		},
+	}
+	ctx.KubernetesScriptInstaller = mockKubernetesScriptInstaller{
+		installScript: func(distribution, sourcePath, destPath string) error {
+			return nil
+		},
+	}
+	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
+		downloadK3sArtefacts: func(arch image.Arch, version, installPath, imagesPath string) error {
+			binary := filepath.Join(installPath, "cool-k3s-binary")
+			return os.WriteFile(binary, nil, os.ModePerm)
+		},
+	}
+
+	serverConfig := map[string]any{
+		"token": "123",
+		"tls-san": []string{
+			"192-168-122-100.sslip.io",
+		},
+	}
+
+	b, err := yaml.Marshal(serverConfig)
+	require.NoError(t, err)
+
+	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
+	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
+	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
+
+	scripts, err := configureKubernetes(ctx)
+	require.NoError(t, err)
+	require.Len(t, scripts, 1)
+
+	// Script file assertions
+	scriptPath := filepath.Join(ctx.CombustionDir, scripts[0])
+
+	info, err := os.Stat(scriptPath)
+	require.NoError(t, err)
+
+	assert.Equal(t, fileio.ExecutablePerms, info.Mode())
+
+	b, err = os.ReadFile(scriptPath)
+	require.NoError(t, err)
+
+	contents := string(b)
+	assert.Contains(t, contents, "hosts[node1.suse.com]=server")
+	assert.Contains(t, contents, "hosts[node2.suse.com]=agent")
+	assert.Contains(t, contents, "cp kubernetes/images/* /var/lib/rancher/k3s/agent/images/")
+	assert.Contains(t, contents, "cp $CONFIGFILE /etc/rancher/k3s/config.yaml")
+	assert.Contains(t, contents, "if [ \"$HOSTNAME\" = node1.suse.com ]; then")
+	assert.Contains(t, contents, "cp k8s-vip.yaml /var/lib/rancher/k3s/server/manifests/k8s-vip.yaml")
+	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
+	assert.Contains(t, contents, "export INSTALL_K3S_EXEC=$NODETYPE")
+	assert.Contains(t, contents, "export INSTALL_K3S_SKIP_DOWNLOAD=true")
+	assert.Contains(t, contents, "export INSTALL_K3S_SKIP_START=true")
+	assert.Contains(t, contents, "export INSTALL_K3S_BIN_DIR=/opt/k3s")
+	assert.Contains(t, contents, "chmod +x kubernetes/install/cool-k3s-binary")
+	assert.Contains(t, contents, "cp kubernetes/install/cool-k3s-binary $INSTALL_K3S_BIN_DIR/k3s")
+
+	// Server config file assertions
+	configPath := filepath.Join(ctx.CombustionDir, "server.yaml")
+
+	info, err = os.Stat(configPath)
+	require.NoError(t, err)
+
+	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
+
+	b, err = os.ReadFile(configPath)
+	require.NoError(t, err)
+
+	var configContents map[string]any
+	require.NoError(t, yaml.Unmarshal(b, &configContents))
+
+	assert.Equal(t, "123", configContents["token"])
+	assert.Equal(t, "https://192.168.122.100:6443", configContents["server"])
+	assert.Equal(t, []any{"192-168-122-100.sslip.io", "192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
+	assert.Equal(t, []any{"servicelb"}, configContents["disable"])
+	assert.Nil(t, configContents["cluster-init"])
+
+	// Initialising server config file assertions
+	configPath = filepath.Join(ctx.CombustionDir, "init_server.yaml")
+
+	b, err = os.ReadFile(configPath)
+	require.NoError(t, err)
+
+	configContents = map[string]any{} // clear the map
+	require.NoError(t, yaml.Unmarshal(b, configContents))
+
+	assert.Equal(t, "123", configContents["token"])
+	assert.Equal(t, nil, configContents["server"])
+	assert.Equal(t, []any{"192-168-122-100.sslip.io", "192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
+	assert.Equal(t, []any{"servicelb"}, configContents["disable"])
+	assert.Equal(t, true, configContents["cluster-init"])
+
+	// Agent config file assertions
+	configPath = filepath.Join(ctx.CombustionDir, "agent.yaml")
+
+	b, err = os.ReadFile(configPath)
+	require.NoError(t, err)
+
+	configContents = map[string]any{} // clear the map
+	require.NoError(t, yaml.Unmarshal(b, configContents))
+
+	assert.Equal(t, "123", configContents["token"])
+	assert.Equal(t, "https://192.168.122.100:6443", configContents["server"])
+	assert.Equal(t, []any{"192-168-122-100.sslip.io", "192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
+	assert.Equal(t, []any{"servicelb"}, configContents["disable"])
+	assert.Nil(t, configContents["cluster-init"])
+}
+
 func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
