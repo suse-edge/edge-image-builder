@@ -69,6 +69,7 @@ type OperatingSystem struct {
 }
 
 type Packages struct {
+	NoGPGCheck      bool      `yaml:"noGPGCheck"`
 	PKGList         []string  `yaml:"packageList"`
 	AdditionalRepos []AddRepo `yaml:"additionalRepos"`
 	RegCode         string    `yaml:"registrationCode"`

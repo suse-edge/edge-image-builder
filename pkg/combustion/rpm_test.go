@@ -14,12 +14,12 @@ import (
 )
 
 type mockRPMResolver struct {
-	resolveFunc func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error)
+	resolveFunc func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error)
 }
 
-func (m mockRPMResolver) Resolve(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+func (m mockRPMResolver) Resolve(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
 	if m.resolveFunc != nil {
-		return m.resolveFunc(packages, localPackagesPath, outputDir)
+		return m.resolveFunc(packages, localRPMConfig, outputDir)
 	}
 
 	panic("not implemented")
@@ -160,7 +160,7 @@ func TestConfigureRPMSError(t *testing.T) {
 		{
 			name: "Resolving RPM dependencies fails",
 			rpmResolver: mockRPMResolver{
-				resolveFunc: func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+				resolveFunc: func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
 					return "", nil, fmt.Errorf("resolution failed")
 				},
 			},
@@ -169,7 +169,7 @@ func TestConfigureRPMSError(t *testing.T) {
 		{
 			name: "Creating RPM repository fails",
 			rpmResolver: mockRPMResolver{
-				resolveFunc: func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+				resolveFunc: func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
 					return "rpm-repo", []string{"foo", "bar"}, nil
 				},
 			},
@@ -183,7 +183,7 @@ func TestConfigureRPMSError(t *testing.T) {
 		{
 			name: "Writing RPM script with empty package list",
 			rpmResolver: mockRPMResolver{
-				resolveFunc: func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+				resolveFunc: func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
 					return "rpm-repo", []string{}, nil
 				},
 			},
@@ -197,7 +197,7 @@ func TestConfigureRPMSError(t *testing.T) {
 		{
 			name: "Writing RPM script with empty repo path",
 			rpmResolver: mockRPMResolver{
-				resolveFunc: func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+				resolveFunc: func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
 					return "", []string{"foo", "bar"}, nil
 				},
 			},
@@ -218,6 +218,55 @@ func TestConfigureRPMSError(t *testing.T) {
 			_, err := configureRPMs(ctx)
 			require.Error(t, err)
 			assert.EqualError(t, err, test.expectedErr)
+		})
+	}
+}
+
+func TestConfigureRPMSGPGDirError(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	rpmDir := filepath.Join(ctx.ImageConfigDir, userRPMsDir)
+	require.NoError(t, os.Mkdir(rpmDir, 0o755))
+	defer func() {
+		require.NoError(t, os.RemoveAll(rpmDir))
+	}()
+
+	tests := []struct {
+		name         string
+		expectedErr  string
+		pkgs         image.Packages
+		createGPGDir bool
+	}{
+		{
+			name:         "Disabled GPG validation, but existing GPG dir",
+			createGPGDir: true,
+			pkgs: image.Packages{
+				NoGPGCheck: true,
+			},
+			expectedErr: fmt.Sprintf("found existing '%s' directory, but GPG validation is disabled", userGPGsDir),
+		},
+		{
+			name:        "Enabled GPG validation, but missing GPG dir",
+			pkgs:        image.Packages{},
+			expectedErr: "GPG validation is enabled, but 'gpg-keys' directory is missing for side-loaded RPMs",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ctx.ImageDefinition.OperatingSystem.Packages = test.pkgs
+
+			gpgDir := filepath.Join(rpmDir, userGPGsDir)
+			if test.createGPGDir {
+				require.NoError(t, os.Mkdir(gpgDir, 0o755))
+			}
+
+			_, err := configureRPMs(ctx)
+			require.Error(t, err)
+			assert.EqualError(t, err, test.expectedErr)
+
+			require.NoError(t, os.RemoveAll(gpgDir))
 		})
 	}
 }
@@ -245,6 +294,9 @@ func TestConfigureRPMSSuccessfulConfig(t *testing.T) {
 		require.NoError(t, os.RemoveAll(rpmDir))
 	}()
 
+	gpgDir := filepath.Join(rpmDir, userGPGsDir)
+	require.NoError(t, os.Mkdir(gpgDir, 0o755))
+
 	ctx.RPMRepoCreator = mockRPMRepoCreator{
 		createFunc: func(path string) error {
 			return nil
@@ -252,7 +304,17 @@ func TestConfigureRPMSSuccessfulConfig(t *testing.T) {
 	}
 
 	ctx.RPMResolver = mockRPMResolver{
-		resolveFunc: func(packages *image.Packages, localPackagesPath, outputDir string) (rpmDir string, pkgList []string, err error) {
+		resolveFunc: func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (string, []string, error) {
+			if localRPMConfig == nil {
+				return "", nil, fmt.Errorf("local rpm config is nil")
+			}
+			if rpmDir != localRPMConfig.RPMPath {
+				return "", nil, fmt.Errorf("rpm path mismatch. Expected %s, got %s", rpmDir, localRPMConfig.RPMPath)
+			}
+			if gpgDir != localRPMConfig.GPGKeysPath {
+				return "", nil, fmt.Errorf("gpg path mismatch. Expected %s, got %s", gpgDir, localRPMConfig.GPGKeysPath)
+			}
+
 			return expectedDir, expectedPkg, nil
 		},
 	}
