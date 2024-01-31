@@ -40,11 +40,11 @@ var (
 	//go:embed templates/15-rke2-multi-node-installer.sh.tpl
 	rke2MultiNodeInstaller string
 
-	//go:embed templates/rke2-vip.yaml.tpl
-	rke2VIPManifest string
-
 	//go:embed templates/15-k3s-single-node-installer.sh.tpl
 	k3sSingleNodeInstaller string
+
+	//go:embed templates/k8s-vip.yaml.tpl
+	k8sVIPManifest string
 )
 
 func configureKubernetes(ctx *image.Context) ([]string, error) {
@@ -105,14 +105,48 @@ func configureK3S(ctx *image.Context) (string, error) {
 		return "", fmt.Errorf("copying k3s installer script: %w", err)
 	}
 
+	configDir := generateComponentPath(ctx, k8sDir)
+	configPath := filepath.Join(configDir, k8sConfigDir)
+
+	cluster, err := kubernetes.NewCluster(&ctx.ImageDefinition.Kubernetes, configPath)
+	if err != nil {
+		return "", fmt.Errorf("initialising kubernetes cluster config: %w", err)
+	}
+
+	if err = storeKubernetesClusterConfig(cluster, ctx.CombustionDir); err != nil {
+		return "", fmt.Errorf("storing k3s cluster config: %w", err)
+	}
+
 	binaryPath, imagesPath, err := downloadK3sArtefacts(ctx)
 	if err != nil {
 		return "", fmt.Errorf("downloading k3s artefacts: %w", err)
 	}
 
 	templateValues := map[string]any{
+		"apiVIP":     ctx.ImageDefinition.Kubernetes.Network.APIVIP,
+		"apiHost":    ctx.ImageDefinition.Kubernetes.Network.APIHost,
 		"binaryPath": binaryPath,
 		"imagesPath": imagesPath,
+	}
+
+	singleNode := len(ctx.ImageDefinition.Kubernetes.Nodes) < 2
+	if singleNode {
+		var vipManifest string
+
+		if ctx.ImageDefinition.Kubernetes.Network.APIVIP == "" {
+			zap.S().Info("Virtual IP address for k3s cluster is not provided and will not be configured")
+		} else {
+			log.Audit("WARNING: A Virtual IP address for the k3s cluster has been provided. " +
+				"An external IP address for the Ingress controller (Traefik) must be manually configured.")
+			zap.S().Warn("Virtual IP address for k3s cluster is requested and will invalidate Traefik configuration")
+
+			if vipManifest, err = storeKubernetesVIPManifest(ctx); err != nil {
+				return "", fmt.Errorf("storing k3s VIP manifest: %w", err)
+			}
+		}
+
+		templateValues["configFile"] = k8sServerConfigFile
+		templateValues["vipManifest"] = vipManifest
 	}
 
 	return storeKubernetesInstaller(ctx, "single-node-k3s", k3sSingleNodeInstaller, templateValues)
@@ -203,7 +237,7 @@ func configureRKE2(ctx *image.Context) (string, error) {
 
 		if ctx.ImageDefinition.Kubernetes.Network.APIVIP == "" {
 			zap.S().Info("Virtual IP address for RKE2 cluster is not provided and will not be configured")
-		} else if vipManifest, err = storeRKE2VIPManifest(ctx); err != nil {
+		} else if vipManifest, err = storeKubernetesVIPManifest(ctx); err != nil {
 			return "", fmt.Errorf("storing RKE2 VIP manifest: %w", err)
 		}
 
@@ -213,7 +247,7 @@ func configureRKE2(ctx *image.Context) (string, error) {
 		return storeKubernetesInstaller(ctx, "single-node-rke2", rke2SingleNodeInstaller, templateValues)
 	}
 
-	vipManifest, err := storeRKE2VIPManifest(ctx)
+	vipManifest, err := storeKubernetesVIPManifest(ctx)
 	if err != nil {
 		return "", fmt.Errorf("storing RKE2 VIP manifest: %w", err)
 	}
@@ -272,23 +306,25 @@ func downloadRKE2Artefacts(ctx *image.Context, cluster *kubernetes.Cluster) (ins
 	return installPath, imagesPath, nil
 }
 
-func storeRKE2VIPManifest(ctx *image.Context) (string, error) {
-	const vipManifest = "rke2-vip.yaml"
+func storeKubernetesVIPManifest(ctx *image.Context) (string, error) {
+	const vipManifest = "k8s-vip.yaml"
 
 	manifest := struct {
 		APIAddress string
+		RKE2       bool
 	}{
 		APIAddress: ctx.ImageDefinition.Kubernetes.Network.APIVIP,
+		RKE2:       strings.Contains(ctx.ImageDefinition.Kubernetes.Version, image.KubernetesDistroRKE2),
 	}
 
-	data, err := template.Parse("rke2-vip", rke2VIPManifest, &manifest)
+	data, err := template.Parse("k8s-vip", k8sVIPManifest, &manifest)
 	if err != nil {
-		return "", fmt.Errorf("parsing RKE2 VIP template: %w", err)
+		return "", fmt.Errorf("parsing kubernetes VIP template: %w", err)
 	}
 
 	installScript := filepath.Join(ctx.CombustionDir, vipManifest)
 	if err = os.WriteFile(installScript, []byte(data), fileio.NonExecutablePerms); err != nil {
-		return "", fmt.Errorf("writing RKE2 VIP manifest: %w", err)
+		return "", fmt.Errorf("writing kubernetes VIP manifest: %w", err)
 	}
 
 	return vipManifest, nil

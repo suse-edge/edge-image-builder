@@ -24,6 +24,7 @@ const (
 	cniDefaultValue = image.CNITypeCilium
 	serverKey       = "server"
 	tlsSANKey       = "tls-san"
+	disableKey      = "disable"
 )
 
 type Cluster struct {
@@ -126,9 +127,15 @@ func identifyInitialiserNode(kubernetes *image.Kubernetes) string {
 }
 
 func setSingleNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string]any) {
-	setClusterCNI(config)
+	if strings.Contains(kubernetes.Version, image.KubernetesDistroRKE2) {
+		setClusterCNI(config)
+	}
 	if kubernetes.Network.APIVIP != "" {
 		appendClusterTLSSAN(config, kubernetes.Network.APIVIP)
+
+		if strings.Contains(kubernetes.Version, image.KubernetesDistroK3S) {
+			appendDisabledServices(config, "servicelb")
+		}
 	}
 	if kubernetes.Network.APIHost != "" {
 		appendClusterTLSSAN(config, kubernetes.Network.APIHost)
@@ -208,6 +215,38 @@ func appendClusterTLSSAN(config map[string]any, address string) {
 	default:
 		zap.S().Warnf("Ignoring invalid 'tls-san' value: %v", v)
 		config[tlsSANKey] = []string{address}
+	}
+}
+
+func appendDisabledServices(config map[string]any, service string) {
+	if service == "" {
+		zap.S().Warn("Attempted to disable an empty service")
+		return
+	}
+
+	disabledServices, ok := config[disableKey]
+	if !ok {
+		config[disableKey] = []string{service}
+		return
+	}
+
+	switch v := disabledServices.(type) {
+	case string:
+		var services []string
+		for _, s := range strings.Split(v, ",") {
+			services = append(services, strings.TrimSpace(s))
+		}
+		services = append(services, service)
+		config[disableKey] = services
+	case []string:
+		v = append(v, service)
+		config[disableKey] = v
+	case []any:
+		v = append(v, service)
+		config[disableKey] = v
+	default:
+		zap.S().Warnf("Ignoring invalid 'disable' value: %v", v)
+		config[disableKey] = []string{service}
 	}
 }
 
