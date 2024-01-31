@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -16,14 +17,15 @@ import (
 )
 
 const (
-	haulerManifestYamlName = "hauler-manifest.yaml"
-	registryScriptName     = "14-embedded-registry.sh"
-	registryTarName        = "embedded-registry.tar.zst"
-	registryComponentName  = "embedded artifact registry"
-	registryLogFileName    = "embedded-registry.log"
-	hauler                 = "hauler"
-	registryDir            = "registry"
-	registryPort           = "6545"
+	haulerManifestYamlName  = "hauler-manifest.yaml"
+	registryScriptName      = "14-embedded-registry.sh"
+	registryTarName         = "embedded-registry.tar.zst"
+	registryComponentName   = "embedded artifact registry"
+	registryLogFileName     = "embedded-registry.log"
+	hauler                  = "hauler"
+	registryDir             = "registry"
+	registryPort            = "6545"
+	registryMirrorsFileName = "registries.yaml"
 )
 
 //go:embed templates/hauler-manifest.yaml.tpl
@@ -31,6 +33,9 @@ var haulerManifest string
 
 //go:embed templates/14-embedded-registry.sh.tpl
 var registryScript string
+
+//go:embed templates/registries.yaml.tpl
+var k8sRegistryMirrors string
 
 func configureRegistry(ctx *image.Context) ([]string, error) {
 	if !IsEmbeddedArtifactRegistryConfigured(ctx) {
@@ -66,6 +71,16 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("getting all container images: %w", err)
+	}
+
+	if ctx.ImageDefinition.Kubernetes.Version != "" {
+		hostnames := getImageHostnames(containerImages)
+
+		err = writeRegistryMirrors(ctx, hostnames)
+		if err != nil {
+			log.AuditComponentFailed(registryComponentName)
+			return nil, fmt.Errorf("writing registry mirrors: %w", err)
+		}
 	}
 
 	err = writeHaulerManifest(ctx, containerImages, ctx.ImageDefinition.Kubernetes.HelmCharts)
@@ -220,4 +235,39 @@ func IsEmbeddedArtifactRegistryConfigured(ctx *image.Context) bool {
 	return len(ctx.ImageDefinition.Kubernetes.HelmCharts) != 0 ||
 		len(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages) != 0 ||
 		len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0
+}
+
+func getImageHostnames(containerImages []image.ContainerImage) []string {
+	var hostnames []string
+
+	for _, containerImage := range containerImages {
+		result := strings.Split(containerImage.Name, "/")
+		if len(result) > 1 {
+			hostnames = append(hostnames, result[0])
+		}
+	}
+
+	return hostnames
+}
+
+func writeRegistryMirrors(ctx *image.Context, hostnames []string) error {
+	registriesYamlFile := filepath.Join(ctx.CombustionDir, registryMirrorsFileName)
+	registriesDef := struct {
+		Hostnames []string
+		Port      string
+	}{
+		Hostnames: hostnames,
+		Port:      registryPort,
+	}
+
+	data, err := template.Parse(registryMirrorsFileName, k8sRegistryMirrors, registriesDef)
+	if err != nil {
+		return fmt.Errorf("applying template to %s: %w", registryMirrorsFileName, err)
+	}
+
+	if err := os.WriteFile(registriesYamlFile, []byte(data), fileio.NonExecutablePerms); err != nil {
+		return fmt.Errorf("writing file %s: %w", registryMirrorsFileName, err)
+	}
+
+	return nil
 }

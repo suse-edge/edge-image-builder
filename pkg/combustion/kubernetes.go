@@ -189,11 +189,12 @@ func configureRKE2(ctx *image.Context) (string, error) {
 	}
 
 	templateValues := map[string]any{
-		"apiVIP":        ctx.ImageDefinition.Kubernetes.Network.APIVIP,
-		"apiHost":       ctx.ImageDefinition.Kubernetes.Network.APIHost,
-		"installPath":   installPath,
-		"imagesPath":    imagesPath,
-		"manifestsPath": manifestsPath,
+		"apiVIP":          ctx.ImageDefinition.Kubernetes.Network.APIVIP,
+		"apiHost":         ctx.ImageDefinition.Kubernetes.Network.APIHost,
+		"installPath":     installPath,
+		"imagesPath":      imagesPath,
+		"manifestsPath":   manifestsPath,
+		"registryMirrors": registryMirrorsFileName,
 	}
 
 	singleNode := len(ctx.ImageDefinition.Kubernetes.Nodes) < 2

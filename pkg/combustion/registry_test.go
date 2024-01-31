@@ -245,3 +245,52 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 		})
 	}
 }
+
+func TestWriteRegistryMirrorsValid(t *testing.T) {
+	// Setup
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	hostnames := []string{"hello-world:latest", "rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1", "quay.io"}
+
+	// Test
+	err := writeRegistryMirrors(ctx, hostnames)
+
+	// Verify
+	require.NoError(t, err)
+
+	manifestFileName := filepath.Join(ctx.CombustionDir, registryMirrorsFileName)
+	_, err = os.Stat(manifestFileName)
+	require.NoError(t, err)
+
+	foundBytes, err := os.ReadFile(manifestFileName)
+	require.NoError(t, err)
+	found := string(foundBytes)
+	assert.Contains(t, found, "- \"http://localhost:6545\"")
+	assert.Contains(t, found, "docker.io")
+	assert.Contains(t, found, "rgcrprod.azurecr.us")
+	assert.Contains(t, found, "quay.io")
+}
+
+func TestGetImageHostnames(t *testing.T) {
+	// Setup
+	containerImages := []image.ContainerImage{
+		{
+			Name: "hello-world:latest",
+		},
+		{
+			Name: "quay.io/podman/hello",
+		},
+		{
+			Name:           "rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1",
+			SupplyChainKey: "carbide-key.pub",
+		},
+	}
+	expectedHostnames := []string{"quay.io", "rgcrprod.azurecr.us"}
+
+	// Test
+	hostnames := getImageHostnames(containerImages)
+
+	// Verify
+	assert.Equal(t, expectedHostnames, hostnames)
+}
