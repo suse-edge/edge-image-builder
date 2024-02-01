@@ -149,7 +149,7 @@ func configureK3S(ctx *image.Context, cluster *kubernetes.Cluster) (string, erro
 			zap.S().Info("Virtual IP address for k3s cluster is not provided and will not be configured")
 		} else {
 			log.Audit("WARNING: A Virtual IP address for the k3s cluster has been provided. " +
-				"An external IP address for the Ingress controller (Traefik) must be manually configured.")
+				"An external IP address for the Ingress Controller (Traefik) must be manually configured.")
 			zap.S().Warn("Virtual IP address for k3s cluster is requested and will invalidate Traefik configuration")
 
 			if vipManifest, err = storeKubernetesVIPManifest(ctx); err != nil {
@@ -163,7 +163,7 @@ func configureK3S(ctx *image.Context, cluster *kubernetes.Cluster) (string, erro
 		return storeKubernetesInstaller(ctx, "single-node-k3s", k3sSingleNodeInstaller, templateValues)
 	}
 
-	log.Audit("WARNING: An external IP address for the Ingress controller (Traefik) must be manually configured in multi node clusters")
+	log.Audit("WARNING: An external IP address for the Ingress Controller (Traefik) must be manually configured in multi-node clusters.")
 	zap.S().Warn("Virtual IP address for k3s cluster is necessary for multi node clusters and will invalidate Traefik configuration")
 
 	vipManifest, err := storeKubernetesVIPManifest(ctx)
