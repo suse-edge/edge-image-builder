@@ -82,8 +82,9 @@ func TestNewCluster_SingleNode_ExistingConfig(t *testing.T) {
 	assert.Nil(t, cluster.AgentConfig)
 }
 
-func TestNewCluster_MultiNode_MissingConfig(t *testing.T) {
+func TestNewCluster_MultiNodeRKE2_MissingConfig(t *testing.T) {
 	kubernetes := &image.Kubernetes{
+		Version: "v1.29.0+rke2r1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP:  "192.168.122.50",
@@ -124,14 +125,15 @@ func TestNewCluster_MultiNode_MissingConfig(t *testing.T) {
 
 	require.NotNil(t, cluster.AgentConfig)
 	assert.Equal(t, "cilium", cluster.AgentConfig["cni"])
-	assert.Equal(t, []string{"192.168.122.50", "api.suse.edge.com"}, cluster.AgentConfig["tls-san"])
 	assert.Equal(t, clusterToken, cluster.AgentConfig["token"])
 	assert.Equal(t, "https://192.168.122.50:9345", cluster.AgentConfig["server"])
-	assert.Nil(t, cluster.ServerConfig["debug"])
+	assert.Nil(t, cluster.AgentConfig["tls-san"])
+	assert.Nil(t, cluster.AgentConfig["debug"])
 }
 
-func TestNewCluster_MultiNode_ExistingConfig(t *testing.T) {
+func TestNewCluster_MultiNodeRKE2_ExistingConfig(t *testing.T) {
 	kubernetes := &image.Kubernetes{
+		Version: "v1.29.0+rke2r1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP:  "192.168.122.50",
@@ -171,10 +173,10 @@ func TestNewCluster_MultiNode_ExistingConfig(t *testing.T) {
 
 	require.NotNil(t, cluster.AgentConfig)
 	assert.Equal(t, "calico", cluster.AgentConfig["cni"])
-	assert.Equal(t, []string{"192.168.122.50", "api.suse.edge.com"}, cluster.AgentConfig["tls-san"])
 	assert.Equal(t, "totally-not-generated-one", cluster.AgentConfig["token"])
 	assert.Equal(t, "https://192.168.122.50:9345", cluster.AgentConfig["server"])
 	assert.Equal(t, true, cluster.AgentConfig["debug"])
+	assert.Nil(t, cluster.AgentConfig["tls-san"])
 	assert.Nil(t, cluster.AgentConfig["selinux"])
 }
 
@@ -273,10 +275,10 @@ func TestIdentifyInitialiserNode(t *testing.T) {
 func TestSetClusterAPIAddress(t *testing.T) {
 	config := map[string]any{}
 
-	setClusterAPIAddress(config, "")
+	setClusterAPIAddress(config, "", 9345)
 	assert.NotContains(t, config, "server")
 
-	setClusterAPIAddress(config, "192.168.122.50")
+	setClusterAPIAddress(config, "192.168.122.50", 9345)
 	assert.Equal(t, "https://192.168.122.50:9345", config["server"])
 }
 
