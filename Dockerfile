@@ -24,7 +24,8 @@ RUN zypper install -y \
     xorriso squashfs  \
     libguestfs kernel-default e2fsprogs parted gptfdisk btrfsprogs \
     podman \
-    createrepo_c
+    createrepo_c \
+    helm
 
 # TODO: Install nmc via zypper once an RPM package is available
 RUN curl -o nmc-aarch64 -L https://github.com/suse-edge/nm-configurator/releases/download/v0.2.0/nmc-linux-aarch64 && \

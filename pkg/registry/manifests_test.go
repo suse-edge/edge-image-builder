@@ -169,7 +169,7 @@ func TestGetAllImagesInvalidURL(t *testing.T) {
 	}
 
 	// Test
-	_, err := GetAllImages(nil, manifestURLs, "", "downloaded-manifests")
+	_, err := GetAllImages(nil, manifestURLs, "", "", "downloaded-manifests")
 
 	// Verify
 	require.ErrorContains(t, err, "error downloading manifests: downloading manifest 'k8s.io/examples/application/nginx-app.yaml': executing request: Get \"k8s.io/examples/application/nginx-app.yaml\": unsupported protocol scheme \"\"")
@@ -181,7 +181,7 @@ func TestGetAllImagesInvalidDownloadDestination(t *testing.T) {
 	manifestDownloadDest := ""
 
 	// Test
-	_, err := GetAllImages(nil, manifestURLs, "", manifestDownloadDest)
+	_, err := GetAllImages(nil, manifestURLs, "", "", manifestDownloadDest)
 
 	// Verify
 	require.ErrorContains(t, err, "manifest download destination directory not defined")
@@ -189,7 +189,7 @@ func TestGetAllImagesInvalidDownloadDestination(t *testing.T) {
 
 func TestGetAllImagesLocalManifestDirNotDefined(t *testing.T) {
 	// Test
-	containerImages, err := GetAllImages(nil, nil, "", "")
+	containerImages, err := GetAllImages(nil, nil, "", "", "")
 
 	// Verify
 	require.NoError(t, err)
@@ -201,7 +201,7 @@ func TestGetAllImagesInvalidLocalManifestsDir(t *testing.T) {
 	localManifestsDir := "does-not-exist"
 
 	// Test
-	_, err := GetAllImages(nil, nil, localManifestsDir, "")
+	_, err := GetAllImages(nil, nil, localManifestsDir, "", "")
 
 	// Verify
 	require.ErrorContains(t, err, "error getting local manifest paths: reading manifest source dir 'does-not-exist': open does-not-exist: no such file or directory")
@@ -244,7 +244,7 @@ func TestGetAllImagesInvalidLocalManifest(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test
-	_, err = GetAllImages(nil, nil, localManifestsSrcDir, "")
+	_, err = GetAllImages(nil, nil, localManifestsSrcDir, "", "")
 
 	// Verify
 	require.ErrorContains(t, err, "error reading manifest error unmarshalling manifest yaml")

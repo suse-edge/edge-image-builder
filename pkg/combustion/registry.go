@@ -3,9 +3,11 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
@@ -26,6 +28,10 @@ const (
 	registryDir             = "registry"
 	registryPort            = "6545"
 	registryMirrorsFileName = "registries.yaml"
+
+	helmLogFileName      = "helm.log"
+	helmDir              = "helm"
+	helmTemplateFilename = "helm.yaml"
 )
 
 //go:embed templates/hauler-manifest.yaml.tpl
@@ -50,6 +56,17 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("creating registry dir: %w", err)
 	}
 
+	var helmTemplatePath string
+	if isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) {
+		helmTemplatePath = helmTemplateFilename
+
+		err = generateHelmTemplate(ctx)
+		if err != nil {
+			log.AuditComponentFailed(registryComponentName)
+			return nil, fmt.Errorf("generating helm templates and values: %w", err)
+		}
+	}
+
 	var localManifestSrcDir string
 	if componentDir := filepath.Join(k8sDir, "manifests"); isComponentConfigured(ctx, componentDir) {
 		localManifestSrcDir = filepath.Join(ctx.ImageConfigDir, componentDir)
@@ -67,7 +84,7 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		}
 	}
 
-	containerImages, err := registry.GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, manifestDownloadDest)
+	containerImages, err := registry.GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, helmTemplatePath, manifestDownloadDest)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("getting all container images: %w", err)
@@ -243,7 +260,9 @@ func getImageHostnames(containerImages []image.ContainerImage) []string {
 	for _, containerImage := range containerImages {
 		result := strings.Split(containerImage.Name, "/")
 		if len(result) > 1 {
-			hostnames = append(hostnames, result[0])
+			if !slices.Contains(hostnames, result[0]) && result[0] != "docker.io" {
+				hostnames = append(hostnames, result[0])
+			}
 		}
 	}
 
@@ -267,6 +286,61 @@ func writeRegistryMirrors(ctx *image.Context, hostnames []string) error {
 
 	if err := os.WriteFile(registriesYamlFile, []byte(data), fileio.NonExecutablePerms); err != nil {
 		return fmt.Errorf("writing file %s: %w", registryMirrorsFileName, err)
+	}
+
+	return nil
+}
+
+func createHelmCommand(ctx *image.Context, helmCommand string) (*exec.Cmd, *os.File, error) {
+	fullLogFilename := filepath.Join(ctx.BuildDir, helmLogFileName)
+	logFile, err := os.OpenFile(fullLogFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error opening helm log file %s: %w", helmLogFileName, err)
+	}
+
+	templateFile, err := os.Create(helmTemplateFilename)
+	if err != nil {
+		// logFile.Close()
+		return nil, nil, fmt.Errorf("error creating helm template file: %w", err)
+	}
+
+	args := strings.Fields(helmCommand)
+
+	cmd := exec.Command(args[0], args[1:]...)
+	multiWriter := io.MultiWriter(logFile, templateFile)
+	cmd.Stdout = multiWriter
+	cmd.Stderr = multiWriter
+
+	return cmd, logFile, nil
+}
+
+func generateHelmTemplate(ctx *image.Context) error {
+	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
+	helmCommands, err := registry.GenerateHelmCommandsAndWriteHelmValues(helmSrcDir)
+	if err != nil {
+		return fmt.Errorf("generating helm templates: %w", err)
+	}
+
+	for _, command := range helmCommands {
+		err := func() error {
+			cmd, registryLog, err := createHelmCommand(ctx, command)
+			if err != nil {
+				return fmt.Errorf("preparing to template helm chart: %w", err)
+			}
+			defer func() {
+				if err = registryLog.Close(); err != nil {
+					zap.S().Warnf("failed to close helm log file properly: %s", err)
+				}
+			}()
+
+			if err = cmd.Run(); err != nil {
+				return fmt.Errorf("templating helm chart: %w: ", err)
+			}
+			return nil
+		}()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
