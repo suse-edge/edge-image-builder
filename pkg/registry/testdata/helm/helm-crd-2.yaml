@@ -1,0 +1,39 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: nginx
+  namespace: kube-system
+spec:
+  repo: oci://ghcr.io/nginxinc/charts/nginx-ingress
+  chart: nginx
+  targetNamespace: web
+  set:
+    service.type: NodePort
+    rbac.create: "true"
+  valuesContent: |-
+    replicaCount: 1
+    service:
+      port: 80
+    ingress:
+      enabled: false
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: kube-system
+  name: example-repo-auth
+type: kubernetes.io/basic-auth
+stringData:
+  username: user
+  password: pass
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: kube-system
+  name: example-repo-ca
+data:
+  ca.crt: |-
+    -----BEGIN CERTIFICATE-----
+    <YOUR CERTIFICATE>
+    -----END CERTIFICATE-----

@@ -15,9 +15,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs []string, localManifestSrcDir string, manifestDownloadDest string) ([]image.ContainerImage, error) {
+func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs []string, localManifestSrcDir string, helmTemplatePath string, manifestDownloadDest string) ([]image.ContainerImage, error) {
 	var combinedManifestPaths []string
 	var extractedImagesSet = make(map[string]string)
+
+	if helmTemplatePath != "" {
+		combinedManifestPaths = append(combinedManifestPaths, helmTemplatePath)
+	}
 
 	if len(manifestURLs) != 0 {
 		if manifestDownloadDest == "" {
