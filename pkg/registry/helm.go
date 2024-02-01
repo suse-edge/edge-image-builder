@@ -136,7 +136,16 @@ func GenerateHelmCommandsAndWriteHelmValues(localHelmSrcDir string) ([]string, e
 			valuesPath = fmt.Sprintf("values-%d.yaml", index)
 		}
 
-		helmCommand := buildHelmCommand(&helmCRD, valuesPath)
+		var tempRepoWithChart string
+
+		if strings.HasPrefix(helmCRD.Spec.Repo, "http") {
+			tempRepo := fmt.Sprintf("repo-%d", index)
+			repoCommand := fmt.Sprintf("helm repo add %s %s", tempRepo, helmCRD.Spec.Repo)
+			tempRepoWithChart = fmt.Sprintf("repo-%d/%s", index, helmCRD.Spec.Chart)
+			helmCommands = append(helmCommands, repoCommand)
+		}
+
+		helmCommand := buildHelmCommand(&helmCRD, valuesPath, tempRepoWithChart)
 		err = writeHelmValuesFile(&helmCRD, valuesPath)
 		if err != nil {
 			return nil, fmt.Errorf("writing helm values manifest: %w", err)
@@ -148,10 +157,14 @@ func GenerateHelmCommandsAndWriteHelmValues(localHelmSrcDir string) ([]string, e
 	return helmCommands, nil
 }
 
-func buildHelmCommand(crd *HelmCRD, valuesFilePath string) string {
+func buildHelmCommand(crd *HelmCRD, valuesFilePath string, tempRepoWithChart string) string {
 	var cmdParts []string
 
-	cmdParts = append(cmdParts, "helm template --skip-crds", fmt.Sprintf("%s %s", crd.Spec.Chart, crd.Spec.Repo))
+	if tempRepoWithChart != "" {
+		cmdParts = append(cmdParts, "helm template --skip-crds", fmt.Sprintf("%s %s", crd.Spec.Chart, tempRepoWithChart))
+	} else {
+		cmdParts = append(cmdParts, "helm template --skip-crds", fmt.Sprintf("%s %s", crd.Spec.Chart, crd.Spec.Repo))
+	}
 
 	if crd.Spec.Version != "" {
 		cmdParts = append(cmdParts, fmt.Sprintf("--version %s", crd.Spec.Version))

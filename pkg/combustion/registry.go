@@ -298,18 +298,23 @@ func createHelmCommand(ctx *image.Context, helmCommand string) (*exec.Cmd, *os.F
 		return nil, nil, fmt.Errorf("error opening helm log file %s: %w", helmLogFileName, err)
 	}
 
-	templateFile, err := os.Create(helmTemplateFilename)
+	templateFile, err := os.OpenFile(helmTemplateFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
 	if err != nil {
-		// logFile.Close()
-		return nil, nil, fmt.Errorf("error creating helm template file: %w", err)
+		return nil, nil, fmt.Errorf("error opening (for append) helm template file: %w", err)
 	}
 
+	var cmd *exec.Cmd
 	args := strings.Fields(helmCommand)
+	if args[1] == "template" {
+		cmd = exec.Command(args[0], args[1:]...)
+		multiWriter := io.MultiWriter(logFile, templateFile)
+		cmd.Stdout = multiWriter
+	} else {
+		cmd = exec.Command(args[0], args[1:]...)
+		cmd.Stdout = logFile
+	}
 
-	cmd := exec.Command(args[0], args[1:]...)
-	multiWriter := io.MultiWriter(logFile, templateFile)
-	cmd.Stdout = multiWriter
-	cmd.Stderr = multiWriter
+	cmd.Stderr = logFile
 
 	return cmd, logFile, nil
 }
