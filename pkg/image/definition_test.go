@@ -62,7 +62,6 @@ func TestParse(t *testing.T) {
 	suma := definition.OperatingSystem.Suma
 	assert.Equal(t, "suma.edge.suse.com", suma.Host)
 	assert.Equal(t, "slemicro55", suma.ActivationKey)
-	assert.Equal(t, false, suma.GetSSL)
 
 	// Operating System -> Packages
 	pkgConfig := definition.OperatingSystem.Packages
