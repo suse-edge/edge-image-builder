@@ -146,7 +146,7 @@ type Network struct {
 type Node struct {
 	Hostname    string `yaml:"hostname"`
 	Type        string `yaml:"type"`
-	Initialiser bool   `yaml:"initialiser"`
+	Initialiser bool   `yaml:"initializer"`
 }
 
 type Manifests struct {
