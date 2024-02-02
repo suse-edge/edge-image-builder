@@ -142,7 +142,23 @@ func GenerateHelmCommandsAndWriteHelmValues(localHelmSrcDir string) ([]string, e
 			tempRepo := fmt.Sprintf("repo-%d", index)
 			repoCommand := fmt.Sprintf("helm repo add %s %s", tempRepo, helmCRD.Spec.Repo)
 			tempRepoWithChart = fmt.Sprintf("repo-%d/%s", index, helmCRD.Spec.Chart)
+
 			helmCommands = append(helmCommands, repoCommand)
+			var pullCommand string
+			if helmCRD.Spec.Version != "" {
+				pullCommand = fmt.Sprintf("helm pull repo-%d/%s --version %s", index, helmCRD.Spec.Chart, helmCRD.Spec.Version)
+			} else {
+				pullCommand = fmt.Sprintf("helm pull repo-%d/%s", index, helmCRD.Spec.Chart)
+			}
+			helmCommands = append(helmCommands, pullCommand)
+		} else {
+			var pullCommand string
+			if helmCRD.Spec.Version != "" {
+				pullCommand = fmt.Sprintf("helm pull %s --version %s", helmCRD.Spec.Repo, helmCRD.Spec.Version)
+			} else {
+				pullCommand = fmt.Sprintf("helm pull %s", helmCRD.Spec.Repo)
+			}
+			helmCommands = append(helmCommands, pullCommand)
 		}
 
 		helmCommand := buildHelmCommand(&helmCRD, valuesPath, tempRepoWithChart)
