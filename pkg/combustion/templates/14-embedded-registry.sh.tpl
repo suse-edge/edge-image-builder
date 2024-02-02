@@ -8,6 +8,13 @@ mv {{ .RegistryDir }}/{{ .EmbeddedRegistryTar }} /opt/hauler/
 mv hauler /usr/local/bin/hauler
 umount /usr/local
 
+{{- if .ChartsDir }}
+mount /var
+mkdir -p /var/lib/rancher/rke2/server/manifests/static/charts
+cp {{.ChartsDir }}/*  /var/lib/rancher/rke2/server/manifests/static/charts/
+umount /var
+{{- end }}
+
 
 # This serves the hauler registry artifacts as OCI artifacts
 cat <<- EOF > /etc/systemd/system/eib-embedded-registry.service
