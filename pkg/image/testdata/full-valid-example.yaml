@@ -45,7 +45,6 @@ operatingSystem:
   suma:
     host: suma.edge.suse.com
     activationKey: slemicro55
-    getSSL: false
   packages:
     noGPGCheck: true
     packageList:

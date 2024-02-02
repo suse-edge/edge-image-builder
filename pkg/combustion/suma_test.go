@@ -40,7 +40,6 @@ func TestConfigureSuma_FullConfiguration(t *testing.T) {
 			Suma: image.Suma{
 				Host:          "suma.edge.suse.com",
 				ActivationKey: "slemicro55",
-				GetSSL:        true,
 			},
 		},
 	}
@@ -63,9 +62,6 @@ func TestConfigureSuma_FullConfiguration(t *testing.T) {
 	assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
 
 	foundContents := string(foundBytes)
-
-	// - Make sure that SSL cert is grabbed
-	assert.Contains(t, foundContents, "update-ca-certificates")
 
 	// - Ensure that we have the correct URL defined
 	assert.Contains(t, foundContents, "master: suma.edge.suse.com")
