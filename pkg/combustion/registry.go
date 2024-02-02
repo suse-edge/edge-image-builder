@@ -32,6 +32,7 @@ const (
 	helmLogFileName      = "helm.log"
 	helmDir              = "helm"
 	helmTemplateFilename = "helm.yaml"
+	helmChartsDir        = "charts"
 )
 
 //go:embed templates/hauler-manifest.yaml.tpl
@@ -59,6 +60,13 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 	var helmTemplatePath string
 	if isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) {
 		helmTemplatePath = helmTemplateFilename
+
+		helmChartsDestDir := filepath.Join(ctx.CombustionDir, helmChartsDir)
+		err := os.Mkdir(helmChartsDestDir, os.ModePerm)
+		if err != nil {
+			log.AuditComponentFailed(registryComponentName)
+			return nil, fmt.Errorf("creating helm charts destination dir: %w", err)
+		}
 
 		err = generateHelmTemplate(ctx)
 		if err != nil {
@@ -158,7 +166,7 @@ func writeHaulerManifest(ctx *image.Context, images []image.ContainerImage, char
 
 func populateHaulerStore(ctx *image.Context) error {
 	haulerManifestPath := filepath.Join(ctx.BuildDir, haulerManifestYamlName)
-	args := []string{"store", "sync", "--files", haulerManifestPath}
+	args := []string{"store", "sync", "--files", haulerManifestPath, "-p", "linux/amd64"}
 
 	cmd, registryLog, err := createRegistryCommand(ctx, hauler, args)
 	if err != nil {
@@ -210,14 +218,21 @@ func copyHaulerBinary(ctx *image.Context, haulerBinaryPath string) error {
 }
 
 func writeRegistryScript(ctx *image.Context) (string, error) {
+	var chartsDir string
+	if isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) {
+		chartsDir = helmChartsDir
+	}
+
 	values := struct {
 		Port                string
 		RegistryDir         string
 		EmbeddedRegistryTar string
+		ChartsDir           string
 	}{
 		Port:                registryPort,
 		RegistryDir:         registryDir,
 		EmbeddedRegistryTar: registryTarName,
+		ChartsDir:           chartsDir,
 	}
 
 	data, err := template.Parse(registryScriptName, registryScript, &values)
@@ -309,6 +324,11 @@ func createHelmCommand(ctx *image.Context, helmCommand string) (*exec.Cmd, *os.F
 		cmd = exec.Command(args[0], args[1:]...)
 		multiWriter := io.MultiWriter(logFile, templateFile)
 		cmd.Stdout = multiWriter
+	} else if args[1] == "pull" {
+		helmChartsDestDir := filepath.Join(ctx.CombustionDir, helmChartsDir)
+		args = append(args, "-d", helmChartsDestDir)
+
+		cmd = exec.Command(args[0], args[1:]...)
 	} else {
 		cmd = exec.Command(args[0], args[1:]...)
 		cmd.Stdout = logFile
