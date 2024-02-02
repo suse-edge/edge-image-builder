@@ -5,8 +5,9 @@ image:
   baseImage: slemicro5.5.iso
   outputImageName: eibimage.iso
 operatingSystem:
-  installDevice: /dev/sda
-  unattended: true
+  isoInstallation:
+    installDevice: /dev/sda
+    unattended: true
   time:
     timezone: Europe/London
     chronyPools:

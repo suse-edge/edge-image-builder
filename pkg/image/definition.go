@@ -56,16 +56,20 @@ type Image struct {
 }
 
 type OperatingSystem struct {
-	KernelArgs    []string              `yaml:"kernelArgs"`
-	Users         []OperatingSystemUser `yaml:"users"`
-	Systemd       Systemd               `yaml:"systemd"`
-	Suma          Suma                  `yaml:"suma"`
-	Packages      Packages              `yaml:"packages"`
-	InstallDevice string                `yaml:"installDevice"`
-	Unattended    bool                  `yaml:"unattended"`
-	Time          Time                  `yaml:"time"`
-	Proxy         Proxy                 `yaml:"proxy"`
-	Keymap        string                `yaml:"keymap"`
+	KernelArgs      []string              `yaml:"kernelArgs"`
+	Users           []OperatingSystemUser `yaml:"users"`
+	Systemd         Systemd               `yaml:"systemd"`
+	Suma            Suma                  `yaml:"suma"`
+	Packages        Packages              `yaml:"packages"`
+	IsoInstallation IsoInstallation       `yaml:"isoInstallation"`
+	Time            Time                  `yaml:"time"`
+	Proxy           Proxy                 `yaml:"proxy"`
+	Keymap          string                `yaml:"keymap"`
+}
+
+type IsoInstallation struct {
+	InstallDevice string `yaml:"installDevice"`
+	Unattended    bool   `yaml:"unattended"`
 }
 
 type Packages struct {
