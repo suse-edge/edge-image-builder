@@ -17,7 +17,7 @@ func TestValidateDefinition(t *testing.T) {
 		_ = os.RemoveAll(configDir)
 	}()
 
-	testImagesDir := filepath.Join(configDir, "images")
+	testImagesDir := filepath.Join(configDir, "base-images")
 	err = os.MkdirAll(testImagesDir, os.ModePerm)
 	require.NoError(t, err)
 

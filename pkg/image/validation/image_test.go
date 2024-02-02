@@ -17,7 +17,7 @@ func TestValidateImage(t *testing.T) {
 		_ = os.RemoveAll(imageConfigDir)
 	}()
 
-	testImagesDir := filepath.Join(imageConfigDir, "images")
+	testImagesDir := filepath.Join(imageConfigDir, "base-images")
 	err = os.Mkdir(testImagesDir, os.ModePerm)
 	require.NoError(t, err)
 
