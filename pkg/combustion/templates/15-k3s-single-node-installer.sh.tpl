@@ -31,10 +31,12 @@ cp {{ .registryMirrors }} /etc/rancher/k3s/registries.yaml
 
 export INSTALL_K3S_SKIP_DOWNLOAD=true
 export INSTALL_K3S_SKIP_START=true
-export INSTALL_K3S_BIN_DIR=/opt/k3s
 
-mkdir -p $INSTALL_K3S_BIN_DIR
+mount /usr/local
+
 chmod +x {{ .binaryPath }}
-cp {{ .binaryPath }} $INSTALL_K3S_BIN_DIR/k3s
+cp {{ .binaryPath }} /usr/local/bin/k3s
 
 ./k3s_installer.sh
+
+umount /usr/local
