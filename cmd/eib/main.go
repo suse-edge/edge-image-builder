@@ -243,7 +243,7 @@ func bootstrapDependencyServices(ctx *image.Context, rootDir string) bool {
 			return false
 		}
 
-		imgPath := filepath.Join(ctx.ImageConfigDir, "images", ctx.ImageDefinition.Image.BaseImage)
+		imgPath := filepath.Join(ctx.ImageConfigDir, "base-images", ctx.ImageDefinition.Image.BaseImage)
 		rpmResolver := resolver.New(ctx.BuildDir, imgPath, ctx.ImageDefinition.Image.ImageType, p)
 		ctx.RPMResolver = rpmResolver
 		ctx.RPMRepoCreator = rpm.NewRepoCreator(ctx.BuildDir)

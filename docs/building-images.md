@@ -136,7 +136,7 @@ the structure of this directory will be better fleshed out. For now, the require
 .
 ├── eib-config-iso.yaml
 ├── eib-config-raw.yaml
-└── images
+└── base-images
     └── SLE-Micro.x86_64-5.5.0-Default-SelfInstall-GM.install.iso
     └── SLE-Micro.x86_64-5.5.0-Default-GM.raw
 ```
@@ -144,7 +144,7 @@ the structure of this directory will be better fleshed out. For now, the require
 * `eib-config-iso.yaml`, `eib-config-raw.yaml` - All image definition files should be in the root of the image
   configuration directory. Multiple definition files may be included in a single configuration directory, with
   the specific definition file specified as a CLI argument as described above.
-* `images` - This directory must exist and contains the base images from which EIB will build customized images.
+* `base-images` - This directory must exist and contains the base images from which EIB will build customized images.
   There are no restrictions on the naming. The image definition file will specify which image in this directory
   to use for a particular build.
 
