@@ -89,12 +89,11 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, expectedAddRepos, pkgConfig.AdditionalRepos)
 	assert.Equal(t, "INTERNAL-USE-ONLY-foo-bar", pkgConfig.RegCode)
 
-	// Operating System -> InstallDevice
-	installDevice := definition.OperatingSystem.InstallDevice
+	// Operating System -> IsoInstallation
+	installDevice := definition.OperatingSystem.IsoInstallation.InstallDevice
 	assert.Equal(t, "/dev/sda", installDevice)
 
-	// Operating System -> Unattended
-	unattended := definition.OperatingSystem.Unattended
+	unattended := definition.OperatingSystem.IsoInstallation.Unattended
 	assert.Equal(t, true, unattended)
 
 	// Operating System -> Time
@@ -103,12 +102,12 @@ func TestParse(t *testing.T) {
 	expectedChronyPools := []string{
 		"2.suse.pool.ntp.org",
 	}
-	assert.Equal(t, expectedChronyPools, time.ChronyPools)
+	assert.Equal(t, expectedChronyPools, time.NtpConfiguration.Pools)
 	expectedChronyServers := []string{
 		"10.0.0.1",
 		"10.0.0.2",
 	}
-	assert.Equal(t, expectedChronyServers, time.ChronyServers)
+	assert.Equal(t, expectedChronyServers, time.NtpConfiguration.Servers)
 
 	// Operating System -> Proxy -> HTTPProxy
 	httpProxy := definition.OperatingSystem.Proxy.HTTPProxy

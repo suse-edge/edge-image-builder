@@ -56,16 +56,20 @@ type Image struct {
 }
 
 type OperatingSystem struct {
-	KernelArgs    []string              `yaml:"kernelArgs"`
-	Users         []OperatingSystemUser `yaml:"users"`
-	Systemd       Systemd               `yaml:"systemd"`
-	Suma          Suma                  `yaml:"suma"`
-	Packages      Packages              `yaml:"packages"`
-	InstallDevice string                `yaml:"installDevice"`
-	Unattended    bool                  `yaml:"unattended"`
-	Time          Time                  `yaml:"time"`
-	Proxy         Proxy                 `yaml:"proxy"`
-	Keymap        string                `yaml:"keymap"`
+	KernelArgs      []string              `yaml:"kernelArgs"`
+	Users           []OperatingSystemUser `yaml:"users"`
+	Systemd         Systemd               `yaml:"systemd"`
+	Suma            Suma                  `yaml:"suma"`
+	Packages        Packages              `yaml:"packages"`
+	IsoInstallation IsoInstallation       `yaml:"isoInstallation"`
+	Time            Time                  `yaml:"time"`
+	Proxy           Proxy                 `yaml:"proxy"`
+	Keymap          string                `yaml:"keymap"`
+}
+
+type IsoInstallation struct {
+	InstallDevice string `yaml:"installDevice"`
+	Unattended    bool   `yaml:"unattended"`
 }
 
 type Packages struct {
@@ -97,9 +101,13 @@ type Suma struct {
 }
 
 type Time struct {
-	Timezone      string   `yaml:"timezone"`
-	ChronyPools   []string `yaml:"chronyPools"`
-	ChronyServers []string `yaml:"chronyServers"`
+	Timezone         string           `yaml:"timezone"`
+	NtpConfiguration NtpConfiguration `yaml:"ntp"`
+}
+
+type NtpConfiguration struct {
+	Pools   []string `yaml:"pools"`
+	Servers []string `yaml:"servers"`
 }
 
 type Proxy struct {

@@ -5,15 +5,17 @@ image:
   baseImage: slemicro5.5.iso
   outputImageName: eibimage.iso
 operatingSystem:
-  installDevice: /dev/sda
-  unattended: true
+  isoInstallation:
+    installDevice: /dev/sda
+    unattended: true
   time:
     timezone: Europe/London
-    chronyPools:
-      - 2.suse.pool.ntp.org
-    chronyServers:
-      - 10.0.0.1
-      - 10.0.0.2
+    ntp:
+      pools:
+        - 2.suse.pool.ntp.org
+      servers:
+        - 10.0.0.1
+        - 10.0.0.2
   proxy:
     httpProxy: http://10.0.0.1:3128
     httpsProxy: http://10.0.0.1:3128
