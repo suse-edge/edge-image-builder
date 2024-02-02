@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -39,7 +40,17 @@ func configureProxy(ctx *image.Context) ([]string, error) {
 func writeProxyCombustionScript(ctx *image.Context) error {
 	proxyScriptFilename := filepath.Join(ctx.CombustionDir, proxyScriptName)
 
-	data, err := template.Parse(proxyScriptName, proxyScript, ctx.ImageDefinition.OperatingSystem.Proxy)
+	values := struct {
+		HTTPProxy  string
+		HTTPSProxy string
+		NoProxy    string
+	}{
+		HTTPProxy:  ctx.ImageDefinition.OperatingSystem.Proxy.HTTPProxy,
+		HTTPSProxy: ctx.ImageDefinition.OperatingSystem.Proxy.HTTPSProxy,
+		NoProxy:    strings.Join(ctx.ImageDefinition.OperatingSystem.Proxy.NoProxy, ", "),
+	}
+
+	data, err := template.Parse(proxyScriptName, proxyScript, values)
 	if err != nil {
 		return fmt.Errorf("applying template to %s: %w", proxyScriptName, err)
 	}

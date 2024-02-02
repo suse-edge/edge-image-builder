@@ -119,7 +119,7 @@ func TestParse(t *testing.T) {
 
 	// Operating System -> Proxy -> NoProxy
 	noProxy := definition.OperatingSystem.Proxy.NoProxy
-	assert.Equal(t, "localhost, 127.0.0.1, edge.suse.com", noProxy)
+	assert.Equal(t, []string{"localhost", "127.0.0.1", "edge.suse.com"}, noProxy)
 
 	// Operating System -> Keymap
 	keymap := definition.OperatingSystem.Keymap
