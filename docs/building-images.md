@@ -51,7 +51,10 @@ operatingSystem:
   proxy:
     httpProxy: http://10.0.0.1:3128
     httpsProxy: http://10.0.0.1:3128
-    noProxy: localhost, 127.0.0.1, edge.suse.com
+    noProxy:
+    - localhost
+    - 127.0.0.1
+    - edge.suse.com
   kernelArgs:
   - arg1
   - arg2
@@ -88,8 +91,8 @@ operatingSystem:
 * `proxy` - Optional; section where the user can provide system-wide proxy information
   * `httpProxy` - Optional; set the system-wide http proxy settings
   * `httpsProxy` - Optional; set the system-wide https proxy settings
-  * `noProxy` - Optional; override the default `NO_PROXY` list. By default this is "localhost, 127.0.0.1" if parameter is omitted, but
-  if you set this flag, make sure you add these into your list if they're required.
+  * `noProxy` - Optional; override the default `NO_PROXY` list. By default, this is "localhost, 127.0.0.1" if this
+  parameter is omitted. If this option is set, these may need to be manually added if they are still in use.
 * `kernelArgs` - Optional; Provides a list of flags that should be passed to the kernel on boot.
 * `users` - Optional; Defines a list of operating system users to be created. Each entry is made up of
   the following fields:

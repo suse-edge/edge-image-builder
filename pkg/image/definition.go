@@ -76,7 +76,7 @@ type Packages struct {
 	NoGPGCheck      bool      `yaml:"noGPGCheck"`
 	PKGList         []string  `yaml:"packageList"`
 	AdditionalRepos []AddRepo `yaml:"additionalRepos"`
-	RegCode         string    `yaml:"registrationCode"`
+	RegCode         string    `yaml:"sccRegistrationCode"`
 }
 
 type AddRepo struct {
