@@ -111,9 +111,9 @@ type NtpConfiguration struct {
 }
 
 type Proxy struct {
-	HTTPProxy  string `yaml:"httpProxy"`
-	HTTPSProxy string `yaml:"httpsProxy"`
-	NoProxy    string `yaml:"noProxy"`
+	HTTPProxy  string   `yaml:"httpProxy"`
+	HTTPSProxy string   `yaml:"httpsProxy"`
+	NoProxy    []string `yaml:"noProxy"`
 }
 
 type EmbeddedArtifactRegistry struct {
