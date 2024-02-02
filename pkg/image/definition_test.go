@@ -102,12 +102,12 @@ func TestParse(t *testing.T) {
 	expectedChronyPools := []string{
 		"2.suse.pool.ntp.org",
 	}
-	assert.Equal(t, expectedChronyPools, time.ChronyPools)
+	assert.Equal(t, expectedChronyPools, time.NtpConfiguration.Pools)
 	expectedChronyServers := []string{
 		"10.0.0.1",
 		"10.0.0.2",
 	}
-	assert.Equal(t, expectedChronyServers, time.ChronyServers)
+	assert.Equal(t, expectedChronyServers, time.NtpConfiguration.Servers)
 
 	// Operating System -> Proxy -> HTTPProxy
 	httpProxy := definition.OperatingSystem.Proxy.HTTPProxy

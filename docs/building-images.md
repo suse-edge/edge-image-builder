@@ -37,15 +37,17 @@ The operating system configuration section is entirely optional.
 The following describes the possible options for the operating system section:
 ```yaml
 operatingSystem:
-  installDevice: /path/to/disk
-  unattended: false
+  isoInstallation:
+    installDevice: /path/to/disk
+    unattended: false
   time:
     timezone: Europe/London
-    chronyPools:
-      - 1.pool.server.com
-    chronyServers:
-      - 10.0.0.1
-      - 10.0.0.2
+    ntp:
+      pools:
+        - 1.pool.server.com
+      servers:
+        - 10.0.0.1
+        - 10.0.0.2
   proxy:
     httpProxy: http://10.0.0.1:3128
     httpsProxy: http://10.0.0.1:3128
@@ -70,17 +72,19 @@ operatingSystem:
   keymap: us
 ```
 
-* `installDevice` - Optional; only for ISO images - specifies the disk that should be used as the install
+* `isoInstallation` - Optional; configuration in this section only applies to ISO images.
+  * `installDevice` - Optional; specifies the disk that should be used as the install
   device. This needs to be block special, and will default to automatically wipe any data found on the disk.
   If left omitted, the user will still have to select the disk to install to (if >1 found) and confirm wipe.
-* `unattended` - Optional; only for ISO images - forces GRUB override to automatically install the operating
+  * `unattended` - Optional; forces GRUB override to automatically install the operating
   system rather than prompting user to begin the installation. In combination with `installDevice` can create
   a fully unattended and automated install. Beware of creating boot loops and data loss with these options.
   If left omitted (or set to `false`) the user will still have to choose to install via the GRUB menu.
 * `time` - Optional; section where the user can provide timezone information and Chronyd configuration.
   * `timezone` - Optional; the timezone in the format of "Region/Locality", e.g. "Europe/London". Full list via `timedatectl list-timezones`.
-  * `chronyPools` - Optional; a list of pools that Chrony can use as data sources.
-  * `chronyServers` - Optional; a list of servers that Chrony can use as data sources.
+  * `ntp` - Optional; contains attributes related to configuring NTP
+    * `pools` - Optional; a list of pools that Chrony can use as data sources.
+    * `servers` - Optional; a list of servers that Chrony can use as data sources.
 * `proxy` - Optional; section where the user can provide system-wide proxy information
   * `httpProxy` - Optional; set the system-wide http proxy settings
   * `httpsProxy` - Optional; set the system-wide https proxy settings

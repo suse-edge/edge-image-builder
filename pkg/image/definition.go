@@ -101,9 +101,13 @@ type Suma struct {
 }
 
 type Time struct {
-	Timezone      string   `yaml:"timezone"`
-	ChronyPools   []string `yaml:"chronyPools"`
-	ChronyServers []string `yaml:"chronyServers"`
+	Timezone         string           `yaml:"timezone"`
+	NtpConfiguration NtpConfiguration `yaml:"ntp"`
+}
+
+type NtpConfiguration struct {
+	Pools   []string `yaml:"pools"`
+	Servers []string `yaml:"servers"`
 }
 
 type Proxy struct {
