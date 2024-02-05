@@ -113,15 +113,16 @@ func readAndParseHelmCRD(helmPath string) (HelmCRD, error) {
 	return HelmCRD{}, fmt.Errorf("no HelmChart found in the provided file")
 }
 
-func GenerateHelmCommandsAndWriteHelmValues(localHelmSrcDir string) ([]string, error) {
+func GenerateHelmCommandsAndWriteHelmValues(localHelmSrcDir string) ([]string, []string, error) {
 	var helmCommands []string
 	var helmManifestPaths []string
 	var err error
+	var helmChartPaths []string
 
 	if localHelmSrcDir != "" {
 		helmManifestPaths, err = getLocalManifestPaths(localHelmSrcDir)
 		if err != nil {
-			return nil, fmt.Errorf("error getting helm manifest paths: %w", err)
+			return nil, nil, fmt.Errorf("error getting helm manifest paths: %w", err)
 		}
 	}
 
@@ -129,7 +130,7 @@ func GenerateHelmCommandsAndWriteHelmValues(localHelmSrcDir string) ([]string, e
 		var valuesPath string
 		helmCRD, err := readAndParseHelmCRD(helmManifest)
 		if err != nil {
-			return nil, fmt.Errorf("reading and parsing helm crd: %w", err)
+			return nil, nil, fmt.Errorf("reading and parsing helm crd: %w", err)
 		}
 
 		if helmCRD.Spec.ValuesContent != "" {
@@ -161,16 +162,17 @@ func GenerateHelmCommandsAndWriteHelmValues(localHelmSrcDir string) ([]string, e
 			helmCommands = append(helmCommands, pullCommand)
 		}
 
+		helmChartPaths = append(helmChartPaths, fmt.Sprintf("%s-*.tgz", helmCRD.Spec.Chart))
 		helmCommand := buildHelmCommand(&helmCRD, valuesPath, tempRepoWithChart)
 		err = writeHelmValuesFile(&helmCRD, valuesPath)
 		if err != nil {
-			return nil, fmt.Errorf("writing helm values manifest: %w", err)
+			return nil, nil, fmt.Errorf("writing helm values manifest: %w", err)
 		}
 
 		helmCommands = append(helmCommands, helmCommand)
 	}
 
-	return helmCommands, nil
+	return helmCommands, helmChartPaths, nil
 }
 
 func buildHelmCommand(crd *HelmCRD, valuesFilePath string, tempRepoWithChart string) string {
