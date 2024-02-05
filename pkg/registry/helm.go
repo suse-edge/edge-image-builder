@@ -13,24 +13,20 @@ import (
 )
 
 type HelmCRD struct {
-	APIVersion string `yaml:"apiVersion"`
-	Kind       string `yaml:"kind"`
-	Metadata   struct {
-		Name      string `yaml:"name"`
-		Namespace string `yaml:"namespace"`
-	} `yaml:"metadata"`
 	Spec struct {
-		Repo            string         `yaml:"repo"`
-		Chart           string         `yaml:"chart"`
-		TargetNamespace string         `yaml:"targetNamespace"`
-		Version         string         `yaml:"version"`
-		Set             map[string]any `yaml:"set"`
-		ValuesContent   string         `yaml:"valuesContent"`
+		Repo          string         `yaml:"repo"`
+		Chart         string         `yaml:"chart"`
+		Version       string         `yaml:"version"`
+		Set           map[string]any `yaml:"set"`
+		ValuesContent string         `yaml:"valuesContent"`
 	} `yaml:"spec"`
 }
 
-func formatMap(prefix string, m map[string]any) string {
-	var parts []string
+var registryServiceURL = "http://hauler-registry.default.svc.cluster.local"
+
+func parseSetArgs(prefix string, m map[string]any) []string {
+	var args []string
+
 	for k, v := range m {
 		fullKey := k
 		if prefix != "" {
@@ -38,159 +34,163 @@ func formatMap(prefix string, m map[string]any) string {
 		}
 
 		switch value := v.(type) {
-		case string, bool, int, float64:
-			parts = append(parts, fmt.Sprintf("%s=%v", fullKey, value))
+		case string, bool, int, int64, float64: // TODO: probably include all primitive types
+			args = append(args, fmt.Sprintf("%s=%v", fullKey, value))
 		case []any:
 			for i, item := range value {
 				switch itemValue := item.(type) {
 				case map[string]any:
 					for innerKey, innerValue := range itemValue {
 						formattedKey := fmt.Sprintf("%s[%d].%s", fullKey, i, innerKey)
-						parts = append(parts, fmt.Sprintf("%s=%v", formattedKey, innerValue))
+						args = append(args, fmt.Sprintf("%s=%v", formattedKey, innerValue))
 					}
 				default:
-					parts = append(parts, fmt.Sprintf("%s[%d]=%v", fullKey, i, itemValue))
+					args = append(args, fmt.Sprintf("%s[%d]=%v", fullKey, i, itemValue))
 				}
 			}
 		case map[string]any:
-			parts = append(parts, formatMap(fullKey, value))
+			args = append(args, parseSetArgs(fullKey, value)...)
 		}
 	}
 
-	return strings.Join(parts, ",")
+	return args
 }
 
-func writeHelmValuesFile(crd *HelmCRD, valuesPath string) error {
-	if valuesPath == "" {
-		return nil
-	}
-
-	err := os.WriteFile(valuesPath, []byte(crd.Spec.ValuesContent), fileio.NonExecutablePerms)
+func parseHelmCRDs(manifestsPath string) ([]*HelmCRD, error) {
+	crdFile, err := os.ReadFile(manifestsPath)
 	if err != nil {
-		return fmt.Errorf("failed to write helm values file: %w", err)
+		return nil, fmt.Errorf("reading helm manifest: %w", err)
 	}
 
-	return nil
-}
-
-func readAndParseHelmCRD(helmPath string) (HelmCRD, error) {
-	crdFile, err := os.ReadFile(helmPath)
-	if err != nil {
-		return HelmCRD{}, fmt.Errorf("reading helm crd: %w", err)
-	}
+	var crds []*HelmCRD
 
 	decoder := yaml.NewDecoder(bytes.NewReader(crdFile))
 	for {
-		var genericMap map[string]any
-		err := decoder.Decode(&genericMap)
-		if err != nil {
+		var manifest map[string]any
+
+		if err = decoder.Decode(&manifest); err != nil {
 			if errors.Is(err, io.EOF) {
 				break
 			}
-			return HelmCRD{}, fmt.Errorf("unmarshaling helm CRD to generic map: %w", err)
+			return nil, fmt.Errorf("unmarshaling manifest: %w", err)
 		}
 
-		kind, ok := genericMap["kind"]
+		kind, ok := manifest["kind"]
 		if !ok {
-			return HelmCRD{}, fmt.Errorf("missing 'kind' field in YAML document")
+			return nil, fmt.Errorf("missing 'kind' field in YAML document")
 		}
 
-		if kind == "HelmChart" {
-			yamlBytes, err := yaml.Marshal(genericMap)
-			if err != nil {
-				return HelmCRD{}, fmt.Errorf("re-marshaling generic map to YAML: %w", err)
-			}
-
-			var crd HelmCRD
-			err = yaml.Unmarshal(yamlBytes, &crd)
-			if err != nil {
-				return HelmCRD{}, fmt.Errorf("unmarshaling helm CRD to helm struct: %w", err)
-			}
-			return crd, nil
+		if kind != "HelmChart" {
+			continue
 		}
+
+		yamlBytes, err := yaml.Marshal(manifest)
+		if err != nil {
+			return nil, fmt.Errorf("marshaling manifest: %w", err)
+		}
+
+		var crd HelmCRD
+		if err = yaml.Unmarshal(yamlBytes, &crd); err != nil {
+			return nil, fmt.Errorf("unmarshaling helm CRD: %w", err)
+		}
+
+		crds = append(crds, &crd)
 	}
 
-	return HelmCRD{}, fmt.Errorf("no HelmChart found in the provided file")
+	if len(crds) == 0 {
+		return nil, fmt.Errorf("no HelmChart found in the provided file")
+	}
+
+	return crds, nil
 }
 
-func GenerateHelmCommandsAndWriteHelmValues(localHelmSrcDir string) ([]string, []string, error) {
-	var helmCommands []string
-	var helmManifestPaths []string
-	var err error
-	var helmChartPaths []string
-
-	if localHelmSrcDir != "" {
-		helmManifestPaths, err = getLocalManifestPaths(localHelmSrcDir)
-		if err != nil {
-			return nil, nil, fmt.Errorf("error getting helm manifest paths: %w", err)
-		}
+func GenerateHelmCommands(localHelmSrcDir string) ([]string, []string, error) {
+	if localHelmSrcDir == "" {
+		return nil, nil, nil
 	}
 
-	for index, helmManifest := range helmManifestPaths {
-		var valuesPath string
-		helmCRD, err := readAndParseHelmCRD(helmManifest)
+	helmManifestPaths, err := getLocalManifestPaths(localHelmSrcDir)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error getting helm manifest paths: %w", err)
+	}
+
+	var helmCommands []string
+	var helmChartPaths []string
+
+	for _, manifest := range helmManifestPaths {
+		helmCRDs, err := parseHelmCRDs(manifest)
 		if err != nil {
-			return nil, nil, fmt.Errorf("reading and parsing helm crd: %w", err)
+			return nil, nil, fmt.Errorf("parsing helm manifest: %w", err)
 		}
 
-		if helmCRD.Spec.ValuesContent != "" {
-			valuesPath = fmt.Sprintf("values-%d.yaml", index)
-		}
+		for _, crd := range helmCRDs {
+			var valuesPath string
 
-		var tempRepoWithChart string
+			if crd.Spec.ValuesContent != "" {
+				valuesPath = fmt.Sprintf("values-%s.yaml", crd.Spec.Chart)
 
-		if strings.HasPrefix(helmCRD.Spec.Repo, "http") {
-			tempRepo := fmt.Sprintf("repo-%d", index)
-			repoCommand := fmt.Sprintf("helm repo add %s %s", tempRepo, helmCRD.Spec.Repo)
-			tempRepoWithChart = fmt.Sprintf("repo-%d/%s", index, helmCRD.Spec.Chart)
-
-			helmCommands = append(helmCommands, repoCommand)
-			var pullCommand string
-			if helmCRD.Spec.Version != "" {
-				pullCommand = fmt.Sprintf("helm pull repo-%d/%s --version %s", index, helmCRD.Spec.Chart, helmCRD.Spec.Version)
-			} else {
-				pullCommand = fmt.Sprintf("helm pull repo-%d/%s", index, helmCRD.Spec.Chart)
+				if err = os.WriteFile(valuesPath, []byte(crd.Spec.ValuesContent), fileio.NonExecutablePerms); err != nil {
+					return nil, nil, fmt.Errorf("writing helm values file: %w", err)
+				}
 			}
-			helmCommands = append(helmCommands, pullCommand)
-		} else {
-			var pullCommand string
-			if helmCRD.Spec.Version != "" {
-				pullCommand = fmt.Sprintf("helm pull %s --version %s", helmCRD.Spec.Repo, helmCRD.Spec.Version)
-			} else {
-				pullCommand = fmt.Sprintf("helm pull %s", helmCRD.Spec.Repo)
+
+			tempRepo := fmt.Sprintf("repo-%s", crd.Spec.Chart)
+			repository := helmRepositoryName(crd.Spec.Repo, tempRepo, crd.Spec.Chart)
+
+			addCommand := helmAddRepoCommand(crd.Spec.Repo, tempRepo)
+			if addCommand != "" {
+				helmCommands = append(helmCommands, addCommand)
 			}
-			helmCommands = append(helmCommands, pullCommand)
-		}
 
-		helmChartPaths = append(helmChartPaths, fmt.Sprintf("%s-*.tgz", helmCRD.Spec.Chart))
-		helmCommand := buildHelmCommand(&helmCRD, valuesPath, tempRepoWithChart)
-		err = writeHelmValuesFile(&helmCRD, valuesPath)
-		if err != nil {
-			return nil, nil, fmt.Errorf("writing helm values manifest: %w", err)
+			templateCommand := helmTemplateCommand(crd, repository, valuesPath)
+			pullCommand := helmPullCommand(crd.Spec.Repo, crd.Spec.Chart, crd.Spec.Version)
+			helmCommands = append(helmCommands, pullCommand, templateCommand)
+			helmChartPaths = append(helmChartPaths, fmt.Sprintf("%s-*.tgz", crd.Spec.Chart))
 		}
-
-		helmCommands = append(helmCommands, helmCommand)
 	}
 
 	return helmCommands, helmChartPaths, nil
 }
 
-func buildHelmCommand(crd *HelmCRD, valuesFilePath string, tempRepoWithChart string) string {
+func helmRepositoryName(repoURL, tempRepo, chart string) string {
+	if strings.HasPrefix(repoURL, "http") {
+		return fmt.Sprintf("%s/%s", tempRepo, chart)
+	}
+
+	return repoURL
+}
+
+func helmAddRepoCommand(repo, tempRepo string) string {
+	if !strings.HasPrefix(repo, "http") {
+		return ""
+	}
+
+	return fmt.Sprintf("helm repo add %s %s", tempRepo, repo)
+}
+
+func helmPullCommand(repository, chart, version string) string {
+	repository = helmRepositoryName(repository, fmt.Sprintf("repo-%s", chart), chart)
+
+	pullCommand := fmt.Sprintf("helm pull %s", repository)
+	if version != "" {
+		pullCommand = fmt.Sprintf("helm pull %s --version %s", repository, version)
+	}
+
+	return pullCommand
+}
+
+func helmTemplateCommand(crd *HelmCRD, repository string, valuesFilePath string) string {
 	var cmdParts []string
 
-	if tempRepoWithChart != "" {
-		cmdParts = append(cmdParts, "helm template --skip-crds", fmt.Sprintf("%s %s", crd.Spec.Chart, tempRepoWithChart))
-	} else {
-		cmdParts = append(cmdParts, "helm template --skip-crds", fmt.Sprintf("%s %s", crd.Spec.Chart, crd.Spec.Repo))
-	}
+	cmdParts = append(cmdParts, fmt.Sprintf("helm template --skip-crds %s %s", crd.Spec.Chart, repository))
 
 	if crd.Spec.Version != "" {
 		cmdParts = append(cmdParts, fmt.Sprintf("--version %s", crd.Spec.Version))
 	}
 
-	set := formatMap("", crd.Spec.Set)
 	if len(crd.Spec.Set) > 0 {
-		cmdParts = append(cmdParts, fmt.Sprintf("--set %s", set))
+		args := parseSetArgs("", crd.Spec.Set)
+		cmdParts = append(cmdParts, fmt.Sprintf("--set %s", strings.Join(args, ",")))
 	}
 
 	if crd.Spec.ValuesContent != "" {
@@ -199,3 +199,61 @@ func buildHelmCommand(crd *HelmCRD, valuesFilePath string, tempRepoWithChart str
 
 	return strings.Join(cmdParts, " ")
 }
+
+//func updateHelmManifest(manifestsPath string, chartTars []string) ([]map[string]interface{}, error) {
+//	manifestFile, err := os.ReadFile(manifestsPath)
+//	if err != nil {
+//		return nil, fmt.Errorf("reading helm manifest: %w", err)
+//	}
+//
+//	var manifests []map[string]interface{}
+//	decoder := yaml.NewDecoder(bytes.NewReader(manifestFile))
+//	for {
+//		var manifest map[string]interface{}
+//
+//		if err = decoder.Decode(&manifest); err != nil {
+//			if errors.Is(err, io.EOF) {
+//				break
+//			}
+//			return nil, fmt.Errorf("unmarshaling manifest: %w", err)
+//		}
+//
+//		kind, ok := manifest["kind"]
+//		if !ok || kind != "HelmChart" {
+//			continue
+//		}
+//
+//		if spec, ok := manifest["spec"].(map[string]interface{}); ok {
+//			delete(spec, "repo")
+//			oldChart := spec["chart"]
+//			spec["chart"] = "updated-chart-name"
+//		}
+//
+//		manifests = append(manifests, manifest)
+//	}
+//
+//	return manifests, nil
+//}
+//
+//func UpdateAllManifests(localHelmSrcDir string, chartTars []string) ([][]map[string]interface{}, error) {
+//	if localHelmSrcDir == "" {
+//		return nil, nil
+//	}
+//
+//	helmManifestPaths, err := getLocalManifestPaths(localHelmSrcDir)
+//	if err != nil {
+//		return nil, fmt.Errorf("error getting helm manifest paths: %w", err)
+//	}
+//
+//	var allManifests [][]map[string]interface{}
+//	for _, manifest := range helmManifestPaths {
+//		updatedManifests, err := updateHelmManifest(manifest, chartTars)
+//		if err != nil {
+//			return nil, fmt.Errorf("updating helm manifest: %w", err)
+//		}
+//
+//		allManifests = append(allManifests, updatedManifests)
+//	}
+//
+//	return allManifests, nil
+//}
