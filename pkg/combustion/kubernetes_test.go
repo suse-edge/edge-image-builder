@@ -209,7 +209,7 @@ func TestConfigureKubernetes_SuccessfulSingleNodeK3sCluster(t *testing.T) {
 	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
 	assert.Contains(t, contents, "export INSTALL_K3S_SKIP_DOWNLOAD=true")
 	assert.Contains(t, contents, "export INSTALL_K3S_SKIP_START=true")
-	assert.Contains(t, contents, "export INSTALL_K3S_BIN_DIR=/opt/k3s/bin")
+	assert.Contains(t, contents, "export INSTALL_K3S_BIN_DIR=/opt/bin")
 	assert.Contains(t, contents, "chmod +x kubernetes/install/cool-k3s-binary")
 	assert.Contains(t, contents, "cp kubernetes/install/cool-k3s-binary $INSTALL_K3S_BIN_DIR/k3s")
 
@@ -306,7 +306,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sCluster(t *testing.T) {
 	assert.Contains(t, contents, "export INSTALL_K3S_EXEC=$NODETYPE")
 	assert.Contains(t, contents, "export INSTALL_K3S_SKIP_DOWNLOAD=true")
 	assert.Contains(t, contents, "export INSTALL_K3S_SKIP_START=true")
-	assert.Contains(t, contents, "export INSTALL_K3S_BIN_DIR=/opt/k3s/bin")
+	assert.Contains(t, contents, "export INSTALL_K3S_BIN_DIR=/opt/bin")
 	assert.Contains(t, contents, "chmod +x kubernetes/install/cool-k3s-binary")
 	assert.Contains(t, contents, "cp kubernetes/install/cool-k3s-binary $INSTALL_K3S_BIN_DIR/k3s")
 
