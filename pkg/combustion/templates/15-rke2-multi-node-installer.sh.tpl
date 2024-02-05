@@ -53,6 +53,8 @@ cp {{ .registryMirrors }} /etc/rancher/rke2/registries.yaml
 export INSTALL_RKE2_TAR_PREFIX=/opt/rke2
 export INSTALL_RKE2_ARTIFACT_PATH={{ .installPath }}
 
+# Create the CNI directory, usually created and labelled by the
+# rke2-selinux package, but isn't executed during combustion.
 mkdir -p /opt/cni
 
 ./rke2_installer.sh
