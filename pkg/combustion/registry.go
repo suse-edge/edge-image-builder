@@ -29,7 +29,6 @@ const (
 	hauler                  = "hauler"
 	registryDir             = "registry"
 	registryPort            = "6545"
-	fileServerPort          = "6546"
 	registryMirrorsFileName = "registries.yaml"
 
 	helmLogFileName      = "helm.log"
@@ -115,6 +114,15 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("populating hauler store: %w", err)
 	}
+
+	chartTars, err := addHaulerLocalCharts(ctx, helmChartPaths)
+	if err != nil {
+		log.AuditComponentFailed(registryComponentName)
+		return nil, fmt.Errorf("populating hauler store with charts: %w", err)
+	}
+	_ = chartTars
+	//fmt.Println(chartTars)
+	//writeUpdatedHelmManifests(ctx, chartTars)
 
 	err = generateRegistryTar(ctx)
 	if err != nil {
@@ -443,5 +451,13 @@ func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string) error {
 		}
 	}
 
-	return nil
+	return helmChartPaths, nil
 }
+
+//func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string) {
+//	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
+//
+//	stuff, err := registry.UpdateAllManifests(helmSrcDir)
+//	fmt.Println("stuff", stuff)
+//	fmt.Println("err", err)
+//}
