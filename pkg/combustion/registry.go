@@ -27,6 +27,7 @@ const (
 	hauler                  = "hauler"
 	registryDir             = "registry"
 	registryPort            = "6545"
+	fileServerPort          = "6546"
 	registryMirrorsFileName = "registries.yaml"
 
 	helmLogFileName      = "helm.log"
@@ -58,17 +59,11 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 	}
 
 	var helmTemplatePath string
+	var helmChartPaths []string
 	if isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) {
 		helmTemplatePath = helmTemplateFilename
 
-		helmChartsDestDir := filepath.Join(ctx.CombustionDir, helmChartsDir)
-		err := os.Mkdir(helmChartsDestDir, os.ModePerm)
-		if err != nil {
-			log.AuditComponentFailed(registryComponentName)
-			return nil, fmt.Errorf("creating helm charts destination dir: %w", err)
-		}
-
-		err = generateHelmTemplate(ctx)
+		helmChartPaths, err = configureHelm(ctx)
 		if err != nil {
 			log.AuditComponentFailed(registryComponentName)
 			return nil, fmt.Errorf("generating helm templates and values: %w", err)
@@ -114,11 +109,20 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("writing hauler manifest: %w", err)
 	}
 
-	err = populateHaulerStore(ctx)
+	err = syncHaulerManifest(ctx)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("populating hauler store: %w", err)
 	}
+
+	chartTars, err := addHaulerLocalCharts(ctx, helmChartPaths)
+	if err != nil {
+		log.AuditComponentFailed(registryComponentName)
+		return nil, fmt.Errorf("populating hauler store with charts: %w", err)
+	}
+	_ = chartTars
+	//fmt.Println(chartTars)
+	//writeUpdatedHelmManifests(ctx, chartTars)
 
 	err = generateRegistryTar(ctx)
 	if err != nil {
@@ -164,7 +168,7 @@ func writeHaulerManifest(ctx *image.Context, images []image.ContainerImage, char
 	return nil
 }
 
-func populateHaulerStore(ctx *image.Context) error {
+func syncHaulerManifest(ctx *image.Context) error {
 	haulerManifestPath := filepath.Join(ctx.BuildDir, haulerManifestYamlName)
 	args := []string{"store", "sync", "--files", haulerManifestPath, "-p", "linux/amd64"}
 
@@ -183,6 +187,41 @@ func populateHaulerStore(ctx *image.Context) error {
 	}
 
 	return nil
+}
+
+func addHaulerLocalCharts(ctx *image.Context, chartPaths []string) ([]string, error) {
+	var chartTarNames []string
+	for _, chart := range chartPaths {
+		var expandedChart string
+		if strings.Contains(chart, "*") {
+			matches, err := filepath.Glob(chart)
+			if err != nil {
+				return nil, fmt.Errorf("error expanding wildcard %s: %w", chart, err)
+			}
+			if len(matches) == 0 {
+				return nil, fmt.Errorf("no files matched pattern: %s", chart)
+			}
+			expandedChart = matches[0]
+			chartTarNames = append(chartTarNames, expandedChart)
+		}
+
+		args := []string{"store", "add", "chart", expandedChart}
+		cmd, registryLog, err := createRegistryCommand(ctx, hauler, args)
+		if err != nil {
+			return nil, fmt.Errorf("preparing to chart tars to registry store: %w", err)
+		}
+		defer func() {
+			if err = registryLog.Close(); err != nil {
+				zap.S().Warnf("failed to close registry log file properly: %s", err)
+			}
+		}()
+
+		if err = cmd.Run(); err != nil {
+			return nil, fmt.Errorf("adding hauler chart: %w: ", err)
+		}
+	}
+
+	return chartTarNames, nil
 }
 
 func generateRegistryTar(ctx *image.Context) error {
@@ -223,16 +262,29 @@ func writeRegistryScript(ctx *image.Context) (string, error) {
 		chartsDir = helmChartsDir
 	}
 
+	version := ctx.ImageDefinition.Kubernetes.Version
+	var k8sType string
+	switch {
+	case strings.Contains(version, image.KubernetesDistroRKE2):
+		k8sType = image.KubernetesDistroRKE2
+	case strings.Contains(version, image.KubernetesDistroK3S):
+		k8sType = image.KubernetesDistroK3S
+	}
+
 	values := struct {
-		Port                string
+		RegistryPort        string
 		RegistryDir         string
 		EmbeddedRegistryTar string
 		ChartsDir           string
+		FileServerPort      string
+		K8sType             string
 	}{
-		Port:                registryPort,
+		FileServerPort:      fileServerPort,
+		RegistryPort:        registryPort,
 		RegistryDir:         registryDir,
 		EmbeddedRegistryTar: registryTarName,
 		ChartsDir:           chartsDir,
+		K8sType:             k8sType,
 	}
 
 	data, err := template.Parse(registryScriptName, registryScript, &values)
@@ -325,9 +377,7 @@ func createHelmCommand(ctx *image.Context, helmCommand string) (*exec.Cmd, *os.F
 		multiWriter := io.MultiWriter(logFile, templateFile)
 		cmd.Stdout = multiWriter
 	} else if args[1] == "pull" {
-		helmChartsDestDir := filepath.Join(ctx.CombustionDir, helmChartsDir)
-		args = append(args, "-d", helmChartsDestDir)
-
+		args = append(args)
 		cmd = exec.Command(args[0], args[1:]...)
 	} else {
 		cmd = exec.Command(args[0], args[1:]...)
@@ -339,11 +389,11 @@ func createHelmCommand(ctx *image.Context, helmCommand string) (*exec.Cmd, *os.F
 	return cmd, logFile, nil
 }
 
-func generateHelmTemplate(ctx *image.Context) error {
+func configureHelm(ctx *image.Context) ([]string, error) {
 	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
-	helmCommands, err := registry.GenerateHelmCommandsAndWriteHelmValues(helmSrcDir)
+	helmCommands, helmChartPaths, err := registry.GenerateHelmCommands(helmSrcDir)
 	if err != nil {
-		return fmt.Errorf("generating helm templates: %w", err)
+		return nil, fmt.Errorf("generating helm templates: %w", err)
 	}
 
 	for _, command := range helmCommands {
@@ -364,9 +414,17 @@ func generateHelmTemplate(ctx *image.Context) error {
 			return nil
 		}()
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return nil
+	return helmChartPaths, nil
 }
+
+//func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string) {
+//	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
+//
+//	stuff, err := registry.UpdateAllManifests(helmSrcDir)
+//	fmt.Println("stuff", stuff)
+//	fmt.Println("err", err)
+//}
