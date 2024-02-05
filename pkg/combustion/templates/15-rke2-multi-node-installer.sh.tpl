@@ -53,6 +53,8 @@ cp {{ .registryMirrors }} /etc/rancher/rke2/registries.yaml
 export INSTALL_RKE2_TAR_PREFIX=/opt/rke2
 export INSTALL_RKE2_ARTIFACT_PATH={{ .installPath }}
 
+mkdir -p /opt/cni
+
 ./rke2_installer.sh
 
 systemctl enable rke2-$NODETYPE.service
