@@ -3,6 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"io"
 	"os"
 	"os/exec"
@@ -120,9 +121,11 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("populating hauler store with charts: %w", err)
 	}
-	_ = chartTars
-	//fmt.Println(chartTars)
-	//writeUpdatedHelmManifests(ctx, chartTars)
+
+	err = writeUpdatedHelmManifests(ctx, chartTars)
+	if err != nil {
+		return nil, fmt.Errorf("writing updated manifests: %w", err)
+	}
 
 	err = generateRegistryTar(ctx)
 	if err != nil {
@@ -454,10 +457,42 @@ func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string) error {
 	return helmChartPaths, nil
 }
 
-//func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string) {
-//	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
-//
-//	stuff, err := registry.UpdateAllManifests(helmSrcDir)
-//	fmt.Println("stuff", stuff)
-//	fmt.Println("err", err)
-//}
+func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string) error {
+	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
+
+	manifests, err := registry.UpdateAllManifests(helmSrcDir, chartTars)
+	if err != nil {
+		return fmt.Errorf("updating manifests: %w", err)
+	}
+
+	for i, manifest := range manifests {
+		for j, doc := range manifest {
+			data, err := yaml.Marshal(doc)
+			if err != nil {
+				return fmt.Errorf("marshaling data: %w", err)
+			}
+
+			fileName := fmt.Sprintf("manifest%d.yaml", i+j)
+			dirPath := filepath.Join(ctx.CombustionDir, k8sDir, k8sManifestsDir)
+			if err = os.MkdirAll(dirPath, os.ModePerm); err != nil {
+				return fmt.Errorf("creating kubernetes manifests dir: %w", err)
+			}
+
+			filePath := filepath.Join(dirPath, fileName)
+			file, err := os.Create(filePath)
+			if err != nil {
+				return fmt.Errorf("creating manifest file: %w", err)
+			}
+
+			if _, err = file.Write(data); err != nil {
+				return fmt.Errorf("writing manifest file: %w", err)
+			}
+
+			if err = file.Close(); err != nil {
+				return fmt.Errorf("closing file %w", err)
+			}
+		}
+	}
+
+	return helmChartPaths, nil
+}
