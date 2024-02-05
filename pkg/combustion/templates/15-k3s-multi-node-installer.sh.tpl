@@ -53,7 +53,7 @@ cp {{ .registryMirrors }} /etc/rancher/k3s/registries.yaml
 export INSTALL_K3S_EXEC=$NODETYPE
 export INSTALL_K3S_SKIP_DOWNLOAD=true
 export INSTALL_K3S_SKIP_START=true
-export INSTALL_K3S_BIN_DIR=/opt/k3s
+export INSTALL_K3S_BIN_DIR=/opt/k3s/bin
 
 mkdir -p $INSTALL_K3S_BIN_DIR
 chmod +x {{ .binaryPath }}
