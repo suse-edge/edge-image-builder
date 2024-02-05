@@ -389,7 +389,7 @@ func configureManifests(ctx *image.Context) (string, error) {
 
 	manifestsPath := filepath.Join(k8sDir, k8sManifestsDir)
 	manifestDestDir := filepath.Join(ctx.CombustionDir, manifestsPath)
-	err := os.Mkdir(manifestDestDir, os.ModePerm)
+	err := os.MkdirAll(manifestDestDir, os.ModePerm)
 	if err != nil {
 		return "", fmt.Errorf("creating manifests destination dir: %w", err)
 	}

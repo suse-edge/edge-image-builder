@@ -200,60 +200,65 @@ func helmTemplateCommand(crd *HelmCRD, repository string, valuesFilePath string)
 	return strings.Join(cmdParts, " ")
 }
 
-//func updateHelmManifest(manifestsPath string, chartTars []string) ([]map[string]interface{}, error) {
-//	manifestFile, err := os.ReadFile(manifestsPath)
-//	if err != nil {
-//		return nil, fmt.Errorf("reading helm manifest: %w", err)
-//	}
-//
-//	var manifests []map[string]interface{}
-//	decoder := yaml.NewDecoder(bytes.NewReader(manifestFile))
-//	for {
-//		var manifest map[string]interface{}
-//
-//		if err = decoder.Decode(&manifest); err != nil {
-//			if errors.Is(err, io.EOF) {
-//				break
-//			}
-//			return nil, fmt.Errorf("unmarshaling manifest: %w", err)
-//		}
-//
-//		kind, ok := manifest["kind"]
-//		if !ok || kind != "HelmChart" {
-//			continue
-//		}
-//
-//		if spec, ok := manifest["spec"].(map[string]interface{}); ok {
-//			delete(spec, "repo")
-//			oldChart := spec["chart"]
-//			spec["chart"] = "updated-chart-name"
-//		}
-//
-//		manifests = append(manifests, manifest)
-//	}
-//
-//	return manifests, nil
-//}
-//
-//func UpdateAllManifests(localHelmSrcDir string, chartTars []string) ([][]map[string]interface{}, error) {
-//	if localHelmSrcDir == "" {
-//		return nil, nil
-//	}
-//
-//	helmManifestPaths, err := getLocalManifestPaths(localHelmSrcDir)
-//	if err != nil {
-//		return nil, fmt.Errorf("error getting helm manifest paths: %w", err)
-//	}
-//
-//	var allManifests [][]map[string]interface{}
-//	for _, manifest := range helmManifestPaths {
-//		updatedManifests, err := updateHelmManifest(manifest, chartTars)
-//		if err != nil {
-//			return nil, fmt.Errorf("updating helm manifest: %w", err)
-//		}
-//
-//		allManifests = append(allManifests, updatedManifests)
-//	}
-//
-//	return allManifests, nil
-//}
+func updateHelmManifest(manifestsPath string, chartTars []string) ([]map[string]interface{}, error) {
+	manifestFile, err := os.ReadFile(manifestsPath)
+	if err != nil {
+		return nil, fmt.Errorf("reading helm manifest: %w", err)
+	}
+
+	var manifests []map[string]interface{}
+	decoder := yaml.NewDecoder(bytes.NewReader(manifestFile))
+	for {
+		var manifest map[string]interface{}
+
+		if err = decoder.Decode(&manifest); err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return nil, fmt.Errorf("unmarshaling manifest: %w", err)
+		}
+
+		kind, ok := manifest["kind"]
+		if !ok || kind != "HelmChart" {
+			continue
+		}
+
+		if spec, ok := manifest["spec"].(map[string]interface{}); ok {
+			delete(spec, "repo")
+			oldChart := spec["chart"]
+			for _, chartTar := range chartTars {
+				if strings.Contains(chartTar, oldChart.(string)) {
+					spec["chart"] = fmt.Sprintf("%s/%s", registryServiceURL, chartTar)
+				}
+			}
+
+		}
+
+		manifests = append(manifests, manifest)
+	}
+
+	return manifests, nil
+}
+
+func UpdateAllManifests(localHelmSrcDir string, chartTars []string) ([][]map[string]interface{}, error) {
+	if localHelmSrcDir == "" {
+		return nil, nil
+	}
+
+	helmManifestPaths, err := getLocalManifestPaths(localHelmSrcDir)
+	if err != nil {
+		return nil, fmt.Errorf("error getting helm manifest paths: %w", err)
+	}
+
+	var allManifests [][]map[string]interface{}
+	for _, manifest := range helmManifestPaths {
+		updatedManifests, err := updateHelmManifest(manifest, chartTars)
+		if err != nil {
+			return nil, fmt.Errorf("updating helm manifest: %w", err)
+		}
+
+		allManifests = append(allManifests, updatedManifests)
+	}
+
+	return allManifests, nil
+}

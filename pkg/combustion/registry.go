@@ -3,6 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"io"
 	"os"
 	"os/exec"
@@ -120,9 +121,11 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("populating hauler store with charts: %w", err)
 	}
-	_ = chartTars
-	//fmt.Println(chartTars)
-	//writeUpdatedHelmManifests(ctx, chartTars)
+
+	err = writeUpdatedHelmManifests(ctx, chartTars)
+	if err != nil {
+		return nil, fmt.Errorf("writing updated manifests: %w", err)
+	}
 
 	err = generateRegistryTar(ctx)
 	if err != nil {
@@ -421,10 +424,44 @@ func configureHelm(ctx *image.Context) ([]string, error) {
 	return helmChartPaths, nil
 }
 
-//func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string) {
-//	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
-//
-//	stuff, err := registry.UpdateAllManifests(helmSrcDir)
-//	fmt.Println("stuff", stuff)
-//	fmt.Println("err", err)
-//}
+func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string) error {
+	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
+
+	manifests, err := registry.UpdateAllManifests(helmSrcDir, chartTars)
+	if err != nil {
+		return fmt.Errorf("error updating manifests: %w", err)
+	}
+	for i, items := range manifests {
+		for j, item := range items {
+			data, err := yaml.Marshal(&item)
+			if err != nil {
+				if err != nil {
+					return fmt.Errorf("Error marshaling data: %w\n", err)
+				}
+			}
+
+			fileName := fmt.Sprintf("manifest%d-%d.yaml", i, j)
+			dirPath := filepath.Join(ctx.CombustionDir, k8sDir, k8sManifestsDir)
+			if err = os.MkdirAll(dirPath, os.ModePerm); err != nil {
+				return fmt.Errorf("creating kubernetes manifests dir: %w", err)
+			}
+			filePath := filepath.Join(dirPath, fileName)
+			file, err := os.Create(filePath)
+			if err != nil {
+				return fmt.Errorf("Error creating file: %w\n", err)
+			}
+			defer file.Close()
+
+			// Write the marshaled data to the file
+			_, err = file.Write(data)
+			if err != nil {
+				if err != nil {
+					return fmt.Errorf("Error wrtiting file: %w\n", err)
+				}
+			}
+
+			fmt.Printf("Successfully wrote to %s\n", fileName)
+		}
+	}
+	return nil
+}
