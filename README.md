@@ -29,24 +29,24 @@ the host machine.
 The following example command attaches the directory and runs EIB:
 ```shell
 podman run --rm -it \
--v $IMAGE_DIR:/eib eib:dev /bin/eib \
--config-file $CONFIG_FILE.yaml \
--config-dir /eib \
--build-dir /eib/_build
+-v $IMAGE_DIR:/eib eib:dev build /bin/eib \
+--config-file $CONFIG_FILE.yaml \
+--config-dir /eib \
+--build-dir /eib/_build
 ```
 
 * `-v` - Used to mount a local directory (in this example, the value of $IMAGE_DIR) into the EIB container at `/eib`.
-* `-config-file` - Specifies which image configuration file to build. The path to this file will be relative to
+* `--config-file` - Specifies which image configuration file to build. The path to this file will be relative to
   the image configuration directory. If the configuration file is in the root of the configuration directory, simply 
   specify the name of the configuration file 
-* `-config-dir` - Specifies the image configuration directory. Keep in mind that this is relative to the running
+* `--config-dir` - Specifies the image configuration directory. Keep in mind that this is relative to the running
   container, so its value must match the mounted volume.
-* `-build-dir` - (optional) If unspecified, EIB will use a temporary directory inside the container for
+* `--build-dir` - (optional) If unspecified, EIB will use a temporary directory inside the container for
   assembling/generating the components used in the build. This may be specified to a location within the mounted
   volume to make the build artifacts available after the container completes. In this example, a directory named
   `_build` will be created in the image configuration directory and will persist after EIB finishes. This directory
   will contain subdirectories storing the respective artifacts of the different builds.
-* `-validate` - If specified, the specified image definition and configuration directory will be checked to ensure
+* `--validate` - If specified, the specified image definition and configuration directory will be checked to ensure
   the build can proceed, however the image will not actually be built.
 
 ## Testing Images
