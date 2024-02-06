@@ -65,7 +65,7 @@ func (b *Builder) generateOutputImageFilename() string {
 }
 
 func (b *Builder) generateBaseImageFilename() string {
-	filename := filepath.Join(b.context.ImageConfigDir, "images", b.context.ImageDefinition.Image.BaseImage)
+	filename := filepath.Join(b.context.ImageConfigDir, "base-images", b.context.ImageDefinition.Image.BaseImage)
 	return filename
 }
 

@@ -55,7 +55,7 @@ func validateImage(ctx *image.Context) []FailedValidation {
 			UserMessage: "The 'baseImage' field is required in the 'image' section.",
 		})
 	} else {
-		baseImageFilename := filepath.Join(ctx.ImageConfigDir, "images", def.Image.BaseImage)
+		baseImageFilename := filepath.Join(ctx.ImageConfigDir, "base-images", def.Image.BaseImage)
 		_, err := os.Stat(baseImageFilename)
 		if err != nil {
 			if os.IsNotExist(err) {
