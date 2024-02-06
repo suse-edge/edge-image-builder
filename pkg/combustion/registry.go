@@ -3,13 +3,14 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -63,11 +64,10 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 	var helmChartPaths []string
 	if isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) {
 		helmTemplatePath = helmTemplateFilename
-
 		helmChartPaths, err = configureHelm(ctx)
 		if err != nil {
 			log.AuditComponentFailed(registryComponentName)
-			return nil, fmt.Errorf("generating helm templates and values: %w", err)
+			return nil, fmt.Errorf("configuring helm: %w", err)
 		}
 	}
 
@@ -116,17 +116,6 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("populating hauler store: %w", err)
 	}
 
-	chartTars, err := addHaulerLocalCharts(ctx, helmChartPaths)
-	if err != nil {
-		log.AuditComponentFailed(registryComponentName)
-		return nil, fmt.Errorf("populating hauler store with charts: %w", err)
-	}
-
-	err = writeUpdatedHelmManifests(ctx, chartTars)
-	if err != nil {
-		return nil, fmt.Errorf("writing updated manifests: %w", err)
-	}
-
 	err = generateRegistryTar(ctx)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
@@ -138,6 +127,17 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("copying hauler binary: %w", err)
+	}
+
+	chartTarPaths, err := getDownloadedCharts(helmChartPaths)
+	if err != nil {
+		log.AuditComponentFailed(registryComponentName)
+		return nil, fmt.Errorf("getting downloaded helm chart paths: %w", err)
+	}
+
+	err = writeUpdatedHelmManifests(ctx, chartTarPaths)
+	if err != nil {
+		return nil, fmt.Errorf("writing updated helm chart manifests: %w", err)
 	}
 
 	registryScriptNameResult, err := writeRegistryScript(ctx)
@@ -190,7 +190,7 @@ func syncHaulerManifest(ctx *image.Context) error {
 	return nil
 }
 
-func addHaulerLocalCharts(ctx *image.Context, chartPaths []string) ([]string, error) {
+func getDownloadedCharts(chartPaths []string) ([]string, error) {
 	var chartTarNames []string
 	for _, chart := range chartPaths {
 		var expandedChart string
@@ -200,25 +200,10 @@ func addHaulerLocalCharts(ctx *image.Context, chartPaths []string) ([]string, er
 				return nil, fmt.Errorf("error expanding wildcard %s: %w", chart, err)
 			}
 			if len(matches) == 0 {
-				return nil, fmt.Errorf("no files matched pattern: %s", chart)
+				return nil, fmt.Errorf("no charts matched pattern: %s", chart)
 			}
 			expandedChart = matches[0]
 			chartTarNames = append(chartTarNames, expandedChart)
-		}
-
-		args := []string{"store", "add", "chart", expandedChart}
-		cmd, registryLog, err := createRegistryCommand(ctx, hauler, args)
-		if err != nil {
-			return nil, fmt.Errorf("preparing to chart tars to registry store: %w", err)
-		}
-		defer func() {
-			if err = registryLog.Close(); err != nil {
-				zap.S().Warnf("failed to close registry log file properly: %s", err)
-			}
-		}()
-
-		if err = cmd.Run(); err != nil {
-			return nil, fmt.Errorf("adding hauler chart: %w: ", err)
 		}
 	}
 
@@ -358,7 +343,7 @@ func writeRegistryMirrors(ctx *image.Context, hostnames []string) error {
 	return nil
 }
 
-func createHelmCommand(ctx *image.Context, helmCommand string) (*exec.Cmd, *os.File, error) {
+func createHelmCommand(ctx *image.Context, helmCommand []string) (*exec.Cmd, *os.File, error) {
 	fullLogFilename := filepath.Join(ctx.BuildDir, helmLogFileName)
 	logFile, err := os.OpenFile(fullLogFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
 	if err != nil {
@@ -371,16 +356,15 @@ func createHelmCommand(ctx *image.Context, helmCommand string) (*exec.Cmd, *os.F
 	}
 
 	var cmd *exec.Cmd
-	args := strings.Fields(helmCommand)
-	if args[1] == "template" {
-		cmd = exec.Command(args[0], args[1:]...)
+	switch helmCommand[1] {
+	case "template":
+		cmd = exec.Command("helm", helmCommand...)
 		multiWriter := io.MultiWriter(logFile, templateFile)
 		cmd.Stdout = multiWriter
-	} else if args[1] == "pull" {
-		args = append(args)
-		cmd = exec.Command(args[0], args[1:]...)
-	} else {
-		cmd = exec.Command(args[0], args[1:]...)
+	case "pull":
+		cmd = exec.Command("helm", helmCommand...)
+	case "repo":
+		cmd = exec.Command("helm", helmCommand...)
 		cmd.Stdout = logFile
 	}
 
@@ -398,7 +382,8 @@ func configureHelm(ctx *image.Context) ([]string, error) {
 
 	for _, command := range helmCommands {
 		err := func() error {
-			cmd, registryLog, err := createHelmCommand(ctx, command)
+			commandArgs := strings.Fields(command)
+			cmd, registryLog, err := createHelmCommand(ctx, commandArgs)
 			if err != nil {
 				return fmt.Errorf("preparing to template helm chart: %w", err)
 			}
@@ -426,39 +411,37 @@ func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string) error {
 
 	manifests, err := registry.UpdateAllManifests(helmSrcDir, chartTars)
 	if err != nil {
-		return fmt.Errorf("error updating manifests: %w", err)
+		return fmt.Errorf("updating manifests: %w", err)
 	}
-	for i, items := range manifests {
-		for j, item := range items {
-			data, err := yaml.Marshal(&item)
+
+	for i, manifest := range manifests {
+		for j, doc := range manifest {
+			data, err := yaml.Marshal(doc)
 			if err != nil {
-				if err != nil {
-					return fmt.Errorf("Error marshaling data: %w\n", err)
-				}
+				return fmt.Errorf("marshaling data: %w", err)
 			}
 
-			fileName := fmt.Sprintf("manifest%d-%d.yaml", i, j)
+			fileName := fmt.Sprintf("manifest%d.yaml", i+j)
 			dirPath := filepath.Join(ctx.CombustionDir, k8sDir, k8sManifestsDir)
 			if err = os.MkdirAll(dirPath, os.ModePerm); err != nil {
 				return fmt.Errorf("creating kubernetes manifests dir: %w", err)
 			}
+
 			filePath := filepath.Join(dirPath, fileName)
 			file, err := os.Create(filePath)
 			if err != nil {
-				return fmt.Errorf("Error creating file: %w\n", err)
-			}
-			defer file.Close()
-
-			// Write the marshaled data to the file
-			_, err = file.Write(data)
-			if err != nil {
-				if err != nil {
-					return fmt.Errorf("Error wrtiting file: %w\n", err)
-				}
+				return fmt.Errorf("creating manifest file: %w", err)
 			}
 
-			fmt.Printf("Successfully wrote to %s\n", fileName)
+			if _, err = file.Write(data); err != nil {
+				return fmt.Errorf("writing manifest file: %w", err)
+			}
+
+			if err = file.Close(); err != nil {
+				return fmt.Errorf("closing file %w", err)
+			}
 		}
 	}
+
 	return nil
 }
