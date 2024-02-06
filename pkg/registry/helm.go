@@ -2,6 +2,7 @@ package registry
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -22,8 +23,6 @@ type HelmCRD struct {
 	} `yaml:"spec"`
 }
 
-var registryServiceURL = "http://hauler-registry.default.svc.cluster.local"
-
 func parseSetArgs(prefix string, m map[string]any) []string {
 	var args []string
 
@@ -34,7 +33,7 @@ func parseSetArgs(prefix string, m map[string]any) []string {
 		}
 
 		switch value := v.(type) {
-		case string, bool, int, int64, float64: // TODO: probably include all primitive types
+		case string, bool, int, int8, int16, int32, int64, float32, float64, uint, uint8, uint16, uint32, uint64:
 			args = append(args, fmt.Sprintf("%s=%v", fullKey, value))
 		case []any:
 			for i, item := range value {
@@ -77,7 +76,7 @@ func parseHelmCRDs(manifestsPath string) ([]*HelmCRD, error) {
 
 		kind, ok := manifest["kind"]
 		if !ok {
-			return nil, fmt.Errorf("missing 'kind' field in YAML document")
+			return nil, fmt.Errorf("missing 'kind' field in helm manifest")
 		}
 
 		if kind != "HelmChart" {
@@ -104,18 +103,15 @@ func parseHelmCRDs(manifestsPath string) ([]*HelmCRD, error) {
 	return crds, nil
 }
 
-func GenerateHelmCommands(localHelmSrcDir string) ([]string, []string, error) {
+func GenerateHelmCommands(localHelmSrcDir string) (helmCommands []string, helmChartPaths []string, err error) {
 	if localHelmSrcDir == "" {
 		return nil, nil, nil
 	}
 
 	helmManifestPaths, err := getLocalManifestPaths(localHelmSrcDir)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error getting helm manifest paths: %w", err)
+		return nil, nil, fmt.Errorf("getting helm manifest paths: %w", err)
 	}
-
-	var helmCommands []string
-	var helmChartPaths []string
 
 	for _, manifest := range helmManifestPaths {
 		helmCRDs, err := parseHelmCRDs(manifest)
@@ -171,9 +167,9 @@ func helmAddRepoCommand(repo, tempRepo string) string {
 func helmPullCommand(repository, chart, version string) string {
 	repository = helmRepositoryName(repository, fmt.Sprintf("repo-%s", chart), chart)
 
-	pullCommand := fmt.Sprintf("helm pull %s", repository)
+	pullCommand := fmt.Sprintf("pull %s", repository)
 	if version != "" {
-		pullCommand = fmt.Sprintf("helm pull %s --version %s", repository, version)
+		pullCommand = fmt.Sprintf("pull %s --version %s", repository, version)
 	}
 
 	return pullCommand
@@ -182,7 +178,7 @@ func helmPullCommand(repository, chart, version string) string {
 func helmTemplateCommand(crd *HelmCRD, repository string, valuesFilePath string) string {
 	var cmdParts []string
 
-	cmdParts = append(cmdParts, fmt.Sprintf("helm template --skip-crds %s %s", crd.Spec.Chart, repository))
+	cmdParts = append(cmdParts, fmt.Sprintf("template --skip-crds %s %s", crd.Spec.Chart, repository))
 
 	if crd.Spec.Version != "" {
 		cmdParts = append(cmdParts, fmt.Sprintf("--version %s", crd.Spec.Version))
@@ -200,16 +196,16 @@ func helmTemplateCommand(crd *HelmCRD, repository string, valuesFilePath string)
 	return strings.Join(cmdParts, " ")
 }
 
-func updateHelmManifest(manifestsPath string, chartTars []string) ([]map[string]interface{}, error) {
+func updateHelmManifest(manifestsPath string, chartTarsPaths []string) ([]map[string]any, error) {
 	manifestFile, err := os.ReadFile(manifestsPath)
 	if err != nil {
 		return nil, fmt.Errorf("reading helm manifest: %w", err)
 	}
 
-	var manifests []map[string]interface{}
+	var manifests []map[string]any
 	decoder := yaml.NewDecoder(bytes.NewReader(manifestFile))
 	for {
-		var manifest map[string]interface{}
+		var manifest map[string]any
 
 		if err = decoder.Decode(&manifest); err != nil {
 			if errors.Is(err, io.EOF) {
@@ -223,15 +219,25 @@ func updateHelmManifest(manifestsPath string, chartTars []string) ([]map[string]
 			continue
 		}
 
-		if spec, ok := manifest["spec"].(map[string]interface{}); ok {
-			delete(spec, "repo")
+		if spec, ok := manifest["spec"].(map[string]any); ok {
+			if _, ok := spec["chartContent"].(string); ok {
+				continue
+			}
 			oldChart := spec["chart"]
-			for _, chartTar := range chartTars {
+			delete(spec, "repo")
+			delete(spec, "chart")
+			for _, chartTar := range chartTarsPaths {
 				if strings.Contains(chartTar, oldChart.(string)) {
-					spec["chart"] = fmt.Sprintf("%s/%s", registryServiceURL, chartTar)
+					tarData, err := os.ReadFile(chartTar)
+					if err != nil {
+						return nil, fmt.Errorf("reading chart tar: %w", err)
+					}
+
+					base64Str := base64.StdEncoding.EncodeToString(tarData)
+
+					spec["chartContent"] = base64Str
 				}
 			}
-
 		}
 
 		manifests = append(manifests, manifest)
@@ -240,17 +246,17 @@ func updateHelmManifest(manifestsPath string, chartTars []string) ([]map[string]
 	return manifests, nil
 }
 
-func UpdateAllManifests(localHelmSrcDir string, chartTars []string) ([][]map[string]interface{}, error) {
+func UpdateAllManifests(localHelmSrcDir string, chartTars []string) ([][]map[string]any, error) {
 	if localHelmSrcDir == "" {
 		return nil, nil
 	}
 
 	helmManifestPaths, err := getLocalManifestPaths(localHelmSrcDir)
 	if err != nil {
-		return nil, fmt.Errorf("error getting helm manifest paths: %w", err)
+		return nil, fmt.Errorf("getting helm manifest paths: %w", err)
 	}
 
-	var allManifests [][]map[string]interface{}
+	var allManifests [][]map[string]any
 	for _, manifest := range helmManifestPaths {
 		updatedManifests, err := updateHelmManifest(manifest, chartTars)
 		if err != nil {
