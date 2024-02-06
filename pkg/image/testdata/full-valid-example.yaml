@@ -83,7 +83,3 @@ kubernetes:
   manifests:
     urls:
       - https://k8s.io/examples/application/nginx-app.yaml
-  charts:
-    - name: rancher
-      repoURL: https://releases.rancher.com/server-charts/latest
-      version: 2.8.0

@@ -104,7 +104,7 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		}
 	}
 
-	err = writeHaulerManifest(ctx, containerImages, ctx.ImageDefinition.Kubernetes.HelmCharts)
+	err = writeHaulerManifest(ctx, containerImages)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("writing hauler manifest: %w", err)
@@ -150,14 +150,12 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 	return []string{registryScriptNameResult}, nil
 }
 
-func writeHaulerManifest(ctx *image.Context, images []image.ContainerImage, charts []image.HelmChart) error {
+func writeHaulerManifest(ctx *image.Context, images []image.ContainerImage) error {
 	haulerManifestYamlFile := filepath.Join(ctx.BuildDir, haulerManifestYamlName)
 	haulerDef := struct {
 		ContainerImages []image.ContainerImage
-		HelmCharts      []image.HelmChart
 	}{
 		ContainerImages: images,
-		HelmCharts:      charts,
 	}
 	data, err := template.Parse(haulerManifestYamlName, haulerManifest, haulerDef)
 	if err != nil {
@@ -319,8 +317,7 @@ func createRegistryCommand(ctx *image.Context, commandName string, args []string
 }
 
 func IsEmbeddedArtifactRegistryConfigured(ctx *image.Context) bool {
-	return len(ctx.ImageDefinition.Kubernetes.HelmCharts) != 0 ||
-		len(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages) != 0 ||
+	return len(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages) != 0 ||
 		len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0
 }
 

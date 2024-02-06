@@ -124,18 +124,11 @@ type ContainerImage struct {
 	SupplyChainKey string `yaml:"supplyChainKey"`
 }
 
-type HelmChart struct {
-	Name    string `yaml:"name"`
-	RepoURL string `yaml:"repoURL"`
-	Version string `yaml:"version"`
-}
-
 type Kubernetes struct {
-	Version    string      `yaml:"version"`
-	Network    Network     `yaml:"network"`
-	Nodes      []Node      `yaml:"nodes"`
-	Manifests  Manifests   `yaml:"manifests"`
-	HelmCharts []HelmChart `yaml:"charts"`
+	Version   string    `yaml:"version"`
+	Network   Network   `yaml:"network"`
+	Nodes     []Node    `yaml:"nodes"`
+	Manifests Manifests `yaml:"manifests"`
 }
 
 type Network struct {
