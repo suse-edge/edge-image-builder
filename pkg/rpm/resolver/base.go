@@ -23,6 +23,10 @@ const (
 //go:embed templates/prepare-tarball.sh.tpl
 var prepareTraballTemplate string
 
+type ImageImporter interface {
+	Import(tarball, ref string) error
+}
+
 type TarballImageBuilder struct {
 	// dir from where the image builder will work
 	dir string
@@ -30,16 +34,16 @@ type TarballImageBuilder struct {
 	imgPath string
 	// type of the image that will be used as base (either ISO or RAW)
 	imgType string
-	// podman client which to use for image build
-	podman Podman
+	// imgImporter used to import the tarball archive as a container image
+	imgImporter ImageImporter
 }
 
-func NewTarballBuilder(workDir, imgPath, imgType string, podman Podman) *TarballImageBuilder {
+func NewTarballBuilder(workDir, imgPath, imgType string, importer ImageImporter) *TarballImageBuilder {
 	return &TarballImageBuilder{
-		dir:     workDir,
-		imgPath: imgPath,
-		imgType: imgType,
-		podman:  podman,
+		dir:         workDir,
+		imgPath:     imgPath,
+		imgType:     imgType,
+		imgImporter: importer,
 	}
 }
 
@@ -60,7 +64,7 @@ func (t *TarballImageBuilder) Build() (string, error) {
 	}
 
 	tarballPath := filepath.Join(t.getTarballImgDir(), tarballName)
-	if err := t.podman.Import(tarballPath, tarballImgRef); err != nil {
+	if err := t.imgImporter.Import(tarballPath, tarballImgRef); err != nil {
 		return "", fmt.Errorf("importing the tarball image: %w", err)
 	}
 

@@ -24,7 +24,6 @@ const (
 var dockerfileTemplate string
 
 type Podman interface {
-	Import(tarball, ref string) error
 	Build(context, name string) error
 	Create(img string) (string, error)
 	Copy(id, src, dest string) error
