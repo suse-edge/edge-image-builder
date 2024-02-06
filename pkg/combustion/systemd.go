@@ -14,10 +14,10 @@ import (
 
 const (
 	systemdComponentName = "systemd"
-	systemdScriptName    = "20-systemd.sh"
+	systemdScriptName    = "14-systemd.sh"
 )
 
-//go:embed templates/20-systemd.sh.tpl
+//go:embed templates/14-systemd.sh.tpl
 var systemdTemplate string
 
 func configureSystemd(ctx *image.Context) ([]string, error) {

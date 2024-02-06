@@ -14,10 +14,10 @@ import (
 
 const (
 	keymapComponentName = "keymap"
-	keymapScriptName    = "13-keymap-setup.sh"
+	keymapScriptName    = "12-keymap-setup.sh"
 )
 
-//go:embed templates/13-keymap-setup.sh.tpl
+//go:embed templates/12-keymap-setup.sh.tpl
 var keymapScript string
 
 func configureKeymap(ctx *image.Context) ([]string, error) {

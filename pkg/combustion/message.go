@@ -12,11 +12,11 @@ import (
 )
 
 const (
-	messageScriptName    = "message.sh"
+	messageScriptName    = "48-message.sh"
 	messageComponentName = "identifier"
 )
 
-//go:embed templates/message.sh
+//go:embed templates/48-message.sh
 var messageScript string
 
 func configureMessage(ctx *image.Context) ([]string, error) {

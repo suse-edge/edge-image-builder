@@ -14,10 +14,10 @@ import (
 
 const (
 	sumaComponentName = "suma"
-	sumaScriptName    = "12-suma-registration.sh"
+	sumaScriptName    = "30-suma-registration.sh"
 )
 
-//go:embed templates/12-suma-register.sh.tpl
+//go:embed templates/30-suma-register.sh.tpl
 var sumaScript string
 
 func configureSuma(ctx *image.Context) ([]string, error) {
