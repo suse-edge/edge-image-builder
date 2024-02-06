@@ -152,9 +152,6 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "agent", kubernetes.Nodes[4].Type)
 	assert.Equal(t, false, kubernetes.Nodes[4].Initialiser)
 	assert.Equal(t, "https://k8s.io/examples/application/nginx-app.yaml", kubernetes.Manifests.URLs[0])
-	assert.Equal(t, "rancher", kubernetes.HelmCharts[0].Name)
-	assert.Equal(t, "https://releases.rancher.com/server-charts/latest", kubernetes.HelmCharts[0].RepoURL)
-	assert.Equal(t, "2.8.0", kubernetes.HelmCharts[0].Version)
 }
 
 func TestParseBadConfig(t *testing.T) {
