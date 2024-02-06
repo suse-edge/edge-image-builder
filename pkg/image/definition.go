@@ -56,27 +56,23 @@ type Image struct {
 }
 
 type OperatingSystem struct {
-	KernelArgs      []string              `yaml:"kernelArgs"`
-	Users           []OperatingSystemUser `yaml:"users"`
-	Systemd         Systemd               `yaml:"systemd"`
-	Suma            Suma                  `yaml:"suma"`
-	Packages        Packages              `yaml:"packages"`
-	IsoInstallation IsoInstallation       `yaml:"isoInstallation"`
-	Time            Time                  `yaml:"time"`
-	Proxy           Proxy                 `yaml:"proxy"`
-	Keymap          string                `yaml:"keymap"`
-}
-
-type IsoInstallation struct {
-	InstallDevice string `yaml:"installDevice"`
-	Unattended    bool   `yaml:"unattended"`
+	KernelArgs    []string              `yaml:"kernelArgs"`
+	Users         []OperatingSystemUser `yaml:"users"`
+	Systemd       Systemd               `yaml:"systemd"`
+	Suma          Suma                  `yaml:"suma"`
+	Packages      Packages              `yaml:"packages"`
+	InstallDevice string                `yaml:"installDevice"`
+	Unattended    bool                  `yaml:"unattended"`
+	Time          Time                  `yaml:"time"`
+	Proxy         Proxy                 `yaml:"proxy"`
+	Keymap        string                `yaml:"keymap"`
 }
 
 type Packages struct {
 	NoGPGCheck      bool      `yaml:"noGPGCheck"`
 	PKGList         []string  `yaml:"packageList"`
 	AdditionalRepos []AddRepo `yaml:"additionalRepos"`
-	RegCode         string    `yaml:"sccRegistrationCode"`
+	RegCode         string    `yaml:"registrationCode"`
 }
 
 type AddRepo struct {
@@ -97,22 +93,19 @@ type Systemd struct {
 type Suma struct {
 	Host          string `yaml:"host"`
 	ActivationKey string `yaml:"activationKey"`
+	GetSSL        bool   `yaml:"getSSL"`
 }
 
 type Time struct {
-	Timezone         string           `yaml:"timezone"`
-	NtpConfiguration NtpConfiguration `yaml:"ntp"`
-}
-
-type NtpConfiguration struct {
-	Pools   []string `yaml:"pools"`
-	Servers []string `yaml:"servers"`
+	Timezone      string   `yaml:"timezone"`
+	ChronyPools   []string `yaml:"chronyPools"`
+	ChronyServers []string `yaml:"chronyServers"`
 }
 
 type Proxy struct {
-	HTTPProxy  string   `yaml:"httpProxy"`
-	HTTPSProxy string   `yaml:"httpsProxy"`
-	NoProxy    []string `yaml:"noProxy"`
+	HTTPProxy  string `yaml:"httpProxy"`
+	HTTPSProxy string `yaml:"httpsProxy"`
+	NoProxy    string `yaml:"noProxy"`
 }
 
 type EmbeddedArtifactRegistry struct {
@@ -124,11 +117,18 @@ type ContainerImage struct {
 	SupplyChainKey string `yaml:"supplyChainKey"`
 }
 
+type HelmChart struct {
+	Name    string `yaml:"name"`
+	RepoURL string `yaml:"repoURL"`
+	Version string `yaml:"version"`
+}
+
 type Kubernetes struct {
-	Version   string    `yaml:"version"`
-	Network   Network   `yaml:"network"`
-	Nodes     []Node    `yaml:"nodes"`
-	Manifests Manifests `yaml:"manifests"`
+	Version    string      `yaml:"version"`
+	Network    Network     `yaml:"network"`
+	Nodes      []Node      `yaml:"nodes"`
+	Manifests  Manifests   `yaml:"manifests"`
+	HelmCharts []HelmChart `yaml:"charts"`
 }
 
 type Network struct {
@@ -139,7 +139,7 @@ type Network struct {
 type Node struct {
 	Hostname    string `yaml:"hostname"`
 	Type        string `yaml:"type"`
-	Initialiser bool   `yaml:"initializer"`
+	Initialiser bool   `yaml:"initialiser"`
 }
 
 type Manifests struct {

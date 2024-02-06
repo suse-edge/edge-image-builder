@@ -5,24 +5,19 @@ image:
   baseImage: slemicro5.5.iso
   outputImageName: eibimage.iso
 operatingSystem:
-  isoInstallation:
-    installDevice: /dev/sda
-    unattended: true
+  installDevice: /dev/sda
+  unattended: true
   time:
     timezone: Europe/London
-    ntp:
-      pools:
-        - 2.suse.pool.ntp.org
-      servers:
-        - 10.0.0.1
-        - 10.0.0.2
+    chronyPools:
+      - 2.suse.pool.ntp.org
+    chronyServers:
+      - 10.0.0.1
+      - 10.0.0.2
   proxy:
     httpProxy: http://10.0.0.1:3128
     httpsProxy: http://10.0.0.1:3128
-    noProxy:
-    - localhost
-    - 127.0.0.1
-    - edge.suse.com
+    noProxy: localhost, 127.0.0.1, edge.suse.com
   kernelArgs:
     - alpha=foo
     - beta=bar
@@ -45,6 +40,7 @@ operatingSystem:
   suma:
     host: suma.edge.suse.com
     activationKey: slemicro55
+    getSSL: false
   packages:
     noGPGCheck: true
     packageList:
@@ -57,7 +53,7 @@ operatingSystem:
     additionalRepos:
       - url: https://download.nvidia.com/suse/sle15sp5/
       - url: https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/
-    sccRegistrationCode: INTERNAL-USE-ONLY-foo-bar
+    registrationCode: INTERNAL-USE-ONLY-foo-bar
 embeddedArtifactRegistry:
   images:
     - name: hello-world:latest
@@ -73,7 +69,7 @@ kubernetes:
       type: server
     - hostname: node2.suse.com
       type: server
-      initializer: true
+      initialiser: true
     - hostname: node3.suse.com
       type: agent
     - hostname: node4.suse.com
@@ -83,3 +79,7 @@ kubernetes:
   manifests:
     urls:
       - https://k8s.io/examples/application/nginx-app.yaml
+  charts:
+    - name: rancher
+      repoURL: https://releases.rancher.com/server-charts/latest
+      version: 2.8.0

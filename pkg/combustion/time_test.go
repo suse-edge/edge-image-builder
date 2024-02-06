@@ -37,11 +37,9 @@ func TestConfigureTime_FullConfiguration(t *testing.T) {
 	ctx.ImageDefinition = &image.Definition{
 		OperatingSystem: image.OperatingSystem{
 			Time: image.Time{
-				Timezone: "Europe/London",
-				NtpConfiguration: image.NtpConfiguration{
-					Pools:   []string{"2.suse.pool.ntp.org"},
-					Servers: []string{"10.0.0.1", "10.0.0.2"},
-				},
+				Timezone:      "Europe/London",
+				ChronyPools:   []string{"2.suse.pool.ntp.org"},
+				ChronyServers: []string{"10.0.0.1", "10.0.0.2"},
 			},
 		},
 	}

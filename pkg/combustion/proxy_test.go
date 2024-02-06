@@ -39,7 +39,7 @@ func TestConfigureProxy_FullConfiguration(t *testing.T) {
 			Proxy: image.Proxy{
 				HTTPProxy:  "http://10.0.0.1:3128",
 				HTTPSProxy: "http://10.0.0.1:3128",
-				NoProxy:    []string{"localhost", "127.0.0.1", "edge.suse.com"},
+				NoProxy:    "localhost, 127.0.0.1, edge.suse.com",
 			},
 		},
 	}

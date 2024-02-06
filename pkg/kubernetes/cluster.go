@@ -25,7 +25,6 @@ const (
 	serverKey       = "server"
 	tlsSANKey       = "tls-san"
 	disableKey      = "disable"
-	clusterInitKey  = "cluster-init"
 )
 
 type Cluster struct {
@@ -63,10 +62,9 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 
 	// Ensure the agent uses the same cluster configuration values as the server
 	agentConfig[tokenKey] = serverConfig[tokenKey]
+	agentConfig[cniKey] = serverConfig[cniKey]
 	agentConfig[serverKey] = serverConfig[serverKey]
-	if strings.Contains(kubernetes.Version, image.KubernetesDistroRKE2) {
-		agentConfig[cniKey] = serverConfig[cniKey]
-	}
+	agentConfig[tlsSANKey] = serverConfig[tlsSANKey]
 
 	// Create the initialiser server config
 	initialiserConfig := map[string]any{}
@@ -74,9 +72,6 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 		initialiserConfig[k] = v
 	}
 	delete(initialiserConfig, serverKey)
-	if strings.Contains(kubernetes.Version, image.KubernetesDistroK3S) {
-		initialiserConfig[clusterInitKey] = true
-	}
 
 	initialiser := identifyInitialiserNode(kubernetes)
 	if initialiser == "" {
@@ -149,20 +144,9 @@ func setSingleNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string
 }
 
 func setMultiNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string]any) {
-	const (
-		k3sServerPort  = 6443
-		rke2ServerPort = 9345
-	)
-
-	if strings.Contains(kubernetes.Version, image.KubernetesDistroRKE2) {
-		setClusterAPIAddress(config, kubernetes.Network.APIVIP, rke2ServerPort)
-		setClusterCNI(config)
-	} else {
-		setClusterAPIAddress(config, kubernetes.Network.APIVIP, k3sServerPort)
-		appendDisabledServices(config, "servicelb")
-	}
-
+	setClusterCNI(config)
 	setClusterToken(config)
+	setClusterAPIAddress(config, kubernetes.Network.APIVIP)
 	appendClusterTLSSAN(config, kubernetes.Network.APIVIP)
 	if kubernetes.Network.APIHost != "" {
 		appendClusterTLSSAN(config, kubernetes.Network.APIHost)
@@ -193,13 +177,13 @@ func setClusterCNI(config map[string]any) {
 	config[cniKey] = cniDefaultValue
 }
 
-func setClusterAPIAddress(config map[string]any, apiAddress string, port int) {
+func setClusterAPIAddress(config map[string]any, apiAddress string) {
 	if apiAddress == "" {
 		zap.S().Warn("Attempted to set an empty cluster API address")
 		return
 	}
 
-	config[serverKey] = fmt.Sprintf("https://%s:%d", apiAddress, port)
+	config[serverKey] = fmt.Sprintf("https://%s:9345", apiAddress)
 }
 
 func appendClusterTLSSAN(config map[string]any, address string) {

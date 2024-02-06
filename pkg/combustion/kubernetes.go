@@ -43,9 +43,6 @@ var (
 	//go:embed templates/15-k3s-single-node-installer.sh.tpl
 	k3sSingleNodeInstaller string
 
-	//go:embed templates/15-k3s-multi-node-installer.sh.tpl
-	k3sMultiNodeInstaller string
-
 	//go:embed templates/k8s-vip.yaml.tpl
 	k8sVIPManifest string
 )
@@ -58,36 +55,22 @@ func configureKubernetes(ctx *image.Context) ([]string, error) {
 		return nil, nil
 	}
 
+	// Show a message to the user to indicate that the Kubernetes component
+	// is usually taking longer to complete due to downloading files
+	log.Audit("Configuring Kubernetes component...")
+
 	configureFunc := kubernetesConfigurator(version)
 	if configureFunc == nil {
 		log.AuditComponentFailed(k8sComponentName)
 		return nil, fmt.Errorf("cannot configure kubernetes version: %s", version)
 	}
 
-	// Show a message to the user to indicate that the Kubernetes component
-	// is usually taking longer to complete due to downloading files
-	log.Audit("Configuring Kubernetes component...")
-
 	if kubernetes.ServersCount(ctx.ImageDefinition.Kubernetes.Nodes) == 2 {
 		log.Audit("WARNING: Kubernetes clusters consisting of two server nodes cannot form a highly available architecture")
 		zap.S().Warn("Kubernetes cluster of two server nodes has been requested")
 	}
 
-	configDir := generateComponentPath(ctx, k8sDir)
-	configPath := filepath.Join(configDir, k8sConfigDir)
-
-	cluster, err := kubernetes.NewCluster(&ctx.ImageDefinition.Kubernetes, configPath)
-	if err != nil {
-		log.AuditComponentFailed(k8sComponentName)
-		return nil, fmt.Errorf("initialising cluster config: %w", err)
-	}
-
-	if err = storeKubernetesClusterConfig(cluster, ctx.CombustionDir); err != nil {
-		log.AuditComponentFailed(k8sComponentName)
-		return nil, fmt.Errorf("storing cluster config: %w", err)
-	}
-
-	script, err := configureFunc(ctx, cluster)
+	script, err := configureFunc(ctx)
 	if err != nil {
 		log.AuditComponentFailed(k8sComponentName)
 		return nil, fmt.Errorf("configuring kubernetes components: %w", err)
@@ -97,7 +80,7 @@ func configureKubernetes(ctx *image.Context) ([]string, error) {
 	return []string{script}, nil
 }
 
-func kubernetesConfigurator(version string) func(*image.Context, *kubernetes.Cluster) (string, error) {
+func kubernetesConfigurator(version string) func(*image.Context) (string, error) {
 	switch {
 	case strings.Contains(version, image.KubernetesDistroRKE2):
 		return configureRKE2
@@ -115,11 +98,23 @@ func installKubernetesScript(ctx *image.Context, distribution string) error {
 	return ctx.KubernetesScriptInstaller.InstallScript(distribution, sourcePath, destPath)
 }
 
-func configureK3S(ctx *image.Context, cluster *kubernetes.Cluster) (string, error) {
+func configureK3S(ctx *image.Context) (string, error) {
 	zap.S().Info("Configuring K3s cluster")
 
 	if err := installKubernetesScript(ctx, image.KubernetesDistroK3S); err != nil {
 		return "", fmt.Errorf("copying k3s installer script: %w", err)
+	}
+
+	configDir := generateComponentPath(ctx, k8sDir)
+	configPath := filepath.Join(configDir, k8sConfigDir)
+
+	cluster, err := kubernetes.NewCluster(&ctx.ImageDefinition.Kubernetes, configPath)
+	if err != nil {
+		return "", fmt.Errorf("initialising kubernetes cluster config: %w", err)
+	}
+
+	if err = storeKubernetesClusterConfig(cluster, ctx.CombustionDir); err != nil {
+		return "", fmt.Errorf("storing k3s cluster config: %w", err)
 	}
 
 	binaryPath, imagesPath, err := downloadK3sArtefacts(ctx)
@@ -127,18 +122,11 @@ func configureK3S(ctx *image.Context, cluster *kubernetes.Cluster) (string, erro
 		return "", fmt.Errorf("downloading k3s artefacts: %w", err)
 	}
 
-	manifestsPath, err := configureManifests(ctx)
-	if err != nil {
-		return "", fmt.Errorf("configuring kubernetes manifests: %w", err)
-	}
-
 	templateValues := map[string]any{
-		"apiVIP":          ctx.ImageDefinition.Kubernetes.Network.APIVIP,
-		"apiHost":         ctx.ImageDefinition.Kubernetes.Network.APIHost,
-		"binaryPath":      binaryPath,
-		"imagesPath":      imagesPath,
-		"manifestsPath":   manifestsPath,
-		"registryMirrors": registryMirrorsFileName,
+		"apiVIP":     ctx.ImageDefinition.Kubernetes.Network.APIVIP,
+		"apiHost":    ctx.ImageDefinition.Kubernetes.Network.APIHost,
+		"binaryPath": binaryPath,
+		"imagesPath": imagesPath,
 	}
 
 	singleNode := len(ctx.ImageDefinition.Kubernetes.Nodes) < 2
@@ -149,7 +137,7 @@ func configureK3S(ctx *image.Context, cluster *kubernetes.Cluster) (string, erro
 			zap.S().Info("Virtual IP address for k3s cluster is not provided and will not be configured")
 		} else {
 			log.Audit("WARNING: A Virtual IP address for the k3s cluster has been provided. " +
-				"An external IP address for the Ingress Controller (Traefik) must be manually configured.")
+				"An external IP address for the Ingress controller (Traefik) must be manually configured.")
 			zap.S().Warn("Virtual IP address for k3s cluster is requested and will invalidate Traefik configuration")
 
 			if vipManifest, err = storeKubernetesVIPManifest(ctx); err != nil {
@@ -159,24 +147,9 @@ func configureK3S(ctx *image.Context, cluster *kubernetes.Cluster) (string, erro
 
 		templateValues["configFile"] = k8sServerConfigFile
 		templateValues["vipManifest"] = vipManifest
-
-		return storeKubernetesInstaller(ctx, "single-node-k3s", k3sSingleNodeInstaller, templateValues)
 	}
 
-	log.Audit("WARNING: An external IP address for the Ingress Controller (Traefik) must be manually configured in multi-node clusters.")
-	zap.S().Warn("Virtual IP address for k3s cluster is necessary for multi node clusters and will invalidate Traefik configuration")
-
-	vipManifest, err := storeKubernetesVIPManifest(ctx)
-	if err != nil {
-		return "", fmt.Errorf("storing k3s VIP manifest: %w", err)
-	}
-
-	templateValues["nodes"] = ctx.ImageDefinition.Kubernetes.Nodes
-	templateValues["initialiser"] = cluster.InitialiserName
-	templateValues["initialiserConfigFile"] = k8sInitServerConfigFile
-	templateValues["vipManifest"] = vipManifest
-
-	return storeKubernetesInstaller(ctx, "multi-node-k3s", k3sMultiNodeInstaller, templateValues)
+	return storeKubernetesInstaller(ctx, "single-node-k3s", k3sSingleNodeInstaller, templateValues)
 }
 
 func downloadK3sArtefacts(ctx *image.Context) (binaryPath, imagesPath string, err error) {
@@ -220,11 +193,23 @@ func downloadK3sArtefacts(ctx *image.Context) (binaryPath, imagesPath string, er
 	return binaryPath, imagesPath, nil
 }
 
-func configureRKE2(ctx *image.Context, cluster *kubernetes.Cluster) (string, error) {
+func configureRKE2(ctx *image.Context) (string, error) {
 	zap.S().Info("Configuring RKE2 cluster")
 
 	if err := installKubernetesScript(ctx, image.KubernetesDistroRKE2); err != nil {
 		return "", fmt.Errorf("copying RKE2 installer script: %w", err)
+	}
+
+	configDir := generateComponentPath(ctx, k8sDir)
+	configPath := filepath.Join(configDir, k8sConfigDir)
+
+	cluster, err := kubernetes.NewCluster(&ctx.ImageDefinition.Kubernetes, configPath)
+	if err != nil {
+		return "", fmt.Errorf("initialising kubernetes cluster config: %w", err)
+	}
+
+	if err = storeKubernetesClusterConfig(cluster, ctx.CombustionDir); err != nil {
+		return "", fmt.Errorf("storing RKE2 cluster config: %w", err)
 	}
 
 	installPath, imagesPath, err := downloadRKE2Artefacts(ctx, cluster)

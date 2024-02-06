@@ -29,10 +29,19 @@ func TestWriteHaulerManifestValidManifest(t *testing.T) {
 				},
 			},
 		},
+		Kubernetes: image.Kubernetes{
+			HelmCharts: []image.HelmChart{
+				{
+					Name:    "rancher",
+					RepoURL: "https://releases.rancher.com/server-charts/latest",
+					Version: "2.8.0",
+				},
+			},
+		},
 	}
 
 	// Test
-	err := writeHaulerManifest(ctx, ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages)
+	err := writeHaulerManifest(ctx, ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages, ctx.ImageDefinition.Kubernetes.HelmCharts)
 
 	// Verify
 	require.NoError(t, err)
@@ -46,6 +55,7 @@ func TestWriteHaulerManifestValidManifest(t *testing.T) {
 	found := string(foundBytes)
 	assert.Contains(t, found, "- name: hello-world:latest")
 	assert.Contains(t, found, "- name: rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1")
+	assert.Contains(t, found, "repoURL: https://releases.rancher.com/server-charts/latest")
 }
 
 func TestCreateRegistryCommand(t *testing.T) {
@@ -154,6 +164,30 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 						Manifests: image.Manifests{
 							URLs: []string{
 								"https://k8s.io/examples/application/nginx-app.yaml",
+							},
+						},
+						HelmCharts: []image.HelmChart{
+							{
+								Name:    "rancher",
+								RepoURL: "https://releases.rancher.com/server-charts/latest",
+								Version: "2.8.0",
+							},
+						},
+					},
+				},
+			},
+			isConfigured: true,
+		},
+		{
+			name: "Chart Defined",
+			ctx: &image.Context{
+				ImageDefinition: &image.Definition{
+					Kubernetes: image.Kubernetes{
+						HelmCharts: []image.HelmChart{
+							{
+								Name:    "rancher",
+								RepoURL: "https://releases.rancher.com/server-charts/latest",
+								Version: "2.8.0",
 							},
 						},
 					},
