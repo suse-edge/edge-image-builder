@@ -15,7 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs []string, localManifestSrcDir string, helmManifestSrcDir string, helmTemplatePath string, manifestDownloadDest string) ([]image.ContainerImage, error) {
+func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs []string, localManifestSrcDir string, helmTemplatePath string, manifestDownloadDest string) ([]image.ContainerImage, error) {
 	var combinedManifestPaths []string
 	var extractedImagesSet = make(map[string]string)
 
@@ -37,21 +37,12 @@ func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs [
 	}
 
 	if localManifestSrcDir != "" {
-		localManifestPaths, err := getManifestPaths(localManifestSrcDir)
+		localManifestPaths, err := getLocalManifestPaths(localManifestSrcDir)
 		if err != nil {
 			return nil, fmt.Errorf("error getting local manifest paths: %w", err)
 		}
 
 		combinedManifestPaths = append(combinedManifestPaths, localManifestPaths...)
-	}
-
-	if helmManifestSrcDir != "" {
-		helmManifestPaths, err := getManifestPaths(helmManifestSrcDir)
-		if err != nil {
-			return nil, fmt.Errorf("error getting helm manifest paths: %w", err)
-		}
-
-		combinedManifestPaths = append(combinedManifestPaths, helmManifestPaths...)
 	}
 
 	for _, manifestPath := range combinedManifestPaths {
@@ -132,7 +123,7 @@ func storeManifestImageNames(data map[string]any, imageSet map[string]string) {
 	findImages(data)
 }
 
-func getManifestPaths(src string) ([]string, error) {
+func getLocalManifestPaths(src string) ([]string, error) {
 	if src == "" {
 		return nil, fmt.Errorf("manifest source directory not defined")
 	}
