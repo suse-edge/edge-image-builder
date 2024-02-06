@@ -157,7 +157,7 @@ There are a number of optional directories that may be included in the image con
     executed during the combustion phase. Combustion scripts are executed alphabetically. All scripts that EIB
     automatically includes will be prefixed using values between 00 and 49 (e.g. `05-configure-network.sh`,
     `30-suma-register.sh`). Unless absolutely sure the default flow should be interrupted, all custom scripts
-    should either be prefixed within the range 50-99 (e.g. `60-my-script.sh`).
+    should be prefixed within the range 50-99 (e.g. `60-my-script.sh`).
   * `files` - If present, all the files in this directory will be included in the built image.
 * `network` - If present, network configurations will be generated from all desired states in this directory
   and will be included in the built image. The configurations relevant for the particular host will be identified
