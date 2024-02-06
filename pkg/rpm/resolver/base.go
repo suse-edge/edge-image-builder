@@ -69,16 +69,16 @@ func (t *TarballImageBuilder) Build() (string, error) {
 }
 
 func (t *TarballImageBuilder) prepareTarball() error {
-	baseImgDir := t.getTarballImgDir()
-	if err := os.MkdirAll(baseImgDir, os.ModePerm); err != nil {
-		return fmt.Errorf("creating %s dir: %w", baseImgDir, err)
+	tarballImgDir := t.getTarballImgDir()
+	if err := os.MkdirAll(tarballImgDir, os.ModePerm); err != nil {
+		return fmt.Errorf("creating %s dir: %w", tarballImgDir, err)
 	}
 
 	// copy user provided image so that the builder can
 	// safely work on the copy without worrying that it might
 	// break the provided image
 	if err := fileio.CopyFile(t.imgPath, t.getBaseISOCopyPath(), fileio.NonExecutablePerms); err != nil {
-		return fmt.Errorf("creating work copy of image %s in repo work dir %s: %w", t.imgPath, baseImgDir, err)
+		return fmt.Errorf("creating work copy of image %s in repo work dir %s: %w", t.imgPath, tarballImgDir, err)
 	}
 
 	return nil
@@ -113,7 +113,7 @@ func (t *TarballImageBuilder) writeTarballImageScript() error {
 func (t *TarballImageBuilder) runTarballImageScript() error {
 	logFile, err := os.Create(filepath.Join(t.dir, prepareTarballScriptLog))
 	if err != nil {
-		return fmt.Errorf("generating prepare base image log file: %w", err)
+		return fmt.Errorf("generating prepare tarball image log file: %w", err)
 	}
 	defer logFile.Close()
 
