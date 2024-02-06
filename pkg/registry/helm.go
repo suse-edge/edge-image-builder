@@ -14,12 +14,16 @@ import (
 )
 
 type HelmCRD struct {
+	Metadata struct {
+		Name string `yaml:"name"`
+	} `yaml:"metadata"`
 	Spec struct {
 		Repo          string         `yaml:"repo"`
 		Chart         string         `yaml:"chart"`
 		Version       string         `yaml:"version"`
 		Set           map[string]any `yaml:"set"`
 		ValuesContent string         `yaml:"valuesContent"`
+		ChartContent  string         `yaml:"chartContent"`
 	} `yaml:"spec"`
 }
 
@@ -130,18 +134,35 @@ func GenerateHelmCommands(localHelmSrcDir string) (helmCommands []string, helmCh
 				}
 			}
 
-			tempRepo := fmt.Sprintf("repo-%s", crd.Spec.Chart)
-			repository := helmRepositoryName(crd.Spec.Repo, tempRepo, crd.Spec.Chart)
+			if crd.Spec.ChartContent == "" {
+				tempRepo := fmt.Sprintf("repo-%s", crd.Spec.Chart)
+				repository := helmRepositoryName(crd.Spec.Repo, tempRepo, crd.Spec.Chart)
 
-			addCommand := helmAddRepoCommand(crd.Spec.Repo, tempRepo)
-			if addCommand != "" {
-				helmCommands = append(helmCommands, addCommand)
+				addCommand := helmAddRepoCommand(crd.Spec.Repo, tempRepo)
+				if addCommand != "" {
+					helmCommands = append(helmCommands, addCommand)
+				}
+
+				templateCommand := helmTemplateCommand(crd, repository, valuesPath, crd.Spec.Chart)
+				pullCommand := helmPullCommand(crd.Spec.Repo, crd.Spec.Chart, crd.Spec.Version)
+				helmCommands = append(helmCommands, pullCommand, templateCommand)
+				helmChartPaths = append(helmChartPaths, fmt.Sprintf("%s-*.tgz", crd.Spec.Chart))
+			} else {
+				decodedTar, err := base64.StdEncoding.DecodeString(crd.Spec.ChartContent)
+				if err != nil {
+					return nil, nil, fmt.Errorf("decoding base64 chart content: %w", err)
+				}
+				chartTar := fmt.Sprintf("%s.tgz", crd.Metadata.Name)
+
+				err = os.WriteFile(chartTar, decodedTar, fileio.NonExecutablePerms)
+				if err != nil {
+					return nil, nil, fmt.Errorf("writing decoded chart to file: %w", err)
+				}
+
+				templateCommand := helmTemplateCommand(crd, chartTar, valuesPath, crd.Metadata.Name)
+				helmCommands = append(helmCommands, templateCommand)
+				helmChartPaths = append(helmChartPaths, chartTar)
 			}
-
-			templateCommand := helmTemplateCommand(crd, repository, valuesPath)
-			pullCommand := helmPullCommand(crd.Spec.Repo, crd.Spec.Chart, crd.Spec.Version)
-			helmCommands = append(helmCommands, pullCommand, templateCommand)
-			helmChartPaths = append(helmChartPaths, fmt.Sprintf("%s-*.tgz", crd.Spec.Chart))
 		}
 	}
 
@@ -175,10 +196,10 @@ func helmPullCommand(repository, chart, version string) string {
 	return pullCommand
 }
 
-func helmTemplateCommand(crd *HelmCRD, repository string, valuesFilePath string) string {
+func helmTemplateCommand(crd *HelmCRD, repository string, valuesFilePath string, chartName string) string {
 	var cmdParts []string
 
-	cmdParts = append(cmdParts, fmt.Sprintf("template --skip-crds %s %s", crd.Spec.Chart, repository))
+	cmdParts = append(cmdParts, fmt.Sprintf("template --skip-crds %s %s", chartName, repository))
 
 	if crd.Spec.Version != "" {
 		cmdParts = append(cmdParts, fmt.Sprintf("--version %s", crd.Spec.Version))
@@ -221,6 +242,7 @@ func updateHelmManifest(manifestsPath string, chartTarsPaths []string) ([]map[st
 
 		if spec, ok := manifest["spec"].(map[string]any); ok {
 			if _, ok := spec["chartContent"].(string); ok {
+				manifests = append(manifests, manifest)
 				continue
 			}
 			oldChart := spec["chart"]
