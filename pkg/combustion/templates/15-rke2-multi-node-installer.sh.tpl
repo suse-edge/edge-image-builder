@@ -20,9 +20,9 @@ if [ "$NODETYPE" = "none" ]; then
 fi
 
 mount /var
+
 mkdir -p /var/lib/rancher/rke2/agent/images/
 cp {{ .imagesPath }}/* /var/lib/rancher/rke2/agent/images/
-
 
 CONFIGFILE=$NODETYPE.yaml
 
@@ -35,7 +35,6 @@ if [ "$HOSTNAME" = {{ .initialiser }} ]; then
     {{- if .manifestsPath }}
     cp {{ .manifestsPath }}/* /var/lib/rancher/rke2/server/manifests/
     {{- end }}
-
 fi
 
 umount /var
@@ -53,6 +52,10 @@ cp {{ .registryMirrors }} /etc/rancher/rke2/registries.yaml
 
 export INSTALL_RKE2_TAR_PREFIX=/opt/rke2
 export INSTALL_RKE2_ARTIFACT_PATH={{ .installPath }}
+
+# Create the CNI directory, usually created and labelled by the
+# rke2-selinux package, but isn't executed during combustion.
+mkdir -p /opt/cni
 
 ./rke2_installer.sh
 

@@ -62,7 +62,6 @@ func TestParse(t *testing.T) {
 	suma := definition.OperatingSystem.Suma
 	assert.Equal(t, "suma.edge.suse.com", suma.Host)
 	assert.Equal(t, "slemicro55", suma.ActivationKey)
-	assert.Equal(t, false, suma.GetSSL)
 
 	// Operating System -> Packages
 	pkgConfig := definition.OperatingSystem.Packages
@@ -89,12 +88,11 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, expectedAddRepos, pkgConfig.AdditionalRepos)
 	assert.Equal(t, "INTERNAL-USE-ONLY-foo-bar", pkgConfig.RegCode)
 
-	// Operating System -> InstallDevice
-	installDevice := definition.OperatingSystem.InstallDevice
+	// Operating System -> IsoInstallation
+	installDevice := definition.OperatingSystem.IsoInstallation.InstallDevice
 	assert.Equal(t, "/dev/sda", installDevice)
 
-	// Operating System -> Unattended
-	unattended := definition.OperatingSystem.Unattended
+	unattended := definition.OperatingSystem.IsoInstallation.Unattended
 	assert.Equal(t, true, unattended)
 
 	// Operating System -> Time
@@ -103,12 +101,12 @@ func TestParse(t *testing.T) {
 	expectedChronyPools := []string{
 		"2.suse.pool.ntp.org",
 	}
-	assert.Equal(t, expectedChronyPools, time.ChronyPools)
+	assert.Equal(t, expectedChronyPools, time.NtpConfiguration.Pools)
 	expectedChronyServers := []string{
 		"10.0.0.1",
 		"10.0.0.2",
 	}
-	assert.Equal(t, expectedChronyServers, time.ChronyServers)
+	assert.Equal(t, expectedChronyServers, time.NtpConfiguration.Servers)
 
 	// Operating System -> Proxy -> HTTPProxy
 	httpProxy := definition.OperatingSystem.Proxy.HTTPProxy
@@ -120,7 +118,7 @@ func TestParse(t *testing.T) {
 
 	// Operating System -> Proxy -> NoProxy
 	noProxy := definition.OperatingSystem.Proxy.NoProxy
-	assert.Equal(t, "localhost, 127.0.0.1, edge.suse.com", noProxy)
+	assert.Equal(t, []string{"localhost", "127.0.0.1", "edge.suse.com"}, noProxy)
 
 	// Operating System -> Keymap
 	keymap := definition.OperatingSystem.Keymap
@@ -154,9 +152,6 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "agent", kubernetes.Nodes[4].Type)
 	assert.Equal(t, false, kubernetes.Nodes[4].Initialiser)
 	assert.Equal(t, "https://k8s.io/examples/application/nginx-app.yaml", kubernetes.Manifests.URLs[0])
-	assert.Equal(t, "rancher", kubernetes.HelmCharts[0].Name)
-	assert.Equal(t, "https://releases.rancher.com/server-charts/latest", kubernetes.HelmCharts[0].RepoURL)
-	assert.Equal(t, "2.8.0", kubernetes.HelmCharts[0].Version)
 }
 
 func TestParseBadConfig(t *testing.T) {

@@ -47,8 +47,10 @@ func TestValidateOperatingSystem(t *testing.T) {
 						},
 						RegCode: "letMeIn",
 					},
-					Unattended:    true,
-					InstallDevice: "/dev/sda",
+					IsoInstallation: image.IsoInstallation{
+						Unattended:    true,
+						InstallDevice: "/dev/sda",
+					},
 				},
 			},
 		},
@@ -74,8 +76,10 @@ func TestValidateOperatingSystem(t *testing.T) {
 					Packages: image.Packages{
 						PKGList: []string{"zsh", "git"},
 					},
-					Unattended:    true,
-					InstallDevice: "/dev/sda",
+					IsoInstallation: image.IsoInstallation{
+						Unattended:    true,
+						InstallDevice: "/dev/sda",
+					},
 				},
 			},
 			ExpectedFailedMessages: []string{
@@ -84,8 +88,8 @@ func TestValidateOperatingSystem(t *testing.T) {
 				"User 'danny' must have either a password or SSH key.",
 				"The 'host' field is required for the 'suma' section.",
 				"When including the 'packageList' field, either additional repositories or a registration code must be included.",
-				fmt.Sprintf("The 'unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO),
-				fmt.Sprintf("The 'installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
+				fmt.Sprintf("The 'isoInstallation/unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO),
+				fmt.Sprintf("The 'isoInstallation/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
 			},
 		},
 	}
@@ -506,8 +510,10 @@ func TestValidateUnattended(t *testing.T) {
 					ImageType: image.TypeISO,
 				},
 				OperatingSystem: image.OperatingSystem{
-					Unattended:    true,
-					InstallDevice: "/dev/sda",
+					IsoInstallation: image.IsoInstallation{
+						Unattended:    true,
+						InstallDevice: "/dev/sda",
+					},
 				},
 			},
 		},
@@ -517,11 +523,13 @@ func TestValidateUnattended(t *testing.T) {
 					ImageType: image.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
-					Unattended: true,
+					IsoInstallation: image.IsoInstallation{
+						Unattended: true,
+					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				fmt.Sprintf("The 'unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO),
+				fmt.Sprintf("The 'isoInstallation/unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO),
 			},
 		},
 		`not iso install device`: {
@@ -530,11 +538,13 @@ func TestValidateUnattended(t *testing.T) {
 					ImageType: image.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
-					InstallDevice: "/dev/sda",
+					IsoInstallation: image.IsoInstallation{
+						InstallDevice: "/dev/sda",
+					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				fmt.Sprintf("The 'installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
+				fmt.Sprintf("The 'isoInstallation/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
 			},
 		},
 	}

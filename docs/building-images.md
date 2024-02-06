@@ -37,19 +37,24 @@ The operating system configuration section is entirely optional.
 The following describes the possible options for the operating system section:
 ```yaml
 operatingSystem:
-  installDevice: /path/to/disk
-  unattended: false
+  isoInstallation:
+    installDevice: /path/to/disk
+    unattended: false
   time:
     timezone: Europe/London
-    chronyPools:
-      - 1.pool.server.com
-    chronyServers:
-      - 10.0.0.1
-      - 10.0.0.2
+    ntp:
+      pools:
+        - 1.pool.server.com
+      servers:
+        - 10.0.0.1
+        - 10.0.0.2
   proxy:
     httpProxy: http://10.0.0.1:3128
     httpsProxy: http://10.0.0.1:3128
-    noProxy: localhost, 127.0.0.1, edge.suse.com
+    noProxy:
+    - localhost
+    - 127.0.0.1
+    - edge.suse.com
   kernelArgs:
   - arg1
   - arg2
@@ -70,22 +75,24 @@ operatingSystem:
   keymap: us
 ```
 
-* `installDevice` - Optional; only for ISO images - specifies the disk that should be used as the install
+* `isoInstallation` - Optional; configuration in this section only applies to ISO images.
+  * `installDevice` - Optional; specifies the disk that should be used as the install
   device. This needs to be block special, and will default to automatically wipe any data found on the disk.
   If left omitted, the user will still have to select the disk to install to (if >1 found) and confirm wipe.
-* `unattended` - Optional; only for ISO images - forces GRUB override to automatically install the operating
+  * `unattended` - Optional; forces GRUB override to automatically install the operating
   system rather than prompting user to begin the installation. In combination with `installDevice` can create
   a fully unattended and automated install. Beware of creating boot loops and data loss with these options.
   If left omitted (or set to `false`) the user will still have to choose to install via the GRUB menu.
 * `time` - Optional; section where the user can provide timezone information and Chronyd configuration.
   * `timezone` - Optional; the timezone in the format of "Region/Locality", e.g. "Europe/London". Full list via `timedatectl list-timezones`.
-  * `chronyPools` - Optional; a list of pools that Chrony can use as data sources.
-  * `chronyServers` - Optional; a list of servers that Chrony can use as data sources.
+  * `ntp` - Optional; contains attributes related to configuring NTP
+    * `pools` - Optional; a list of pools that Chrony can use as data sources.
+    * `servers` - Optional; a list of servers that Chrony can use as data sources.
 * `proxy` - Optional; section where the user can provide system-wide proxy information
   * `httpProxy` - Optional; set the system-wide http proxy settings
   * `httpsProxy` - Optional; set the system-wide https proxy settings
-  * `noProxy` - Optional; override the default `NO_PROXY` list. By default this is "localhost, 127.0.0.1" if parameter is omitted, but
-  if you set this flag, make sure you add these into your list if they're required.
+  * `noProxy` - Optional; override the default `NO_PROXY` list. By default, this is "localhost, 127.0.0.1" if this
+  parameter is omitted. If this option is set, these may need to be manually added if they are still in use.
 * `kernelArgs` - Optional; Provides a list of flags that should be passed to the kernel on boot.
 * `users` - Optional; Defines a list of operating system users to be created. Each entry is made up of
   the following fields:
@@ -103,7 +110,7 @@ operatingSystem:
 
 ## SUSE Manager (SUMA)
 
-Automatic SUSE Manager registration can be configured for the image, which will happen at system-boot time. Therefore
+Automatic SUSE Manager registration can be configured for the image, which will happen at system-boot time. Therefore,
 your system will need to come up with networking, either via DHCP or configured statically, e.g. via `nmc` or via
 custom scripts. If you're creating an *air-gapped* image, do *not* use the SUSE Manager registration unless your server
 is available from within the air-gapped network.
@@ -112,10 +119,9 @@ The following items must be defined in the configuration file under the `suma` s
 
 * `host` - This is the FQDN of the SUSE Manager host that the host needs to register against (do not use http/s prefix)
 * `activationKey` - This is the activation key that the node uses to register with.
-* `getSSL` - This specifies whether EIB should download and install the SUMA SSL Certificate (default: false)
 
 The default SSL certificate for the SUSE Manager server can usually be found at
-`https://<suma-host>/pub/RHN-ORG-TRUSTED-SSL-CERT`, and is currently hardcoded to look at this location relative to `host`.
+`https://<suma-host>/pub/RHN-ORG-TRUSTED-SSL-CERT`.
 
 Additionally, the appropriate *venv-salt-minion* RPM package must be supplied in the RPM's directory so it can be
 installed at boot time prior to SUSE Manager registration taking place. This RPM can usually be found on the

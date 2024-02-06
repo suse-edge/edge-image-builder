@@ -39,7 +39,17 @@ func configureTime(ctx *image.Context) ([]string, error) {
 func writeTimeCombustionScript(ctx *image.Context) error {
 	timeScriptFilename := filepath.Join(ctx.CombustionDir, timeScriptName)
 
-	data, err := template.Parse(timeScriptName, timeScript, ctx.ImageDefinition.OperatingSystem.Time)
+	values := struct {
+		Timezone string
+		Pools    []string
+		Servers  []string
+	}{
+		Timezone: ctx.ImageDefinition.OperatingSystem.Time.Timezone,
+		Pools:    ctx.ImageDefinition.OperatingSystem.Time.NtpConfiguration.Pools,
+		Servers:  ctx.ImageDefinition.OperatingSystem.Time.NtpConfiguration.Servers,
+	}
+
+	data, err := template.Parse(timeScriptName, timeScript, values)
 	if err != nil {
 		return fmt.Errorf("applying template to %s: %w", timeScriptName, err)
 	}
