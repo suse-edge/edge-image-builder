@@ -53,6 +53,10 @@ func Configure(ctx *image.Context) error {
 			runnable: configureNetwork,
 		},
 		{
+			name:     networkConfigdriveComponentName,
+			runnable: configureNetworkConfigdrive,
+		},
+		{
 			name:     usersComponentName,
 			runnable: configureUsers,
 		},
@@ -106,6 +110,8 @@ func Configure(ctx *image.Context) error {
 	var networkScript string
 	if isComponentConfigured(ctx, networkConfigDir) {
 		networkScript = networkConfigScriptName
+	} else if ctx.ImageDefinition.OperatingSystem.ConfigDrive {
+		networkScript = networkConfigdriveScriptName
 	}
 
 	script, err := assembleScript(combustionScripts, networkScript)
