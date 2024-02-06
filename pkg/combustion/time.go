@@ -14,10 +14,10 @@ import (
 
 const (
 	timeComponentName = "time"
-	timeScriptName    = "09-time-setup.sh"
+	timeScriptName    = "11-time-setup.sh"
 )
 
-//go:embed templates/09-time-setup.sh.tpl
+//go:embed templates/11-time-setup.sh.tpl
 var timeScript string
 
 func configureTime(ctx *image.Context) ([]string, error) {

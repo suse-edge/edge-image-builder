@@ -16,11 +16,11 @@ import (
 const (
 	elementalComponentName = "elemental"
 	elementalConfigDir     = "elemental"
-	elementalScriptName    = "11-elemental.sh"
+	elementalScriptName    = "31-elemental.sh"
 	elementalConfigName    = "elemental_config.yaml"
 )
 
-//go:embed templates/11-elemental-register.sh.tpl
+//go:embed templates/31-elemental-register.sh.tpl
 var elementalScript string
 
 func configureElemental(ctx *image.Context) ([]string, error) {

@@ -30,20 +30,20 @@ const (
 	k8sServerConfigFile     = "server.yaml"
 	k8sAgentConfigFile      = "agent.yaml"
 
-	k8sInstallScript = "15-k8s-install.sh"
+	k8sInstallScript = "20-k8s-install.sh"
 )
 
 var (
-	//go:embed templates/15-rke2-single-node-installer.sh.tpl
+	//go:embed templates/rke2-single-node-installer.sh.tpl
 	rke2SingleNodeInstaller string
 
-	//go:embed templates/15-rke2-multi-node-installer.sh.tpl
+	//go:embed templates/rke2-multi-node-installer.sh.tpl
 	rke2MultiNodeInstaller string
 
-	//go:embed templates/15-k3s-single-node-installer.sh.tpl
+	//go:embed templates/k3s-single-node-installer.sh.tpl
 	k3sSingleNodeInstaller string
 
-	//go:embed templates/15-k3s-multi-node-installer.sh.tpl
+	//go:embed templates/k3s-multi-node-installer.sh.tpl
 	k3sMultiNodeInstaller string
 
 	//go:embed templates/k8s-vip.yaml.tpl

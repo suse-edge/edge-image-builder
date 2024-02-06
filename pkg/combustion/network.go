@@ -19,10 +19,10 @@ const (
 	// Used for both input component source and
 	// output configurations subdirectory under combustion.
 	networkConfigDir        = "network"
-	networkConfigScriptName = "03-configure-network.sh"
+	networkConfigScriptName = "05-configure-network.sh"
 )
 
-//go:embed templates/03-configure-network.sh.tpl
+//go:embed templates/05-configure-network.sh.tpl
 var configureNetworkScript string
 
 // Configures the network component if enabled.

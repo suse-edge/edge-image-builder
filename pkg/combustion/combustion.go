@@ -25,7 +25,15 @@ type configureComponent func(context *image.Context) ([]string, error)
 func Configure(ctx *image.Context) error {
 	var combustionScripts []string
 
-	// Order rationale:
+	// EIB Combustion script prefix ranges:
+	// 00-09 -- Networking
+	// 10-19 -- Operating System
+	// 20-24 -- Kubernetes
+	// 25-29 -- User Workloads
+	// 30-39 -- SUSE Product Integration
+	// 40-49 -- Miscellaneous
+
+	// Component order rationale:
 	// - Message has no effect on the system, so this can go anywhere
 	// - Custom scripts should be early to allow the most flexibility in the user
 	//   being able to override/preempt the built-in behavior
