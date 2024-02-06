@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	prepareTarballScriptName = "prepare-tarball.sh"
-	prepareTarballScriptLog  = "prepare-tarball.log"
-	tarballName              = "tarball-image.tar.gz"
-	tarballImgRef            = "tarball"
+	prepareTarballScriptName = "prepare-resolver-base-tarball-image.sh"
+	prepareTarballScriptLog  = "prepare-resolver-base-tarball-image.log"
+	tarballName              = "resolver-base-tarball-image.tar.gz"
+	tarballImgRef            = "resolver-base-tarball-image"
 )
 
 //go:embed templates/prepare-tarball.sh.tpl
