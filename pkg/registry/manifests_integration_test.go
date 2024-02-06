@@ -99,7 +99,7 @@ func TestGetAllImages(t *testing.T) {
 	manifestURLs := []string{"https://k8s.io/examples/application/nginx-app.yaml"}
 
 	// Test
-	containerImages, err := GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, manifestDownloadDest)
+	containerImages, err := GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, "", manifestDownloadDest)
 
 	// Verify
 	require.NoError(t, err)

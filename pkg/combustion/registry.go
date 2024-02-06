@@ -3,10 +3,14 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -26,6 +30,11 @@ const (
 	registryDir             = "registry"
 	registryPort            = "6545"
 	registryMirrorsFileName = "registries.yaml"
+
+	helmLogFileName      = "helm.log"
+	helmDir              = "helm"
+	helmTemplateFilename = "helm.yaml"
+	helmChartsDir        = "charts"
 )
 
 //go:embed templates/hauler-manifest.yaml.tpl
@@ -50,6 +59,17 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("creating registry dir: %w", err)
 	}
 
+	var helmTemplatePath string
+	var helmChartPaths []string
+	if isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) {
+		helmTemplatePath = helmTemplateFilename
+		helmChartPaths, err = configureHelm(ctx)
+		if err != nil {
+			log.AuditComponentFailed(registryComponentName)
+			return nil, fmt.Errorf("configuring helm: %w", err)
+		}
+	}
+
 	var localManifestSrcDir string
 	if componentDir := filepath.Join(k8sDir, "manifests"); isComponentConfigured(ctx, componentDir) {
 		localManifestSrcDir = filepath.Join(ctx.ImageConfigDir, componentDir)
@@ -67,7 +87,7 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		}
 	}
 
-	containerImages, err := registry.GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, manifestDownloadDest)
+	containerImages, err := registry.GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, helmTemplatePath, manifestDownloadDest)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("getting all container images: %w", err)
@@ -89,7 +109,7 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("writing hauler manifest: %w", err)
 	}
 
-	err = populateHaulerStore(ctx)
+	err = syncHaulerManifest(ctx)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("populating hauler store: %w", err)
@@ -106,6 +126,17 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("copying hauler binary: %w", err)
+	}
+
+	chartTarPaths, err := getDownloadedCharts(helmChartPaths)
+	if err != nil {
+		log.AuditComponentFailed(registryComponentName)
+		return nil, fmt.Errorf("getting downloaded helm chart paths: %w", err)
+	}
+
+	err = writeUpdatedHelmManifests(ctx, chartTarPaths)
+	if err != nil {
+		return nil, fmt.Errorf("writing updated helm chart manifests: %w", err)
 	}
 
 	registryScriptNameResult, err := writeRegistryScript(ctx)
@@ -137,9 +168,9 @@ func writeHaulerManifest(ctx *image.Context, images []image.ContainerImage) erro
 	return nil
 }
 
-func populateHaulerStore(ctx *image.Context) error {
+func syncHaulerManifest(ctx *image.Context) error {
 	haulerManifestPath := filepath.Join(ctx.BuildDir, haulerManifestYamlName)
-	args := []string{"store", "sync", "--files", haulerManifestPath}
+	args := []string{"store", "sync", "--files", haulerManifestPath, "-p", "linux/amd64"}
 
 	cmd, registryLog, err := createRegistryCommand(ctx, hauler, args)
 	if err != nil {
@@ -156,6 +187,26 @@ func populateHaulerStore(ctx *image.Context) error {
 	}
 
 	return nil
+}
+
+func getDownloadedCharts(chartPaths []string) ([]string, error) {
+	var chartTarNames []string
+	for _, chart := range chartPaths {
+		var expandedChart string
+		if strings.Contains(chart, "*") {
+			matches, err := filepath.Glob(chart)
+			if err != nil {
+				return nil, fmt.Errorf("error expanding wildcard %s: %w", chart, err)
+			}
+			if len(matches) == 0 {
+				return nil, fmt.Errorf("no charts matched pattern: %s", chart)
+			}
+			expandedChart = matches[0]
+			chartTarNames = append(chartTarNames, expandedChart)
+		}
+	}
+
+	return chartTarNames, nil
 }
 
 func generateRegistryTar(ctx *image.Context) error {
@@ -191,14 +242,32 @@ func copyHaulerBinary(ctx *image.Context, haulerBinaryPath string) error {
 }
 
 func writeRegistryScript(ctx *image.Context) (string, error) {
+	var chartsDir string
+	if isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) {
+		chartsDir = helmChartsDir
+	}
+
+	version := ctx.ImageDefinition.Kubernetes.Version
+	var k8sType string
+	switch {
+	case strings.Contains(version, image.KubernetesDistroRKE2):
+		k8sType = image.KubernetesDistroRKE2
+	case strings.Contains(version, image.KubernetesDistroK3S):
+		k8sType = image.KubernetesDistroK3S
+	}
+
 	values := struct {
-		Port                string
+		RegistryPort        string
 		RegistryDir         string
 		EmbeddedRegistryTar string
+		ChartsDir           string
+		K8sType             string
 	}{
-		Port:                registryPort,
+		RegistryPort:        registryPort,
 		RegistryDir:         registryDir,
 		EmbeddedRegistryTar: registryTarName,
+		ChartsDir:           chartsDir,
+		K8sType:             k8sType,
 	}
 
 	data, err := template.Parse(registryScriptName, registryScript, &values)
@@ -240,7 +309,9 @@ func getImageHostnames(containerImages []image.ContainerImage) []string {
 	for _, containerImage := range containerImages {
 		result := strings.Split(containerImage.Name, "/")
 		if len(result) > 1 {
-			hostnames = append(hostnames, result[0])
+			if !slices.Contains(hostnames, result[0]) && result[0] != "docker.io" {
+				hostnames = append(hostnames, result[0])
+			}
 		}
 	}
 
@@ -264,6 +335,111 @@ func writeRegistryMirrors(ctx *image.Context, hostnames []string) error {
 
 	if err := os.WriteFile(registriesYamlFile, []byte(data), fileio.NonExecutablePerms); err != nil {
 		return fmt.Errorf("writing file %s: %w", registryMirrorsFileName, err)
+	}
+
+	return nil
+}
+
+func createHelmCommand(ctx *image.Context, helmCommand []string) (*exec.Cmd, *os.File, error) {
+	fullLogFilename := filepath.Join(ctx.BuildDir, helmLogFileName)
+	logFile, err := os.OpenFile(fullLogFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error opening helm log file %s: %w", helmLogFileName, err)
+	}
+
+	templateFile, err := os.OpenFile(helmTemplateFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error opening (for append) helm template file: %w", err)
+	}
+
+	var cmd *exec.Cmd
+	switch helmCommand[0] {
+	case "template":
+		cmd = exec.Command("helm", helmCommand...)
+		multiWriter := io.MultiWriter(logFile, templateFile)
+		cmd.Stdout = multiWriter
+	case "pull":
+		cmd = exec.Command("helm", helmCommand...)
+	case "repo":
+		cmd = exec.Command("helm", helmCommand...)
+		cmd.Stdout = logFile
+	default:
+		return nil, nil, fmt.Errorf("invalid helm command: %s, must be 'pull', 'repo', or 'template'", helmCommand[0])
+	}
+
+	cmd.Stderr = logFile
+
+	return cmd, logFile, nil
+}
+
+func configureHelm(ctx *image.Context) ([]string, error) {
+	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
+	helmCommands, helmChartPaths, err := registry.GenerateHelmCommands(helmSrcDir)
+	if err != nil {
+		return nil, fmt.Errorf("generating helm templates: %w", err)
+	}
+
+	for _, command := range helmCommands {
+		err := func() error {
+			commandArgs := strings.Fields(command)
+			cmd, registryLog, err := createHelmCommand(ctx, commandArgs)
+			if err != nil {
+				return fmt.Errorf("preparing to template helm chart: %w", err)
+			}
+			defer func() {
+				if err = registryLog.Close(); err != nil {
+					zap.S().Warnf("failed to close helm log file properly: %s", err)
+				}
+			}()
+
+			if err = cmd.Run(); err != nil {
+				return fmt.Errorf("templating helm chart: %w: ", err)
+			}
+			return nil
+		}()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return helmChartPaths, nil
+}
+
+func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string) error {
+	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
+
+	manifests, err := registry.UpdateAllManifests(helmSrcDir, chartTars)
+	if err != nil {
+		return fmt.Errorf("updating manifests: %w", err)
+	}
+
+	for i, manifest := range manifests {
+		for j, doc := range manifest {
+			data, err := yaml.Marshal(doc)
+			if err != nil {
+				return fmt.Errorf("marshaling data: %w", err)
+			}
+
+			fileName := fmt.Sprintf("manifest%d.yaml", i+j)
+			dirPath := filepath.Join(ctx.CombustionDir, k8sDir, k8sManifestsDir)
+			if err = os.MkdirAll(dirPath, os.ModePerm); err != nil {
+				return fmt.Errorf("creating kubernetes manifests dir: %w", err)
+			}
+
+			filePath := filepath.Join(dirPath, fileName)
+			file, err := os.Create(filePath)
+			if err != nil {
+				return fmt.Errorf("creating manifest file: %w", err)
+			}
+
+			if _, err = file.Write(data); err != nil {
+				return fmt.Errorf("writing manifest file: %w", err)
+			}
+
+			if err = file.Close(); err != nil {
+				return fmt.Errorf("closing file %w", err)
+			}
+		}
 	}
 
 	return nil

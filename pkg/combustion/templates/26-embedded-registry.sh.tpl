@@ -18,7 +18,7 @@ cat <<- EOF > /etc/systemd/system/eib-embedded-registry.service
   User=root
   WorkingDirectory=/opt/hauler
   ExecStartPre=/usr/local/bin/hauler store load {{ .EmbeddedRegistryTar }}
-  ExecStart=/usr/local/bin/hauler store serve -p {{ .Port }}
+  ExecStart=/usr/local/bin/hauler store serve registry -p {{ .RegistryPort }}
   Restart=on-failure
 
   [Install]
