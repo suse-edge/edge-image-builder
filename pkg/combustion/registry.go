@@ -263,10 +263,8 @@ func writeRegistryScript(ctx *image.Context) (string, error) {
 		RegistryDir         string
 		EmbeddedRegistryTar string
 		ChartsDir           string
-		FileServerPort      string
 		K8sType             string
 	}{
-		FileServerPort:      fileServerPort,
 		RegistryPort:        registryPort,
 		RegistryDir:         registryDir,
 		EmbeddedRegistryTar: registryTarName,
@@ -358,7 +356,7 @@ func createHelmCommand(ctx *image.Context, helmCommand []string) (*exec.Cmd, *os
 	}
 
 	var cmd *exec.Cmd
-	switch helmCommand[1] {
+	switch helmCommand[0] {
 	case "template":
 		cmd = exec.Command("helm", helmCommand...)
 		multiWriter := io.MultiWriter(logFile, templateFile)
@@ -368,6 +366,8 @@ func createHelmCommand(ctx *image.Context, helmCommand []string) (*exec.Cmd, *os
 	case "repo":
 		cmd = exec.Command("helm", helmCommand...)
 		cmd.Stdout = logFile
+	default:
+		return nil, nil, fmt.Errorf("invalid helm command: %s, must be 'pull', 'repo', or 'template'", helmCommand[0])
 	}
 
 	cmd.Stderr = logFile
@@ -445,45 +445,5 @@ func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string) error {
 		}
 	}
 
-	return helmChartPaths, nil
-}
-
-func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string) error {
-	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
-
-	manifests, err := registry.UpdateAllManifests(helmSrcDir, chartTars)
-	if err != nil {
-		return fmt.Errorf("updating manifests: %w", err)
-	}
-
-	for i, manifest := range manifests {
-		for j, doc := range manifest {
-			data, err := yaml.Marshal(doc)
-			if err != nil {
-				return fmt.Errorf("marshaling data: %w", err)
-			}
-
-			fileName := fmt.Sprintf("manifest%d.yaml", i+j)
-			dirPath := filepath.Join(ctx.CombustionDir, k8sDir, k8sManifestsDir)
-			if err = os.MkdirAll(dirPath, os.ModePerm); err != nil {
-				return fmt.Errorf("creating kubernetes manifests dir: %w", err)
-			}
-
-			filePath := filepath.Join(dirPath, fileName)
-			file, err := os.Create(filePath)
-			if err != nil {
-				return fmt.Errorf("creating manifest file: %w", err)
-			}
-
-			if _, err = file.Write(data); err != nil {
-				return fmt.Errorf("writing manifest file: %w", err)
-			}
-
-			if err = file.Close(); err != nil {
-				return fmt.Errorf("closing file %w", err)
-			}
-		}
-	}
-
-	return helmChartPaths, nil
+	return nil
 }

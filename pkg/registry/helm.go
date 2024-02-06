@@ -161,7 +161,7 @@ func helmAddRepoCommand(repo, tempRepo string) string {
 		return ""
 	}
 
-	return fmt.Sprintf("helm repo add %s %s", tempRepo, repo)
+	return fmt.Sprintf("repo add %s %s", tempRepo, repo)
 }
 
 func helmPullCommand(repository, chart, version string) string {
