@@ -3,7 +3,6 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"io"
 	"os"
 	"os/exec"
@@ -114,17 +113,6 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("populating hauler store: %w", err)
-	}
-
-	chartTars, err := addHaulerLocalCharts(ctx, helmChartPaths)
-	if err != nil {
-		log.AuditComponentFailed(registryComponentName)
-		return nil, fmt.Errorf("populating hauler store with charts: %w", err)
-	}
-
-	err = writeUpdatedHelmManifests(ctx, chartTars)
-	if err != nil {
-		return nil, fmt.Errorf("writing updated manifests: %w", err)
 	}
 
 	err = generateRegistryTar(ctx)
