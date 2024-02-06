@@ -124,6 +124,10 @@ func TestParse(t *testing.T) {
 	keymap := definition.OperatingSystem.Keymap
 	assert.Equal(t, "us", keymap)
 
+	// Operating System -> ConfigDrive
+	configdrive := definition.OperatingSystem.ConfigDrive
+	assert.True(t, configdrive)
+
 	// EmbeddedArtifactRegistry
 	embeddedArtifactRegistry := definition.EmbeddedArtifactRegistry
 	assert.Equal(t, "hello-world:latest", embeddedArtifactRegistry.ContainerImages[0].Name)

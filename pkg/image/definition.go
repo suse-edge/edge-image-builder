@@ -65,6 +65,7 @@ type OperatingSystem struct {
 	Time            Time                  `yaml:"time"`
 	Proxy           Proxy                 `yaml:"proxy"`
 	Keymap          string                `yaml:"keymap"`
+	ConfigDrive     bool                  `yaml:"configdrive"`
 }
 
 type IsoInstallation struct {
