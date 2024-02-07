@@ -4,7 +4,7 @@ This documentation dives deeper into how a user can configure packages for insta
 Below you can find a table of contents for easier navigation:
 
 1. [Supported systems](#supported-systems)
-2. [Configure packages for installation](#configure-packages-for-installation)
+1. [Configure packages for installation](#configure-packages-for-installation)
     * [Install packages through 'packageList'](#install-packages-through-packagelist)
         * [Install a package from a third-party repo](#install-a-package-from-a-third-party-repo)
         * [Install a package from SUSE's internal repositories](#install-a-package-from-suses-internal-repositories)
@@ -12,7 +12,7 @@ Below you can find a table of contents for easier navigation:
         * [RPM with dependency resolution from a third-party repository](#rpm-with-dependency-resolution-from-a-third-party-repository)
         * [RPM with depdendency resolution from SUSE's internal repositories](#rpm-with-depdendency-resolution-from-suses-internal-repositories)
     * [Installing unsigned packages](#installing-unsigned-packages)
-3. [Package installation workflow](#package-installation-workflow)
+1. [Package installation workflow](#package-installation-workflow)
     * [Running the EIB container](#running-the-eib-container)
     * [Building the EIB image](#building-the-eib-image)
         * [RPM resolution process](#rpm-resolution-process)    
@@ -22,19 +22,19 @@ Below you can find a table of contents for easier navigation:
 ## Supported systems
 EIB's **RPM resolution** process and package installation has been tested on the following `x86_64` systems: 
 1. [SLES 15-SP5](https://www.suse.com/download/sles/)
-2. [openSUSE Tumbleweed](https://get.opensuse.org/tumbleweed/)
-3. [Ubuntu 22.04](https://releases.ubuntu.com/jammy/)
-4. [Fedora Linux](https://fedoraproject.org/server/download)
+1. [openSUSE Tumbleweed](https://get.opensuse.org/tumbleweed/)
+1. [Ubuntu 22.04](https://releases.ubuntu.com/jammy/)
+1. [Fedora Linux](https://fedoraproject.org/server/download)
 
 ## Specify packages for installation
 You can configure packages for installation in the following ways:
 1. provide a `packageList` configuration under `operatingSystem.packages` in the EIB image configuration file
-2. create a `rpms` directory under EIB's configuration directory and provide local RPM files that you want to be installed on the image
+1. create a `rpms` directory under EIB's configuration directory and provide local RPM files that you want to be installed on the image
 
 ### Install packages through 'packageList'
 To install a package using the `packageList` configuration, at a minimum you must configure the following under `operatingSystem.packages`:
 1. valid package names under `packageList`
-2. `additionalRepos` or `sccRegistrationCode`
+1. `additionalRepos` or `sccRegistrationCode`
 
 Below you can find examples for the aforementioned use cases.
 
@@ -120,8 +120,8 @@ By providing this configuration, **all** GPG validation will be **disabled**, al
 ## Package installation workflow
 The package installation workflow can be separated in three logical parts:
 1. *Running the EIB container* - how to run the EIB container so that the **RPM resolution** has the needed permissions
-2. *Building the EIB image* - what happens during the **RPM resolution** logic of EIB's image build
-3. *Booting the EIB image* - how are the packages actually installed once the EIB image is booted for the first time
+1. *Building the EIB image* - what happens during the **RPM resolution** logic of EIB's image build
+1. *Booting the EIB image* - how are the packages actually installed once the EIB image is booted for the first time
 
 ### Running the EIB container
 ![image](./images/rpm-eib-container-run.png)
@@ -151,9 +151,9 @@ Once the EIB container has been successfully executed, it parses all the user pr
 ### Building the EIB image
 During this phase, EIB prepares the user configured packages for installation. This process is called **RPM resolution** and it includes:
 1. Validating that each provided package has a GPG signature or comes from a GPG signed RPM repository
-2. Resolving and downloading the dependencies for each configured package
-3. Creating a RPM repository that consists of the configured packages and their dependencies
-4. Configure the usage of this repositry for package installation during the **combustion** phase of the EIB image boot
+1. Resolving and downloading the dependencies for each configured package
+1. Creating a RPM repository that consists of the configured packages and their dependencies
+1. Configure the usage of this repositry for package installation during the **combustion** phase of the EIB image boot
 
 Below you can find a more detailed description of EIB's **RPM resolution** process. 
 
@@ -171,10 +171,10 @@ All the RPM resolution logic is done during the build of the **RPM resolver** im
     * Connecting to SUSE's internal RPM repositories, if configured by the user through `operatingSystem.packages.sccRegistrationCode`
     * Importing any GPG keys provided by the user under `<eib-config-dir>/rpms/gpg-keys`
     * Adding any third-party RPM repositories, if configured by the user through `operatingSystem.packages.additionalRepos`
-2. Validation of:
+1. Validation of:
     * RPM files provided by the user under `<eib-config-dir>/rpms`
     * Third-party RPM repositories, if configured by the user through `operatingSystem.packages.additionalRepos`
-3. Downloading the dependencies for all configured packages and side-loaded RPMs to a **RPM cache directory**
+1. Downloading the dependencies for all configured packages and side-loaded RPMs to a **RPM cache directory**
 
 After a successful RPM resolver image build, EIB starts a container from the newly built image and copies the aforementioned **RPM cache directory** to the **combustion** directory located in the EIB container. This cache directory is then converted to a ready to use RPM repository by EIB.
 
@@ -183,21 +183,21 @@ The final step in the EIB **RPM resolution** process is to create an **install s
 #### Troubleshooting
 When troubleshooting the **RPM resolution** process, it is beneficial to look at the following files/directories inside of the EIB build directory:
 1. `eib-build.log` - general logs for the whole EIB image build process
-2. `podman-image-build.log` - logs for the build of the EIB resolver image. If missing, but the `resolver-image-build` directory is present, this means that there is a problem in the configuration of the `resolver-image-build` directory
-3. `podman-system-service.log` - logs for the Podman listening service
-4. `resolver-image-build` directory - build context for the resolver image. Make sure that the `Dockerfile` holds correct data. When installing side-loaded RPMs, make sure that the `rpms` and `gpg-keys` directories are present in the `resolver-image-build` directory
-5. `resolver-base-image` direcotry - contains resources related to the creation of the **virtual disk tarball** archive. If this directory exists, this means that a problem has been encountered while EIB was trying to import the **tarball image**
-6. `prepare-base.log` - logs related to the creation of the **virtual disk tarball**
-7. `createrepo.log` - logs related to the conversion of the **RPM cache directory** to a **RPM repository**
-8. `combustion/rpm-repo` directory - the **RPM repository**; should hold the desired RPMs for installation and their dependencies
-9. `combustion/10-rpm-install.sh` - script that will be executed during the **combustion** phase; should use the `rpm-repo` repository and have all the expected packages configured for installation
+1. `podman-image-build.log` - logs for the build of the EIB resolver image. If missing, but the `resolver-image-build` directory is present, this means that there is a problem in the configuration of the `resolver-image-build` directory
+1. `podman-system-service.log` - logs for the Podman listening service
+1. `resolver-image-build` directory - build context for the resolver image. Make sure that the `Dockerfile` holds correct data. When installing side-loaded RPMs, make sure that the `rpms` and `gpg-keys` directories are present in the `resolver-image-build` directory
+1. `resolver-base-image` direcotry - contains resources related to the creation of the **virtual disk tarball** archive. If this directory exists, this means that a problem has been encountered while EIB was trying to import the **tarball image**
+1. `prepare-base.log` - logs related to the creation of the **virtual disk tarball**
+1. `createrepo.log` - logs related to the conversion of the **RPM cache directory** to a **RPM repository**
+1. `combustion/rpm-repo` directory - the **RPM repository**; should hold the desired RPMs for installation and their dependencies
+1. `combustion/10-rpm-install.sh` - script that will be executed during the **combustion** phase; should use the `rpm-repo` repository and have all the expected packages configured for installation
 
 ### Booting the EIB image
 During the combustion phase of the EIB image boot, as mentioned above, both the **RPM repository** and **RPM combustion script** will be present in the combustion [configuration directory](https://github.com/openSUSE/combustion?tab=readme-ov-file#combustion) respectively under `/dev/shm/combustion/config/10-rpm-install.sh` and `/dev/shm/combustion/config/rpm-repo`.
 
 The root combustion script then calls the `10-rpm-install.sh` script, which does the following:
 1. Adds the `rpm-repo` directory as a local RPM repository for its package manager
-2. Installs the desired packages from the newly added `rpm-repo` repository 
-3. Once all packages have been installed it removes the `rpm-repo` from the package manager
+1. Installs the desired packages from the newly added `rpm-repo` repository 
+1. Once all packages have been installed it removes the `rpm-repo` from the package manager
 
 The successful execution of the `10-rpm-install.sh` script indicates that all packages have been installed on the operating system. Upon the completion of the image boot, the user should have access to every package that he configured when building the EIB image.
