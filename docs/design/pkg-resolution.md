@@ -5,7 +5,7 @@ The package resolution design can be separated in three logical parts:
 1. *Booting the EIB image* - how are the packages actually installed once the EIB image is booted for the first time
 
 ## Running the EIB container
-![image](./images/rpm-eib-container-run.png)
+![image](../images/rpm-eib-container-run.png)
 
 The package resolution workflow begins with the user specifying packages and/or stand-alone RPMs that will be installed when the EIB image is booted. On how to to do a correct specification, see [Specify packages for installation](installing-packages.md#specify-packages-for-installation).
 
@@ -37,7 +37,7 @@ During this phase, EIB prepares the user specified packages for installation. Th
 1. Configure the usage of this repositry for package installation during the **combustion** phase of the EIB image boot
 
 ### RPM resolution process
-![image](./images/rpm-resolver-architecture.png)
+![image](../images/rpm-resolver-architecture.png)
 
 EIB mainly utilizes Podman's functionality to setup the environment needed for the **RPM resolution** process. In order to communicate with Podman, EIB first creates a [listening service](https://docs.podman.io/en/latest/markdown/podman-system-service.1.html) that will faciliate the communication between EIB and Podman. From here onwards, asume that any Podman related operation that EIB does goes through the **listening service** first.
 
