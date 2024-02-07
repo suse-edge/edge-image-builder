@@ -26,7 +26,7 @@ EIB's **RPM resolution** process and package installation has been tested on the
 3. [Ubuntu 22.04](https://releases.ubuntu.com/jammy/)
 4. [Fedora Linux](https://fedoraproject.org/server/download)
 
-## Configure packages for installation
+## Specify packages for installation
 You can configure packages for installation in the following ways:
 1. provide a `packageList` configuration under `operatingSystem.packages` in the EIB image configuration file
 2. create a `rpms` directory under EIB's configuration directory and provide local RPM files that you want to be installed on the image
@@ -59,7 +59,7 @@ operatingSystem:
 ```
 
 ### Side-load RPMs
-Sometimes you may want to install RPM files that are local to your machine. For this use-case, you should create a directory called `rpms` under `<eib-config-dir>/rpms` and copy your local RPM files there.
+Sometimes you may want to install RPM files that are not hosted in a repository. For this use-case, you should create a directory called `rpms` under `<eib-config-dir>/rpms` and copy your local RPM files there.
 
 > **_NOTE:_** You must provide an `additionalRepos` entry or a `sccRegistrationCode` if your RPMs are dependent on other packages.
 

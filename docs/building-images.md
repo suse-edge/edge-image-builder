@@ -115,7 +115,7 @@ operatingSystem:
   * `disable` - Optional; List of systemd services to disable.
 * `keymap` - Optional; sets the virtual console (VC) keymap, full list via `localectl list-keymaps`. If unset, we default to
   `us`.
-* `packages` - Optional; Defines packages that need to be resolved and installed on the operating system during the combustion phase. For detailed information on how to use this configuration, see the [Installing pacakges](installing-packages.md) guide.
+* `packages` - Optional; Defines packages that should have their dependencies determined and pre-loaded into the built image. For detailed information on how to use this configuration, see the [Installing pacakges](installing-packages.md) guide.
   * `noGPGCheck` - Optional; Defines whether GPG validation should be done over all additional repositories and side-loaded RPMs. If set to `true` it effectively disables all GPG validaiton. If unset, defaults to `false`. **Disabling GPG validation is intended for development purposes only!**
   * `packageList` - Optional; List of packages that are to be installed from SUSE's internal RPM repositories or from additionally provided third-party repositories.
   * `additionalRepos` - Optional; List of third-party RPM repository URLs that will be added to the package manager of the OS.
