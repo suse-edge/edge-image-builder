@@ -21,9 +21,9 @@ Below you can find a table of contents for easier navigation:
 
 ## Supported systems
 EIB's **RPM resolution** process and package installation has been tested on the following `x86_64` systems: 
-1. [Ubuntu 22.04](https://releases.ubuntu.com/jammy/)
-2. [SLES 15-SP5](https://www.suse.com/download/sles/)
-3. [openSUSE Tumbleweed](https://get.opensuse.org/tumbleweed/)
+1. [SLES 15-SP5](https://www.suse.com/download/sles/)
+2. [openSUSE Tumbleweed](https://get.opensuse.org/tumbleweed/)
+3. [Ubuntu 22.04](https://releases.ubuntu.com/jammy/)
 4. [Fedora Linux](https://fedoraproject.org/server/download)
 
 ## Configure packages for installation

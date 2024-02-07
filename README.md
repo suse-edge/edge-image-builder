@@ -8,14 +8,14 @@ such as [Podman](https://podman.io/).
 ### Prerequisites
 Before building the EIB image, make sure that you have the development headers and libraries for **gpgme**, **device-mapper** and **libbtrfs** installed on your system:
 
-**Ubuntu:** 
-```shell
-sudo apt-get install -y libgpgme-dev libdevmapper-dev libbtrfs-dev
-```
-
 **SUSE Linux:**
 ```shell
 sudo zypper install -y gpgme-devel device-mapper-devel libbtrfs-devel
+```
+
+**Ubuntu:** 
+```shell
+sudo apt-get install -y libgpgme-dev libdevmapper-dev libbtrfs-dev
 ```
 
 **Fedora:**
