@@ -54,8 +54,8 @@ spec:
       securityContext:
         fsGroup: 1001
         fsGroupChangePolicy: Always
-        supplementalGroups: [ ]
-        sysctls: [ ]
+        supplementalGroups: []
+        sysctls: []
       containers:
         - name: apache
           image: docker.io/bitnami/apache:2.4.58-debian-11-r10
@@ -103,7 +103,7 @@ spec:
             successThreshold: 1
             failureThreshold: 6
           resources:
-            limits: { }
-            requests: { }
+            limits: {}
+            requests: {}
           volumeMounts:
       volumes:

@@ -75,6 +75,7 @@ func parseHelmCRDs(manifestsPath string) ([]*HelmCRD, error) {
 			if errors.Is(err, io.EOF) {
 				break
 			}
+
 			return nil, fmt.Errorf("unmarshaling manifest: %w", err)
 		}
 

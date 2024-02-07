@@ -69,6 +69,9 @@ func TestGetAllImages(t *testing.T) {
 		{
 			Name: "nginx:1.14.2",
 		},
+		{
+			Name: "docker.io/bitnami/apache:2.4.58-debian-11-r10",
+		},
 	}
 	sort.Slice(expectedContainerImages, func(i, j int) bool {
 		return expectedContainerImages[i].Name < expectedContainerImages[j].Name
@@ -98,8 +101,10 @@ func TestGetAllImages(t *testing.T) {
 	}
 	manifestURLs := []string{"https://k8s.io/examples/application/nginx-app.yaml"}
 
+	helmTemplatePath := filepath.Join("testdata", "helm", "helm-template.yaml")
+
 	// Test
-	containerImages, err := GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, "", manifestDownloadDest)
+	containerImages, err := GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, helmTemplatePath, manifestDownloadDest)
 
 	// Verify
 	require.NoError(t, err)
