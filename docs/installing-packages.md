@@ -1,24 +1,6 @@
 # Installing packages
 This documentation dives deeper into how a user can configure packages for installation inside the EIB image. Furthermore, it explains the **RPM resolution** process that EIB goes through so it can ensure that configured packages will be successfully installed even in an **air-gapped** environment.
 
-Below you can find a table of contents for easier navigation:
-
-1. [Supported systems](#supported-systems)
-1. [Configure packages for installation](#configure-packages-for-installation)
-    * [Install packages through 'packageList'](#install-packages-through-packagelist)
-        * [Install a package from a third-party repo](#install-a-package-from-a-third-party-repo)
-        * [Install a package from SUSE's internal repositories](#install-a-package-from-suses-internal-repositories)
-    * [Side-load RPMs](#side-load-rpms)
-        * [RPM with dependency resolution from a third-party repository](#rpm-with-dependency-resolution-from-a-third-party-repository)
-        * [RPM with depdendency resolution from SUSE's internal repositories](#rpm-with-depdendency-resolution-from-suses-internal-repositories)
-    * [Installing unsigned packages](#installing-unsigned-packages)
-1. [Package installation workflow](#package-installation-workflow)
-    * [Running the EIB container](#running-the-eib-container)
-    * [Building the EIB image](#building-the-eib-image)
-        * [RPM resolution process](#rpm-resolution-process)    
-        * [Troubleshooting](#troubleshooting)
-    * [Booting the EIB image](#booting-the-eib-image)
-
 ## Supported systems
 EIB's **RPM resolution** process and package installation has been tested on the following `x86_64` systems: 
 1. [SLES 15-SP5](https://www.suse.com/download/sles/)
@@ -35,8 +17,6 @@ You can configure packages for installation in the following ways:
 To install a package using the `packageList` configuration, at a minimum you must configure the following under `operatingSystem.packages`:
 1. valid package names under `packageList`
 1. `additionalRepos` or `sccRegistrationCode`
-
-Below you can find examples for the aforementioned use cases.
 
 #### Install a package from a third-party repo
 ```yaml
@@ -154,8 +134,6 @@ During this phase, EIB prepares the user configured packages for installation. T
 1. Resolving and downloading the dependencies for each configured package
 1. Creating a RPM repository that consists of the configured packages and their dependencies
 1. Configure the usage of this repositry for package installation during the **combustion** phase of the EIB image boot
-
-Below you can find a more detailed description of EIB's **RPM resolution** process. 
 
 #### RPM resolution process
 ![image](./images/rpm-resolver-architecture.png)
