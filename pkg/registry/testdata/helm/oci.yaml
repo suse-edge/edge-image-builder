@@ -1,0 +1,31 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: apache
+  namespace: kube-system
+spec:
+  repo: oci://registry-1.docker.io/bitnamicharts/apache
+  chart: apache
+  targetNamespace: web
+  version: 10.5.2
+  set:
+    rbac.enabled: "true"
+    ssl.enabled: "true"
+    servers:
+      - port: 80
+        host: example
+      - port: 22
+        host: example2
+  valuesContent: |-
+    service:
+      type: ClusterIP
+    ingress:
+      enabled: true
+      hostname: www.example.com
+    metrics:
+      enabled: true
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: web
