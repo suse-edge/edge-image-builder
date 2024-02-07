@@ -50,7 +50,7 @@ EIB configuration directory tree:
 ```shell
 .
 ├── eib-config-iso.yaml
-├── images
+├── base-images
 │   └── SLE-Micro.x86_64-5.5.0-Default-RT-GM.raw
 └── rpms
     ├── gpg-keys
@@ -71,7 +71,7 @@ EIB configuration directory tree:
 ```shell
 .
 ├── eib-config-iso.yaml
-├── images
+├── base-images
 │   └── SLE-Micro.x86_64-5.5.0-Default-RT-GM.raw
 └── rpms
     ├── gpg-keys
