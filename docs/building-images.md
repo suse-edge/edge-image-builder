@@ -183,7 +183,3 @@ as follows:
 
 * `elemental` - This must contain a file named `elemental_config.yaml`. This file will be bundled in
   the built image and used to register with Elemental on boot.
-
-Additionally, the following RPMs must be included in the RPMs directory as described above:
-* `elemental-register`
-* `elemental-system-agent`
