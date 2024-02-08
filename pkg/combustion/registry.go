@@ -503,5 +503,6 @@ func writeStringToLog(s string, logFile *os.File) error {
 	if _, err := logFile.WriteString(s + "\n"); err != nil {
 		return fmt.Errorf("writing '%s' to log file '%s': %w", s, logFile.Name(), err)
 	}
+
 	return nil
 }
