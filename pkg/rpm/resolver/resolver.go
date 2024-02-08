@@ -24,35 +24,37 @@ const (
 var dockerfileTemplate string
 
 type Podman interface {
-	Import(tarball, ref string) error
 	Build(context, name string) error
 	Create(img string) (string, error)
 	Copy(id, src, dest string) error
 }
 
+type BaseResolverImageBuilder interface {
+	Build() (string, error)
+}
+
 type Resolver struct {
 	// dir from where the resolver will work
 	dir string
-	// path to the image that the resolver will use as base
-	imgPath string
-	// type of the image that will be used as base (either ISO or RAW)
-	imgType string
 	// podman client which to use for container management tasks
 	podman Podman
-	// helper property, contains RPM paths that will be used for resolution in the
+	// baseResolverImageBuilder builder for the image which the resolver will use as base
+	baseResolverImageBuilder BaseResolverImageBuilder
+	// helper property; name of the image that will be used as a base to the resolver image
+	baseImageRef string
+	// helper property; contains RPM paths that will be used for resolution in the
 	// resolver image
 	rpmPaths []string
-	// helper property, contains the paths to the gpgKeys that will be used to validate
+	// helper property; contains the paths to the gpgKeys that will be used to validate
 	// the RPM signatures in the resolver image
 	gpgKeyPaths []string
 }
 
-func New(workDir, imgPath, imgType string, podman Podman) *Resolver {
+func New(workDir string, podman Podman, baseImageBuilder BaseResolverImageBuilder) *Resolver {
 	return &Resolver{
-		dir:     workDir,
-		imgPath: imgPath,
-		imgType: imgType,
-		podman:  podman,
+		dir:                      workDir,
+		podman:                   podman,
+		baseResolverImageBuilder: baseImageBuilder,
 	}
 }
 
@@ -70,7 +72,7 @@ func New(workDir, imgPath, imgType string, podman Podman) *Resolver {
 func (r *Resolver) Resolve(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDirPath string, pkgList []string, err error) {
 	zap.L().Info("Resolving package dependencies...")
 
-	if err = r.buildBase(); err != nil {
+	if r.baseImageRef, err = r.baseResolverImageBuilder.Build(); err != nil {
 		return "", nil, fmt.Errorf("building base resolver image: %w", err)
 	}
 
@@ -166,7 +168,7 @@ func (r *Resolver) writeDockerfile(localRPMConfig *image.LocalRPMConfig, package
 		ToGPGPath    string
 		NoGPGCheck   bool
 	}{
-		BaseImage:  baseImageRef,
+		BaseImage:  r.baseImageRef,
 		RegCode:    packages.RegCode,
 		AddRepo:    r.generateAddRepoStr(packages.AdditionalRepos),
 		CacheDir:   r.generateResolverImgRPMRepoPath(),
