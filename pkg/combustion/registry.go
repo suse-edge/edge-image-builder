@@ -31,7 +31,9 @@ const (
 	registryPort            = "6545"
 	registryMirrorsFileName = "registries.yaml"
 
-	helmLogFileName      = "helm.log"
+	templateLogFileName  = "helm-template.log"
+	pullLogFileName      = "helm-pull.log"
+	repoAddLogFileName   = "helm-repo-add.log"
 	helmDir              = "helm"
 	helmTemplateFilename = "helm.yaml"
 	helmChartsDir        = "charts"
@@ -300,7 +302,8 @@ func createRegistryCommand(ctx *image.Context, commandName string, args []string
 
 func IsEmbeddedArtifactRegistryConfigured(ctx *image.Context) bool {
 	return len(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages) != 0 ||
-		len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0
+		len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0 ||
+		isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir))
 }
 
 func getImageHostnames(containerImages []image.ContainerImage) []string {
@@ -340,69 +343,110 @@ func writeRegistryMirrors(ctx *image.Context, hostnames []string) error {
 	return nil
 }
 
-func createHelmCommand(ctx *image.Context, helmCommand []string) (*exec.Cmd, *os.File, error) {
-	fullLogFilename := filepath.Join(ctx.BuildDir, helmLogFileName)
-	logFile, err := os.OpenFile(fullLogFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error opening helm log file %s: %w", helmLogFileName, err)
-	}
-
+func createHelmCommand(helmCommand []string, logFiles []*os.File) (*exec.Cmd, error) {
 	templateFile, err := os.OpenFile(helmTemplateFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error opening (for append) helm template file: %w", err)
+		return nil, fmt.Errorf("error opening (for append) helm template file: %w", err)
 	}
 
-	var cmd *exec.Cmd
-	switch helmCommand[0] {
+	cmd := exec.Command("helm")
+	cmd.Args = helmCommand
+	switch helmCommand[1] {
 	case "template":
-		cmd = exec.Command("helm", helmCommand...)
-		multiWriter := io.MultiWriter(logFile, templateFile)
+		err := writeStringToLog("command: "+cmd.String(), logFiles[0])
+		if err != nil {
+			return nil, fmt.Errorf("writing string to log file: %w", err)
+		}
+		multiWriter := io.MultiWriter(logFiles[0], templateFile)
 		cmd.Stdout = multiWriter
+		cmd.Stderr = logFiles[0]
 	case "pull":
-		cmd = exec.Command("helm", helmCommand...)
+		err := writeStringToLog("command: "+cmd.String(), logFiles[1])
+		if err != nil {
+			return nil, fmt.Errorf("writing string to log file: %w", err)
+		}
+		cmd.Stdout = logFiles[1]
+		cmd.Stderr = logFiles[1]
 	case "repo":
-		cmd = exec.Command("helm", helmCommand...)
-		cmd.Stdout = logFile
+		err := writeStringToLog("command: "+cmd.String(), logFiles[2])
+		if err != nil {
+			return nil, fmt.Errorf("writing string to log file: %w", err)
+		}
+		cmd.Stdout = logFiles[2]
+		cmd.Stderr = logFiles[2]
 	default:
-		return nil, nil, fmt.Errorf("invalid helm command: %s, must be 'pull', 'repo', or 'template'", helmCommand[0])
+		return nil, fmt.Errorf("invalid helm command: %s, must be 'pull', 'repo', or 'template'", helmCommand[1])
 	}
 
-	cmd.Stderr = logFile
-
-	return cmd, logFile, nil
+	return cmd, nil
 }
 
 func configureHelm(ctx *image.Context) ([]string, error) {
 	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
-	helmCommands, helmChartPaths, err := registry.GenerateHelmCommands(helmSrcDir)
+	helmCommands, helmChartPaths, err := registry.GenerateHelmCommands(helmSrcDir, "")
+
+	templateLogFilePath := filepath.Join(ctx.BuildDir, templateLogFileName)
+	templateLogFile, err := os.OpenFile(templateLogFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
+	if err != nil {
+		return nil, fmt.Errorf("opening helm template log file %s: %w", templateLogFilePath, err)
+	}
+
+	pullLogFilePath := filepath.Join(ctx.BuildDir, pullLogFileName)
+	pullLogFile, err := os.OpenFile(pullLogFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
+	if err != nil {
+		return nil, fmt.Errorf("opening helm pull log file %s: %w", pullLogFilePath, err)
+	}
+
+	repoAddLogFilePath := filepath.Join(ctx.BuildDir, repoAddLogFileName)
+	repoAddLogFile, err := os.OpenFile(repoAddLogFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
+	if err != nil {
+		return nil, fmt.Errorf("opening helm repo add log file %s: %w", repoAddLogFilePath, err)
+	}
+
+	logFiles := []*os.File{
+		templateLogFile,
+		pullLogFile,
+		repoAddLogFile,
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("generating helm templates: %w", err)
 	}
 
 	for _, command := range helmCommands {
-		err := func() error {
-			commandArgs := strings.Fields(command)
-			cmd, registryLog, err := createHelmCommand(ctx, commandArgs)
-			if err != nil {
-				return fmt.Errorf("preparing to template helm chart: %w", err)
-			}
-			defer func() {
-				if err = registryLog.Close(); err != nil {
-					zap.S().Warnf("failed to close helm log file properly: %s", err)
-				}
-			}()
-
-			if err = cmd.Run(); err != nil {
-				return fmt.Errorf("templating helm chart: %w: ", err)
-			}
-			return nil
-		}()
+		err := executeHelmCommand(command, logFiles)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("executing helm command: %w", err)
 		}
 	}
 
+	defer func() {
+		if err = logFiles[0].Close(); err != nil {
+			zap.S().Warnf("failed to close helm template log file properly: %s", err)
+		}
+		if err = logFiles[1].Close(); err != nil {
+			zap.S().Warnf("failed to close helm pull log file properly: %s", err)
+		}
+		if err = logFiles[2].Close(); err != nil {
+			zap.S().Warnf("failed to close helm repo add log file properly: %s", err)
+		}
+	}()
+
 	return helmChartPaths, nil
+}
+
+func executeHelmCommand(command string, logFiles []*os.File) error {
+	commandArgs := strings.Fields(command)
+	cmd, err := createHelmCommand(commandArgs, logFiles)
+	if err != nil {
+		return fmt.Errorf("creating helm command: %w", err)
+	}
+
+	if err = cmd.Run(); err != nil {
+		return fmt.Errorf("running command '%s': %w", commandArgs[0], err)
+	}
+
+	return nil
 }
 
 func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string) error {
@@ -413,34 +457,30 @@ func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string) error {
 		return fmt.Errorf("updating manifests: %w", err)
 	}
 
+	dirPath := filepath.Join(ctx.CombustionDir, k8sDir, k8sManifestsDir)
+	if err = os.MkdirAll(dirPath, os.ModePerm); err != nil {
+		return fmt.Errorf("creating kubernetes manifests dir: %w", err)
+	}
+
 	for i, manifest := range manifests {
-		for j, doc := range manifest {
-			data, err := yaml.Marshal(doc)
-			if err != nil {
-				return fmt.Errorf("marshaling data: %w", err)
-			}
+		data, err := yaml.Marshal(manifest)
+		if err != nil {
+			return fmt.Errorf("marshaling data: %w", err)
+		}
 
-			fileName := fmt.Sprintf("manifest%d.yaml", i+j)
-			dirPath := filepath.Join(ctx.CombustionDir, k8sDir, k8sManifestsDir)
-			if err = os.MkdirAll(dirPath, os.ModePerm); err != nil {
-				return fmt.Errorf("creating kubernetes manifests dir: %w", err)
-			}
-
-			filePath := filepath.Join(dirPath, fileName)
-			file, err := os.Create(filePath)
-			if err != nil {
-				return fmt.Errorf("creating manifest file: %w", err)
-			}
-
-			if _, err = file.Write(data); err != nil {
-				return fmt.Errorf("writing manifest file: %w", err)
-			}
-
-			if err = file.Close(); err != nil {
-				return fmt.Errorf("closing file %w", err)
-			}
+		fileName := fmt.Sprintf("manifest%d.yaml", i)
+		filePath := filepath.Join(dirPath, fileName)
+		if err := os.WriteFile(filePath, data, fileio.NonExecutablePerms); err != nil {
+			return fmt.Errorf("writing manifest file %w", err)
 		}
 	}
 
+	return nil
+}
+
+func writeStringToLog(s string, logFile *os.File) error {
+	if _, err := logFile.WriteString(s + "\n"); err != nil {
+		return fmt.Errorf("writing '%s' to log file '%s': %w", s, logFile.Name(), err)
+	}
 	return nil
 }

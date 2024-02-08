@@ -1,7 +1,0 @@
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: apache
-  namespace: default
-spec:
-  chartContent: H4sIFAAAAAAA
