@@ -31,12 +31,13 @@ const (
 	registryPort            = "6545"
 	registryMirrorsFileName = "registries.yaml"
 
-	templateLogFileName  = "helm-template.log"
-	pullLogFileName      = "helm-pull.log"
-	repoAddLogFileName   = "helm-repo-add.log"
-	helmDir              = "helm"
-	helmTemplateFilename = "helm.yaml"
-	helmChartsDir        = "charts"
+	templateLogFileName       = "helm-template.log"
+	pullLogFileName           = "helm-pull.log"
+	repoAddLogFileName        = "helm-repo-add.log"
+	helmDir                   = "helm"
+	helmTemplateFilename      = "helm.yaml"
+	helmChartsDir             = "charts"
+	helmManifestHolderDirName = "manifest-holder"
 )
 
 //go:embed templates/hauler-manifest.yaml.tpl
@@ -63,6 +64,7 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 
 	var helmTemplatePath string
 	var helmChartPaths []string
+	var helmManifestHolderDir string
 	if isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) {
 		helmTemplatePath = helmTemplateFilename
 		helmChartPaths, err = configureHelm(ctx)
@@ -70,6 +72,24 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 			log.AuditComponentFailed(registryComponentName)
 			return nil, fmt.Errorf("configuring helm: %w", err)
 		}
+
+		helmManifestHolderDir = filepath.Join(ctx.BuildDir, helmManifestHolderDirName)
+		err := os.Mkdir(helmManifestHolderDir, os.ModePerm)
+		if err != nil {
+			log.AuditComponentFailed(registryComponentName)
+			return nil, fmt.Errorf("creating manifest holder dir: %w", err)
+		}
+	}
+
+	chartTarPaths, err := getDownloadedCharts(helmChartPaths)
+	if err != nil {
+		log.AuditComponentFailed(registryComponentName)
+		return nil, fmt.Errorf("getting downloaded helm chart paths: %w", err)
+	}
+
+	err = writeUpdatedHelmManifests(ctx, chartTarPaths, helmManifestHolderDir)
+	if err != nil {
+		return nil, fmt.Errorf("writing updated helm chart manifests: %w", err)
 	}
 
 	var localManifestSrcDir string
@@ -89,7 +109,7 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		}
 	}
 
-	containerImages, err := registry.GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, helmTemplatePath, manifestDownloadDest)
+	containerImages, err := registry.GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, helmManifestHolderDir, helmTemplatePath, manifestDownloadDest)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("getting all container images: %w", err)
@@ -128,17 +148,6 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("copying hauler binary: %w", err)
-	}
-
-	chartTarPaths, err := getDownloadedCharts(helmChartPaths)
-	if err != nil {
-		log.AuditComponentFailed(registryComponentName)
-		return nil, fmt.Errorf("getting downloaded helm chart paths: %w", err)
-	}
-
-	err = writeUpdatedHelmManifests(ctx, chartTarPaths)
-	if err != nil {
-		return nil, fmt.Errorf("writing updated helm chart manifests: %w", err)
 	}
 
 	registryScriptNameResult, err := writeRegistryScript(ctx)
@@ -449,7 +458,7 @@ func executeHelmCommand(command string, logFiles []*os.File) error {
 	return nil
 }
 
-func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string) error {
+func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string, manifestsDir string) error {
 	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
 
 	manifests, err := registry.UpdateAllManifests(helmSrcDir, chartTars)
@@ -463,14 +472,26 @@ func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string) error {
 	}
 
 	for i, manifest := range manifests {
-		data, err := yaml.Marshal(manifest)
-		if err != nil {
-			return fmt.Errorf("marshaling data: %w", err)
+		var manifestDocs []byte
+		for _, doc := range manifest {
+			manifestDocs = append(manifestDocs, []byte("---\n")...)
+
+			data, err := yaml.Marshal(doc)
+			if err != nil {
+				return fmt.Errorf("marshaling data: %w", err)
+			}
+
+			manifestDocs = append(manifestDocs, data...)
 		}
 
-		fileName := fmt.Sprintf("manifest%d.yaml", i)
-		filePath := filepath.Join(dirPath, fileName)
-		if err := os.WriteFile(filePath, data, fileio.NonExecutablePerms); err != nil {
+		fileName := fmt.Sprintf("manifest-%d.yaml", i)
+		filePath := filepath.Join(manifestsDir, fileName)
+		if err := os.WriteFile(filePath, manifestDocs, fileio.NonExecutablePerms); err != nil {
+			return fmt.Errorf("writing manifest file %w", err)
+		}
+
+		destFilePath := filepath.Join(dirPath, fileName)
+		if err := os.WriteFile(destFilePath, manifestDocs, fileio.NonExecutablePerms); err != nil {
 			return fmt.Errorf("writing manifest file %w", err)
 		}
 	}
