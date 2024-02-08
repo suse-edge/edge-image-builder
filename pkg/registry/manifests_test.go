@@ -113,7 +113,7 @@ func TestGetLocalManifestPaths(t *testing.T) {
 	expectedPaths := []string{"testdata/empty-crd.yaml", "testdata/invalid-crd.yml", "testdata/sample-crd.yaml"}
 
 	// Test
-	manifestPaths, err := getLocalManifestPaths(manifestSrcDir)
+	manifestPaths, err := getManifestPaths(manifestSrcDir)
 
 	// Verify
 	require.NoError(t, err)
@@ -125,7 +125,7 @@ func TestGetLocalManifestPathsEmptySrc(t *testing.T) {
 	manifestSrcDir := ""
 
 	// Test
-	_, err := getLocalManifestPaths(manifestSrcDir)
+	_, err := getManifestPaths(manifestSrcDir)
 
 	// Verify
 	require.ErrorContains(t, err, "manifest source directory not defined")
@@ -136,7 +136,7 @@ func TestGetLocalManifestPathsInvalidSrc(t *testing.T) {
 	manifestSrcDir := "not-real"
 
 	// Test
-	_, err := getLocalManifestPaths(manifestSrcDir)
+	_, err := getManifestPaths(manifestSrcDir)
 
 	// Verify
 	require.ErrorContains(t, err, "reading manifest source dir 'not-real': open not-real: no such file or directory")
@@ -150,7 +150,7 @@ func TestGetLocalManifestPathsNoManifests(t *testing.T) {
 	}()
 
 	// Test
-	manifestPaths, err := getLocalManifestPaths("downloaded-manifests")
+	manifestPaths, err := getManifestPaths("downloaded-manifests")
 
 	// Verify
 	require.NoError(t, err)
