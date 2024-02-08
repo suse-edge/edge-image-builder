@@ -613,8 +613,8 @@ func TestUpdateAllHelmManifest(t *testing.T) {
 }
 
 func TestGenerateHelmCommands(t *testing.T) {
-	helmDir := "helm"
-	require.NoError(t, os.Mkdir(helmDir, 0o755))
+	helmDir, err := os.MkdirTemp("", "helm")
+	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, os.RemoveAll(helmDir))
 	}()
@@ -633,17 +633,17 @@ func TestGenerateHelmCommands(t *testing.T) {
 			name:       "Helm Dir With Valid Manifests",
 			helmSrcDir: localHelmSrcDirValid,
 			helmChartPaths: []string{
-				"helm/apache2.tgz", // This one is created manually while the others are pulled
+				filepath.Join(helmDir, "apache2.tgz"), // This one is created manually while the others are pulled
 				"apache-*.tgz",
 				"metallb-*.tgz",
 			},
 			expectedCommands: []string{
-				"helm template --skip-crds apache2 helm/apache2.tgz",
-				"helm pull oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2 -d helm",
-				"helm template --skip-crds apache oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2 --set rbac.enabled=true,servers[0].host=example,servers[0].port=80,servers[1].host=example2,servers[1].port=22,ssl.enabled=true -f helm/values-apache.yaml",
+				fmt.Sprintf("helm template --skip-crds apache2 %s", filepath.Join(helmDir, "apache2.tgz")),
+				fmt.Sprintf("helm pull oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2 -d %s", helmDir),
+				fmt.Sprintf("helm template --skip-crds apache oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2 --set rbac.enabled=true,servers[0].host=example,servers[0].port=80,servers[1].host=example2,servers[1].port=22,ssl.enabled=true -f %s", filepath.Join(helmDir, "values-apache.yaml")),
 				"helm template --skip-crds metallb repo-metallb/metallb",
 				"helm repo add repo-metallb https://suse-edge.github.io/charts",
-				"helm pull repo-metallb/metallb -d helm",
+				fmt.Sprintf("helm pull repo-metallb/metallb -d %s", helmDir),
 				"helm template --skip-crds metallb repo-metallb/metallb",
 			},
 		},
@@ -695,4 +695,6 @@ func TestGenerateHelmCommands(t *testing.T) {
 			}
 		})
 	}
+	assert.FileExists(t, tests[0].helmChartPaths[0])
+	assert.FileExists(t, filepath.Join(helmDir, "values-apache.yaml"))
 }
