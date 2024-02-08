@@ -66,6 +66,11 @@ func Run(*cli.Context) error {
 		return nil
 	}
 
+	if err = downloadKubernetesSELinuxPolicies(ctx); err != nil {
+		audit.AuditInfof("Configuring Kubernetes failed. %s", checkLogMessage)
+		zap.S().Fatalf("Failed to download Kubernetes SELinux policy: %s", err)
+	}
+
 	appendElementalRPMs(ctx)
 
 	if !bootstrapDependencyServices(ctx, args.RootBuildDir) {
@@ -199,6 +204,34 @@ func isImageDefinitionValid(ctx *image.Context) bool {
 	}
 
 	return true
+}
+
+func downloadKubernetesSELinuxPolicies(ctx *image.Context) error {
+	if ctx.ImageDefinition.Kubernetes.Version == "" {
+		return nil
+	}
+
+	configPath := filepath.Join(ctx.ImageConfigDir, "kubernetes", "config", "server.yaml")
+	config, err := kubernetes.ParseKubernetesConfig(configPath)
+	if err != nil {
+		return fmt.Errorf("parsing kubernetes server config: %w", err)
+	}
+
+	selinuxEnabled, _ := config["selinux"].(bool)
+	if !selinuxEnabled {
+		return nil
+	}
+
+	zap.S().Info("SELinux mode requested for Kubernetes")
+
+	rpmDir := filepath.Join(ctx.ImageConfigDir, "rpms")
+	gpgKeysDir := filepath.Join(rpmDir, "gpg-keys")
+
+	if err = os.MkdirAll(gpgKeysDir, os.ModePerm); err != nil {
+		return fmt.Errorf("creating rpms directory: %w", err)
+	}
+
+	return kubernetes.DownloadSELinuxRPMs(&ctx.ImageDefinition.Kubernetes, rpmDir, gpgKeysDir)
 }
 
 func appendElementalRPMs(ctx *image.Context) {
