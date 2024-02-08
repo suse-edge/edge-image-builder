@@ -237,9 +237,10 @@ func TestUpdateHelmManifest(t *testing.T) {
 			chartTarPaths: chartTarPaths,
 		},
 		{
-			name:          "Helm Repo Manifest",
-			manifestPath:  repoManifestPath,
-			chartTarPaths: chartTarPaths,
+			name:                "Helm Repo Manifest",
+			manifestPath:        repoManifestPath,
+			chartTarPaths:       chartTarPaths,
+			nonHelmExpectedKind: "Pod",
 		},
 		{
 			name:          "Nonexistent Path",
@@ -275,14 +276,15 @@ func TestUpdateHelmManifest(t *testing.T) {
 			if test.expectedError == "" && !test.tarTest {
 				require.NoError(t, err)
 				for _, doc := range manifest {
-					if spec, ok := doc["spec"].(map[string]any); ok {
+					kind, kindOk := doc["kind"].(string)
+					spec, specOk := doc["spec"].(map[string]any)
+					if kindOk && kind == "HelmChart" && specOk {
 						assert.NotEmpty(t, spec)
 						chartContent, ok := spec["chartContent"].(string)
 						assert.Equal(t, true, ok)
 						assert.NotEmpty(t, chartContent)
 					} else {
-						kind, ok := doc["kind"].(string)
-						assert.Equal(t, true, ok)
+						assert.Equal(t, true, kindOk)
 						assert.Equal(t, test.nonHelmExpectedKind, kind)
 					}
 				}
@@ -587,8 +589,9 @@ func TestUpdateAllHelmManifest(t *testing.T) {
 				require.NoError(t, err)
 				for _, manifest := range allManifests {
 					for _, doc := range manifest {
-						spec, ok := doc["spec"].(map[string]any)
-						if ok {
+						kind, kindOk := doc["kind"].(string)
+						spec, specOk := doc["spec"].(map[string]any)
+						if specOk && kindOk && kind == "HelmChart" {
 							assert.NotEmpty(t, spec)
 
 							chartContent, ok := spec["chartContent"].(string)
