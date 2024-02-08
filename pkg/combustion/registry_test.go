@@ -260,3 +260,82 @@ func TestGetImageHostnames(t *testing.T) {
 	// Verify
 	assert.Equal(t, expectedHostnames, hostnames)
 }
+
+func TestGetDownloadedCharts(t *testing.T) {
+	// Setup
+	tempDir, err := os.MkdirTemp("", "temp")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(tempDir))
+	}()
+	sampleChartPath := filepath.Join(tempDir, "apache-10.5.2.tgz")
+	err = os.WriteFile(sampleChartPath, []byte(""), fileio.NonExecutablePerms)
+	require.NoError(t, err)
+
+	sampleChartPath2 := filepath.Join(tempDir, "metallb-1.0.0.tgz")
+	err = os.WriteFile(sampleChartPath2, []byte(""), fileio.NonExecutablePerms)
+	require.NoError(t, err)
+
+	chartPaths := []string{
+		filepath.Join(tempDir, "metallb-*.tgz"),
+		filepath.Join(tempDir, "apache-*.tgz"),
+	}
+
+	expectedChartPaths := []string{
+		sampleChartPath,
+		sampleChartPath2,
+	}
+
+	// Test
+	outputChartPaths, err := getDownloadedCharts(chartPaths)
+	fmt.Println(outputChartPaths)
+
+	// Verify
+	require.NoError(t, err)
+	assert.ElementsMatch(t, expectedChartPaths, outputChartPaths)
+}
+
+func TestGetDownloadedChartsNoWildCard(t *testing.T) {
+	// Setup
+	chartPaths := []string{
+		"metallb.tgz",
+		"apache.tgz",
+	}
+
+	// Test
+	outputChartPaths, err := getDownloadedCharts(chartPaths)
+
+	// Verify
+	require.NoError(t, err)
+	assert.Empty(t, outputChartPaths)
+}
+
+func TestGetDownloadedChartsMalformedPattern(t *testing.T) {
+	// Setup
+	chartPaths := []string{
+		filepath.Join("", "[metallb.tgz-*"),
+	}
+	expectedError := "error expanding wildcard [metallb.tgz-*: syntax error in pattern"
+
+	// Test
+	_, err := getDownloadedCharts(chartPaths)
+
+	// Verify
+	require.ErrorContains(t, err, expectedError)
+}
+
+func TestGetDownloadedChartsNoDir(t *testing.T) {
+	// Setup
+	chartPaths := []string{
+		"metallb-*.tgz",
+		"apache-*.tgz",
+	}
+	expectedError := "no charts matched pattern: metallb-*.tgz"
+
+	// Test
+	outputChartPaths, err := getDownloadedCharts(chartPaths)
+
+	// Verify
+	require.ErrorContains(t, err, expectedError)
+	assert.Empty(t, outputChartPaths)
+}
