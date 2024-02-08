@@ -65,8 +65,8 @@ When troubleshooting the **RPM resolution** process, it is beneficial to look at
 1. `podman-image-build.log` - logs for the build of the EIB resolver image. If missing, but the `resolver-image-build` directory is present, this means that there is a problem in the configuration of the `resolver-image-build` directory
 1. `podman-system-service.log` - logs for the Podman listening service
 1. `resolver-image-build` directory - build context for the resolver image. Make sure that the `Dockerfile` holds correct data. When installing side-loaded RPMs, make sure that the `rpms` and `gpg-keys` directories are present in the `resolver-image-build` directory
-1. `resolver-base-image` direcotry - contains resources related to the creation of the **virtual disk tarball** archive. If this directory exists, this means that a problem has been encountered while EIB was trying to import the **tarball image**
-1. `prepare-base.log` - logs related to the creation of the **virtual disk tarball**
+1. `resolver-tarball-image` direcotry - contains resources related to the creation of the **virtual disk tarball** archive. If this directory exists, this means that a problem has been encountered while EIB was trying to import the **tarball image**
+1. `prepare-resolver-base-tarball-image.log` - logs related to the creation of the **virtual disk tarball**
 1. `createrepo.log` - logs related to the conversion of the **RPM cache directory** to a **RPM repository**
 1. `combustion/rpm-repo` directory - the **RPM repository**; should hold the desired RPMs for installation and their dependencies
 1. `combustion/10-rpm-install.sh` - script that will be executed during the **combustion** phase; should use the `rpm-repo` repository and have all the expected packages specified for installation
