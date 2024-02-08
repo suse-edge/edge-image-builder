@@ -66,6 +66,8 @@ func Run(*cli.Context) error {
 		return nil
 	}
 
+	appendElementalRPMs(ctx)
+
 	if !bootstrapDependencyServices(ctx, args.RootBuildDir) {
 		os.Exit(1)
 	}
@@ -197,6 +199,28 @@ func isImageDefinitionValid(ctx *image.Context) bool {
 	}
 
 	return true
+}
+
+func appendElementalRPMs(ctx *image.Context) {
+	elementalDir := filepath.Join(ctx.ImageConfigDir, "elemental")
+	if _, err := os.Stat(elementalDir); err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			zap.S().Warnf("Looking for 'elemental' dir failed unexpectedly: %s", err)
+		}
+
+		return
+	}
+
+	packageList := ctx.ImageDefinition.OperatingSystem.Packages.PKGList
+	packageList = append(packageList, "elemental-register", "elemental-system-agent")
+
+	// TODO: Use an official repository URL once it's out
+	repositories := ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos
+	repositories = append(repositories,
+		image.AddRepo{URL: "https://download.opensuse.org/repositories/isv:/Rancher:/Elemental:/Staging/standard/"})
+
+	ctx.ImageDefinition.OperatingSystem.Packages.PKGList = packageList
+	ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos = repositories
 }
 
 // If the image definition requires it, starts the necessary services, displaying appropriate messages
