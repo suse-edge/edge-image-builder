@@ -2,12 +2,16 @@ package kubernetes
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/http"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"go.uber.org/zap"
 )
 
 const (
@@ -25,8 +29,15 @@ type selinuxPolicy struct {
 func DownloadSELinuxRPMs(kubernetes *image.Kubernetes, rpmDir, gpgKeysDir string) error {
 	policy := newSELinuxPolicy(kubernetes.Version)
 	policyPath := filepath.Join(rpmDir, policy.rpmName)
-	if err := http.DownloadFile(context.Background(), policy.downloadURL, policyPath, nil); err != nil {
-		return fmt.Errorf("downloading selinux policy: %w", err)
+
+	if _, err := os.Stat(policyPath); err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			zap.S().Errorf("Looking for SELinux RPM '%s' failed unexpectedly: %s", policyPath, err)
+		}
+
+		if err = http.DownloadFile(context.Background(), policy.downloadURL, policyPath, nil); err != nil {
+			return fmt.Errorf("downloading selinux policy: %w", err)
+		}
 	}
 
 	signingKeyPath := filepath.Join(gpgKeysDir, "rancher-public.key")
