@@ -339,3 +339,66 @@ func TestGetDownloadedChartsNoDir(t *testing.T) {
 	require.ErrorContains(t, err, expectedError)
 	assert.Empty(t, outputChartPaths)
 }
+
+func TestWriteStringToLog(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "temp")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(tempDir))
+	}()
+	sampleLogPath := filepath.Join(tempDir, "sample.log")
+	logFile, err := os.OpenFile(sampleLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
+	require.NoError(t, err)
+
+	noPermsLogPath := filepath.Join(tempDir, "no-perms.log")
+	noPermsLogFile, err := os.OpenFile(noPermsLogPath, os.O_CREATE|os.O_RDONLY, fileio.NonExecutablePerms)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name           string
+		stringToWrite  string
+		expectedString string
+		file           *os.File
+		filePath       string
+		expectedError  string
+	}{
+		{
+			name:           "Write String To File",
+			stringToWrite:  "sample text to write",
+			expectedString: "sample text to write\n",
+			file:           logFile,
+			filePath:       sampleLogPath,
+		},
+		{
+			name:          "ReadOnly File",
+			stringToWrite: "test",
+			file:          noPermsLogFile,
+			filePath:      noPermsLogPath,
+			expectedError: fmt.Sprintf("writing 'test' to log file '%[1]s': write %[1]s: bad file descriptor", filepath.Join(tempDir, "no-perms.log")),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err = writeStringToLog(test.stringToWrite, test.file)
+			if test.expectedError == "" {
+				require.NoError(t, err)
+				require.NoError(t, test.file.Close())
+
+				content, err := os.ReadFile(test.filePath)
+				require.NoError(t, err)
+
+				actualContent := string(content)
+				assert.Equal(t, test.expectedString, actualContent)
+			} else {
+				require.ErrorContains(t, err, test.expectedError)
+
+				content, err := os.ReadFile(test.filePath)
+				require.NoError(t, err)
+
+				actualContent := string(content)
+				assert.Empty(t, actualContent)
+			}
+		})
+	}
+}
