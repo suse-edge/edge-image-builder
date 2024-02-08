@@ -1,16 +1,20 @@
 # ----- EIB Builder Image -----
 FROM registry.suse.com/bci/golang:1.21
 
-WORKDIR /src
-COPY . ./
-
 # Dependency uses by line
 # 1. Podman Go library
 RUN zypper install -y \
     gpgme-devel device-mapper-devel libbtrfs-devel
 
-RUN go build ./cmd/eib
+WORKDIR /src
 
+COPY go.mod go.sum ./
+COPY ./cmd ./cmd
+COPY ./pkg ./pkg
+
+RUN --mount=type=cache,id=gomod,target=/go/pkg/mod \
+    --mount=type=cache,id=gobuild,target=/root/.cache/go-build \
+    go build ./cmd/eib
 
 # ----- Deliverable Image -----
 FROM opensuse/leap:15.5
