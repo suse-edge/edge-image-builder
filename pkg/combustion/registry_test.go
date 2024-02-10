@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -398,6 +399,150 @@ func TestWriteStringToLog(t *testing.T) {
 
 				actualContent := string(content)
 				assert.Empty(t, actualContent)
+			}
+		})
+	}
+}
+
+func TestCreateHelmCommand(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "temp")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(tempDir))
+	}()
+	templateLogPath := filepath.Join(tempDir, "template.log")
+	templateLogFile, err := os.OpenFile(templateLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
+	require.NoError(t, err)
+
+	pullLogPath := filepath.Join(tempDir, "pull.log")
+	pullLogFile, err := os.OpenFile(pullLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
+	require.NoError(t, err)
+
+	repoLogPath := filepath.Join(tempDir, "repo.log")
+	repoLogFile, err := os.OpenFile(repoLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
+	require.NoError(t, err)
+
+	readOnlyLogPath := filepath.Join(tempDir, "read-only.log")
+	readOnlyLogFile, err := os.OpenFile(readOnlyLogPath, os.O_CREATE|os.O_RDONLY, fileio.NonExecutablePerms)
+	require.NoError(t, err)
+
+	logFiles := []*os.File{
+		templateLogFile,
+		pullLogFile,
+		repoLogFile,
+	}
+
+	invalidLogFiles := []*os.File{
+		readOnlyLogFile,
+		readOnlyLogFile,
+		readOnlyLogFile,
+	}
+
+	tests := []struct {
+		name            string
+		logFiles        []*os.File
+		helmCommand     []string
+		helmTemplateDir string
+		expectedLog     string
+		expectedFile    string
+		expectedString  string
+		expectedError   string
+	}{
+		{
+			name: "Helm Template Command",
+			helmCommand: []string{
+				"helm", "template", "metallb", "repo-metallb/metallb", "-f", "values.yaml",
+			},
+			helmTemplateDir: tempDir,
+			expectedFile:    filepath.Join(tempDir, helmTemplateFilename),
+			expectedLog:     templateLogPath,
+			expectedString:  "command: helm template metallb repo-metallb/metallb -f values.yaml\n",
+			logFiles:        logFiles,
+		},
+		{
+			name: "Helm Pull Command",
+			helmCommand: []string{
+				"helm", "pull", "oci://registry-1.docker.io/bitnamicharts/apache", "--version", "10.5.2",
+			},
+			helmTemplateDir: tempDir,
+			expectedFile:    filepath.Join(tempDir, helmTemplateFilename),
+			expectedLog:     pullLogPath,
+			expectedString:  "command: helm pull oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2\n",
+			logFiles:        logFiles,
+		},
+		{
+			name: "Helm Repo Add Command",
+			helmCommand: []string{
+				"helm", "repo", "add", "repo-metallb", "https://suse-edge.github.io/charts",
+			},
+			helmTemplateDir: tempDir,
+			expectedFile:    filepath.Join(tempDir, helmTemplateFilename),
+			expectedLog:     repoLogPath,
+			expectedString:  "command: helm repo add repo-metallb https://suse-edge.github.io/charts\n",
+			logFiles:        logFiles,
+		},
+		{
+			name: "Invalid Helm Command",
+			helmCommand: []string{
+				"helm", "invalid",
+			},
+			helmTemplateDir: tempDir,
+			expectedError:   "invalid helm command: 'invalid', must be 'pull', 'repo', or 'template'",
+		},
+		{
+			name: "Template Read Only Log File",
+			helmCommand: []string{
+				"helm", "template", "metallb", "repo-metallb/metallb", "-f", "values.yaml",
+			},
+			helmTemplateDir: tempDir,
+			logFiles:        invalidLogFiles,
+			expectedError:   fmt.Sprintf("writing string to log file: writing 'command: helm template metallb repo-metallb/metallb -f values.yaml' to log file '%[1]s': write %[1]s: bad file descriptor", filepath.Join(tempDir, "read-only.log")),
+		},
+		{
+			name: "Pull Read Only Log File",
+			helmCommand: []string{
+				"helm", "pull", "oci://registry-1.docker.io/bitnamicharts/apache", "--version", "10.5.2",
+			},
+			helmTemplateDir: tempDir,
+			logFiles:        invalidLogFiles,
+			expectedError:   fmt.Sprintf("writing string to log file: writing 'command: helm pull oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2' to log file '%[1]s': write %[1]s: bad file descriptor", filepath.Join(tempDir, "read-only.log")),
+		},
+		{
+			name: "Repo Add Read Only Log File",
+			helmCommand: []string{
+				"helm", "repo", "add", "repo-metallb", "https://suse-edge.github.io/charts",
+			},
+			helmTemplateDir: tempDir,
+			logFiles:        invalidLogFiles,
+			expectedError:   fmt.Sprintf("writing string to log file: writing 'command: helm repo add repo-metallb https://suse-edge.github.io/charts' to log file '%[1]s': write %[1]s: bad file descriptor", filepath.Join(tempDir, "read-only.log")),
+		},
+		{
+			name: "Invalid Helm Template Dir",
+			helmCommand: []string{
+				"helm", "repo", "add", "repo-metallb", "https://suse-edge.github.io/charts",
+			},
+			helmTemplateDir: "invalid",
+			logFiles:        invalidLogFiles,
+			expectedError:   "error opening (for append) helm template file: open invalid/helm.yaml: no such file or directory",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cmd, err := createHelmCommand(test.helmTemplateDir, test.helmCommand, test.logFiles)
+			if test.expectedError == "" {
+				require.NoError(t, err)
+				assert.Equal(t, strings.Join(test.helmCommand, " "), cmd.String())
+				assert.FileExists(t, test.expectedFile)
+
+				assert.FileExists(t, test.expectedLog)
+				content, err := os.ReadFile(test.expectedLog)
+				require.NoError(t, err)
+
+				actualContent := string(content)
+				assert.Equal(t, test.expectedString, actualContent)
+			} else {
+				require.ErrorContains(t, err, test.expectedError)
 			}
 		})
 	}
