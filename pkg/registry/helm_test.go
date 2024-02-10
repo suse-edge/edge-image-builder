@@ -669,7 +669,6 @@ func TestGenerateHelmCommands(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			helmCommands, helmChartPaths, err := GenerateHelmCommands(test.helmSrcDir, helmDir)
-			fmt.Println(err)
 			if test.expectedError == "" {
 				assert.ElementsMatch(t, helmChartPaths, test.helmChartPaths)
 				require.NoError(t, err)
