@@ -289,7 +289,6 @@ func TestGetDownloadedCharts(t *testing.T) {
 
 	// Test
 	outputChartPaths, err := getDownloadedCharts(chartPaths)
-	fmt.Println(outputChartPaths)
 
 	// Verify
 	require.NoError(t, err)
@@ -541,6 +540,144 @@ func TestCreateHelmCommand(t *testing.T) {
 
 				actualContent := string(content)
 				assert.Equal(t, test.expectedString, actualContent)
+			} else {
+				require.ErrorContains(t, err, test.expectedError)
+			}
+		})
+	}
+}
+
+func dirEntriesToNames(entries []os.DirEntry) []string {
+	var names []string
+	for _, entry := range entries {
+		names = append(names, entry.Name())
+	}
+
+	return names
+}
+
+func TestWriteUpdatedHelmManifests(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "temp")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(tempDir))
+	}()
+
+	unreadableDir := filepath.Join(tempDir, "unreadable")
+	err = os.Mkdir(unreadableDir, os.ModePerm)
+	require.NoError(t, err)
+
+	unreadableManifestPath := filepath.Join(unreadableDir, "unreadable-manifest.yaml")
+	err = os.WriteFile(unreadableManifestPath, []byte(""), 0000)
+	require.NoError(t, err)
+
+	unreadableTarPath := filepath.Join(unreadableDir, "unreadable-apache-tar.tgz")
+	err = os.WriteFile(unreadableTarPath, []byte(""), 0000)
+	require.NoError(t, err)
+
+	validHelmSrcDir := filepath.Join("..", "registry", "testdata", "helm", "valid")
+	invalidHelmSrcDir := filepath.Join("..", "registry", "testdata", "helm", "invalid")
+
+	manifestHolderDir := filepath.Join(tempDir, helmManifestHolderDirName)
+	err = os.Mkdir(manifestHolderDir, os.ModePerm)
+	require.NoError(t, err)
+
+	k8sManifestsDestDir := filepath.Join(tempDir, k8sDir, k8sManifestsDir)
+	err = os.MkdirAll(k8sManifestsDestDir, os.ModePerm)
+	require.NoError(t, err)
+
+	validChartTars := []string{
+		filepath.Join("..", "registry", "testdata", "helm", "apache-10.5.2.tgz"),
+		filepath.Join("..", "registry", "testdata", "helm", "metallb.tgz"),
+	}
+
+	tests := []struct {
+		name                  string
+		helmSrcDir            string
+		helmManifestHolderDir string
+		manifestDestDir       string
+		chartTars             []string
+		expectedManifests     []string
+		expectedError         string
+	}{
+		{
+			name:                  "Write Updated Helm Manifests",
+			helmSrcDir:            validHelmSrcDir,
+			manifestDestDir:       k8sManifestsDestDir,
+			helmManifestHolderDir: manifestHolderDir,
+			expectedManifests: []string{
+				"manifest-0.yaml",
+				"manifest-1.yaml",
+				"manifest-2.yaml",
+			},
+			chartTars: validChartTars,
+		},
+		{
+			name:          "Invalid Helm Source Dir",
+			helmSrcDir:    invalidHelmSrcDir,
+			expectedError: "updating manifests: updating helm manifest: unmarshaling manifest '../registry/testdata/helm/invalid/invalid.yaml': yaml: line 3: mapping values are not allowed in this context",
+		},
+		{
+			name:                  "Invalid Manifest Holder Dir",
+			helmSrcDir:            validHelmSrcDir,
+			chartTars:             validChartTars,
+			helmManifestHolderDir: "invalid-holder",
+			expectedError:         "writing manifest file to manifest holder: open invalid-holder/manifest-0.yaml: no such file or directory",
+		},
+		{
+			name:                  "Invalid K8s Manifest Dest Dir",
+			helmSrcDir:            validHelmSrcDir,
+			chartTars:             validChartTars,
+			helmManifestHolderDir: manifestHolderDir,
+			manifestDestDir:       "invalid-dest",
+			expectedError:         "writing manifest file to combustion destination: open invalid-dest/manifest-0.yaml: no such file or directory",
+		},
+		{
+			name:                  "Unreadable Manifest",
+			helmSrcDir:            unreadableDir,
+			chartTars:             validChartTars,
+			helmManifestHolderDir: manifestHolderDir,
+			manifestDestDir:       k8sManifestsDestDir,
+			expectedError:         fmt.Sprintf("updating manifests: updating helm manifest: reading helm manifest '%[1]s': open %[1]s: permission denied", filepath.Join(unreadableDir, "unreadable-manifest.yaml")),
+		},
+		{
+			name:       "Unreadable Chart Tar",
+			helmSrcDir: validHelmSrcDir,
+			chartTars: []string{
+				unreadableTarPath,
+			},
+			helmManifestHolderDir: manifestHolderDir,
+			manifestDestDir:       k8sManifestsDestDir,
+			expectedError:         fmt.Sprintf("updating manifests: updating helm manifest: reading chart tar '%[1]s': open %[1]s: permission denied", filepath.Join(unreadableDir, "unreadable-apache-tar.tgz")),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err = writeUpdatedHelmManifests(test.manifestDestDir, test.chartTars, test.helmManifestHolderDir, test.helmSrcDir)
+			if test.expectedError == "" {
+				require.NoError(t, err)
+
+				manifestHolderDirContents, err := os.ReadDir(test.helmManifestHolderDir)
+				require.NoError(t, err)
+				actualManifests := dirEntriesToNames(manifestHolderDirContents)
+				assert.ElementsMatch(t, test.expectedManifests, actualManifests)
+
+				manifestDestDirContents, err := os.ReadDir(test.manifestDestDir)
+				require.NoError(t, err)
+				actualManifests = dirEntriesToNames(manifestDestDirContents)
+				assert.ElementsMatch(t, test.expectedManifests, actualManifests)
+
+				for _, manifestName := range actualManifests {
+					manifestContent, err := os.ReadFile(filepath.Join(test.manifestDestDir, manifestName))
+					require.NoError(t, err)
+
+					actualContent := string(manifestContent)
+					assert.Contains(t, actualContent, "chartContent:")
+					assert.Contains(t, actualContent, "HelmChart")
+					assert.NotContains(t, actualContent, "repo:")
+					assert.NotContains(t, actualContent, "chart:")
+				}
 			} else {
 				require.ErrorContains(t, err, test.expectedError)
 			}

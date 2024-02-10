@@ -65,6 +65,7 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 	var helmTemplatePath string
 	var helmChartPaths []string
 	var helmManifestHolderDir string
+	var k8sManifestsDestDir string
 	if isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) {
 		helmTemplatePath = helmTemplateFilename
 		helmChartPaths, err = configureHelm(ctx)
@@ -74,10 +75,15 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		}
 
 		helmManifestHolderDir = filepath.Join(ctx.BuildDir, helmManifestHolderDirName)
-		err := os.Mkdir(helmManifestHolderDir, os.ModePerm)
+		err = os.Mkdir(helmManifestHolderDir, os.ModePerm)
 		if err != nil {
 			log.AuditComponentFailed(registryComponentName)
 			return nil, fmt.Errorf("creating manifest holder dir: %w", err)
+		}
+
+		k8sManifestsDestDir = filepath.Join(ctx.CombustionDir, k8sDir, k8sManifestsDir)
+		if err = os.MkdirAll(k8sManifestsDestDir, os.ModePerm); err != nil {
+			return nil, fmt.Errorf("creating kubernetes manifests dir: %w", err)
 		}
 	}
 
@@ -87,7 +93,8 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("getting downloaded helm chart paths: %w", err)
 	}
 
-	err = writeUpdatedHelmManifests(ctx, chartTarPaths, helmManifestHolderDir)
+	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
+	err = writeUpdatedHelmManifests(k8sManifestsDestDir, chartTarPaths, helmManifestHolderDir, helmSrcDir)
 	if err != nil {
 		return nil, fmt.Errorf("writing updated helm chart manifests: %w", err)
 	}
@@ -172,7 +179,7 @@ func writeHaulerManifest(ctx *image.Context, images []image.ContainerImage) erro
 		return fmt.Errorf("applying template to %s: %w", haulerManifestYamlName, err)
 	}
 
-	if err := os.WriteFile(haulerManifestYamlFile, []byte(data), fileio.NonExecutablePerms); err != nil {
+	if err = os.WriteFile(haulerManifestYamlFile, []byte(data), fileio.NonExecutablePerms); err != nil {
 		return fmt.Errorf("writing file %s: %w", haulerManifestYamlName, err)
 	}
 
@@ -459,17 +466,10 @@ func executeHelmCommand(command string, logFiles []*os.File) error {
 	return nil
 }
 
-func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string, manifestsDir string) error {
-	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
-
+func writeUpdatedHelmManifests(k8sManifestsDir string, chartTars []string, manifestsHolderDir string, helmSrcDir string) error {
 	manifests, err := registry.UpdateAllManifests(helmSrcDir, chartTars)
 	if err != nil {
 		return fmt.Errorf("updating manifests: %w", err)
-	}
-
-	dirPath := filepath.Join(ctx.CombustionDir, k8sDir, k8sManifestsDir)
-	if err = os.MkdirAll(dirPath, os.ModePerm); err != nil {
-		return fmt.Errorf("creating kubernetes manifests dir: %w", err)
 	}
 
 	for i, manifest := range manifests {
@@ -486,14 +486,14 @@ func writeUpdatedHelmManifests(ctx *image.Context, chartTars []string, manifests
 		}
 
 		fileName := fmt.Sprintf("manifest-%d.yaml", i)
-		filePath := filepath.Join(manifestsDir, fileName)
+		filePath := filepath.Join(manifestsHolderDir, fileName)
 		if err := os.WriteFile(filePath, manifestDocs, fileio.NonExecutablePerms); err != nil {
-			return fmt.Errorf("writing manifest file %w", err)
+			return fmt.Errorf("writing manifest file to manifest holder: %w", err)
 		}
 
-		destFilePath := filepath.Join(dirPath, fileName)
+		destFilePath := filepath.Join(k8sManifestsDir, fileName)
 		if err := os.WriteFile(destFilePath, manifestDocs, fileio.NonExecutablePerms); err != nil {
-			return fmt.Errorf("writing manifest file %w", err)
+			return fmt.Errorf("writing manifest file to combustion destination: %w", err)
 		}
 	}
 
