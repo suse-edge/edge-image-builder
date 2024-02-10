@@ -28,6 +28,10 @@ type HelmCRD struct {
 	} `yaml:"spec"`
 }
 
+const (
+	HelmChartKind = "HelmChart"
+)
+
 func parseSetArgs(prefix string, m map[string]any) []string {
 	var args []string
 
@@ -85,7 +89,7 @@ func parseHelmCRDs(manifestsPath string) ([]*HelmCRD, error) {
 			return nil, fmt.Errorf("missing 'kind' field in helm manifest")
 		}
 
-		if kind != "HelmChart" {
+		if kind != HelmChartKind {
 			continue
 		}
 
@@ -240,7 +244,7 @@ func updateHelmManifest(manifestPath string, chartTarsPaths []string) ([]map[str
 		}
 
 		kind, ok := manifest["kind"]
-		if !ok || kind != "HelmChart" {
+		if !ok || kind != HelmChartKind {
 			manifests = append(manifests, manifest)
 			continue
 		}

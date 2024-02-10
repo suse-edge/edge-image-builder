@@ -38,6 +38,8 @@ const (
 	helmTemplateFilename      = "helm.yaml"
 	helmChartsDir             = "charts"
 	helmManifestHolderDirName = "manifest-holder"
+
+	commandLogPrefix = "command: "
 )
 
 //go:embed templates/hauler-manifest.yaml.tpl
@@ -370,7 +372,7 @@ func createHelmCommand(templateDir string, helmCommand []string, logFiles []*os.
 	cmd.Args = helmCommand
 	switch helmCommand[1] {
 	case "template":
-		err = writeStringToLog("command: "+cmd.String(), logFiles[0])
+		err = writeStringToLog(commandLogPrefix+cmd.String(), logFiles[0])
 		if err != nil {
 			return nil, fmt.Errorf("writing string to log file: %w", err)
 		}
@@ -378,14 +380,14 @@ func createHelmCommand(templateDir string, helmCommand []string, logFiles []*os.
 		cmd.Stdout = multiWriter
 		cmd.Stderr = logFiles[0]
 	case "pull":
-		err = writeStringToLog("command: "+cmd.String(), logFiles[1])
+		err = writeStringToLog(commandLogPrefix+cmd.String(), logFiles[1])
 		if err != nil {
 			return nil, fmt.Errorf("writing string to log file: %w", err)
 		}
 		cmd.Stdout = logFiles[1]
 		cmd.Stderr = logFiles[1]
 	case "repo":
-		err = writeStringToLog("command: "+cmd.String(), logFiles[2])
+		err = writeStringToLog(commandLogPrefix+cmd.String(), logFiles[2])
 		if err != nil {
 			return nil, fmt.Errorf("writing string to log file: %w", err)
 		}
@@ -401,6 +403,9 @@ func createHelmCommand(templateDir string, helmCommand []string, logFiles []*os.
 func configureHelm(ctx *image.Context) ([]string, error) {
 	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
 	helmCommands, helmChartPaths, err := registry.GenerateHelmCommands(helmSrcDir, "")
+	if err != nil {
+		return nil, fmt.Errorf("generating helm commands: %w", err)
+	}
 
 	templateLogFilePath := filepath.Join(ctx.BuildDir, templateLogFileName)
 	templateLogFile, err := os.OpenFile(templateLogFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
@@ -431,7 +436,7 @@ func configureHelm(ctx *image.Context) ([]string, error) {
 	}
 
 	for _, command := range helmCommands {
-		err := executeHelmCommand(command, logFiles)
+		err = executeHelmCommand(command, logFiles)
 		if err != nil {
 			return nil, fmt.Errorf("executing helm command: %w", err)
 		}

@@ -2,10 +2,14 @@ package combustion
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/suse-edge/edge-image-builder/pkg/registry"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -385,7 +389,8 @@ func TestWriteStringToLog(t *testing.T) {
 				require.NoError(t, err)
 				require.NoError(t, test.file.Close())
 
-				content, err := os.ReadFile(test.filePath)
+				var content []byte
+				content, err = os.ReadFile(test.filePath)
 				require.NoError(t, err)
 
 				actualContent := string(content)
@@ -528,14 +533,16 @@ func TestCreateHelmCommand(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd, err := createHelmCommand(test.helmTemplateDir, test.helmCommand, test.logFiles)
+			var cmd *exec.Cmd
+			cmd, err = createHelmCommand(test.helmTemplateDir, test.helmCommand, test.logFiles)
 			if test.expectedError == "" {
 				require.NoError(t, err)
 				assert.Equal(t, strings.Join(test.helmCommand, " "), cmd.String())
 				assert.FileExists(t, test.expectedFile)
 
 				assert.FileExists(t, test.expectedLog)
-				content, err := os.ReadFile(test.expectedLog)
+				var content []byte
+				content, err = os.ReadFile(test.expectedLog)
 				require.NoError(t, err)
 
 				actualContent := string(content)
@@ -568,11 +575,11 @@ func TestWriteUpdatedHelmManifests(t *testing.T) {
 	require.NoError(t, err)
 
 	unreadableManifestPath := filepath.Join(unreadableDir, "unreadable-manifest.yaml")
-	err = os.WriteFile(unreadableManifestPath, []byte(""), 0000)
+	err = os.WriteFile(unreadableManifestPath, []byte(""), 0o00)
 	require.NoError(t, err)
 
 	unreadableTarPath := filepath.Join(unreadableDir, "unreadable-apache-tar.tgz")
-	err = os.WriteFile(unreadableTarPath, []byte(""), 0000)
+	err = os.WriteFile(unreadableTarPath, []byte(""), 0o00)
 	require.NoError(t, err)
 
 	validHelmSrcDir := filepath.Join("..", "registry", "testdata", "helm", "valid")
@@ -658,23 +665,26 @@ func TestWriteUpdatedHelmManifests(t *testing.T) {
 			if test.expectedError == "" {
 				require.NoError(t, err)
 
-				manifestHolderDirContents, err := os.ReadDir(test.helmManifestHolderDir)
+				var manifestHolderDirContents []fs.DirEntry
+				manifestHolderDirContents, err = os.ReadDir(test.helmManifestHolderDir)
 				require.NoError(t, err)
 				actualManifests := dirEntriesToNames(manifestHolderDirContents)
 				assert.ElementsMatch(t, test.expectedManifests, actualManifests)
 
-				manifestDestDirContents, err := os.ReadDir(test.manifestDestDir)
+				var manifestDestDirContents []fs.DirEntry
+				manifestDestDirContents, err = os.ReadDir(test.manifestDestDir)
 				require.NoError(t, err)
 				actualManifests = dirEntriesToNames(manifestDestDirContents)
 				assert.ElementsMatch(t, test.expectedManifests, actualManifests)
 
 				for _, manifestName := range actualManifests {
-					manifestContent, err := os.ReadFile(filepath.Join(test.manifestDestDir, manifestName))
+					var manifestContent []byte
+					manifestContent, err = os.ReadFile(filepath.Join(test.manifestDestDir, manifestName))
 					require.NoError(t, err)
 
 					actualContent := string(manifestContent)
 					assert.Contains(t, actualContent, "chartContent:")
-					assert.Contains(t, actualContent, "HelmChart")
+					assert.Contains(t, actualContent, registry.HelmChartKind)
 					assert.NotContains(t, actualContent, "repo:")
 					assert.NotContains(t, actualContent, "chart:")
 				}
