@@ -2,14 +2,15 @@ package registry
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestParseSetArgs(t *testing.T) {
@@ -108,12 +109,12 @@ func TestParseHelmCRDs(t *testing.T) {
 					Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
 					Chart:   "apache",
 					Version: "10.5.2",
-					Set: map[string]interface{}{
+					Set: map[string]any{
 						"rbac.enabled": "true",
 						"ssl.enabled":  "true",
-						"servers": []interface{}{
-							map[string]interface{}{"host": "example", "port": 80},
-							map[string]interface{}{"host": "example2", "port": 22},
+						"servers": []any{
+							map[string]any{"host": "example", "port": 80},
+							map[string]any{"host": "example2", "port": 22},
 						},
 					},
 					ValuesContent: `service:
@@ -278,7 +279,7 @@ func TestUpdateHelmManifest(t *testing.T) {
 				for _, doc := range manifest {
 					kind, kindOk := doc["kind"].(string)
 					spec, specOk := doc["spec"].(map[string]any)
-					if kindOk && kind == "HelmChart" && specOk {
+					if kindOk && kind == HelmChartKind && specOk {
 						assert.NotEmpty(t, spec)
 						chartContent, ok := spec["chartContent"].(string)
 						assert.Equal(t, true, ok)
@@ -438,12 +439,12 @@ func TestHelmTemplateCommand(t *testing.T) {
 					Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
 					Chart:   "apache",
 					Version: "10.5.2",
-					Set: map[string]interface{}{
+					Set: map[string]any{
 						"rbac.enabled": "true",
 						"ssl.enabled":  "true",
-						"servers": []interface{}{
-							map[string]interface{}{"host": "example", "port": 80},
-							map[string]interface{}{"host": "example2", "port": 22},
+						"servers": []any{
+							map[string]any{"host": "example", "port": 80},
+							map[string]any{"host": "example2", "port": 22},
 						},
 					},
 					ValuesContent: `service:
@@ -478,7 +479,7 @@ metrics:
 				}{
 					Repo:  "https://suse-edge.github.io/charts",
 					Chart: "metallb",
-					Set: map[string]interface{}{
+					Set: map[string]any{
 						"rbac.enabled": "true",
 						"ssl.enabled":  "true",
 					},
@@ -591,7 +592,7 @@ func TestUpdateAllHelmManifest(t *testing.T) {
 					for _, doc := range manifest {
 						kind, kindOk := doc["kind"].(string)
 						spec, specOk := doc["spec"].(map[string]any)
-						if specOk && kindOk && kind == "HelmChart" {
+						if specOk && kindOk && kind == HelmChartKind {
 							assert.NotEmpty(t, spec)
 
 							chartContent, ok := spec["chartContent"].(string)
