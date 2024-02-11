@@ -1,0 +1,17 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+  name: metallb
+  namespace: default
+spec:
+  repo: https://suse-edge.github.io/charts
+  chart: metallb
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bci-micro
+spec:
+  containers:
+    - image: registry.suse.com/bci/bci-micro:15.5
+      name: bci-micro
