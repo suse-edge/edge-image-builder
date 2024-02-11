@@ -45,7 +45,7 @@ const (
 //go:embed templates/hauler-manifest.yaml.tpl
 var haulerManifest string
 
-//go:embed templates/14-embedded-registry.sh.tpl
+//go:embed templates/26-embedded-registry.sh.tpl
 var registryScript string
 
 //go:embed templates/registries.yaml.tpl
