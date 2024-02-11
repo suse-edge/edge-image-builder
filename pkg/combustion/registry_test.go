@@ -442,6 +442,13 @@ func TestCreateHelmCommand(t *testing.T) {
 		readOnlyLogFile,
 	}
 
+	var helmPath string
+	helmPath, err = exec.LookPath("helm")
+	if err != nil {
+		require.ErrorContains(t, err, "exec: \"helm\": executable file not found in $PATH")
+		helmPath = "helm"
+	}
+
 	tests := []struct {
 		name            string
 		logFiles        []*os.File
@@ -460,7 +467,7 @@ func TestCreateHelmCommand(t *testing.T) {
 			helmTemplateDir: tempDir,
 			expectedFile:    filepath.Join(tempDir, helmTemplateFilename),
 			expectedLog:     templateLogPath,
-			expectedString:  "command: helm template metallb repo-metallb/metallb -f values.yaml\n",
+			expectedString:  fmt.Sprintf("command: %s template metallb repo-metallb/metallb -f values.yaml\n", helmPath),
 			logFiles:        logFiles,
 		},
 		{
@@ -471,7 +478,7 @@ func TestCreateHelmCommand(t *testing.T) {
 			helmTemplateDir: tempDir,
 			expectedFile:    filepath.Join(tempDir, helmTemplateFilename),
 			expectedLog:     pullLogPath,
-			expectedString:  "command: helm pull oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2\n",
+			expectedString:  fmt.Sprintf("command: %s pull oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2\n", helmPath),
 			logFiles:        logFiles,
 		},
 		{
@@ -482,7 +489,7 @@ func TestCreateHelmCommand(t *testing.T) {
 			helmTemplateDir: tempDir,
 			expectedFile:    filepath.Join(tempDir, helmTemplateFilename),
 			expectedLog:     repoLogPath,
-			expectedString:  "command: helm repo add repo-metallb https://suse-edge.github.io/charts\n",
+			expectedString:  fmt.Sprintf("command: %s repo add repo-metallb https://suse-edge.github.io/charts\n", helmPath),
 			logFiles:        logFiles,
 		},
 		{
@@ -500,7 +507,7 @@ func TestCreateHelmCommand(t *testing.T) {
 			},
 			helmTemplateDir: tempDir,
 			logFiles:        invalidLogFiles,
-			expectedError:   fmt.Sprintf("writing string to log file: writing 'command: helm template metallb repo-metallb/metallb -f values.yaml' to log file '%[1]s': write %[1]s: bad file descriptor", filepath.Join(tempDir, "read-only.log")),
+			expectedError:   fmt.Sprintf("writing string to log file: writing 'command: %[2]s template metallb repo-metallb/metallb -f values.yaml' to log file '%[1]s': write %[1]s: bad file descriptor", filepath.Join(tempDir, "read-only.log"), helmPath),
 		},
 		{
 			name: "Pull Read Only Log File",
@@ -509,7 +516,7 @@ func TestCreateHelmCommand(t *testing.T) {
 			},
 			helmTemplateDir: tempDir,
 			logFiles:        invalidLogFiles,
-			expectedError:   fmt.Sprintf("writing string to log file: writing 'command: helm pull oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2' to log file '%[1]s': write %[1]s: bad file descriptor", filepath.Join(tempDir, "read-only.log")),
+			expectedError:   fmt.Sprintf("writing string to log file: writing 'command: %[2]s pull oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2' to log file '%[1]s': write %[1]s: bad file descriptor", filepath.Join(tempDir, "read-only.log"), helmPath),
 		},
 		{
 			name: "Repo Add Read Only Log File",
@@ -518,7 +525,7 @@ func TestCreateHelmCommand(t *testing.T) {
 			},
 			helmTemplateDir: tempDir,
 			logFiles:        invalidLogFiles,
-			expectedError:   fmt.Sprintf("writing string to log file: writing 'command: helm repo add repo-metallb https://suse-edge.github.io/charts' to log file '%[1]s': write %[1]s: bad file descriptor", filepath.Join(tempDir, "read-only.log")),
+			expectedError:   fmt.Sprintf("writing string to log file: writing 'command: %[2]s repo add repo-metallb https://suse-edge.github.io/charts' to log file '%[1]s': write %[1]s: bad file descriptor", filepath.Join(tempDir, "read-only.log"), helmPath),
 		},
 		{
 			name: "Invalid Helm Template Dir",
