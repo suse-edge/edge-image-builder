@@ -26,6 +26,9 @@ const (
 	registryDir             = "registry"
 	registryPort            = "6545"
 	registryMirrorsFileName = "registries.yaml"
+
+	helmChartsDir = "charts"
+	helmDir       = "helm"
 )
 
 //go:embed templates/hauler-manifest.yaml.tpl
@@ -191,14 +194,32 @@ func copyHaulerBinary(ctx *image.Context, haulerBinaryPath string) error {
 }
 
 func writeRegistryScript(ctx *image.Context) (string, error) {
+	var chartsDir string
+	if isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) {
+		chartsDir = helmChartsDir
+	}
+
+	version := ctx.ImageDefinition.Kubernetes.Version
+	var k8sType string
+	switch {
+	case strings.Contains(version, image.KubernetesDistroRKE2):
+		k8sType = image.KubernetesDistroRKE2
+	case strings.Contains(version, image.KubernetesDistroK3S):
+		k8sType = image.KubernetesDistroK3S
+	}
+
 	values := struct {
-		Port                string
+		RegistryPort        string
 		RegistryDir         string
 		EmbeddedRegistryTar string
+		ChartsDir           string
+		K8sType             string
 	}{
-		Port:                registryPort,
+		RegistryPort:        registryPort,
 		RegistryDir:         registryDir,
 		EmbeddedRegistryTar: registryTarName,
+		ChartsDir:           chartsDir,
+		K8sType:             k8sType,
 	}
 
 	data, err := template.Parse(registryScriptName, registryScript, &values)

@@ -118,7 +118,7 @@ func GenerateHelmCommands(localHelmSrcDir string, destDir string) (helmCommands 
 		return nil, nil, nil
 	}
 
-	helmManifestPaths, err := getManifestPaths(localHelmSrcDir)
+	helmManifestPaths, err := getLocalManifestPaths(localHelmSrcDir)
 	if err != nil {
 		return nil, nil, fmt.Errorf("getting helm manifest paths: %w", err)
 	}
@@ -280,7 +280,7 @@ func UpdateAllManifests(localHelmSrcDir string, chartTarsPath []string) ([][]map
 		return nil, nil
 	}
 
-	helmManifestPaths, err := getManifestPaths(localHelmSrcDir)
+	helmManifestPaths, err := getLocalManifestPaths(localHelmSrcDir)
 	if err != nil {
 		return nil, fmt.Errorf("getting helm manifest paths: %w", err)
 	}
