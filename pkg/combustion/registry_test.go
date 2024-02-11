@@ -462,7 +462,7 @@ func TestCreateHelmCommand(t *testing.T) {
 		{
 			name: "Helm Template Command",
 			helmCommand: []string{
-				"helm", "template", "metallb", "repo-metallb/metallb", "-f", "values.yaml",
+				helmPath, "template", "metallb", "repo-metallb/metallb", "-f", "values.yaml",
 			},
 			helmTemplateDir: tempDir,
 			expectedFile:    filepath.Join(tempDir, helmTemplateFilename),
@@ -473,7 +473,7 @@ func TestCreateHelmCommand(t *testing.T) {
 		{
 			name: "Helm Pull Command",
 			helmCommand: []string{
-				"helm", "pull", "oci://registry-1.docker.io/bitnamicharts/apache", "--version", "10.5.2",
+				helmPath, "pull", "oci://registry-1.docker.io/bitnamicharts/apache", "--version", "10.5.2",
 			},
 			helmTemplateDir: tempDir,
 			expectedFile:    filepath.Join(tempDir, helmTemplateFilename),
@@ -484,7 +484,7 @@ func TestCreateHelmCommand(t *testing.T) {
 		{
 			name: "Helm Repo Add Command",
 			helmCommand: []string{
-				"helm", "repo", "add", "repo-metallb", "https://suse-edge.github.io/charts",
+				helmPath, "repo", "add", "repo-metallb", "https://suse-edge.github.io/charts",
 			},
 			helmTemplateDir: tempDir,
 			expectedFile:    filepath.Join(tempDir, helmTemplateFilename),
@@ -503,7 +503,7 @@ func TestCreateHelmCommand(t *testing.T) {
 		{
 			name: "Template Read Only Log File",
 			helmCommand: []string{
-				"helm", "template", "metallb", "repo-metallb/metallb", "-f", "values.yaml",
+				helmPath, "template", "metallb", "repo-metallb/metallb", "-f", "values.yaml",
 			},
 			helmTemplateDir: tempDir,
 			logFiles:        invalidLogFiles,
@@ -512,7 +512,7 @@ func TestCreateHelmCommand(t *testing.T) {
 		{
 			name: "Pull Read Only Log File",
 			helmCommand: []string{
-				"helm", "pull", "oci://registry-1.docker.io/bitnamicharts/apache", "--version", "10.5.2",
+				helmPath, "pull", "oci://registry-1.docker.io/bitnamicharts/apache", "--version", "10.5.2",
 			},
 			helmTemplateDir: tempDir,
 			logFiles:        invalidLogFiles,
@@ -521,7 +521,7 @@ func TestCreateHelmCommand(t *testing.T) {
 		{
 			name: "Repo Add Read Only Log File",
 			helmCommand: []string{
-				"helm", "repo", "add", "repo-metallb", "https://suse-edge.github.io/charts",
+				helmPath, "repo", "add", "repo-metallb", "https://suse-edge.github.io/charts",
 			},
 			helmTemplateDir: tempDir,
 			logFiles:        invalidLogFiles,
@@ -530,7 +530,7 @@ func TestCreateHelmCommand(t *testing.T) {
 		{
 			name: "Invalid Helm Template Dir",
 			helmCommand: []string{
-				"helm", "repo", "add", "repo-metallb", "https://suse-edge.github.io/charts",
+				helmPath, "repo", "add", "repo-metallb", "https://suse-edge.github.io/charts",
 			},
 			helmTemplateDir: "invalid",
 			logFiles:        invalidLogFiles,
