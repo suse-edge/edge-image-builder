@@ -75,7 +75,6 @@ func parseHelmCRDs(manifestsPath string) ([]*HelmCRD, error) {
 	decoder := yaml.NewDecoder(bytes.NewReader(crdFile))
 	for {
 		var manifest map[string]any
-
 		if err = decoder.Decode(&manifest); err != nil {
 			if errors.Is(err, io.EOF) {
 				break
@@ -206,7 +205,6 @@ func helmPullCommand(repository, chart, version string, destDir string) string {
 
 func helmTemplateCommand(crd *HelmCRD, repository string, valuesFilePath string, chartName string) string {
 	var cmdParts []string
-
 	cmdParts = append(cmdParts, fmt.Sprintf("helm template --skip-crds %s %s", chartName, repository))
 
 	if crd.Spec.Version != "" {
