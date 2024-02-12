@@ -202,10 +202,10 @@ func isImageDefinitionValid(ctx *image.Context) bool {
 }
 
 func appendElementalRPMs(ctx *image.Context) {
-	elementalDir := filepath.Join(ctx.ImageConfigDir, "elemental")
+	elementalDir := combustion.ElementalPath(ctx)
 	if _, err := os.Stat(elementalDir); err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
-			zap.S().Warnf("Looking for 'elemental' dir failed unexpectedly: %s", err)
+			zap.S().Warnf("Looking for '%s' dir failed unexpectedly: %s", elementalDir, err)
 		}
 
 		return

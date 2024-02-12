@@ -77,3 +77,7 @@ func writeElementalCombustionScript(ctx *image.Context) error {
 	}
 	return nil
 }
+
+func ElementalPath(ctx *image.Context) string {
+	return filepath.Join(ctx.ImageConfigDir, elementalConfigDir)
+}
