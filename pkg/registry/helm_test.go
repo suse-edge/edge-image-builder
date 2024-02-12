@@ -14,17 +14,17 @@ import (
 )
 
 func TestParseSetArgs(t *testing.T) {
-	apacheManifestPath := filepath.Join("testdata", "helm", "valid", "oci.yaml")
+	apacheManifestPath := filepath.Join("testdata", "helm", "valid", "oci-chart.yaml")
 	apacheData, err := os.ReadFile(apacheManifestPath)
 	require.NoError(t, err)
-	var apacheManifest HelmCRD
+	var apacheManifest helmCRD
 	err = yaml.Unmarshal(apacheData, &apacheManifest) // Only gets the first doc
 	require.NoError(t, err)
 
 	complexManifestPath := filepath.Join("testdata", "helm", "complex-crd.yaml")
 	complexData, err := os.ReadFile(complexManifestPath)
 	require.NoError(t, err)
-	var complexManifest HelmCRD
+	var complexManifest helmCRD
 	err = yaml.Unmarshal(complexData, &complexManifest)
 	require.NoError(t, err)
 
@@ -86,13 +86,13 @@ func TestParseHelmCRDs(t *testing.T) {
 	tests := []struct {
 		name          string
 		manifestPath  string
-		expectedCRD   HelmCRD
+		expectedCRD   helmCRD
 		expectedError string
 	}{
 		{
 			name:         "OCI With Values",
-			manifestPath: filepath.Join("testdata", "helm", "valid", "oci.yaml"),
-			expectedCRD: HelmCRD{
+			manifestPath: filepath.Join("testdata", "helm", "valid", "oci-chart.yaml"),
+			expectedCRD: helmCRD{
 				Metadata: struct {
 					Name string `yaml:"name"`
 				}{
@@ -129,8 +129,8 @@ metrics:
 		},
 		{
 			name:         "HTTP Repo",
-			manifestPath: filepath.Join("testdata", "helm", "valid", "repo.yaml"),
-			expectedCRD: HelmCRD{
+			manifestPath: filepath.Join("testdata", "helm", "valid", "http-chart.yaml"),
+			expectedCRD: helmCRD{
 				Metadata: struct {
 					Name string `yaml:"name"`
 				}{
@@ -153,8 +153,8 @@ metrics:
 		},
 		{
 			name:         "Chart Content",
-			manifestPath: filepath.Join("testdata", "helm", "valid", "chart-content.yaml"),
-			expectedCRD: HelmCRD{
+			manifestPath: filepath.Join("testdata", "helm", "valid", "encoded-chart.yaml"),
+			expectedCRD: helmCRD{
 				Metadata: struct {
 					Name string `yaml:"name"`
 				}{
@@ -208,9 +208,9 @@ metrics:
 }
 
 func TestUpdateHelmManifest(t *testing.T) {
-	ociManifestPath := filepath.Join("testdata", "helm", "valid", "oci.yaml")
-	chartContentPath := filepath.Join("testdata", "helm", "valid", "chart-content.yaml")
-	repoManifestPath := filepath.Join("testdata", "helm", "valid", "repo.yaml")
+	ociManifestPath := filepath.Join("testdata", "helm", "valid", "oci-chart.yaml")
+	chartContentPath := filepath.Join("testdata", "helm", "valid", "encoded-chart.yaml")
+	repoManifestPath := filepath.Join("testdata", "helm", "valid", "http-chart.yaml")
 	invalidManifestPath := filepath.Join("testdata", "helm", "invalid", "invalid.yaml")
 
 	chartTarPaths := []string{
@@ -223,7 +223,6 @@ func TestUpdateHelmManifest(t *testing.T) {
 		manifestPath        string
 		nonHelmExpectedKind string
 		chartTarPaths       []string
-		tarTest             bool
 		expectedError       string
 	}{
 		{
@@ -256,17 +255,15 @@ func TestUpdateHelmManifest(t *testing.T) {
 			expectedError: "unmarshaling manifest 'testdata/helm/invalid/invalid.yaml': yaml:",
 		},
 		{
-			// No error because the name of the chart must be present in the name of the chart tar
 			name:          "Invalid Chart Tar Paths",
 			manifestPath:  repoManifestPath,
 			chartTarPaths: []string{"non-existent-tar"},
-			tarTest:       true,
+			expectedError: "no tarball path matching chart: 'metallb'",
 		},
 		{
 			name:          "Invalid Chart Tar",
 			manifestPath:  repoManifestPath,
 			chartTarPaths: []string{"metallb-invalid-path"},
-			tarTest:       true,
 			expectedError: "reading chart tar 'metallb-invalid-path': open metallb-invalid-path: no such file or directory",
 		},
 	}
@@ -274,12 +271,14 @@ func TestUpdateHelmManifest(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			manifest, err := updateHelmManifest(test.manifestPath, test.chartTarPaths)
-			if test.expectedError == "" && !test.tarTest {
+			if test.expectedError == "" {
 				require.NoError(t, err)
 				for _, doc := range manifest {
 					kind, kindOk := doc["kind"].(string)
-					spec, specOk := doc["spec"].(map[string]any)
-					if kindOk && kind == HelmChartKind && specOk {
+					require.True(t, kindOk)
+					if kind == helmChartKind {
+						spec, specOk := doc["spec"].(map[string]any)
+						assert.True(t, specOk)
 						assert.NotEmpty(t, spec)
 						chartContent, ok := spec["chartContent"].(string)
 						assert.Equal(t, true, ok)
@@ -305,29 +304,26 @@ func TestHelmRepositoryName(t *testing.T) {
 	tests := []struct {
 		name           string
 		repoURL        string
-		tempRepo       string
 		chart          string
 		expectedOutput string
 	}{
 		{
 			name:           "OCI",
 			repoURL:        "oci://registry-1.docker.io/bitnamicharts/apache",
-			tempRepo:       "",
 			chart:          "apache",
 			expectedOutput: "oci://registry-1.docker.io/bitnamicharts/apache",
 		},
 		{
 			name:           "HTTP Repo",
 			repoURL:        "https://suse-edge.github.io/charts",
-			tempRepo:       "tempRepo",
 			chart:          "metallb",
-			expectedOutput: "tempRepo/metallb",
+			expectedOutput: "repo-metallb/metallb",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			repoName := helmRepositoryName(test.repoURL, test.tempRepo, test.chart)
+			repoName := helmRepositoryName(test.repoURL, test.chart)
 			assert.Equal(t, test.expectedOutput, repoName)
 		})
 	}
@@ -337,26 +333,26 @@ func TestHelmAddRepoCommand(t *testing.T) {
 	tests := []struct {
 		name           string
 		repoURL        string
-		tempRepo       string
+		chart          string
 		expectedOutput string
 	}{
 		{
 			name:           "OCI",
 			repoURL:        "oci://registry-1.docker.io/bitnamicharts/apache",
-			tempRepo:       "tempRepo",
+			chart:          "chart",
 			expectedOutput: "",
 		},
 		{
 			name:           "HTTP Repo",
 			repoURL:        "https://suse-edge.github.io/charts",
-			tempRepo:       "tempRepo",
-			expectedOutput: "helm repo add tempRepo https://suse-edge.github.io/charts",
+			chart:          "chart",
+			expectedOutput: "helm repo add repo-chart https://suse-edge.github.io/charts",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			addRepoCommand := helmAddRepoCommand(test.repoURL, test.tempRepo)
+			addRepoCommand := helmAddRepoCommand(test.repoURL, test.chart)
 			assert.Equal(t, test.expectedOutput, addRepoCommand)
 		})
 	}
@@ -382,15 +378,16 @@ func TestHelmPullCommand(t *testing.T) {
 			name:           "HTTP Repo",
 			repo:           "https://suse-edge.github.io/charts",
 			chart:          "sample-chart",
-			destDir:        "",
-			expectedOutput: "helm pull repo-sample-chart/sample-chart",
+			destDir:        "dest",
+			expectedOutput: "helm pull repo-sample-chart/sample-chart -d dest",
 		},
 		{
 			name:           "OCI",
 			repo:           "oci://registry-1.docker.io/bitnamicharts/apache",
 			chart:          "",
+			destDir:        "dest",
 			version:        "10.5.2",
-			expectedOutput: "helm pull oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2",
+			expectedOutput: "helm pull oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2 -d dest",
 		},
 		{
 			name:           "HTTP Repo",
@@ -413,7 +410,7 @@ func TestHelmPullCommand(t *testing.T) {
 func TestHelmTemplateCommand(t *testing.T) {
 	tests := []struct {
 		name           string
-		crd            *HelmCRD
+		crd            *helmCRD
 		repo           string
 		valuesFilePath string
 		chart          string
@@ -422,7 +419,7 @@ func TestHelmTemplateCommand(t *testing.T) {
 		{
 			name: "OCI",
 			repo: "oci://registry-1.docker.io/bitnamicharts/apache",
-			crd: &HelmCRD{
+			crd: &helmCRD{
 				Metadata: struct {
 					Name string `yaml:"name"`
 				}{
@@ -463,7 +460,7 @@ metrics:
 		{
 			name: "HTTP Repo",
 			repo: "repo-metallb/metallb",
-			crd: &HelmCRD{
+			crd: &helmCRD{
 				Metadata: struct {
 					Name string `yaml:"name"`
 				}{
@@ -491,7 +488,7 @@ metrics:
 		{
 			name: "Chart Tar",
 			repo: "apache-10.5.2.tgz",
-			crd: &HelmCRD{
+			crd: &helmCRD{
 				Metadata: struct {
 					Name string `yaml:"name"`
 				}{
@@ -565,12 +562,17 @@ func TestUpdateAllHelmManifest(t *testing.T) {
 			expectedError: "updating helm manifest: unmarshaling manifest 'testdata/helm/invalid/invalid.yaml': yaml:",
 		},
 		{
-			name:       "Invalid Chart Tar",
+			name:       "Nonexistent Chart Tar",
 			helmSrcDir: localHelmSrcDirValid,
 			chartTarPaths: []string{
-				"apache", // Chart tar name must include the name of one of the charts
+				"metallb",
 			},
-			expectedError: "updating helm manifest: reading chart tar 'apache': open apache: no such file or directory",
+			expectedError: "updating helm manifest: reading chart tar 'metallb': open metallb: no such file or directory",
+		},
+		{
+			name:          "No Matching Chart Tars",
+			helmSrcDir:    localHelmSrcDirValid,
+			expectedError: "updating helm manifest: no tarball path matching chart: 'metallb",
 		},
 		{
 			name:       "No Helm Dir",
@@ -585,14 +587,16 @@ func TestUpdateAllHelmManifest(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			allManifests, err := UpdateAllManifests(test.helmSrcDir, test.chartTarPaths)
+			allManifests, err := UpdateHelmManifests(test.helmSrcDir, test.chartTarPaths)
 			if test.expectedError == "" {
 				require.NoError(t, err)
 				for _, manifest := range allManifests {
 					for _, doc := range manifest {
 						kind, kindOk := doc["kind"].(string)
-						spec, specOk := doc["spec"].(map[string]any)
-						if specOk && kindOk && kind == HelmChartKind {
+						require.True(t, kindOk)
+						if kind == helmChartKind {
+							spec, specOk := doc["spec"].(map[string]any)
+							assert.True(t, specOk)
 							assert.NotEmpty(t, spec)
 
 							chartContent, ok := spec["chartContent"].(string)
@@ -654,7 +658,7 @@ func TestGenerateHelmCommands(t *testing.T) {
 		{
 			name:          "Helm Dir With Invalid Manifests",
 			helmSrcDir:    localHelmSrcDirInvalid,
-			expectedError: "parsing helm manifest in 'testdata/helm/invalid/invalid.yaml'",
+			expectedError: "parsing manifest 'testdata/helm/invalid/invalid.yaml'",
 		},
 		{
 			name:       "No Source Dir",
@@ -680,17 +684,20 @@ func TestGenerateHelmCommands(t *testing.T) {
 						actualFields := strings.Fields(command)
 						expectedFields := strings.Fields(test.expectedCommands[2])
 
-						if !slices.Contains(actualFields, "--set") {
-							assert.ElementsMatch(t, actualFields, expectedFields)
-						} else {
-							setIndex := slices.Index(actualFields, "--set")
-							setValuesIndex := setIndex + 1
+						setIndex := slices.Index(actualFields, "--set")
+						setValuesIndex := setIndex + 1
 
-							actualSetFields := strings.Split(actualFields[setValuesIndex], ",")
-							expectedSetFields := strings.Split(expectedFields[setValuesIndex], ",")
+						actualSetFields := strings.Split(actualFields[setValuesIndex], ",")
+						expectedSetFields := strings.Split(expectedFields[setValuesIndex], ",")
 
-							assert.ElementsMatch(t, actualSetFields, expectedSetFields)
-						}
+						assert.ElementsMatch(t, actualSetFields, expectedSetFields)
+
+						actualFields[setIndex] = ""
+						actualFields[setIndex+1] = ""
+						expectedFields[setIndex] = ""
+						expectedFields[setIndex+1] = ""
+
+						assert.Equal(t, expectedFields, actualFields)
 					}
 				}
 			} else {
