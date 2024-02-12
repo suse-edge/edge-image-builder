@@ -23,8 +23,12 @@ const (
 	ElementalPackageRepository = "https://download.opensuse.org/repositories/isv:/Rancher:/Elemental:/Staging/standard/"
 )
 
-//go:embed templates/31-elemental-register.sh.tpl
-var elementalScript string
+var (
+	//go:embed templates/31-elemental-register.sh.tpl
+	elementalScript string
+
+	ElementalPackages = []string{"elemental-register", "elemental-system-agent"}
+)
 
 func configureElemental(ctx *image.Context) ([]string, error) {
 	if !isComponentConfigured(ctx, elementalConfigDir) {

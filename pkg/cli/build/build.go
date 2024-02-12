@@ -215,7 +215,7 @@ func appendElementalRPMs(ctx *image.Context) {
 	zap.S().Info("Elemental registration requested")
 
 	packageList := ctx.ImageDefinition.OperatingSystem.Packages.PKGList
-	packageList = append(packageList, "elemental-register", "elemental-system-agent")
+	packageList = append(packageList, combustion.ElementalPackages...)
 
 	repositories := ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos
 	repositories = append(repositories,
