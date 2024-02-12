@@ -211,7 +211,7 @@ func downloadKubernetesSELinuxPolicies(ctx *image.Context) error {
 		return nil
 	}
 
-	configPath := filepath.Join(ctx.ImageConfigDir, "kubernetes", "config", "server.yaml")
+	configPath := combustion.KubernetesConfigPath(ctx)
 	config, err := kubernetes.ParseKubernetesConfig(configPath)
 	if err != nil {
 		return fmt.Errorf("parsing kubernetes server config: %w", err)
@@ -226,11 +226,14 @@ func downloadKubernetesSELinuxPolicies(ctx *image.Context) error {
 		"The necessary RPM packages will be downloaded.")
 	zap.S().Info("SELinux mode requested for Kubernetes")
 
-	rpmDir := filepath.Join(ctx.ImageConfigDir, "rpms")
-	gpgKeysDir := filepath.Join(rpmDir, "gpg-keys")
+	rpmDir := combustion.RPMsPath(ctx)
+	if err = os.MkdirAll(rpmDir, os.ModePerm); err != nil {
+		return fmt.Errorf("creating directory '%s': %w", rpmDir, err)
+	}
 
+	gpgKeysDir := combustion.GPGKeysPath(ctx)
 	if err = os.MkdirAll(gpgKeysDir, os.ModePerm); err != nil {
-		return fmt.Errorf("creating rpms directory: %w", err)
+		return fmt.Errorf("creating directory '%s': %w", gpgKeysDir, err)
 	}
 
 	return kubernetes.DownloadSELinuxRPMs(&ctx.ImageDefinition.Kubernetes, rpmDir, gpgKeysDir)

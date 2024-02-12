@@ -43,12 +43,12 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 
 	var localRPMConfig *image.LocalRPMConfig
 	if isComponentConfigured(ctx, userRPMsDir) {
-		rpmDir := generateComponentPath(ctx, userRPMsDir)
+		rpmDir := RPMsPath(ctx)
 		localRPMConfig = &image.LocalRPMConfig{
 			RPMPath: rpmDir,
 		}
 
-		gpgPath := filepath.Join(rpmDir, userGPGsDir)
+		gpgPath := GPGKeysPath(ctx)
 		_, err := os.Stat(gpgPath)
 		switch {
 		case err == nil:
@@ -136,4 +136,13 @@ func writeRPMScript(ctx *image.Context, repoPath string, packages []string) (str
 	}
 
 	return modifyRPMScriptName, nil
+}
+
+func RPMsPath(ctx *image.Context) string {
+	return generateComponentPath(ctx, userRPMsDir)
+}
+
+func GPGKeysPath(ctx *image.Context) string {
+	rpmDir := RPMsPath(ctx)
+	return filepath.Join(rpmDir, userGPGsDir)
 }
