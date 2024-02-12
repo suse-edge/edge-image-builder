@@ -1,7 +1,6 @@
 package network
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -9,12 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestConfiguratorInstaller_InstallConfigurator(t *testing.T) {
-	amdBinaryContents := []byte("amd")
-	armBinaryContents := []byte("arm")
+	binaryContents := []byte("network magic")
 
 	srcDir, err := os.MkdirTemp("", "eib-configurator-installer-source-")
 	require.NoError(t, err)
@@ -23,8 +20,8 @@ func TestConfiguratorInstaller_InstallConfigurator(t *testing.T) {
 		assert.NoError(t, os.RemoveAll(srcDir))
 	}()
 
-	require.NoError(t, os.WriteFile(filepath.Join(srcDir, "nmc-x86_64"), amdBinaryContents, fileio.NonExecutablePerms))
-	require.NoError(t, os.WriteFile(filepath.Join(srcDir, "nmc-aarch64"), armBinaryContents, fileio.NonExecutablePerms))
+	binaryPath := filepath.Join(srcDir, "nmc-x86_64")
+	require.NoError(t, os.WriteFile(binaryPath, binaryContents, fileio.NonExecutablePerms))
 
 	destDir, err := os.MkdirTemp("", "eib-configurator-installer-dest-")
 	require.NoError(t, err)
@@ -35,7 +32,6 @@ func TestConfiguratorInstaller_InstallConfigurator(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		arch             image.Arch
 		sourcePath       string
 		installPath      string
 		expectedContents []byte
@@ -43,23 +39,14 @@ func TestConfiguratorInstaller_InstallConfigurator(t *testing.T) {
 	}{
 		{
 			name:          "Failure to copy non-existing binary",
-			arch:          image.ArchTypeX86,
-			sourcePath:    "",
+			sourcePath:    "nmc-x86_64",
 			expectedError: "copying file: opening source file: open nmc-x86_64: no such file or directory",
 		},
 		{
-			name:             "Successfully installed x86_64 binary",
-			arch:             image.ArchTypeX86,
-			sourcePath:       srcDir,
-			installPath:      fmt.Sprintf("%s/nmc-amd", destDir),
-			expectedContents: amdBinaryContents,
-		},
-		{
-			name:             "Successfully installed aarch64 binary",
-			arch:             image.ArchTypeARM,
-			sourcePath:       srcDir,
-			installPath:      fmt.Sprintf("%s/nmc-arm", destDir),
-			expectedContents: armBinaryContents,
+			name:             "Successfully installed binary",
+			sourcePath:       binaryPath,
+			installPath:      filepath.Join(destDir, "nmc"),
+			expectedContents: binaryContents,
 		},
 	}
 
@@ -67,7 +54,7 @@ func TestConfiguratorInstaller_InstallConfigurator(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err = installer.InstallConfigurator(test.arch, test.sourcePath, test.installPath)
+			err = installer.InstallConfigurator(test.sourcePath, test.installPath)
 
 			if test.expectedError != "" {
 				require.Error(t, err)
