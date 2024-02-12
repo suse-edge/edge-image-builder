@@ -222,9 +222,8 @@ func downloadKubernetesSELinuxPolicies(ctx *image.Context) error {
 		return nil
 	}
 
-	audit.Audit("SELinux is enabled in the Kubernetes configuration. " +
+	audit.AuditInfo("SELinux is enabled in the Kubernetes configuration. " +
 		"The necessary RPM packages will be downloaded.")
-	zap.S().Info("SELinux mode requested for Kubernetes")
 
 	rpmDir := combustion.RPMsPath(ctx)
 	if err = os.MkdirAll(rpmDir, os.ModePerm); err != nil {
