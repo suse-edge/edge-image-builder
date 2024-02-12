@@ -18,6 +18,9 @@ const (
 	elementalConfigDir     = "elemental"
 	elementalScriptName    = "31-elemental.sh"
 	elementalConfigName    = "elemental_config.yaml"
+
+	// TODO: Use an official repository URL once it's out
+	ElementalPackageRepository = "https://download.opensuse.org/repositories/isv:/Rancher:/Elemental:/Staging/standard/"
 )
 
 //go:embed templates/31-elemental-register.sh.tpl

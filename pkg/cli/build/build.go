@@ -217,10 +217,9 @@ func appendElementalRPMs(ctx *image.Context) {
 	packageList := ctx.ImageDefinition.OperatingSystem.Packages.PKGList
 	packageList = append(packageList, "elemental-register", "elemental-system-agent")
 
-	// TODO: Use an official repository URL once it's out
 	repositories := ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos
 	repositories = append(repositories,
-		image.AddRepo{URL: "https://download.opensuse.org/repositories/isv:/Rancher:/Elemental:/Staging/standard/"})
+		image.AddRepo{URL: combustion.ElementalPackageRepository})
 
 	ctx.ImageDefinition.OperatingSystem.Packages.PKGList = packageList
 	ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos = repositories
