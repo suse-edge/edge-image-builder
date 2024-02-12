@@ -9,8 +9,8 @@ import (
 func TestNewSELinuxPolicy_K3s(t *testing.T) {
 	policy := newSELinuxPolicy("v1.29.1+k3s2")
 
-	expectedURL := "https://github.com/k3s-io/k3s-selinux/releases/download/v1.4.stable.1/k3s-selinux-1.4-1.slemicro.noarch.rpm"
-	expectedRPM := "k3s-selinux-1.4-1.slemicro.noarch.rpm"
+	expectedURL := "https://github.com/k3s-io/k3s-selinux/releases/download/v1.5.stable.1/k3s-selinux-1.5-1.slemicro.noarch.rpm"
+	expectedRPM := "k3s-selinux-1.5-1.slemicro.noarch.rpm"
 
 	assert.Equal(t, expectedURL, policy.downloadURL)
 	assert.Equal(t, expectedRPM, policy.rpmName)

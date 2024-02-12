@@ -54,7 +54,7 @@ func newSELinuxPolicy(kubernetesVersion string) selinuxPolicy {
 		rke2PolicyChannel       = "stable"
 		rke2PolicyReleaseNumber = "1"
 
-		k3sPolicyVersion       = "1.4" // TODO: Bump to 1.5 once the release assets are fixed
+		k3sPolicyVersion       = "1.5"
 		k3sPolicyChannel       = "stable"
 		k3sPolicyReleaseNumber = "1"
 
