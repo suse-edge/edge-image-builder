@@ -211,6 +211,9 @@ func appendElementalRPMs(ctx *image.Context) {
 		return
 	}
 
+	audit.Audit("Elemental registration is configured. The necessary RPM packages will be downloaded.")
+	zap.S().Info("Elemental registration requested")
+
 	packageList := ctx.ImageDefinition.OperatingSystem.Packages.PKGList
 	packageList = append(packageList, "elemental-register", "elemental-system-agent")
 
