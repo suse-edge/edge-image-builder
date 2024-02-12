@@ -14,19 +14,14 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	rke2SELinuxPolicyReleaseURL = "https://github.com/rancher/rke2-selinux/releases/download/%s/%s"
-	k3sSELinuxPolicyReleaseURL  = "https://github.com/k3s-io/k3s-selinux/releases/download/%s/%s"
-
-	rancherSigningKeyURL = "https://rpm.rancher.io/public.key"
-)
-
 type selinuxPolicy struct {
 	downloadURL string
 	rpmName     string
 }
 
 func DownloadSELinuxRPMs(kubernetes *image.Kubernetes, rpmDir, gpgKeysDir string) error {
+	const rancherSigningKeyURL = "https://rpm.rancher.io/public.key"
+
 	policy := newSELinuxPolicy(kubernetes.Version)
 	policyPath := filepath.Join(rpmDir, policy.rpmName)
 
@@ -60,6 +55,9 @@ func newSELinuxPolicy(kubernetesVersion string) selinuxPolicy {
 
 		rke2PolicyRPM = "rke2-selinux-%s-%s.slemicro.noarch.rpm"
 		k3sPolicyRPM  = "k3s-selinux-%s-%s.slemicro.noarch.rpm"
+
+		rke2PolicyReleaseURL = "https://github.com/rancher/rke2-selinux/releases/download/%s/%s"
+		k3sPolicyReleaseURL  = "https://github.com/k3s-io/k3s-selinux/releases/download/%s/%s"
 	)
 
 	if strings.Contains(kubernetesVersion, image.KubernetesDistroRKE2) {
@@ -67,7 +65,7 @@ func newSELinuxPolicy(kubernetesVersion string) selinuxPolicy {
 		version := fmt.Sprintf("v%s.%s.%s", rke2PolicyVersion, rke2PolicyChannel, rke2PolicyReleaseNumber)
 
 		return selinuxPolicy{
-			downloadURL: fmt.Sprintf(rke2SELinuxPolicyReleaseURL, version, rpm),
+			downloadURL: fmt.Sprintf(rke2PolicyReleaseURL, version, rpm),
 			rpmName:     rpm,
 		}
 	}
@@ -76,7 +74,7 @@ func newSELinuxPolicy(kubernetesVersion string) selinuxPolicy {
 	version := fmt.Sprintf("v%s.%s.%s", k3sPolicyVersion, k3sPolicyChannel, k3sPolicyReleaseNumber)
 
 	return selinuxPolicy{
-		downloadURL: fmt.Sprintf(k3sSELinuxPolicyReleaseURL, version, rpm),
+		downloadURL: fmt.Sprintf(k3sPolicyReleaseURL, version, rpm),
 		rpmName:     rpm,
 	}
 }
