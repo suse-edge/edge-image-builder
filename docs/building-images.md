@@ -74,7 +74,7 @@ operatingSystem:
       - serviceX
   keymap: us
   packages:
-    noGPGCheck: true
+    noGPGCheck: false
     packageList:
       - pkg1
       - pkg2
@@ -116,7 +116,7 @@ operatingSystem:
 * `keymap` - Optional; sets the virtual console (VC) keymap, full list via `localectl list-keymaps`. If unset, we default to
   `us`.
 * `packages` - Optional; Defines packages that should have their dependencies determined and pre-loaded into the built image. For detailed information on how to use this configuration, see the [Installing pacakges](installing-packages.md) guide.
-  * `noGPGCheck` - Optional; Defines whether GPG validation should be done over all additional repositories and side-loaded RPMs. If set to `true` it effectively disables all GPG validaiton. If unset, defaults to `false`. **Disabling GPG validation is intended for development purposes only!**
+  * `noGPGCheck` - Optional; Defines whether GPG validation should be disabled for all additional repositories and side-loaded RPMs. **Disabling GPG validation is intended for development purposes only!**
   * `packageList` - Optional; List of packages that are to be installed from SUSE's internal RPM repositories or from additionally provided third-party repositories.
   * `additionalRepos` - Optional; List of third-party RPM repository URLs that will be added to the package manager of the OS.
   * `sccRegistrationCode` - Optional; SUSE Customer Center registration code, used to connect to SUSE's internal RPM repositories.

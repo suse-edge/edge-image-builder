@@ -7,9 +7,9 @@ The package resolution design can be separated in three logical parts:
 ## Running the EIB container
 ![image](../images/rpm-eib-container-run.png)
 
-The package resolution workflow begins with the user specifying packages and/or stand-alone RPMs that will be installed when the EIB image is booted. On how to to do a correct specification, see [Specify packages for installation](installing-packages.md#specify-packages-for-installation).
+The package resolution workflow begins with the user specifying packages and/or stand-alone RPMs that will be installed when the EIB image is booted. On how to to do a correct specification, see [Specify packages for installation](../installing-packages.md#specify-packages-for-installation).
 
-After the desired specification has been made, the user runs the EIB container with the [`--privileged`](https://docs.podman.io/en/latest/markdown/podman-run.1.html#privileged) option, ensuring that EIB has the needed permissions to successfully run a Podman instance within its container. This is a crutial prerequisite for building a working EIB image with package installation specified (more on this in the next section). 
+After the desired specification has been made, the user runs the EIB container with the [`--privileged`](https://docs.podman.io/en/latest/markdown/podman-run.1.html#privileged) option, ensuring that EIB has the needed permissions to successfully run a Podman instance within its container. This is a crucial prerequisite for building a working EIB image with package installation specified (more on this in the next section). 
 
 An example of the command can be seen below:
 ```shell
@@ -34,12 +34,12 @@ During this phase, EIB prepares the user specified packages for installation. Th
 1. Validating that each provided package has a GPG signature or comes from a GPG signed RPM repository
 1. Resolving and downloading the dependencies for each specified package
 1. Creating a RPM repository that consists of the specified packages and their dependencies
-1. Configure the usage of this repositry for package installation during the **combustion** phase of the EIB image boot
+1. Configuring the usage of this repositry for package installation during the **combustion** phase of the EIB image boot
 
 ### RPM resolution process
 ![image](../images/rpm-resolver-architecture.png)
 
-EIB mainly utilizes Podman's functionality to setup the environment needed for the **RPM resolution** process. In order to communicate with Podman, EIB first creates a [listening service](https://docs.podman.io/en/latest/markdown/podman-system-service.1.html) that will faciliate the communication between EIB and Podman. From here onwards, asume that any Podman related operation that EIB does goes through the **listening service** first.
+EIB mainly utilizes Podman's functionality to setup the environment needed for the **RPM resolution** process. In order to communicate with Podman, EIB first creates a [listening service](https://docs.podman.io/en/latest/markdown/podman-system-service.1.html) that will facilitate the communication between its own container and Podman. From here onwards, assume that any Podman related operation that EIB does goes through the **listening service** first.
 
 Once EIB establishes communication with Podman, it parses the user configured ISO/RAW file and converts it to a Podman importable **virtual disk tarball**. This tarball is [imported](https://docs.podman.io/en/stable/markdown/podman-import.1.html) as an image in Podman. 
 
@@ -65,7 +65,7 @@ When troubleshooting the **RPM resolution** process, it is beneficial to look at
 1. `podman-image-build.log` - logs for the build of the EIB resolver image. If missing, but the `resolver-image-build` directory is present, this means that there is a problem in the configuration of the `resolver-image-build` directory
 1. `podman-system-service.log` - logs for the Podman listening service
 1. `resolver-image-build` directory - build context for the resolver image. Make sure that the `Dockerfile` holds correct data. When installing side-loaded RPMs, make sure that the `rpms` and `gpg-keys` directories are present in the `resolver-image-build` directory
-1. `resolver-tarball-image` direcotry - contains resources related to the creation of the **virtual disk tarball** archive. If this directory exists, this means that a problem has been encountered while EIB was trying to import the **tarball image**
+1. `resolver-tarball-image` directory - contains resources related to the creation of the **virtual disk tarball** archive. If this directory exists, this means that a problem has been encountered while EIB was trying to import the **tarball image**
 1. `prepare-resolver-base-tarball-image.log` - logs related to the creation of the **virtual disk tarball**
 1. `createrepo.log` - logs related to the conversion of the **RPM cache directory** to a **RPM repository**
 1. `combustion/rpm-repo` directory - the **RPM repository**; should hold the desired RPMs for installation and their dependencies

@@ -10,13 +10,13 @@ EIB's **RPM resolution** process and package installation has been tested on the
 
 ## Specify packages for installation
 You can configure packages for installation in the following ways:
-1. provide a `packageList` configuration under `operatingSystem.packages` in the EIB image configuration file
-1. create a `rpms` directory under EIB's configuration directory and provide local RPM files that you want to be installed on the image
+1. Providing a `packageList` configuration under `operatingSystem.packages` in the EIB image configuration file
+1. Creating a `rpms` directory under EIB's configuration directory and provide local RPM files that you want to be installed on the image
 
 ### Install packages through 'packageList'
 To install a package using the `packageList` configuration, at a minimum you must configure the following under `operatingSystem.packages`:
-1. valid package names under `packageList`
-1. `additionalRepos` or `sccRegistrationCode`
+1. Valid package names under `packageList`
+1. Valid RPM repositories under `additionalRepos` or an SCC registration code under `sccRegistrationCode`
 
 #### Install a package from a third-party repo
 ```yaml
@@ -66,7 +66,7 @@ operatingSystem:
       - url: https://download.opensuse.org/repositories/Kernel:/SLE15-SP5/pool
 ```
 
-#### RPM with depdendency resolution from SUSE's internal repositories
+#### RPM with dependency resolution from SUSE's internal repositories
 EIB configuration directory tree:
 ```shell
 .
@@ -87,12 +87,12 @@ operatingSystem:
 ```
 
 ### Installing unsigned packages
-By default EIB does GPG validation for every **additional repository** and **side-loaded RPM**. If you wish to use unsigned additional repositories and/or unsinged RPMs you must add the `noGPGCheck: true` property to EIB's `packages` configuration, like so:
+By default EIB does GPG validation for every **additional repository** and **side-loaded RPM**. If you wish to use unsigned additional repositories and/or unsigned RPMs you must add the `noGPGCheck: true` property to EIB's `packages` configuration, like so:
 ```yaml
 operatingSystem:
   packages:
     noGPGCheck: true
 ```
-By providing this configuration, **all** GPG validation will be **disabled**, allowing you to use non-signed pacakges.
+By providing this configuration, **all** GPG validation will be **disabled**, allowing you to use non-signed packages.
 
 > **_NOTE:_** This property is intended for development purposes only. For production use-cases we encourage users to always use EIB's GPG validation.
