@@ -43,7 +43,7 @@ type Cluster struct {
 
 func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, error) {
 	serverConfigPath := filepath.Join(configPath, serverConfigFile)
-	serverConfig, err := parseKubernetesConfig(serverConfigPath)
+	serverConfig, err := ParseKubernetesConfig(serverConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("parsing server config: %w", err)
 	}
@@ -56,7 +56,7 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 	setMultiNodeConfigDefaults(kubernetes, serverConfig)
 
 	agentConfigPath := filepath.Join(configPath, agentConfigFile)
-	agentConfig, err := parseKubernetesConfig(agentConfigPath)
+	agentConfig, err := ParseKubernetesConfig(agentConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("parsing agent config: %w", err)
 	}
@@ -91,7 +91,7 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 	}, nil
 }
 
-func parseKubernetesConfig(configFile string) (map[string]any, error) {
+func ParseKubernetesConfig(configFile string) (map[string]any, error) {
 	config := map[string]any{}
 
 	b, err := os.ReadFile(configFile)

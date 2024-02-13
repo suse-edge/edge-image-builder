@@ -415,3 +415,7 @@ func configureManifests(ctx *image.Context) (string, error) {
 
 	return manifestsPath, nil
 }
+
+func KubernetesConfigPath(ctx *image.Context) string {
+	return filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir, k8sServerConfigFile)
+}
