@@ -26,9 +26,6 @@ const (
 	registryDir             = "registry"
 	registryPort            = "6545"
 	registryMirrorsFileName = "registries.yaml"
-
-	helmChartsDir = "charts"
-	helmDir       = "helm"
 )
 
 //go:embed templates/hauler-manifest.yaml.tpl

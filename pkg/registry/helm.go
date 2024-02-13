@@ -267,15 +267,17 @@ func updateHelmManifest(manifestPath string, chartTarsPaths []string) ([]map[str
 			delete(spec, "chart")
 			var noMatchingCharts = true
 			for _, chartTar := range chartTarsPaths {
-				if strings.Contains(chartTar, chartName.(string)) {
-					noMatchingCharts = false
-					tarData, err := os.ReadFile(chartTar)
-					if err != nil {
-						return nil, fmt.Errorf("reading chart tar '%s': %w", chartTar, err)
-					}
-					base64Str := base64.StdEncoding.EncodeToString(tarData)
-					spec["chartContent"] = base64Str
+				if !strings.Contains(chartTar, chartName.(string)) {
+					continue
 				}
+				noMatchingCharts = false
+				tarData, err := os.ReadFile(chartTar)
+				if err != nil {
+					return nil, fmt.Errorf("reading chart tar '%s': %w", chartTar, err)
+				}
+				base64Str := base64.StdEncoding.EncodeToString(tarData)
+				spec["chartContent"] = base64Str
+				break
 			}
 			if noMatchingCharts {
 				return nil, fmt.Errorf("no tarball path matching chart: '%s'", chartName)
