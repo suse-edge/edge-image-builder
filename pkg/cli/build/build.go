@@ -67,8 +67,8 @@ func Run(_ *cli.Context) error {
 	}
 
 	if err = appendKubernetesSELinuxRPMs(ctx); err != nil {
-		audit.AuditInfof("Configuring Kubernetes failed. %s", checkLogMessage)
-		zap.S().Fatalf("Failed to download Kubernetes SELinux policy: %s", err)
+		audit.Auditf("Configuring Kubernetes failed. %s", checkLogMessage)
+		zap.S().Fatalf("Failed to configure Kubernetes SELinux policy: %s", err)
 	}
 
 	appendElementalRPMs(ctx)
@@ -225,14 +225,17 @@ func appendKubernetesSELinuxRPMs(ctx *image.Context) error {
 	audit.AuditInfo("SELinux is enabled in the Kubernetes configuration. " +
 		"The necessary RPM packages will be downloaded.")
 
-	packageList := ctx.ImageDefinition.OperatingSystem.Packages.PKGList
-	packageList = append(packageList, kubernetes.SELinuxPackage(ctx.ImageDefinition.Kubernetes.Version))
+	selinuxPackage, err := kubernetes.SELinuxPackage(ctx.ImageDefinition.Kubernetes.Version)
+	if err != nil {
+		return fmt.Errorf("identifying selinux package: %w", err)
+	}
 
-	repositories := ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos
-	repositories = append(repositories, kubernetes.SELinuxRepository(ctx.ImageDefinition.Kubernetes.Version))
+	repository, err := kubernetes.SELinuxRepository(ctx.ImageDefinition.Kubernetes.Version)
+	if err != nil {
+		return fmt.Errorf("identifying selinux repository: %w", err)
+	}
 
-	ctx.ImageDefinition.OperatingSystem.Packages.PKGList = packageList
-	ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos = repositories
+	appendRPMs(ctx, repository, selinuxPackage)
 
 	gpgKeysDir := combustion.GPGKeysPath(ctx)
 	if err = os.MkdirAll(gpgKeysDir, os.ModePerm); err != nil {
@@ -258,12 +261,15 @@ func appendElementalRPMs(ctx *image.Context) {
 
 	audit.AuditInfo("Elemental registration is configured. The necessary RPM packages will be downloaded.")
 
-	packageList := ctx.ImageDefinition.OperatingSystem.Packages.PKGList
-	packageList = append(packageList, combustion.ElementalPackages...)
+	appendRPMs(ctx, image.AddRepo{URL: combustion.ElementalPackageRepository}, combustion.ElementalPackages...)
+}
 
+func appendRPMs(ctx *image.Context, repository image.AddRepo, packages ...string) {
 	repositories := ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos
-	repositories = append(repositories,
-		image.AddRepo{URL: combustion.ElementalPackageRepository})
+	repositories = append(repositories, repository)
+
+	packageList := ctx.ImageDefinition.OperatingSystem.Packages.PKGList
+	packageList = append(packageList, packages...)
 
 	ctx.ImageDefinition.OperatingSystem.Packages.PKGList = packageList
 	ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos = repositories
