@@ -80,6 +80,9 @@ func TestValidateOperatingSystem(t *testing.T) {
 						Unattended:    true,
 						InstallDevice: "/dev/sda",
 					},
+					RawConfiguration: image.RawConfiguration{
+						DiskSize: "64",
+					},
 				},
 			},
 			ExpectedFailedMessages: []string{
@@ -90,6 +93,8 @@ func TestValidateOperatingSystem(t *testing.T) {
 				"When including the 'packageList' field, either additional repositories or a registration code must be included.",
 				fmt.Sprintf("The 'isoInstallation/unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO),
 				fmt.Sprintf("The 'isoInstallation/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
+				fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW),
+				"You cannot simultaneously configure rawConfiguration and isoInstallation, regardless of image type.",
 			},
 		},
 	}
@@ -553,6 +558,121 @@ func TestValidateUnattended(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			def := test.Definition
 			failures := validateUnattended(&def)
+			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+
+			var foundMessages []string
+			for _, foundValidation := range failures {
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+			}
+
+			for _, expectedMessage := range test.ExpectedFailedMessages {
+				assert.Contains(t, foundMessages, expectedMessage)
+			}
+		})
+	}
+}
+
+func TestValidateRawConfiguration(t *testing.T) {
+	tests := map[string]struct {
+		Definition             image.Definition
+		ExpectedFailedMessages []string
+	}{
+		`not included`: {
+			Definition: image.Definition{},
+		},
+		`diskSize specified and valid`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						DiskSize: "64G",
+					},
+				},
+			},
+		},
+		`diskSize invalid as invalid suffix`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						DiskSize: "130B",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW),
+			},
+		},
+		`diskSize invalid as zero`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						DiskSize: "0G",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW),
+			},
+		},
+		`diskSize invalid as lowercase character`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						DiskSize: "100g",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW),
+			},
+		},
+		`diskSize invalid as negative number`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						DiskSize: "-100G",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW),
+			},
+		},
+		`diskSize invalid as no number provided`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						DiskSize: "G",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW),
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			def := test.Definition
+			failures := validateRawConfig(&def)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
 
 			var foundMessages []string

@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -26,6 +27,7 @@ func validateOperatingSystem(ctx *image.Context) []FailedValidation {
 	failures = append(failures, validateSuma(&def.OperatingSystem)...)
 	failures = append(failures, validatePackages(&def.OperatingSystem)...)
 	failures = append(failures, validateUnattended(def)...)
+	failures = append(failures, validateRawConfig(def)...)
 
 	return failures
 }
@@ -210,6 +212,38 @@ func validateUnattended(def *image.Definition) []FailedValidation {
 
 	if def.Image.ImageType != image.TypeISO && def.OperatingSystem.IsoInstallation.InstallDevice != "" {
 		msg := fmt.Sprintf("The 'isoInstallation/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO)
+		failures = append(failures, FailedValidation{
+			UserMessage: msg,
+		})
+	}
+
+	return failures
+}
+
+func validateRawConfig(def *image.Definition) []FailedValidation {
+	var failures []FailedValidation
+	isValidSize := regexp.MustCompile(`^([1-9]\d+|[1-9])+[MGT]`).MatchString
+
+	if def.OperatingSystem.RawConfiguration.DiskSize == "" {
+		return nil
+	}
+
+	if def.Image.ImageType != image.TypeRAW {
+		msg := fmt.Sprintf("The 'rawConfiguration/diskSize' field can only be used when 'imageType' is '%s'.", image.TypeRAW)
+		failures = append(failures, FailedValidation{
+			UserMessage: msg,
+		})
+	}
+
+	if def.OperatingSystem.IsoInstallation.InstallDevice != "" {
+		msg := "You cannot simultaneously configure rawConfiguration and isoInstallation, regardless of image type."
+		failures = append(failures, FailedValidation{
+			UserMessage: msg,
+		})
+	}
+
+	if !isValidSize(def.OperatingSystem.RawConfiguration.DiskSize) {
+		msg := fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
