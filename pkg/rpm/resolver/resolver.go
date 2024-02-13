@@ -157,7 +157,7 @@ func (r *Resolver) writeDockerfile(localRPMConfig *image.LocalRPMConfig, package
 	values := struct {
 		BaseImage    string
 		RegCode      string
-		AddRepo      string
+		AddRepo      []image.AddRepo
 		CacheDir     string
 		PKGList      string
 		LocalRPMList string
@@ -170,7 +170,7 @@ func (r *Resolver) writeDockerfile(localRPMConfig *image.LocalRPMConfig, package
 	}{
 		BaseImage:  r.baseImageRef,
 		RegCode:    packages.RegCode,
-		AddRepo:    r.generateAddRepoStr(packages.AdditionalRepos),
+		AddRepo:    packages.AdditionalRepos,
 		CacheDir:   r.generateResolverImgRPMRepoPath(),
 		NoGPGCheck: packages.NoGPGCheck,
 	}
@@ -202,15 +202,6 @@ func (r *Resolver) writeDockerfile(localRPMConfig *image.LocalRPMConfig, package
 	}
 
 	return nil
-}
-
-func (r *Resolver) generateAddRepoStr(repos []image.AddRepo) string {
-	list := []string{}
-	for _, repo := range repos {
-		list = append(list, repo.URL)
-	}
-
-	return strings.Join(list, " ")
 }
 
 func (r *Resolver) generatePKGInstallList(packages *image.Packages) []string {

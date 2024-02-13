@@ -26,8 +26,11 @@ operatingSystem:
       - reiserfs-kmp-default-debuginfo
     additionalRepos:
       - url: https://download.opensuse.org/repositories/Kernel:/SLE15-SP5/pool
+      - url: https://rpm.rancher.io/rke2/stable/common/slemicro/noarch
+        unsigned: true
 ```
-> **_NOTE:_** Before adding any repositories under `additionalRepos`, make sure that they are signed with a valid GPG key. **All non-signed additional repositories will cause EIB to fail.**
+> **_NOTE:_** Before adding any repositories under `additionalRepos`, make sure that they are signed with a valid GPG key.
+> **All non-signed additional repositories will cause EIB to fail unless they are explicitly labeled as `unsigned`.**
 
 #### Install a package from SUSE's internal repositories
 ```yaml
@@ -51,10 +54,10 @@ EIB configuration directory tree:
 .
 ├── eib-config-iso.yaml
 ├── base-images
-│   └── SLE-Micro.x86_64-5.5.0-Default-RT-GM.raw
+│   └── SLE-Micro.x86_64-5.5.0-Default-RT-GM.raw
 └── rpms
     ├── gpg-keys
-    │   └── reiserfs-kpm-default-debuginfo.key
+    │   └── reiserfs-kpm-default-debuginfo.key
     └── reiserfs-kmp-default-debuginfo-5.14.21-150500.205.1.g8725a95.x86_64.rpm
 ```
 
@@ -62,7 +65,7 @@ EIB config file `packages` configuration:
 ```yaml
 operatingSystem:
   packages:
-    sccRegistrationCode:
+    additionalRepos:
       - url: https://download.opensuse.org/repositories/Kernel:/SLE15-SP5/pool
 ```
 
@@ -72,10 +75,10 @@ EIB configuration directory tree:
 .
 ├── eib-config-iso.yaml
 ├── base-images
-│   └── SLE-Micro.x86_64-5.5.0-Default-RT-GM.raw
+│   └── SLE-Micro.x86_64-5.5.0-Default-RT-GM.raw
 └── rpms
     ├── gpg-keys
-    │   └── git.key
+    │   └── git.key
     └── git-2.35.3-150300.10.33.1.x86_64.rpm
 ```
 
@@ -83,11 +86,12 @@ EIB config file `packages` configuration:
 ```yaml
 operatingSystem:
   packages:
-    additionalRepos: <your-reg-code>
+    sccRegistrationCode: <your-reg-code>
 ```
 
 ### Installing unsigned packages
-By default EIB does GPG validation for every **additional repository** and **side-loaded RPM**. If you wish to use unsigned additional repositories and/or unsigned RPMs you must add the `noGPGCheck: true` property to EIB's `packages` configuration, like so:
+By default, EIB does GPG validation for every **additional repository** and **side-loaded RPM**.
+If you wish to use unsigned additional repositories and/or unsigned RPMs you must add the `noGPGCheck: true` property to EIB's `packages` configuration, like so:
 ```yaml
 operatingSystem:
   packages:

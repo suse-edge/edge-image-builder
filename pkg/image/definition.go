@@ -80,7 +80,8 @@ type Packages struct {
 }
 
 type AddRepo struct {
-	URL string `yaml:"url"`
+	URL      string `yaml:"url"`
+	Unsigned bool   `yaml:"unsigned"`
 }
 
 type OperatingSystemUser struct {
