@@ -224,6 +224,10 @@ func validateRawConfig(def *image.Definition) []FailedValidation {
 	var failures []FailedValidation
 	isValidSize := regexp.MustCompile(`^([1-9]\d+|[1-9])+[MGT]`).MatchString
 
+	if def.OperatingSystem.RawConfiguration.DiskSize == "" {
+		return nil
+	}
+
 	if def.Image.ImageType != image.TypeRAW && def.OperatingSystem.RawConfiguration.DiskSize != "" {
 		msg := fmt.Sprintf("The 'rawConfiguration/diskSize' field can only be used when 'image type' is '%s'.", image.TypeRAW)
 		failures = append(failures, FailedValidation{
