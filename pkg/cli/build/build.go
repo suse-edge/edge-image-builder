@@ -66,6 +66,8 @@ func Run(*cli.Context) error {
 		return nil
 	}
 
+	appendElementalRPMs(ctx)
+
 	if !bootstrapDependencyServices(ctx, args.RootBuildDir) {
 		os.Exit(1)
 	}
@@ -197,6 +199,29 @@ func isImageDefinitionValid(ctx *image.Context) bool {
 	}
 
 	return true
+}
+
+func appendElementalRPMs(ctx *image.Context) {
+	elementalDir := combustion.ElementalPath(ctx)
+	if _, err := os.Stat(elementalDir); err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			zap.S().Warnf("Looking for '%s' dir failed unexpectedly: %s", elementalDir, err)
+		}
+
+		return
+	}
+
+	audit.AuditInfo("Elemental registration is configured. The necessary RPM packages will be downloaded.")
+
+	packageList := ctx.ImageDefinition.OperatingSystem.Packages.PKGList
+	packageList = append(packageList, combustion.ElementalPackages...)
+
+	repositories := ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos
+	repositories = append(repositories,
+		image.AddRepo{URL: combustion.ElementalPackageRepository})
+
+	ctx.ImageDefinition.OperatingSystem.Packages.PKGList = packageList
+	ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos = repositories
 }
 
 // If the image definition requires it, starts the necessary services, displaying appropriate messages
