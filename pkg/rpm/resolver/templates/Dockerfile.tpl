@@ -26,17 +26,17 @@ RUN SLE_SP=$(cat /etc/rpm/macros.sle | awk '/sle/ {print $2};' | cut -c4) && sus
 RUN zypper ref
 {{ end -}}
 
-{{ if ne .AddRepo "" }}
-RUN counter=1 && \
-    for i in {{.AddRepo}}; \
-    do \
-      {{ if not .NoGPGCheck -}}
-      zypper ar -f $i addrepo$counter; \
-      {{ else -}}
-      zypper ar --no-gpgcheck -f $i addrepo$counter; \
-      {{ end -}}
-      counter=$((counter+1)); \
-    done
+{{- range $index, $repo := .AddRepo }}
+
+{{- $gpgCheck := "" -}}
+{{- if $.NoGPGCheck -}}
+{{ $gpgCheck = "--no-gpgcheck" }}
+{{- else if .Unsigned -}}
+{{ $gpgCheck = "--gpgcheck-allow-unsigned-repo" }}
+{{- end -}}
+
+RUN zypper ar {{ $gpgCheck }} -f {{ .URL }} addrepo {{- $index }}
+
 {{ end -}}
 
 {{ if and .LocalGPGList (not .NoGPGCheck) }}

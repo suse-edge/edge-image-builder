@@ -82,7 +82,8 @@ func TestParse(t *testing.T) {
 			URL: "https://download.nvidia.com/suse/sle15sp5/",
 		},
 		{
-			URL: "https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/",
+			URL:      "https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/",
+			Unsigned: true,
 		},
 	}
 	assert.Equal(t, expectedAddRepos, pkgConfig.AdditionalRepos)
