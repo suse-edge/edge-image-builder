@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -26,6 +27,7 @@ func validateOperatingSystem(ctx *image.Context) []FailedValidation {
 	failures = append(failures, validateSuma(&def.OperatingSystem)...)
 	failures = append(failures, validatePackages(&def.OperatingSystem)...)
 	failures = append(failures, validateUnattended(def)...)
+	failures = append(failures, validateRawConfig(def)...)
 
 	return failures
 }
@@ -210,6 +212,34 @@ func validateUnattended(def *image.Definition) []FailedValidation {
 
 	if def.Image.ImageType != image.TypeISO && def.OperatingSystem.IsoInstallation.InstallDevice != "" {
 		msg := fmt.Sprintf("The 'isoInstallation/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO)
+		failures = append(failures, FailedValidation{
+			UserMessage: msg,
+		})
+	}
+
+	return failures
+}
+
+func validateRawConfig(def *image.Definition) []FailedValidation {
+	var failures []FailedValidation
+	isValidSize := regexp.MustCompile(`[0-9]+[MGT]`).MatchString
+
+	if def.Image.ImageType != image.TypeRAW && def.OperatingSystem.RawConfiguration.DiskSize != "" {
+		msg := fmt.Sprintf("The 'rawConfiguration/diskSize' field can only be used when 'image type' is '%s'.", image.TypeRAW)
+		failures = append(failures, FailedValidation{
+			UserMessage: msg,
+		})
+	}
+
+	if def.OperatingSystem.RawConfiguration.DiskSize != "" && def.OperatingSystem.IsoInstallation.InstallDevice != "" {
+		msg := fmt.Sprint("You cannot simultaneously configure rawConfiguration and isoInstallation, regardless of image type.")
+		failures = append(failures, FailedValidation{
+			UserMessage: msg,
+		})
+	}
+
+	if def.OperatingSystem.RawConfiguration.DiskSize != "" && !isValidSize(def.OperatingSystem.RawConfiguration.DiskSize) {
+		msg := fmt.Sprintf("the 'rawConfiguration/diskSize' field must require an integer followed by an 'M/G/T' suffix to indicate size when 'imageType' is '%s'.", image.TypeRAW)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
