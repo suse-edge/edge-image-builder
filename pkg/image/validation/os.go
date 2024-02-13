@@ -228,21 +228,21 @@ func validateRawConfig(def *image.Definition) []FailedValidation {
 		return nil
 	}
 
-	if def.Image.ImageType != image.TypeRAW && def.OperatingSystem.RawConfiguration.DiskSize != "" {
+	if def.Image.ImageType != image.TypeRAW {
 		msg := fmt.Sprintf("The 'rawConfiguration/diskSize' field can only be used when 'image type' is '%s'.", image.TypeRAW)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
 	}
 
-	if def.OperatingSystem.RawConfiguration.DiskSize != "" && def.OperatingSystem.IsoInstallation.InstallDevice != "" {
+	if def.OperatingSystem.IsoInstallation.InstallDevice != "" {
 		msg := "You cannot simultaneously configure rawConfiguration and isoInstallation, regardless of image type."
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
 	}
 
-	if def.OperatingSystem.RawConfiguration.DiskSize != "" && !isValidSize(def.OperatingSystem.RawConfiguration.DiskSize) {
+	if !isValidSize(def.OperatingSystem.RawConfiguration.DiskSize) {
 		msg := fmt.Sprintf("the 'rawConfiguration/diskSize' field must require an integer followed by an 'M/G/T' suffix to indicate size when 'imageType' is '%s'.", image.TypeRAW)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
