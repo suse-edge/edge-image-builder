@@ -592,7 +592,7 @@ func TestValidateRawConfiguration(t *testing.T) {
 				},
 			},
 		},
-		`diskSize invalid`: {
+		`diskSize invalid as invalid suffix`: {
 			Definition: image.Definition{
 				Image: image.Image{
 					ImageType: image.TypeRAW,
@@ -600,6 +600,21 @@ func TestValidateRawConfiguration(t *testing.T) {
 				OperatingSystem: image.OperatingSystem{
 					RawConfiguration: image.RawConfiguration{
 						DiskSize: "130B",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				fmt.Sprintf("the 'rawConfiguration/diskSize' field must require an integer followed by an 'M/G/T' suffix to indicate size when 'imageType' is '%s'.", image.TypeRAW),
+			},
+		},
+		`diskSize invalid as zero`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						DiskSize: "0G",
 					},
 				},
 			},

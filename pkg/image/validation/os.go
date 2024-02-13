@@ -222,7 +222,7 @@ func validateUnattended(def *image.Definition) []FailedValidation {
 
 func validateRawConfig(def *image.Definition) []FailedValidation {
 	var failures []FailedValidation
-	isValidSize := regexp.MustCompile(`[0-9]+[MGT]`).MatchString
+	isValidSize := regexp.MustCompile(`^([1-9]\d+|[1-9])+[MGT]`).MatchString
 
 	if def.Image.ImageType != image.TypeRAW && def.OperatingSystem.RawConfiguration.DiskSize != "" {
 		msg := fmt.Sprintf("The 'rawConfiguration/diskSize' field can only be used when 'image type' is '%s'.", image.TypeRAW)
@@ -232,7 +232,7 @@ func validateRawConfig(def *image.Definition) []FailedValidation {
 	}
 
 	if def.OperatingSystem.RawConfiguration.DiskSize != "" && def.OperatingSystem.IsoInstallation.InstallDevice != "" {
-		msg := fmt.Sprint("You cannot simultaneously configure rawConfiguration and isoInstallation, regardless of image type.")
+		msg := "You cannot simultaneously configure rawConfiguration and isoInstallation, regardless of image type."
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
