@@ -31,7 +31,7 @@ const (
 	checkLogMessage = "Please check the eib-build.log file under the build directory for more information."
 )
 
-func Run(*cli.Context) error {
+func Run(_ *cli.Context) error {
 	args := &cmd.BuildArgs
 
 	buildDir, combustionDir, err := build.SetupBuildDirectory(args.RootBuildDir)
@@ -66,7 +66,7 @@ func Run(*cli.Context) error {
 		return nil
 	}
 
-	if err = downloadKubernetesSELinuxPolicies(ctx); err != nil {
+	if err = appendKubernetesSELinuxRPMs(ctx); err != nil {
 		audit.AuditInfof("Configuring Kubernetes failed. %s", checkLogMessage)
 		zap.S().Fatalf("Failed to download Kubernetes SELinux policy: %s", err)
 	}
@@ -206,7 +206,7 @@ func isImageDefinitionValid(ctx *image.Context) bool {
 	return true
 }
 
-func downloadKubernetesSELinuxPolicies(ctx *image.Context) error {
+func appendKubernetesSELinuxRPMs(ctx *image.Context) error {
 	if ctx.ImageDefinition.Kubernetes.Version == "" {
 		return nil
 	}
@@ -225,17 +225,25 @@ func downloadKubernetesSELinuxPolicies(ctx *image.Context) error {
 	audit.AuditInfo("SELinux is enabled in the Kubernetes configuration. " +
 		"The necessary RPM packages will be downloaded.")
 
-	rpmDir := combustion.RPMsPath(ctx)
-	if err = os.MkdirAll(rpmDir, os.ModePerm); err != nil {
-		return fmt.Errorf("creating directory '%s': %w", rpmDir, err)
-	}
+	packageList := ctx.ImageDefinition.OperatingSystem.Packages.PKGList
+	packageList = append(packageList, kubernetes.SELinuxPackage(ctx.ImageDefinition.Kubernetes.Version))
+
+	repositories := ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos
+	repositories = append(repositories, kubernetes.SELinuxRepository(ctx.ImageDefinition.Kubernetes.Version))
+
+	ctx.ImageDefinition.OperatingSystem.Packages.PKGList = packageList
+	ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos = repositories
 
 	gpgKeysDir := combustion.GPGKeysPath(ctx)
 	if err = os.MkdirAll(gpgKeysDir, os.ModePerm); err != nil {
 		return fmt.Errorf("creating directory '%s': %w", gpgKeysDir, err)
 	}
 
-	return kubernetes.DownloadSELinuxRPMs(&ctx.ImageDefinition.Kubernetes, rpmDir, gpgKeysDir)
+	if err = kubernetes.DownloadSELinuxRPMsSigningKey(gpgKeysDir); err != nil {
+		return fmt.Errorf("downloading signing key: %w", err)
+	}
+
+	return nil
 }
 
 func appendElementalRPMs(ctx *image.Context) {
