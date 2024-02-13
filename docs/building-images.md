@@ -83,6 +83,12 @@ operatingSystem:
   system rather than prompting user to begin the installation. In combination with `installDevice` can create
   a fully unattended and automated install. Beware of creating boot loops and data loss with these options.
   If left omitted (or set to `false`) the user will still have to choose to install via the GRUB menu.
+* `rawConfiguration` - Optional; configuration in this section only applies to RAW images only.
+  * `diskSize` - Optional; sets the desired raw disk image size. This is important to ensure that your disk
+  image is large enough to accommodate any artifacts that you're embedding. It's advised to set this to slightly
+  smaller than your SDcard size (or block device if writing directly to a disk) and the system will automatically
+  expand at boot time to fill the size of the block device. This is optional, but highly recommended. Specify in
+  integer format with either "M" (Megabyte) or "G" (Gigabyte) as a suffix, e.g. "32G".
 * `time` - Optional; section where the user can provide timezone information and Chronyd configuration.
   * `timezone` - Optional; the timezone in the format of "Region/Locality", e.g. "Europe/London". Full list via `timedatectl list-timezones`.
   * `ntp` - Optional; contains attributes related to configuring NTP

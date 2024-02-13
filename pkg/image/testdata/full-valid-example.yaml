@@ -1,6 +1,6 @@
 apiVersion: 1.0
 image:
-  imageType: ISO
+  imageType: iso
   arch: x86_64
   baseImage: slemicro5.5.iso
   outputImageName: eibimage.iso
@@ -8,6 +8,8 @@ operatingSystem:
   isoInstallation:
     installDevice: /dev/sda
     unattended: true
+  rawConfiguration:
+    diskSize: 32G
   time:
     timezone: Europe/London
     ntp:

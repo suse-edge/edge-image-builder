@@ -33,7 +33,8 @@ RUN zypper install -y \
     libguestfs kernel-default e2fsprogs parted gptfdisk btrfsprogs \
     podman \
     createrepo_c \
-    nm-configurator
+    nm-configurator \
+    guestfs-tools lvm2
 
 RUN curl -o hauler-amd64.tar -L https://github.com/rancherfederal/hauler/releases/download/v0.4.2/hauler_0.4.2_linux_amd64.tar.gz && \
     tar -xf hauler-amd64.tar && \

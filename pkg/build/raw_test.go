@@ -52,6 +52,9 @@ func TestWriteModifyScript(t *testing.T) {
 		},
 		OperatingSystem: image.OperatingSystem{
 			KernelArgs: []string{"alpha", "beta"},
+			RawConfiguration: image.RawConfiguration{
+				DiskSize: "64G",
+			},
 		},
 	}
 	builder := Builder{context: ctx}
@@ -74,6 +77,7 @@ func TestWriteModifyScript(t *testing.T) {
 				"download /boot/grub2/grub.cfg /tmp/grub.cfg",
 				"btrfs filesystem label / INSTALL",
 				"sed -i '/ignition.platform/ s/$/ alpha beta /' /tmp/grub.cfg",
+				"truncate -s 64G",
 			},
 			expectedMissing: []string{},
 		},
