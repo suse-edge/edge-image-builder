@@ -47,7 +47,7 @@ func TestValidateOperatingSystem(t *testing.T) {
 						},
 						RegCode: "letMeIn",
 					},
-					IsoInstallation: image.IsoInstallation{
+					IsoConfiguration: image.IsoConfiguration{
 						Unattended:    true,
 						InstallDevice: "/dev/sda",
 					},
@@ -76,7 +76,7 @@ func TestValidateOperatingSystem(t *testing.T) {
 					Packages: image.Packages{
 						PKGList: []string{"zsh", "git"},
 					},
-					IsoInstallation: image.IsoInstallation{
+					IsoConfiguration: image.IsoConfiguration{
 						Unattended:    true,
 						InstallDevice: "/dev/sda",
 					},
@@ -515,7 +515,7 @@ func TestValidateUnattended(t *testing.T) {
 					ImageType: image.TypeISO,
 				},
 				OperatingSystem: image.OperatingSystem{
-					IsoInstallation: image.IsoInstallation{
+					IsoConfiguration: image.IsoConfiguration{
 						Unattended:    true,
 						InstallDevice: "/dev/sda",
 					},
@@ -528,7 +528,7 @@ func TestValidateUnattended(t *testing.T) {
 					ImageType: image.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
-					IsoInstallation: image.IsoInstallation{
+					IsoConfiguration: image.IsoConfiguration{
 						Unattended: true,
 					},
 				},
@@ -543,7 +543,7 @@ func TestValidateUnattended(t *testing.T) {
 					ImageType: image.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
-					IsoInstallation: image.IsoInstallation{
+					IsoConfiguration: image.IsoConfiguration{
 						InstallDevice: "/dev/sda",
 					},
 				},

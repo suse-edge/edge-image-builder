@@ -61,14 +61,14 @@ type OperatingSystem struct {
 	Systemd          Systemd               `yaml:"systemd"`
 	Suma             Suma                  `yaml:"suma"`
 	Packages         Packages              `yaml:"packages"`
-	IsoInstallation  IsoInstallation       `yaml:"isoInstallation"`
+	IsoConfiguration IsoConfiguration      `yaml:"isoConfiguration"`
 	RawConfiguration RawConfiguration      `yaml:"rawConfiguration"`
 	Time             Time                  `yaml:"time"`
 	Proxy            Proxy                 `yaml:"proxy"`
 	Keymap           string                `yaml:"keymap"`
 }
 
-type IsoInstallation struct {
+type IsoConfiguration struct {
 	InstallDevice string `yaml:"installDevice"`
 	Unattended    bool   `yaml:"unattended"`
 }
