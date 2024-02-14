@@ -14,6 +14,14 @@ type validateComponent func(ctx *image.Context) []FailedValidation
 func ValidateDefinition(ctx *image.Context) map[string][]FailedValidation {
 	failures := map[string][]FailedValidation{}
 
+	schemaValidationFailure := validateAPIVersion(ctx)
+	if schemaValidationFailure != nil {
+		// If the schema is invalid, there's no reason to even attempt the rest of
+		// the validation
+		failures["Definition Schema"] = []FailedValidation{*schemaValidationFailure}
+		return failures
+	}
+
 	validations := map[string]validateComponent{
 		imageComponent:    validateImage,
 		osComponent:       validateOperatingSystem,
