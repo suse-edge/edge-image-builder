@@ -123,8 +123,8 @@ func (b *Builder) writeIsoScript(templateContents, outputFilename string) error 
 		IsoSource:           b.generateBaseImageFilename(),
 		OutputImageFilename: b.generateOutputImageFilename(),
 		CombustionDir:       b.context.CombustionDir,
-		InstallDevice:       b.context.ImageDefinition.OperatingSystem.IsoInstallation.InstallDevice,
-		Unattended:          b.context.ImageDefinition.OperatingSystem.IsoInstallation.Unattended,
+		InstallDevice:       b.context.ImageDefinition.OperatingSystem.IsoConfiguration.InstallDevice,
+		Unattended:          b.context.ImageDefinition.OperatingSystem.IsoConfiguration.Unattended,
 	}
 
 	contents, err := template.Parse("iso-script", templateContents, arguments)

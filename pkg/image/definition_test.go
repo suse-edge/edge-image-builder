@@ -89,11 +89,11 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, expectedAddRepos, pkgConfig.AdditionalRepos)
 	assert.Equal(t, "INTERNAL-USE-ONLY-foo-bar", pkgConfig.RegCode)
 
-	// Operating System -> IsoInstallation
-	installDevice := definition.OperatingSystem.IsoInstallation.InstallDevice
+	// Operating System -> IsoConfiguration
+	installDevice := definition.OperatingSystem.IsoConfiguration.InstallDevice
 	assert.Equal(t, "/dev/sda", installDevice)
 
-	unattended := definition.OperatingSystem.IsoInstallation.Unattended
+	unattended := definition.OperatingSystem.IsoConfiguration.Unattended
 	assert.Equal(t, true, unattended)
 
 	// Operating System -> Time

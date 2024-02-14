@@ -5,7 +5,7 @@ image:
   baseImage: slemicro5.5.iso
   outputImageName: eibimage.iso
 operatingSystem:
-  isoInstallation:
+  isoConfiguration:
     installDevice: /dev/sda
     unattended: true
   rawConfiguration:

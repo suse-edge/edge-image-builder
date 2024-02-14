@@ -37,7 +37,7 @@ The operating system configuration section is entirely optional.
 The following describes the possible options for the operating system section:
 ```yaml
 operatingSystem:
-  isoInstallation:
+  isoConfiguration:
     installDevice: /path/to/disk
     unattended: false
   time:
@@ -85,7 +85,7 @@ operatingSystem:
     sccRegistrationCode: scc-reg-code
 ```
 
-* `isoInstallation` - Optional; configuration in this section only applies to ISO images.
+* `isoConfiguration` - Optional; configuration in this section only applies to ISO images.
   * `installDevice` - Optional; specifies the disk that should be used as the install
   device. This needs to be block special, and will default to automatically wipe any data found on the disk.
   If left omitted, the user will still have to select the disk to install to (if >1 found) and confirm wipe.

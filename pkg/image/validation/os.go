@@ -203,15 +203,15 @@ func validatePackages(os *image.OperatingSystem) []FailedValidation {
 func validateUnattended(def *image.Definition) []FailedValidation {
 	var failures []FailedValidation
 
-	if def.Image.ImageType != image.TypeISO && def.OperatingSystem.IsoInstallation.Unattended {
-		msg := fmt.Sprintf("The 'isoInstallation/unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO)
+	if def.Image.ImageType != image.TypeISO && def.OperatingSystem.IsoConfiguration.Unattended {
+		msg := fmt.Sprintf("The 'isoConfiguration/unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
 	}
 
-	if def.Image.ImageType != image.TypeISO && def.OperatingSystem.IsoInstallation.InstallDevice != "" {
-		msg := fmt.Sprintf("The 'isoInstallation/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO)
+	if def.Image.ImageType != image.TypeISO && def.OperatingSystem.IsoConfiguration.InstallDevice != "" {
+		msg := fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
@@ -235,8 +235,8 @@ func validateRawConfig(def *image.Definition) []FailedValidation {
 		})
 	}
 
-	if def.OperatingSystem.IsoInstallation.InstallDevice != "" {
-		msg := "You cannot simultaneously configure rawConfiguration and isoInstallation, regardless of image type."
+	if def.OperatingSystem.IsoConfiguration.InstallDevice != "" {
+		msg := "You cannot simultaneously configure rawConfiguration and isoConfiguration, regardless of image type."
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
