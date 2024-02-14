@@ -90,7 +90,6 @@ func TestValidateOperatingSystem(t *testing.T) {
 				"Systemd conflict found, 'confusedUser' is both enabled and disabled.",
 				"User 'danny' must have either a password or SSH key.",
 				"The 'host' field is required for the 'suma' section.",
-				"When including the 'packageList' field, either additional repositories or a registration code must be included.",
 				fmt.Sprintf("The 'isoConfiguration/unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO),
 				fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
 				fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW),
@@ -430,14 +429,6 @@ func TestPackages(t *testing.T) {
 					},
 				},
 				RegCode: "regcode",
-			},
-		},
-		`package list only`: {
-			Packages: image.Packages{
-				PKGList: []string{"foo", "bar"},
-			},
-			ExpectedFailedMessages: []string{
-				"When including the 'packageList' field, either additional repositories or a registration code must be included.",
 			},
 		},
 		`duplicate packages`: {

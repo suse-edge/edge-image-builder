@@ -191,12 +191,6 @@ func validatePackages(os *image.OperatingSystem) []FailedValidation {
 		}
 	}
 
-	if len(os.Packages.PKGList) > 0 && len(os.Packages.AdditionalRepos) == 0 && os.Packages.RegCode == "" {
-		failures = append(failures, FailedValidation{
-			UserMessage: "When including the 'packageList' field, either additional repositories or a registration code must be included.",
-		})
-	}
-
 	return failures
 }
 
