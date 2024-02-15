@@ -18,7 +18,7 @@ func ValidateDefinition(ctx *image.Context) map[string][]FailedValidation {
 	if schemaValidationFailure != nil {
 		// If the schema is invalid, there's no reason to even attempt the rest of
 		// the validation
-		failures["Definition Schema"] = []FailedValidation{*schemaValidationFailure}
+		failures[apiVersionComponent] = []FailedValidation{*schemaValidationFailure}
 		return failures
 	}
 

@@ -2,6 +2,10 @@ package validation
 
 import "github.com/suse-edge/edge-image-builder/pkg/image"
 
+const (
+	apiVersionComponent = "Definition Schema"
+)
+
 func validateAPIVersion(ctx *image.Context) *FailedValidation {
 	definitionVersion := ctx.ImageDefinition.APIVersion
 
