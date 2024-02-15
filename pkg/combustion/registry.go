@@ -98,7 +98,6 @@ func writeHaulerManifest(ctx *image.Context, images []image.ContainerImage) erro
 func syncHaulerManifest(ctx *image.Context) error {
 	haulerManifestPath := filepath.Join(ctx.BuildDir, haulerManifestYamlName)
 	args := []string{"store", "sync", "--files", haulerManifestPath, "-p", fmt.Sprintf("linux/%s", ctx.ImageDefinition.Image.Arch.Short())}
-	fmt.Println("args", args)
 
 	cmd, registryLog, err := createRegistryCommand(ctx, hauler, args)
 	if err != nil {
