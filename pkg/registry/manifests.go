@@ -57,7 +57,7 @@ func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs [
 	for _, manifestPath := range combinedManifestPaths {
 		manifests, err := readManifest(manifestPath)
 		if err != nil {
-			return nil, fmt.Errorf("error reading manifest %w", err)
+			return nil, fmt.Errorf("error reading manifest: %w", err)
 		}
 
 		for _, manifestData := range manifests {

@@ -244,5 +244,5 @@ func TestGetAllImagesInvalidLocalManifest(t *testing.T) {
 	_, err = GetAllImages(nil, nil, localManifestsSrcDir, "", "", "")
 
 	// Verify
-	require.ErrorContains(t, err, "error reading manifest error unmarshalling manifest yaml")
+	require.ErrorContains(t, err, "error reading manifest: error unmarshalling manifest yaml")
 }

@@ -9,8 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/suse-edge/edge-image-builder/pkg/registry"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
@@ -585,7 +583,7 @@ func TestWriteUpdatedHelmManifests(t *testing.T) {
 	err = os.WriteFile(unreadableManifestPath, []byte(""), 0o00)
 	require.NoError(t, err)
 
-	unreadableTarPath := filepath.Join(unreadableDir, "unreadable-apache-tar.tgz")
+	unreadableTarPath := filepath.Join(unreadableDir, "unreadable-metallb-tar.tgz")
 	err = os.WriteFile(unreadableTarPath, []byte(""), 0o00)
 	require.NoError(t, err)
 
@@ -662,7 +660,7 @@ func TestWriteUpdatedHelmManifests(t *testing.T) {
 			},
 			helmManifestHolderDir: manifestHolderDir,
 			manifestDestDir:       k8sManifestsDestDir,
-			expectedError:         fmt.Sprintf("updating manifests: updating helm manifest: reading chart tar '%[1]s': open %[1]s: permission denied", filepath.Join(unreadableDir, "unreadable-apache-tar.tgz")),
+			expectedError:         fmt.Sprintf("updating manifests: updating helm manifest: reading chart tar '%[1]s': open %[1]s: permission denied", filepath.Join(unreadableDir, "unreadable-metallb-tar.tgz")),
 		},
 	}
 
@@ -691,7 +689,7 @@ func TestWriteUpdatedHelmManifests(t *testing.T) {
 
 					actualContent := string(manifestContent)
 					assert.Contains(t, actualContent, "chartContent:")
-					assert.Contains(t, actualContent, registry.HelmChartKind)
+					assert.Contains(t, actualContent, "HelmChart")
 					assert.NotContains(t, actualContent, "repo:")
 					assert.NotContains(t, actualContent, "chart:")
 				}

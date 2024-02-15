@@ -642,8 +642,8 @@ func TestGenerateHelmCommands(t *testing.T) {
 			helmSrcDir: localHelmSrcDirValid,
 			helmChartPaths: []string{
 				filepath.Join(helmDir, "apache2.tgz"), // This one is created manually while the others are pulled
-				"apache-*.tgz",
-				"metallb-*.tgz",
+				filepath.Join(helmDir, "apache-*.tgz"),
+				filepath.Join(helmDir, "metallb-*.tgz"),
 			},
 			expectedCommands: []string{
 				fmt.Sprintf("helm template --skip-crds apache2 %s", filepath.Join(helmDir, "apache2.tgz")),
