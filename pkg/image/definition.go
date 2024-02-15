@@ -1,6 +1,7 @@
 package image
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
@@ -56,20 +57,25 @@ type Image struct {
 }
 
 type OperatingSystem struct {
-	KernelArgs      []string              `yaml:"kernelArgs"`
-	Users           []OperatingSystemUser `yaml:"users"`
-	Systemd         Systemd               `yaml:"systemd"`
-	Suma            Suma                  `yaml:"suma"`
-	Packages        Packages              `yaml:"packages"`
-	IsoInstallation IsoInstallation       `yaml:"isoInstallation"`
-	Time            Time                  `yaml:"time"`
-	Proxy           Proxy                 `yaml:"proxy"`
-	Keymap          string                `yaml:"keymap"`
+	KernelArgs       []string              `yaml:"kernelArgs"`
+	Users            []OperatingSystemUser `yaml:"users"`
+	Systemd          Systemd               `yaml:"systemd"`
+	Suma             Suma                  `yaml:"suma"`
+	Packages         Packages              `yaml:"packages"`
+	IsoConfiguration IsoConfiguration      `yaml:"isoConfiguration"`
+	RawConfiguration RawConfiguration      `yaml:"rawConfiguration"`
+	Time             Time                  `yaml:"time"`
+	Proxy            Proxy                 `yaml:"proxy"`
+	Keymap           string                `yaml:"keymap"`
 }
 
-type IsoInstallation struct {
+type IsoConfiguration struct {
 	InstallDevice string `yaml:"installDevice"`
 	Unattended    bool   `yaml:"unattended"`
+}
+
+type RawConfiguration struct {
+	DiskSize string `yaml:"diskSize"`
 }
 
 type Packages struct {
@@ -80,7 +86,8 @@ type Packages struct {
 }
 
 type AddRepo struct {
-	URL string `yaml:"url"`
+	URL      string `yaml:"url"`
+	Unsigned bool   `yaml:"unsigned"`
 }
 
 type OperatingSystemUser struct {
@@ -149,7 +156,10 @@ type Manifests struct {
 func ParseDefinition(data []byte) (*Definition, error) {
 	var definition Definition
 
-	if err := yaml.Unmarshal(data, &definition); err != nil {
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
+
+	if err := decoder.Decode(&definition); err != nil {
 		return nil, fmt.Errorf("could not parse the image definition: %w", err)
 	}
 	definition.Image.ImageType = strings.ToLower(definition.Image.ImageType)

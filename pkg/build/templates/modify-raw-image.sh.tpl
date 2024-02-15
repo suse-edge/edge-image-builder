@@ -12,6 +12,17 @@ set -euo pipefail
 #
 # Guestfish Command Documentation: https://libguestfs.org/guestfish.1.html
 
+# Resize the raw disk image to accommodate the users desired raw disk image size
+# This is also required if embedding content into /combustion, especially for airgap.
+# Should *only* execute if the user is building a raw disk image.
+{{ if ne .DiskSize "" -}}
+truncate -r {{.ImagePath}} {{.ImagePath}}.expanded
+truncate -s {{.DiskSize}} {{.ImagePath}}.expanded
+virt-resize --expand /dev/sda3 {{.ImagePath}} {{.ImagePath}}.expanded
+cp {{.ImagePath}}.expanded {{.ImagePath}}
+rm -f {{.ImagePath}}.expanded
+{{ end }}
+
 guestfish --format=raw --rw -a {{.ImagePath}} -i <<'EOF'
   # Enables write access to the read only filesystem
   sh "btrfs property set / ro false"

@@ -9,7 +9,7 @@ type networkConfigGenerator interface {
 }
 
 type networkConfiguratorInstaller interface {
-	InstallConfigurator(arch Arch, sourcePath, installPath string) error
+	InstallConfigurator(sourcePath, installPath string) error
 }
 
 type kubernetesScriptInstaller interface {

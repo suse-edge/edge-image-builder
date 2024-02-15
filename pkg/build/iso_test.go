@@ -131,7 +131,7 @@ func TestWriteIsoScript_Rebuild(t *testing.T) {
 
 	ctx.ImageDefinition = &image.Definition{
 		OperatingSystem: image.OperatingSystem{
-			IsoInstallation: image.IsoInstallation{
+			IsoConfiguration: image.IsoConfiguration{
 				InstallDevice: "/dev/vda",
 				Unattended:    true,
 			},

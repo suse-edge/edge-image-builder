@@ -47,7 +47,7 @@ func TestValidateOperatingSystem(t *testing.T) {
 						},
 						RegCode: "letMeIn",
 					},
-					IsoInstallation: image.IsoInstallation{
+					IsoConfiguration: image.IsoConfiguration{
 						Unattended:    true,
 						InstallDevice: "/dev/sda",
 					},
@@ -76,9 +76,12 @@ func TestValidateOperatingSystem(t *testing.T) {
 					Packages: image.Packages{
 						PKGList: []string{"zsh", "git"},
 					},
-					IsoInstallation: image.IsoInstallation{
+					IsoConfiguration: image.IsoConfiguration{
 						Unattended:    true,
 						InstallDevice: "/dev/sda",
+					},
+					RawConfiguration: image.RawConfiguration{
+						DiskSize: "64",
 					},
 				},
 			},
@@ -87,9 +90,10 @@ func TestValidateOperatingSystem(t *testing.T) {
 				"Systemd conflict found, 'confusedUser' is both enabled and disabled.",
 				"User 'danny' must have either a password or SSH key.",
 				"The 'host' field is required for the 'suma' section.",
-				"When including the 'packageList' field, either additional repositories or a registration code must be included.",
-				fmt.Sprintf("The 'isoInstallation/unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO),
-				fmt.Sprintf("The 'isoInstallation/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
+				fmt.Sprintf("The 'isoConfiguration/unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO),
+				fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
+				fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW),
+				"You cannot simultaneously configure rawConfiguration and isoConfiguration, regardless of image type.",
 			},
 		},
 	}
@@ -427,14 +431,6 @@ func TestPackages(t *testing.T) {
 				RegCode: "regcode",
 			},
 		},
-		`package list only`: {
-			Packages: image.Packages{
-				PKGList: []string{"foo", "bar"},
-			},
-			ExpectedFailedMessages: []string{
-				"When including the 'packageList' field, either additional repositories or a registration code must be included.",
-			},
-		},
 		`duplicate packages`: {
 			Packages: image.Packages{
 				PKGList: []string{"foo", "bar", "foo", "bar", "baz"},
@@ -510,7 +506,7 @@ func TestValidateUnattended(t *testing.T) {
 					ImageType: image.TypeISO,
 				},
 				OperatingSystem: image.OperatingSystem{
-					IsoInstallation: image.IsoInstallation{
+					IsoConfiguration: image.IsoConfiguration{
 						Unattended:    true,
 						InstallDevice: "/dev/sda",
 					},
@@ -523,13 +519,13 @@ func TestValidateUnattended(t *testing.T) {
 					ImageType: image.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
-					IsoInstallation: image.IsoInstallation{
+					IsoConfiguration: image.IsoConfiguration{
 						Unattended: true,
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				fmt.Sprintf("The 'isoInstallation/unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO),
+				fmt.Sprintf("The 'isoConfiguration/unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO),
 			},
 		},
 		`not iso install device`: {
@@ -538,13 +534,13 @@ func TestValidateUnattended(t *testing.T) {
 					ImageType: image.TypeRAW,
 				},
 				OperatingSystem: image.OperatingSystem{
-					IsoInstallation: image.IsoInstallation{
+					IsoConfiguration: image.IsoConfiguration{
 						InstallDevice: "/dev/sda",
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				fmt.Sprintf("The 'isoInstallation/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
+				fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
 			},
 		},
 	}
@@ -553,6 +549,121 @@ func TestValidateUnattended(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			def := test.Definition
 			failures := validateUnattended(&def)
+			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+
+			var foundMessages []string
+			for _, foundValidation := range failures {
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+			}
+
+			for _, expectedMessage := range test.ExpectedFailedMessages {
+				assert.Contains(t, foundMessages, expectedMessage)
+			}
+		})
+	}
+}
+
+func TestValidateRawConfiguration(t *testing.T) {
+	tests := map[string]struct {
+		Definition             image.Definition
+		ExpectedFailedMessages []string
+	}{
+		`not included`: {
+			Definition: image.Definition{},
+		},
+		`diskSize specified and valid`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						DiskSize: "64G",
+					},
+				},
+			},
+		},
+		`diskSize invalid as invalid suffix`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						DiskSize: "130B",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW),
+			},
+		},
+		`diskSize invalid as zero`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						DiskSize: "0G",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW),
+			},
+		},
+		`diskSize invalid as lowercase character`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						DiskSize: "100g",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW),
+			},
+		},
+		`diskSize invalid as negative number`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						DiskSize: "-100G",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW),
+			},
+		},
+		`diskSize invalid as no number provided`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						DiskSize: "G",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW),
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			def := test.Definition
+			failures := validateRawConfig(&def)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
 
 			var foundMessages []string

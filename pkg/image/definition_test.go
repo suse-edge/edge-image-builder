@@ -82,17 +82,18 @@ func TestParse(t *testing.T) {
 			URL: "https://download.nvidia.com/suse/sle15sp5/",
 		},
 		{
-			URL: "https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/",
+			URL:      "https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/",
+			Unsigned: true,
 		},
 	}
 	assert.Equal(t, expectedAddRepos, pkgConfig.AdditionalRepos)
 	assert.Equal(t, "INTERNAL-USE-ONLY-foo-bar", pkgConfig.RegCode)
 
-	// Operating System -> IsoInstallation
-	installDevice := definition.OperatingSystem.IsoInstallation.InstallDevice
+	// Operating System -> IsoConfiguration
+	installDevice := definition.OperatingSystem.IsoConfiguration.InstallDevice
 	assert.Equal(t, "/dev/sda", installDevice)
 
-	unattended := definition.OperatingSystem.IsoInstallation.Unattended
+	unattended := definition.OperatingSystem.IsoConfiguration.Unattended
 	assert.Equal(t, true, unattended)
 
 	// Operating System -> Time
@@ -154,7 +155,7 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "https://k8s.io/examples/application/nginx-app.yaml", kubernetes.Manifests.URLs[0])
 }
 
-func TestParseBadConfig(t *testing.T) {
+func TestParseBadConfig_InvalidFormat(t *testing.T) {
 	// Setup
 	badData := []byte("Not actually YAML")
 
@@ -164,6 +165,25 @@ func TestParseBadConfig(t *testing.T) {
 	// Verify
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "could not parse the image definition")
+	assert.ErrorContains(t, err, "line 1: cannot unmarshal !!str")
+}
+
+func TestParseBadConfig_UnknownFields(t *testing.T) {
+	badConfig := `
+apiVersion: 1.0
+image:
+  type: iso
+operatingSystem:
+  time:
+    zone: Europe/London
+`
+
+	_, err := ParseDefinition([]byte(badConfig))
+
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "could not parse the image definition")
+	assert.ErrorContains(t, err, "line 4: field type not found in type image.Image")
+	assert.ErrorContains(t, err, "line 7: field zone not found in type image.Time")
 }
 
 func TestArch_Short(t *testing.T) {

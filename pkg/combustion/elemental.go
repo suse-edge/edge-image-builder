@@ -18,10 +18,17 @@ const (
 	elementalConfigDir     = "elemental"
 	elementalScriptName    = "31-elemental.sh"
 	elementalConfigName    = "elemental_config.yaml"
+
+	// TODO: Use an official repository URL once it's out
+	ElementalPackageRepository = "https://download.opensuse.org/repositories/isv:/Rancher:/Elemental:/Staging/standard/"
 )
 
-//go:embed templates/31-elemental-register.sh.tpl
-var elementalScript string
+var (
+	//go:embed templates/31-elemental-register.sh.tpl
+	elementalScript string
+
+	ElementalPackages = []string{"elemental-register", "elemental-system-agent"}
+)
 
 func configureElemental(ctx *image.Context) ([]string, error) {
 	if !isComponentConfigured(ctx, elementalConfigDir) {
@@ -73,4 +80,8 @@ func writeElementalCombustionScript(ctx *image.Context) error {
 		return fmt.Errorf("writing file %s: %w", elementalScriptFilename, err)
 	}
 	return nil
+}
+
+func ElementalPath(ctx *image.Context) string {
+	return filepath.Join(ctx.ImageConfigDir, elementalConfigDir)
 }

@@ -37,7 +37,7 @@ The operating system configuration section is entirely optional.
 The following describes the possible options for the operating system section:
 ```yaml
 operatingSystem:
-  isoInstallation:
+  isoConfiguration:
     installDevice: /path/to/disk
     unattended: false
   time:
@@ -73,9 +73,19 @@ operatingSystem:
     disable:
       - serviceX
   keymap: us
+  packages:
+    noGPGCheck: false
+    packageList:
+      - pkg1
+      - pkg2
+    additionalRepos:
+      - url: https://foo.bar
+      - url: https://foo.baz
+        unsigned: true
+    sccRegistrationCode: scc-reg-code
 ```
 
-* `isoInstallation` - Optional; configuration in this section only applies to ISO images.
+* `isoConfiguration` - Optional; configuration in this section only applies to ISO images.
   * `installDevice` - Optional; specifies the disk that should be used as the install
   device. This needs to be block special, and will default to automatically wipe any data found on the disk.
   If left omitted, the user will still have to select the disk to install to (if >1 found) and confirm wipe.
@@ -83,6 +93,12 @@ operatingSystem:
   system rather than prompting user to begin the installation. In combination with `installDevice` can create
   a fully unattended and automated install. Beware of creating boot loops and data loss with these options.
   If left omitted (or set to `false`) the user will still have to choose to install via the GRUB menu.
+* `rawConfiguration` - Optional; configuration in this section only applies to RAW images only.
+  * `diskSize` - Optional; sets the desired raw disk image size. This is important to ensure that your disk
+  image is large enough to accommodate any artifacts that you're embedding. It's advised to set this to slightly
+  smaller than your SDcard size (or block device if writing directly to a disk) and the system will automatically
+  expand at boot time to fill the size of the block device. This is optional, but highly recommended. Specify in
+  integer format with either "M" (Megabyte), "G" (Gigabyte), or "T" (Terabyte) as a suffix, e.g. "32G".
 * `time` - Optional; section where the user can provide timezone information and Chronyd configuration.
   * `timezone` - Optional; the timezone in the format of "Region/Locality", e.g. "Europe/London". Full list via `timedatectl list-timezones`.
   * `ntp` - Optional; contains attributes related to configuring NTP
@@ -107,6 +123,11 @@ operatingSystem:
   * `disable` - Optional; List of systemd services to disable.
 * `keymap` - Optional; sets the virtual console (VC) keymap, full list via `localectl list-keymaps`. If unset, we default to
   `us`.
+* `packages` - Optional; Defines packages that should have their dependencies determined and pre-loaded into the built image. For detailed information on how to use this configuration, see the [Installing pacakges](installing-packages.md) guide.
+  * `noGPGCheck` - Optional; Defines whether GPG validation should be disabled for all additional repositories and side-loaded RPMs. **Disabling GPG validation is intended for development purposes only!**
+  * `packageList` - Optional; List of packages that are to be installed from SUSE's internal RPM repositories or from additionally provided third-party repositories.
+  * `additionalRepos` - Optional; List of third-party RPM repositories that will be added to the package manager of the OS.
+  * `sccRegistrationCode` - Optional; SUSE Customer Center registration code, used to connect to SUSE's internal RPM repositories.
 
 ## SUSE Manager (SUMA)
 
@@ -200,7 +221,3 @@ as follows:
 
 * `elemental` - This must contain a file named `elemental_config.yaml`. This file will be bundled in
   the built image and used to register with Elemental on boot.
-
-Additionally, the following RPMs must be included in the RPMs directory as described above:
-* `elemental-register`
-* `elemental-system-agent`

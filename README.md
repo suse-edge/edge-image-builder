@@ -5,6 +5,24 @@
 EIB is intended to run inside a container. Some form of container build tool and runtime are needed,
 such as [Podman](https://podman.io/).
 
+### Prerequisites
+Before building the EIB image, make sure that you have the development headers and libraries for **gpgme**, **device-mapper** and **libbtrfs** installed on your system:
+
+**SUSE Linux:**
+```shell
+sudo zypper install -y gpgme-devel device-mapper-devel libbtrfs-devel
+```
+
+**Ubuntu:** 
+```shell
+sudo apt-get install -y libgpgme-dev libdevmapper-dev libbtrfs-dev
+```
+
+**Fedora:**
+```shell
+sudo dnf -y install gpgme-devel device-mapper-devel btrfs-progs-devel
+```
+
 Build the container (from the root of this project):
 ```shell
 podman build -t eib:dev .
@@ -48,6 +66,8 @@ podman run --rm -it \
   will contain subdirectories storing the respective artifacts of the different builds.
 * `--validate` - If specified, the specified image definition and configuration directory will be checked to ensure
   the build can proceed, however the image will not actually be built.
+
+> **_NOTE:_** When specifying packages for installation, you need to also pass the [`--privileged`](https://docs.podman.io/en/latest/markdown/podman-run.1.html#privileged) option as well. For more information on why this is needed, see the [Package resolution design](./docs/design/pkg-resolution.md#running-the-eib-container) documentation.
 
 ## Testing Images
 
