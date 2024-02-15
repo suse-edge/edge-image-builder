@@ -1,8 +1,8 @@
 package combustion
 
 import (
+	"bytes"
 	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -344,108 +344,51 @@ func TestGetDownloadedChartsNoDir(t *testing.T) {
 }
 
 func TestCreateHelmCommand(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "temp")
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, os.RemoveAll(tempDir))
-	}()
-	templateLogPath := filepath.Join(tempDir, "template.log")
-	templateLogFile, err := os.OpenFile(templateLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
-	require.NoError(t, err)
-
-	pullLogPath := filepath.Join(tempDir, "pull.log")
-	pullLogFile, err := os.OpenFile(pullLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
-	require.NoError(t, err)
-
-	repoLogPath := filepath.Join(tempDir, "repo.log")
-	repoLogFile, err := os.OpenFile(repoLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
-	require.NoError(t, err)
-
-	readOnlyLogPath := filepath.Join(tempDir, "read-only.log")
-	readOnlyLogFile, err := os.OpenFile(readOnlyLogPath, os.O_CREATE|os.O_RDONLY, fileio.NonExecutablePerms)
-	require.NoError(t, err)
-
-	var helmPath string
-	helmPath, err = exec.LookPath("helm")
+	helmPath, err := exec.LookPath("helm")
 	if err != nil {
 		require.ErrorContains(t, err, "exec: \"helm\": executable file not found in $PATH")
 		helmPath = "helm"
 	}
 
 	tests := []struct {
-		name            string
-		stdout          io.Writer
-		stderr          io.Writer
-		helmCommand     []string
-		helmTemplateDir string
-		expectedLog     string
-		expectedFile    string
-		expectedString  string
-		expectedError   string
+		name           string
+		helmCommand    []string
+		expectedString string
 	}{
 		{
 			name: "Helm Template Command",
 			helmCommand: []string{
 				helmPath, "template", "metallb", "repo-metallb/metallb", "-f", "values.yaml",
 			},
-			helmTemplateDir: tempDir,
-			expectedLog:     templateLogPath,
-			expectedString:  fmt.Sprintf("command: %s template metallb repo-metallb/metallb -f values.yaml\n", helmPath),
-			stdout:          templateLogFile,
-			stderr:          templateLogFile,
+			expectedString: fmt.Sprintf("command: %s template metallb repo-metallb/metallb -f values.yaml\n", helmPath),
 		},
 		{
 			name: "Helm Pull Command",
 			helmCommand: []string{
 				helmPath, "pull", "oci://registry-1.docker.io/bitnamicharts/apache", "--version", "10.5.2",
 			},
-			helmTemplateDir: tempDir,
-			expectedLog:     pullLogPath,
-			expectedString:  fmt.Sprintf("command: %s pull oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2\n", helmPath),
-			stdout:          pullLogFile,
-			stderr:          pullLogFile,
+			expectedString: fmt.Sprintf("command: %s pull oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2\n", helmPath),
 		},
 		{
 			name: "Helm Repo Add Command",
 			helmCommand: []string{
 				helmPath, "repo", "add", "repo-metallb", "https://suse-edge.github.io/charts",
 			},
-			helmTemplateDir: tempDir,
-			expectedLog:     repoLogPath,
-			expectedString:  fmt.Sprintf("command: %s repo add repo-metallb https://suse-edge.github.io/charts\n", helmPath),
-			stdout:          repoLogFile,
-			stderr:          repoLogFile,
-		},
-		{
-			name: "Template Read Only Log File",
-			helmCommand: []string{
-				helmPath, "template", "metallb", "repo-metallb/metallb", "-f", "values.yaml",
-			},
-			helmTemplateDir: tempDir,
-			stdout:          readOnlyLogFile,
-			stderr:          readOnlyLogFile,
-			expectedError:   fmt.Sprintf("writing command prefix to log file: write %s: bad file descriptor", filepath.Join(tempDir, "read-only.log")),
+			expectedString: fmt.Sprintf("command: %s repo add repo-metallb https://suse-edge.github.io/charts\n", helmPath),
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			var cmd *exec.Cmd
-			cmd, err = createHelmCommand(test.helmCommand, test.stdout, test.stderr)
-			if test.expectedError == "" {
-				require.NoError(t, err)
-				assert.Equal(t, strings.Join(test.helmCommand, " "), cmd.String())
+			var stdout, stderr bytes.Buffer
 
-				assert.FileExists(t, test.expectedLog)
-				var content []byte
-				content, err = os.ReadFile(test.expectedLog)
-				require.NoError(t, err)
+			cmd, err := createHelmCommand(test.helmCommand, &stdout, &stderr)
+			require.NoError(t, err)
 
-				actualContent := string(content)
-				assert.Equal(t, test.expectedString, actualContent)
-			} else {
-				require.ErrorContains(t, err, test.expectedError)
-			}
+			assert.Equal(t, strings.Join(test.helmCommand, " "), cmd.String())
+			assert.Equal(t, &stdout, cmd.Stdout)
+			assert.Equal(t, &stderr, cmd.Stderr)
+			assert.Equal(t, test.expectedString, stdout.String())
 		})
 	}
 }
