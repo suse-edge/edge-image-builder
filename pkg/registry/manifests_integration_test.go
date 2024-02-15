@@ -51,8 +51,7 @@ func TestGetAllImages(t *testing.T) {
 			Name: "custom-api:1.2.3",
 		},
 		{
-			Name:           "quay.io/podman/hello",
-			SupplyChainKey: "sample-key",
+			Name: "quay.io/podman/hello",
 		},
 		{
 			Name: "mysql:5.7",
@@ -92,8 +91,7 @@ func TestGetAllImages(t *testing.T) {
 
 	embeddedContainerImages := []image.ContainerImage{
 		{
-			Name:           "quay.io/podman/hello",
-			SupplyChainKey: "sample-key",
+			Name: "quay.io/podman/hello",
 		},
 	}
 	manifestURLs := []string{"https://k8s.io/examples/application/nginx-app.yaml"}

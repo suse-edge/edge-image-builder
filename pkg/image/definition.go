@@ -127,8 +127,7 @@ type EmbeddedArtifactRegistry struct {
 }
 
 type ContainerImage struct {
-	Name           string `yaml:"name"`
-	SupplyChainKey string `yaml:"supplyChainKey"`
+	Name string `yaml:"name"`
 }
 
 type Kubernetes struct {

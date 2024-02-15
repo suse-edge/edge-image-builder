@@ -53,14 +53,13 @@ func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs [
 	}
 
 	for _, containerImage := range embeddedContainerImages {
-		extractedImagesSet[containerImage.Name] = containerImage.SupplyChainKey
+		extractedImagesSet[containerImage.Name] = ""
 	}
 
 	allImages := make([]image.ContainerImage, 0, len(extractedImagesSet))
-	for imageName, supplyChainKey := range extractedImagesSet {
+	for imageName := range extractedImagesSet {
 		containerImage := image.ContainerImage{
-			Name:           imageName,
-			SupplyChainKey: supplyChainKey,
+			Name: imageName,
 		}
 		allImages = append(allImages, containerImage)
 	}

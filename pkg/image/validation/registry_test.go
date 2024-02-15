@@ -19,8 +19,7 @@ func TestValidateEmbeddedArtifactRegistry(t *testing.T) {
 			Registry: image.EmbeddedArtifactRegistry{
 				ContainerImages: []image.ContainerImage{
 					{
-						Name:           "foo",
-						SupplyChainKey: "key",
+						Name: "foo",
 					},
 				},
 			},

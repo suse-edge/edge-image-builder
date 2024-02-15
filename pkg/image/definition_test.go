@@ -128,8 +128,7 @@ func TestParse(t *testing.T) {
 	// EmbeddedArtifactRegistry
 	embeddedArtifactRegistry := definition.EmbeddedArtifactRegistry
 	assert.Equal(t, "hello-world:latest", embeddedArtifactRegistry.ContainerImages[0].Name)
-	assert.Equal(t, "rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1", embeddedArtifactRegistry.ContainerImages[1].Name)
-	assert.Equal(t, "carbide-key.pub", embeddedArtifactRegistry.ContainerImages[1].SupplyChainKey)
+	assert.Equal(t, "ghcr.io/fluxcd/flux-cli@sha256:02aa820c3a9c57d67208afcfc4bce9661658c17d15940aea369da259d2b976dd", embeddedArtifactRegistry.ContainerImages[1].Name)
 
 	// Kubernetes
 	kubernetes := definition.Kubernetes

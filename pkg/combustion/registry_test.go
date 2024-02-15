@@ -24,8 +24,7 @@ func TestWriteHaulerManifestValidManifest(t *testing.T) {
 					Name: "hello-world:latest",
 				},
 				{
-					Name:           "rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1",
-					SupplyChainKey: "carbide-key.pub",
+					Name: "ghcr.io/fluxcd/flux-cli@sha256:02aa820c3a9c57d67208afcfc4bce9661658c17d15940aea369da259d2b976dd",
 				},
 			},
 		},
@@ -45,7 +44,7 @@ func TestWriteHaulerManifestValidManifest(t *testing.T) {
 	require.NoError(t, err)
 	found := string(foundBytes)
 	assert.Contains(t, found, "- name: hello-world:latest")
-	assert.Contains(t, found, "- name: rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1")
+	assert.Contains(t, found, "- name: ghcr.io/fluxcd/flux-cli@sha256:02aa820c3a9c57d67208afcfc4bce9661658c17d15940aea369da259d2b976dd")
 }
 
 func TestCreateRegistryCommand(t *testing.T) {
@@ -145,8 +144,7 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 					EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{
 						ContainerImages: []image.ContainerImage{
 							{
-								Name:           "nginx",
-								SupplyChainKey: "sample-key",
+								Name: "nginx",
 							},
 						},
 					},
@@ -168,8 +166,7 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 					EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{
 						ContainerImages: []image.ContainerImage{
 							{
-								Name:           "nginx",
-								SupplyChainKey: "sample-key",
+								Name: "nginx",
 							},
 						},
 					},
@@ -248,8 +245,7 @@ func TestGetImageHostnames(t *testing.T) {
 			Name: "quay.io/podman/hello",
 		},
 		{
-			Name:           "rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1",
-			SupplyChainKey: "carbide-key.pub",
+			Name: "rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1",
 		},
 	}
 	expectedHostnames := []string{"quay.io", "rgcrprod.azurecr.us"}
