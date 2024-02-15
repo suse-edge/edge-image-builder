@@ -6,7 +6,4 @@ spec:
   images:
     {{- range .ContainerImages }}
     - name: {{ .Name }}
-      {{- if .SupplyChainKey }}
-      key: {{ .SupplyChainKey }}
-      {{- end }}
     {{- end }}
