@@ -428,18 +428,6 @@ func TestCreateHelmCommand(t *testing.T) {
 	readOnlyLogFile, err := os.OpenFile(readOnlyLogPath, os.O_CREATE|os.O_RDONLY, fileio.NonExecutablePerms)
 	require.NoError(t, err)
 
-	logFiles := []*os.File{
-		templateLogFile,
-		pullLogFile,
-		repoLogFile,
-	}
-
-	invalidLogFiles := []*os.File{
-		readOnlyLogFile,
-		readOnlyLogFile,
-		readOnlyLogFile,
-	}
-
 	var helmPath string
 	helmPath, err = exec.LookPath("helm")
 	if err != nil {
@@ -449,7 +437,9 @@ func TestCreateHelmCommand(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		logFiles        []*os.File
+		templateLogFile *os.File
+		pullLogFile     *os.File
+		repoLogFile     *os.File
 		helmCommand     []string
 		helmTemplateDir string
 		expectedLog     string
@@ -466,7 +456,9 @@ func TestCreateHelmCommand(t *testing.T) {
 			expectedFile:    filepath.Join(tempDir, helmTemplateFilename),
 			expectedLog:     templateLogPath,
 			expectedString:  fmt.Sprintf("command: %s template metallb repo-metallb/metallb -f values.yaml\n", helmPath),
-			logFiles:        logFiles,
+			templateLogFile: templateLogFile,
+			pullLogFile:     pullLogFile,
+			repoLogFile:     repoLogFile,
 		},
 		{
 			name: "Helm Pull Command",
@@ -477,7 +469,9 @@ func TestCreateHelmCommand(t *testing.T) {
 			expectedFile:    filepath.Join(tempDir, helmTemplateFilename),
 			expectedLog:     pullLogPath,
 			expectedString:  fmt.Sprintf("command: %s pull oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2\n", helmPath),
-			logFiles:        logFiles,
+			templateLogFile: templateLogFile,
+			pullLogFile:     pullLogFile,
+			repoLogFile:     repoLogFile,
 		},
 		{
 			name: "Helm Repo Add Command",
@@ -488,7 +482,9 @@ func TestCreateHelmCommand(t *testing.T) {
 			expectedFile:    filepath.Join(tempDir, helmTemplateFilename),
 			expectedLog:     repoLogPath,
 			expectedString:  fmt.Sprintf("command: %s repo add repo-metallb https://suse-edge.github.io/charts\n", helmPath),
-			logFiles:        logFiles,
+			templateLogFile: templateLogFile,
+			pullLogFile:     pullLogFile,
+			repoLogFile:     repoLogFile,
 		},
 		{
 			name: "Invalid Helm Command",
@@ -504,7 +500,9 @@ func TestCreateHelmCommand(t *testing.T) {
 				helmPath, "template", "metallb", "repo-metallb/metallb", "-f", "values.yaml",
 			},
 			helmTemplateDir: tempDir,
-			logFiles:        invalidLogFiles,
+			templateLogFile: readOnlyLogFile,
+			pullLogFile:     readOnlyLogFile,
+			repoLogFile:     readOnlyLogFile,
 			expectedError:   fmt.Sprintf("writing string to log file: writing 'command: %[2]s template metallb repo-metallb/metallb -f values.yaml' to log file '%[1]s': write %[1]s: bad file descriptor", filepath.Join(tempDir, "read-only.log"), helmPath),
 		},
 		{
@@ -513,7 +511,9 @@ func TestCreateHelmCommand(t *testing.T) {
 				helmPath, "pull", "oci://registry-1.docker.io/bitnamicharts/apache", "--version", "10.5.2",
 			},
 			helmTemplateDir: tempDir,
-			logFiles:        invalidLogFiles,
+			templateLogFile: readOnlyLogFile,
+			pullLogFile:     readOnlyLogFile,
+			repoLogFile:     readOnlyLogFile,
 			expectedError:   fmt.Sprintf("writing string to log file: writing 'command: %[2]s pull oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2' to log file '%[1]s': write %[1]s: bad file descriptor", filepath.Join(tempDir, "read-only.log"), helmPath),
 		},
 		{
@@ -522,7 +522,9 @@ func TestCreateHelmCommand(t *testing.T) {
 				helmPath, "repo", "add", "repo-metallb", "https://suse-edge.github.io/charts",
 			},
 			helmTemplateDir: tempDir,
-			logFiles:        invalidLogFiles,
+			templateLogFile: readOnlyLogFile,
+			pullLogFile:     readOnlyLogFile,
+			repoLogFile:     readOnlyLogFile,
 			expectedError:   fmt.Sprintf("writing string to log file: writing 'command: %[2]s repo add repo-metallb https://suse-edge.github.io/charts' to log file '%[1]s': write %[1]s: bad file descriptor", filepath.Join(tempDir, "read-only.log"), helmPath),
 		},
 		{
@@ -531,7 +533,9 @@ func TestCreateHelmCommand(t *testing.T) {
 				helmPath, "repo", "add", "repo-metallb", "https://suse-edge.github.io/charts",
 			},
 			helmTemplateDir: "invalid",
-			logFiles:        invalidLogFiles,
+			templateLogFile: readOnlyLogFile,
+			pullLogFile:     readOnlyLogFile,
+			repoLogFile:     readOnlyLogFile,
 			expectedError:   "error opening (for append) helm template file: open invalid/helm.yaml: no such file or directory",
 		},
 	}
@@ -539,7 +543,7 @@ func TestCreateHelmCommand(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var cmd *exec.Cmd
-			cmd, err = createHelmCommand(test.helmTemplateDir, test.helmCommand, test.logFiles)
+			cmd, err = createHelmCommand(test.helmTemplateDir, test.helmCommand, test.templateLogFile, test.pullLogFile, test.repoLogFile)
 			if test.expectedError == "" {
 				require.NoError(t, err)
 				assert.Equal(t, strings.Join(test.helmCommand, " "), cmd.String())
