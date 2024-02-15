@@ -13,6 +13,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/cache"
 	"github.com/suse-edge/edge-image-builder/pkg/cli/cmd"
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
+	"github.com/suse-edge/edge-image-builder/pkg/helm"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/image/validation"
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
@@ -294,6 +295,10 @@ func bootstrapDependencyServices(ctx *image.Context, rootDir string) bool {
 		rpmResolver := resolver.New(ctx.BuildDir, p, baseBuilder)
 		ctx.RPMResolver = rpmResolver
 		ctx.RPMRepoCreator = rpm.NewRepoCreator(ctx.BuildDir)
+	}
+
+	if combustion.IsEmbeddedArtifactRegistryConfigured(ctx) {
+		ctx.Helm = helm.New(ctx.BuildDir)
 	}
 
 	if ctx.ImageDefinition.Kubernetes.Version != "" {

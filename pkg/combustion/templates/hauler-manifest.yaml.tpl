@@ -5,5 +5,5 @@ metadata:
 spec:
   images:
     {{- range .ContainerImages }}
-    - name: {{ .Name }}
+    - name: {{ . }}
     {{- end }}

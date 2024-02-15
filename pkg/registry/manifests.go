@@ -10,74 +10,51 @@ import (
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/http"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
 
-func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs []string, localManifestSrcDir string, helmManifestSrcDir string, helmTemplatePath string, manifestDownloadDest string) ([]image.ContainerImage, error) {
-	var combinedManifestPaths []string
-	var extractedImagesSet = make(map[string]string)
-
-	if helmTemplatePath != "" {
-		combinedManifestPaths = append(combinedManifestPaths, helmTemplatePath)
-	}
+func ManifestImages(manifestURLs []string, manifestsDir string) ([]string, error) {
+	var manifestPaths []string
 
 	if len(manifestURLs) != 0 {
-		if manifestDownloadDest == "" {
-			return nil, fmt.Errorf("manifest download destination directory not defined")
-		}
-
-		downloadedManifestPaths, err := DownloadManifests(manifestURLs, manifestDownloadDest)
+		paths, err := DownloadManifests(manifestURLs, os.TempDir())
 		if err != nil {
-			return nil, fmt.Errorf("error downloading manifests: %w", err)
+			return nil, fmt.Errorf("downloading manifests: %w", err)
 		}
 
-		combinedManifestPaths = append(combinedManifestPaths, downloadedManifestPaths...)
+		manifestPaths = append(manifestPaths, paths...)
 	}
 
-	if localManifestSrcDir != "" {
-		localManifestPaths, err := getManifestPaths(localManifestSrcDir)
+	if manifestsDir != "" {
+		paths, err := getManifestPaths(manifestsDir)
 		if err != nil {
-			return nil, fmt.Errorf("error getting local manifest paths: %w", err)
+			return nil, fmt.Errorf("getting local manifest paths: %w", err)
 		}
 
-		combinedManifestPaths = append(combinedManifestPaths, localManifestPaths...)
+		manifestPaths = append(manifestPaths, paths...)
 	}
 
-	if helmManifestSrcDir != "" {
-		helmManifestPaths, err := getManifestPaths(helmManifestSrcDir)
-		if err != nil {
-			return nil, fmt.Errorf("error getting helm manifest paths: %w", err)
-		}
+	var imageSet = make(map[string]bool)
 
-		combinedManifestPaths = append(combinedManifestPaths, helmManifestPaths...)
-	}
-
-	for _, manifestPath := range combinedManifestPaths {
-		manifests, err := readManifest(manifestPath)
+	for _, path := range manifestPaths {
+		manifests, err := readManifest(path)
 		if err != nil {
-			return nil, fmt.Errorf("error reading manifest: %w", err)
+			return nil, fmt.Errorf("reading manifest: %w", err)
 		}
 
 		for _, manifestData := range manifests {
-			storeManifestImageNames(manifestData, extractedImagesSet)
+			storeManifestImages(manifestData, imageSet)
 		}
 	}
 
-	for _, containerImage := range embeddedContainerImages {
-		extractedImagesSet[containerImage.Name] = ""
+	var images []string
+
+	for imageName := range imageSet {
+		images = append(images, imageName)
 	}
 
-	allImages := make([]image.ContainerImage, 0, len(extractedImagesSet))
-	for imageName := range extractedImagesSet {
-		containerImage := image.ContainerImage{
-			Name: imageName,
-		}
-		allImages = append(allImages, containerImage)
-	}
-
-	return allImages, nil
+	return images, nil
 }
 
 func readManifest(manifestPath string) ([]map[string]any, error) {
@@ -107,7 +84,7 @@ func readManifest(manifestPath string) ([]map[string]any, error) {
 	return manifests, nil
 }
 
-func storeManifestImageNames(data map[string]any, imageSet map[string]string) {
+func storeManifestImages(resource map[string]any, images map[string]bool) {
 	var findImages func(data any)
 
 	findImages = func(data any) {
@@ -116,7 +93,7 @@ func storeManifestImageNames(data map[string]any, imageSet map[string]string) {
 			for k, v := range t {
 				if k == "image" {
 					if imageName, ok := v.(string); ok {
-						imageSet[imageName] = ""
+						images[imageName] = true
 					}
 				}
 				findImages(v)
@@ -128,7 +105,7 @@ func storeManifestImageNames(data map[string]any, imageSet map[string]string) {
 		}
 	}
 
-	findImages(data)
+	findImages(resource)
 }
 
 func getManifestPaths(src string) ([]string, error) {
