@@ -127,6 +127,23 @@ Additionally, the appropriate *venv-salt-minion* RPM package must be supplied in
 installed at boot time prior to SUSE Manager registration taking place. This RPM can usually be found on the
 SUSE Manager host itself at `https://<suma-host>/pub/repositories/slemicro/5/5/bootstrap/x86_64/` as an example.
 
+## Embedded Artifact Registry
+
+The embedded artifact registry configuration section is entirely optional. This is an internal registry that hosts all container images manually specified, as well as all container images automatically detected within user provided Helm charts and manifests.
+
+The embedded artifact registry will be automatically deployed if images are detected within user provided manifests or Helm charts, even if it is not manually configured.
+
+The following describes the possible options for the embedded artifact registry section:
+```yaml
+embeddedArtifactRegistry:
+  images:
+    - name: hello-world:latest
+    - name: ghcr.io/fluxcd/flux-cli@sha256:02aa820c3a9c57d67208afcfc4bce9661658c17d15940aea369da259d2b976dd
+```
+
+* `images` - Configuration in this section only applies to container images.
+  * `name` - required; specifies the name, with a tag or digest, of a container image to be pulled and stored.
+
 ## Image Configuration Directory
 
 The Image Configuration Directory contains all the files necessary for EIB to build an image. As the project matures,
@@ -187,3 +204,23 @@ as follows:
 Additionally, the following RPMs must be included in the RPMs directory as described above:
 * `elemental-register`
 * `elemental-system-agent`
+
+### Embedded Artifact Registry
+
+The embedded artifact registry configuration section is entirely optional. This is an internal registry that hosts all container images manually specified, as well as all container images automatically detected within user provided helm charts and manifests.
+
+The embedded artifact registry will be automatically deployed if images are detected within user provided manifests or helm charts, even if it is not manually configured.
+
+The following describes the possible options for the embedded artifact registry section:
+```yaml
+embeddedArtifactRegistry:
+  images:
+    - name: hello-world:latest
+    - name: rgcrprod.azurecr.us/longhornio/longhorn-ui:v1.5.1
+      supplyChainKey: carbide-key.pub
+    - name: ghcr.io/fluxcd/flux-cli@sha256:02aa820c3a9c57d67208afcfc4bce9661658c17d15940aea369da259d2b976dd
+```
+
+* `images` - Configuration in this section only applies to container images.
+  * `name` - required; specifies the name, tag, and/or digest of a container image to be pulled and stored.
+  * `supplyChainKey` - optional; allows the use of a `carbide` key for accessing artifacts from the `Carbide Secure Registry`. Key is to be kept in the `/TBD` directory with the same name as the `supplyChainKey` value.
