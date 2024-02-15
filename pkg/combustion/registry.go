@@ -174,8 +174,6 @@ func writeRegistryScript(ctx *image.Context) (string, error) {
 		RegistryPort        string
 		RegistryDir         string
 		EmbeddedRegistryTar string
-		ChartsDir           string
-		K8sType             string
 	}{
 		RegistryPort:        registryPort,
 		RegistryDir:         registryDir,
@@ -389,14 +387,6 @@ func writeUpdatedHelmManifests(k8sManifestsDir string, chartTars []string, manif
 		if err = os.WriteFile(destFilePath, b, fileio.NonExecutablePerms); err != nil {
 			return fmt.Errorf("writing manifest file to combustion destination: %w", err)
 		}
-	}
-
-	return nil
-}
-
-func writeStringToLog(s string, logFile *os.File) error {
-	if _, err := logFile.WriteString(s + "\n"); err != nil {
-		return fmt.Errorf("writing '%s' to log file '%s': %w", s, logFile.Name(), err)
 	}
 
 	return nil
