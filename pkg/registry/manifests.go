@@ -15,9 +15,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs []string, localManifestSrcDir string, manifestDownloadDest string) ([]image.ContainerImage, error) {
+func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs []string, localManifestSrcDir string, helmManifestSrcDir string, helmTemplatePath string, manifestDownloadDest string) ([]image.ContainerImage, error) {
 	var combinedManifestPaths []string
 	var extractedImagesSet = make(map[string]string)
+
+	if helmTemplatePath != "" {
+		combinedManifestPaths = append(combinedManifestPaths, helmTemplatePath)
+	}
 
 	if len(manifestURLs) != 0 {
 		if manifestDownloadDest == "" {
@@ -33,7 +37,7 @@ func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs [
 	}
 
 	if localManifestSrcDir != "" {
-		localManifestPaths, err := getLocalManifestPaths(localManifestSrcDir)
+		localManifestPaths, err := getManifestPaths(localManifestSrcDir)
 		if err != nil {
 			return nil, fmt.Errorf("error getting local manifest paths: %w", err)
 		}
@@ -41,10 +45,19 @@ func GetAllImages(embeddedContainerImages []image.ContainerImage, manifestURLs [
 		combinedManifestPaths = append(combinedManifestPaths, localManifestPaths...)
 	}
 
+	if helmManifestSrcDir != "" {
+		helmManifestPaths, err := getManifestPaths(helmManifestSrcDir)
+		if err != nil {
+			return nil, fmt.Errorf("error getting helm manifest paths: %w", err)
+		}
+
+		combinedManifestPaths = append(combinedManifestPaths, helmManifestPaths...)
+	}
+
 	for _, manifestPath := range combinedManifestPaths {
 		manifests, err := readManifest(manifestPath)
 		if err != nil {
-			return nil, fmt.Errorf("error reading manifest %w", err)
+			return nil, fmt.Errorf("error reading manifest: %w", err)
 		}
 
 		for _, manifestData := range manifests {
@@ -118,7 +131,7 @@ func storeManifestImageNames(data map[string]any, imageSet map[string]string) {
 	findImages(data)
 }
 
-func getLocalManifestPaths(src string) ([]string, error) {
+func getManifestPaths(src string) ([]string, error) {
 	if src == "" {
 		return nil, fmt.Errorf("manifest source directory not defined")
 	}

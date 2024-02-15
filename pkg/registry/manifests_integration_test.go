@@ -5,7 +5,6 @@ package registry
 import (
 	"os"
 	"path/filepath"
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -68,10 +67,13 @@ func TestGetAllImages(t *testing.T) {
 		{
 			Name: "nginx:1.14.2",
 		},
+		{
+			Name: "docker.io/bitnami/apache:2.4.58-debian-11-r10",
+		},
+		{
+			Name: "registry.suse.com/bci/bci-micro:15.5",
+		},
 	}
-	sort.Slice(expectedContainerImages, func(i, j int) bool {
-		return expectedContainerImages[i].Name < expectedContainerImages[j].Name
-	})
 
 	manifestDownloadDest := "downloaded-manifests"
 	require.NoError(t, os.Mkdir(manifestDownloadDest, 0o755))
@@ -96,13 +98,14 @@ func TestGetAllImages(t *testing.T) {
 	}
 	manifestURLs := []string{"https://k8s.io/examples/application/nginx-app.yaml"}
 
+	helmTemplatePath := filepath.Join("testdata", "helm", "helm-template.yaml")
+
+	helmManifestDir := filepath.Join("testdata", "helm", "valid")
+
 	// Test
-	containerImages, err := GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, manifestDownloadDest)
+	containerImages, err := GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, helmManifestDir, helmTemplatePath, manifestDownloadDest)
 
 	// Verify
 	require.NoError(t, err)
-	sort.Slice(containerImages, func(i, j int) bool {
-		return containerImages[i].Name < containerImages[j].Name
-	})
-	assert.Equal(t, expectedContainerImages, containerImages)
+	assert.ElementsMatch(t, expectedContainerImages, containerImages)
 }

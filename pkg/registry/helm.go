@@ -121,7 +121,7 @@ func GenerateHelmCommands(localHelmSrcDir string, destDir string) (helmCommands 
 		return nil, nil, fmt.Errorf("destination directory must be specified")
 	}
 
-	helmManifestPaths, err := getLocalManifestPaths(localHelmSrcDir)
+	helmManifestPaths, err := getManifestPaths(localHelmSrcDir)
 	if err != nil {
 		return nil, nil, fmt.Errorf("getting helm manifest paths: %w", err)
 	}
@@ -153,7 +153,7 @@ func GenerateHelmCommands(localHelmSrcDir string, destDir string) (helmCommands 
 				templateCommand := helmTemplateCommand(crd, repository, valuesPath, crd.Spec.Chart)
 				pullCommand := helmPullCommand(crd.Spec.Repo, crd.Spec.Chart, crd.Spec.Version, destDir)
 				helmCommands = append(helmCommands, pullCommand, templateCommand)
-				helmChartPaths = append(helmChartPaths, fmt.Sprintf("%s-*.tgz", crd.Spec.Chart))
+				helmChartPaths = append(helmChartPaths, filepath.Join(destDir, fmt.Sprintf("%s-*.tgz", crd.Spec.Chart)))
 			} else {
 				decodedTar, err := base64.StdEncoding.DecodeString(crd.Spec.ChartContent)
 				if err != nil {
@@ -295,7 +295,7 @@ func UpdateHelmManifests(localHelmSrcDir string, chartTarsPath []string) ([][]ma
 		return nil, nil
 	}
 
-	helmManifestPaths, err := getLocalManifestPaths(localHelmSrcDir)
+	helmManifestPaths, err := getManifestPaths(localHelmSrcDir)
 	if err != nil {
 		return nil, fmt.Errorf("getting helm manifest paths: %w", err)
 	}
