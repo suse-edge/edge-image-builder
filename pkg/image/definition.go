@@ -1,6 +1,7 @@
 package image
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
@@ -150,7 +151,10 @@ type Manifests struct {
 func ParseDefinition(data []byte) (*Definition, error) {
 	var definition Definition
 
-	if err := yaml.Unmarshal(data, &definition); err != nil {
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
+
+	if err := decoder.Decode(&definition); err != nil {
 		return nil, fmt.Errorf("could not parse the image definition: %w", err)
 	}
 	definition.Image.ImageType = strings.ToLower(definition.Image.ImageType)

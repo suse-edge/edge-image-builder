@@ -155,7 +155,7 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "https://k8s.io/examples/application/nginx-app.yaml", kubernetes.Manifests.URLs[0])
 }
 
-func TestParseBadConfig(t *testing.T) {
+func TestParseBadConfig_InvalidFormat(t *testing.T) {
 	// Setup
 	badData := []byte("Not actually YAML")
 
@@ -165,6 +165,25 @@ func TestParseBadConfig(t *testing.T) {
 	// Verify
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "could not parse the image definition")
+	assert.ErrorContains(t, err, "line 1: cannot unmarshal !!str")
+}
+
+func TestParseBadConfig_UnknownFields(t *testing.T) {
+	badConfig := `
+apiVersion: 1.0
+image:
+  type: iso
+operatingSystem:
+  time:
+    zone: Europe/London
+`
+
+	_, err := ParseDefinition([]byte(badConfig))
+
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "could not parse the image definition")
+	assert.ErrorContains(t, err, "line 4: field type not found in type image.Image")
+	assert.ErrorContains(t, err, "line 7: field zone not found in type image.Time")
 }
 
 func TestArch_Short(t *testing.T) {
