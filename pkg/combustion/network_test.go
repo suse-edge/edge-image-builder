@@ -64,27 +64,27 @@ func TestConfigureNetwork(t *testing.T) {
 		expectedErr           string
 	}{
 		{
-			name: "Generating config fails",
-			configGenerator: mockNetworkConfigGenerator{
-				generateNetworkConfigFunc: func(configDir, outputDir string, outputWriter io.Writer) error {
-					return fmt.Errorf("no config for you")
-				},
-			},
-			expectedErr: "generating network config: no config for you",
-		},
-		{
 			name: "Installing configurator fails",
-			configGenerator: mockNetworkConfigGenerator{
-				generateNetworkConfigFunc: func(configDir, outputDir string, outputWriter io.Writer) error {
-					return nil
-				},
-			},
 			configuratorInstaller: mockNetworkConfiguratorInstaller{
 				installConfiguratorFunc: func(sourcePath, installPath string) error {
 					return fmt.Errorf("no installer for you")
 				},
 			},
 			expectedErr: "installing configurator: no installer for you",
+		},
+		{
+			name: "Generating config fails",
+			configGenerator: mockNetworkConfigGenerator{
+				generateNetworkConfigFunc: func(configDir, outputDir string, outputWriter io.Writer) error {
+					return fmt.Errorf("no config for you")
+				},
+			},
+			configuratorInstaller: mockNetworkConfiguratorInstaller{
+				installConfiguratorFunc: func(sourcePath, installPath string) error {
+					return nil
+				},
+			},
+			expectedErr: "generating network config: no config for you",
 		},
 		{
 			name: "Successful configuration",
@@ -105,7 +105,7 @@ func TestConfigureNetwork(t *testing.T) {
 	defer teardown()
 
 	networkDir := filepath.Join(ctx.ImageConfigDir, networkConfigDir)
-	require.NoError(t, os.Mkdir(networkDir, 0o600))
+	require.NoError(t, os.Mkdir(networkDir, 0o700))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -128,14 +128,43 @@ func TestConfigureNetwork(t *testing.T) {
 	}
 }
 
+func TestConfigureNetwork_CustomScript(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.NetworkConfiguratorInstaller = mockNetworkConfiguratorInstaller{
+		installConfiguratorFunc: func(sourcePath, installPath string) error {
+			return nil
+		},
+	}
+
+	networkDir := filepath.Join(ctx.ImageConfigDir, networkConfigDir)
+	require.NoError(t, os.Mkdir(networkDir, 0o700))
+
+	customScriptPath := filepath.Join(networkDir, networkCustomScriptName)
+	customScriptContents := []byte("configure all the nics!")
+
+	require.NoError(t, os.WriteFile(customScriptPath, customScriptContents, 0o600))
+
+	scripts, err := configureNetwork(ctx)
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{networkConfigScriptName}, scripts)
+
+	scriptPath := filepath.Join(ctx.CombustionDir, networkConfigScriptName)
+	contents, err := os.ReadFile(scriptPath)
+	require.NoError(t, err)
+
+	assert.Equal(t, customScriptContents, contents)
+}
+
 func TestWriteNetworkConfigurationScript(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
-	script, err := writeNetworkConfigurationScript(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, networkConfigScriptName, script)
+	scriptPath := filepath.Join(ctx.CombustionDir, "script.sh")
 
-	scriptPath := filepath.Join(ctx.CombustionDir, script)
+	require.NoError(t, writeNetworkConfigurationScript(scriptPath))
+
 	assertNetworkConfigScript(t, scriptPath)
 }
