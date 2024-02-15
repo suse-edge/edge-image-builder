@@ -9,7 +9,7 @@ TBD
 There are three types of changes that may be made to the definition schema between releases:
 * New optional additions
 * New required additions that would break existing definitions
-* Changes to existing fields (renaming, changing types)
+* Changes to existing fields (renaming, changing types, removing a field)
 
 The definition schema versioning will adhere to the following rules:
 
