@@ -2,6 +2,7 @@ package combustion
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -437,9 +438,8 @@ func TestCreateHelmCommand(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		templateLogFile *os.File
-		pullLogFile     *os.File
-		repoLogFile     *os.File
+		stdout          io.Writer
+		stderr          io.Writer
 		helmCommand     []string
 		helmTemplateDir string
 		expectedLog     string
@@ -453,12 +453,10 @@ func TestCreateHelmCommand(t *testing.T) {
 				helmPath, "template", "metallb", "repo-metallb/metallb", "-f", "values.yaml",
 			},
 			helmTemplateDir: tempDir,
-			expectedFile:    filepath.Join(tempDir, helmTemplateFilename),
 			expectedLog:     templateLogPath,
 			expectedString:  fmt.Sprintf("command: %s template metallb repo-metallb/metallb -f values.yaml\n", helmPath),
-			templateLogFile: templateLogFile,
-			pullLogFile:     pullLogFile,
-			repoLogFile:     repoLogFile,
+			stdout:          templateLogFile,
+			stderr:          templateLogFile,
 		},
 		{
 			name: "Helm Pull Command",
@@ -466,12 +464,10 @@ func TestCreateHelmCommand(t *testing.T) {
 				helmPath, "pull", "oci://registry-1.docker.io/bitnamicharts/apache", "--version", "10.5.2",
 			},
 			helmTemplateDir: tempDir,
-			expectedFile:    filepath.Join(tempDir, helmTemplateFilename),
 			expectedLog:     pullLogPath,
 			expectedString:  fmt.Sprintf("command: %s pull oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2\n", helmPath),
-			templateLogFile: templateLogFile,
-			pullLogFile:     pullLogFile,
-			repoLogFile:     repoLogFile,
+			stdout:          pullLogFile,
+			stderr:          pullLogFile,
 		},
 		{
 			name: "Helm Repo Add Command",
@@ -479,20 +475,10 @@ func TestCreateHelmCommand(t *testing.T) {
 				helmPath, "repo", "add", "repo-metallb", "https://suse-edge.github.io/charts",
 			},
 			helmTemplateDir: tempDir,
-			expectedFile:    filepath.Join(tempDir, helmTemplateFilename),
 			expectedLog:     repoLogPath,
 			expectedString:  fmt.Sprintf("command: %s repo add repo-metallb https://suse-edge.github.io/charts\n", helmPath),
-			templateLogFile: templateLogFile,
-			pullLogFile:     pullLogFile,
-			repoLogFile:     repoLogFile,
-		},
-		{
-			name: "Invalid Helm Command",
-			helmCommand: []string{
-				"helm", "invalid",
-			},
-			helmTemplateDir: tempDir,
-			expectedError:   "invalid helm command: 'invalid', must be 'pull', 'repo', or 'template'",
+			stdout:          repoLogFile,
+			stderr:          repoLogFile,
 		},
 		{
 			name: "Template Read Only Log File",
@@ -500,54 +486,19 @@ func TestCreateHelmCommand(t *testing.T) {
 				helmPath, "template", "metallb", "repo-metallb/metallb", "-f", "values.yaml",
 			},
 			helmTemplateDir: tempDir,
-			templateLogFile: readOnlyLogFile,
-			pullLogFile:     readOnlyLogFile,
-			repoLogFile:     readOnlyLogFile,
-			expectedError:   fmt.Sprintf("writing string to log file: writing 'command: %[2]s template metallb repo-metallb/metallb -f values.yaml' to log file '%[1]s': write %[1]s: bad file descriptor", filepath.Join(tempDir, "read-only.log"), helmPath),
-		},
-		{
-			name: "Pull Read Only Log File",
-			helmCommand: []string{
-				helmPath, "pull", "oci://registry-1.docker.io/bitnamicharts/apache", "--version", "10.5.2",
-			},
-			helmTemplateDir: tempDir,
-			templateLogFile: readOnlyLogFile,
-			pullLogFile:     readOnlyLogFile,
-			repoLogFile:     readOnlyLogFile,
-			expectedError:   fmt.Sprintf("writing string to log file: writing 'command: %[2]s pull oci://registry-1.docker.io/bitnamicharts/apache --version 10.5.2' to log file '%[1]s': write %[1]s: bad file descriptor", filepath.Join(tempDir, "read-only.log"), helmPath),
-		},
-		{
-			name: "Repo Add Read Only Log File",
-			helmCommand: []string{
-				helmPath, "repo", "add", "repo-metallb", "https://suse-edge.github.io/charts",
-			},
-			helmTemplateDir: tempDir,
-			templateLogFile: readOnlyLogFile,
-			pullLogFile:     readOnlyLogFile,
-			repoLogFile:     readOnlyLogFile,
-			expectedError:   fmt.Sprintf("writing string to log file: writing 'command: %[2]s repo add repo-metallb https://suse-edge.github.io/charts' to log file '%[1]s': write %[1]s: bad file descriptor", filepath.Join(tempDir, "read-only.log"), helmPath),
-		},
-		{
-			name: "Invalid Helm Template Dir",
-			helmCommand: []string{
-				helmPath, "repo", "add", "repo-metallb", "https://suse-edge.github.io/charts",
-			},
-			helmTemplateDir: "invalid",
-			templateLogFile: readOnlyLogFile,
-			pullLogFile:     readOnlyLogFile,
-			repoLogFile:     readOnlyLogFile,
-			expectedError:   "error opening (for append) helm template file: open invalid/helm.yaml: no such file or directory",
+			stdout:          readOnlyLogFile,
+			stderr:          readOnlyLogFile,
+			expectedError:   fmt.Sprintf("writing command prefix to log file: write %s: bad file descriptor", filepath.Join(tempDir, "read-only.log")),
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			var cmd *exec.Cmd
-			cmd, err = createHelmCommand(test.helmTemplateDir, test.helmCommand, test.templateLogFile, test.pullLogFile, test.repoLogFile)
+			cmd, err = createHelmCommand(test.helmCommand, test.stdout, test.stderr)
 			if test.expectedError == "" {
 				require.NoError(t, err)
 				assert.Equal(t, strings.Join(test.helmCommand, " "), cmd.String())
-				assert.FileExists(t, test.expectedFile)
 
 				assert.FileExists(t, test.expectedLog)
 				var content []byte
@@ -671,34 +622,35 @@ func TestWriteUpdatedHelmManifests(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			err = writeUpdatedHelmManifests(test.manifestDestDir, test.chartTars, test.helmManifestHolderDir, test.helmSrcDir)
-			if test.expectedError == "" {
-				require.NoError(t, err)
-
-				var manifestHolderDirContents []fs.DirEntry
-				manifestHolderDirContents, err = os.ReadDir(test.helmManifestHolderDir)
-				require.NoError(t, err)
-				actualManifests := dirEntriesToNames(manifestHolderDirContents)
-				assert.ElementsMatch(t, test.expectedManifests, actualManifests)
-
-				var manifestDestDirContents []fs.DirEntry
-				manifestDestDirContents, err = os.ReadDir(test.manifestDestDir)
-				require.NoError(t, err)
-				actualManifests = dirEntriesToNames(manifestDestDirContents)
-				assert.ElementsMatch(t, test.expectedManifests, actualManifests)
-
-				for _, manifestName := range actualManifests {
-					var manifestContent []byte
-					manifestContent, err = os.ReadFile(filepath.Join(test.manifestDestDir, manifestName))
-					require.NoError(t, err)
-
-					actualContent := string(manifestContent)
-					assert.Contains(t, actualContent, "chartContent:")
-					assert.Contains(t, actualContent, "HelmChart")
-					assert.NotContains(t, actualContent, "repo:")
-					assert.NotContains(t, actualContent, "chart:")
-				}
-			} else {
+			if test.expectedError != "" {
 				require.ErrorContains(t, err, test.expectedError)
+				return
+			}
+
+			require.NoError(t, err)
+
+			var manifestHolderDirContents []fs.DirEntry
+			manifestHolderDirContents, err = os.ReadDir(test.helmManifestHolderDir)
+			require.NoError(t, err)
+			actualManifests := dirEntriesToNames(manifestHolderDirContents)
+			assert.ElementsMatch(t, test.expectedManifests, actualManifests)
+
+			var manifestDestDirContents []fs.DirEntry
+			manifestDestDirContents, err = os.ReadDir(test.manifestDestDir)
+			require.NoError(t, err)
+			actualManifests = dirEntriesToNames(manifestDestDirContents)
+			assert.ElementsMatch(t, test.expectedManifests, actualManifests)
+
+			for _, manifestName := range actualManifests {
+				var manifestContent []byte
+				manifestContent, err = os.ReadFile(filepath.Join(test.manifestDestDir, manifestName))
+				require.NoError(t, err)
+
+				actualContent := string(manifestContent)
+				assert.Contains(t, actualContent, "chartContent:")
+				assert.Contains(t, actualContent, "HelmChart")
+				assert.NotContains(t, actualContent, "repo:")
+				assert.NotContains(t, actualContent, "chart:")
 			}
 		})
 	}
