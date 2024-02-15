@@ -192,11 +192,11 @@ func copyHaulerBinary(ctx *image.Context, haulerBinaryPath string) error {
 
 func writeRegistryScript(ctx *image.Context) (string, error) {
 	values := struct {
-		Port                string
+		RegistryPort        string
 		RegistryDir         string
 		EmbeddedRegistryTar string
 	}{
-		Port:                registryPort,
+		RegistryPort:        registryPort,
 		RegistryDir:         registryDir,
 		EmbeddedRegistryTar: registryTarName,
 	}
