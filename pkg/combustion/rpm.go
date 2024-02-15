@@ -37,13 +37,13 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 
 	packages := &ctx.ImageDefinition.OperatingSystem.Packages
 	if packages.NoGPGCheck {
-		log.Auditf("WARNING: Running EIB with disabled GPG validation is intended for development purposes only")
+		log.Audit("WARNING: Running EIB with disabled GPG validation is intended for development purposes only")
 		zap.S().Warn("Disabling GPG validation for the EIB RPM resolver")
 	}
 
 	// package list specified without either a sccRegistrationCode or an additionalRepos entry
 	if len(packages.PKGList) > 0 && (packages.RegCode == "" && len(packages.AdditionalRepos) == 0) {
-		log.Auditf("WARNING: No SUSE registration code or additional repositories provided, package resolution may fail if you're using SLE Micro as the base image")
+		log.Audit("WARNING: No SUSE registration code or additional repositories provided, package resolution may fail if you're using SLE Micro as the base image")
 		zap.S().Warn("Detected packages for installation with no sccRegistrationCode or additionalRepos provided")
 	}
 
