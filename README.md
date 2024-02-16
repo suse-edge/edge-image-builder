@@ -53,6 +53,16 @@ podman run --rm -it \
 --build-dir /eib/_build
 ```
 
+**NOTE:**
+Elemental builds require the ```--privileged``` flag. Please see here why this is required [Package resolution design](./docs/design/pkg-resolution.md#running-the-eib-container).
+```shell
+podman run --rm --privileged -it \
+-v $IMAGE_DIR:/eib eib:dev /bin/eib build \
+--config-file $CONFIG_FILE.yaml \
+--config-dir /eib \
+--build-dir /eib/_build
+```
+
 * `-v` - Used to mount a local directory (in this example, the value of $IMAGE_DIR) into the EIB container at `/eib`.
 * `--config-file` - Specifies which image configuration file to build. The path to this file will be relative to
   the image configuration directory. If the configuration file is in the root of the configuration directory, simply 
