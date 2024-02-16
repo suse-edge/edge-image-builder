@@ -98,9 +98,9 @@ func TestWriteRegistryScript(t *testing.T) {
 	assert.Contains(t, found, registryDir)
 	assert.Contains(t, found, registryPort)
 	assert.Contains(t, found, registryTarName)
-	assert.Contains(t, found, "mv hauler /usr/local/bin/hauler")
+	assert.Contains(t, found, "mv hauler /opt/hauler/hauler")
 	assert.Contains(t, found, "systemctl enable eib-embedded-registry.service")
-	assert.Contains(t, found, "ExecStartPre=/usr/local/bin/hauler store load")
+	assert.Contains(t, found, "ExecStartPre=/opt/hauler/hauler store load")
 }
 
 func TestCopyHaulerBinary(t *testing.T) {
