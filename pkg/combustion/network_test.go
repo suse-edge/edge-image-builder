@@ -159,10 +159,11 @@ func TestConfigureNetwork_CustomScript(t *testing.T) {
 }
 
 func TestWriteNetworkConfigurationScript(t *testing.T) {
-	ctx, teardown := setupContext(t)
-	defer teardown()
+	dir, err := os.MkdirTemp("", "network-config-script-")
+	require.NoError(t, err)
+	defer os.RemoveAll(dir)
 
-	scriptPath := filepath.Join(ctx.CombustionDir, "script.sh")
+	scriptPath := filepath.Join(dir, "script.sh")
 
 	require.NoError(t, writeNetworkConfigurationScript(scriptPath))
 
