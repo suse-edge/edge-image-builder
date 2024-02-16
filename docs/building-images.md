@@ -221,3 +221,4 @@ as follows:
 
 * `elemental` - This must contain a file named `elemental_config.yaml`. This file will be bundled in
   the built image and used to register with Elemental on boot.
+> **_NOTE:_** Elemental builds use EIB's package resolution process to download any necessary RPM packages. To ensure a successful build, this process requires the ```--privileged``` flag to be passed to the ```podman run``` command. For more info on why this is required, please see [Package resolution design](design/pkg-resolution.md#running-the-eib-container).
