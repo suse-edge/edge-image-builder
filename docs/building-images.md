@@ -221,3 +221,4 @@ as follows:
 
 * `elemental` - This must contain a file named `elemental_config.yaml`. This file will be bundled in
   the built image and used to register with Elemental on boot.
+* Elemental builds require the ```--privileged``` flag to be passed to ```podman run``` command. Please see here why this is required [Package resolution design](./docs/design/pkg-resolution.md#running-the-eib-container).
