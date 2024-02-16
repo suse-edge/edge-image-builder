@@ -77,7 +77,6 @@ podman run --rm --privileged -it \
 * `--validate` - If specified, the specified image definition and configuration directory will be checked to ensure
   the build can proceed, however the image will not actually be built.
 
-> **_NOTE:_** When specifying packages for installation, you need to also pass the [`--privileged`](https://docs.podman.io/en/latest/markdown/podman-run.1.html#privileged) option as well. For more information on why this is needed, see the [Package resolution design](./docs/design/pkg-resolution.md#running-the-eib-container) documentation.
 
 ## Testing Images
 
