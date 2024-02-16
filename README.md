@@ -54,7 +54,7 @@ podman run --rm -it \
 ```
 
 **NOTE:**
-Elemental builds require the ```--privileged``` flag. Please see here why this is required [Package resolution design](./docs/design/pkg-resolution.md#running-the-eib-container).
+When specifying packages for installation or doing elemental builds you need to also pass the [`--privileged`](https://docs.podman.io/en/latest/markdown/podman-run.1.html#privileged) flag as well. For more information on why this is needed, see the [Package resolution design](./docs/design/pkg-resolution.md#running-the-eib-container) documentation.
 ```shell
 podman run --rm --privileged -it \
 -v $IMAGE_DIR:/eib eib:dev /bin/eib build \
