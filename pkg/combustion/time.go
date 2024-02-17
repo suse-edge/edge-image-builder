@@ -40,13 +40,15 @@ func writeTimeCombustionScript(ctx *image.Context) error {
 	timeScriptFilename := filepath.Join(ctx.CombustionDir, timeScriptName)
 
 	values := struct {
-		Timezone string
-		Pools    []string
-		Servers  []string
+		Timezone  string
+		Pools     []string
+		Servers   []string
+		ForceWait bool
 	}{
-		Timezone: ctx.ImageDefinition.OperatingSystem.Time.Timezone,
-		Pools:    ctx.ImageDefinition.OperatingSystem.Time.NtpConfiguration.Pools,
-		Servers:  ctx.ImageDefinition.OperatingSystem.Time.NtpConfiguration.Servers,
+		Timezone:  ctx.ImageDefinition.OperatingSystem.Time.Timezone,
+		Pools:     ctx.ImageDefinition.OperatingSystem.Time.NtpConfiguration.Pools,
+		Servers:   ctx.ImageDefinition.OperatingSystem.Time.NtpConfiguration.Servers,
+		ForceWait: ctx.ImageDefinition.OperatingSystem.Time.NtpConfiguration.ForceWait,
 	}
 
 	data, err := template.Parse(timeScriptName, timeScript, values)

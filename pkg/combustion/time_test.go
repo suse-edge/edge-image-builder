@@ -39,8 +39,9 @@ func TestConfigureTime_FullConfiguration(t *testing.T) {
 			Time: image.Time{
 				Timezone: "Europe/London",
 				NtpConfiguration: image.NtpConfiguration{
-					Pools:   []string{"2.suse.pool.ntp.org"},
-					Servers: []string{"10.0.0.1", "10.0.0.2"},
+					Pools:     []string{"2.suse.pool.ntp.org"},
+					Servers:   []string{"10.0.0.1", "10.0.0.2"},
+					ForceWait: true,
 				},
 			},
 		},
@@ -76,4 +77,10 @@ func TestConfigureTime_FullConfiguration(t *testing.T) {
 
 	// - Ensure that we have the correct second chrony server listed in chrony sources
 	assert.Contains(t, foundContents, "server 10.0.0.1 iburst", "second chronyServer not created")
+
+	// - Ensure that we're creating the firstboot-timesync service
+	assert.Contains(t, foundContents, "/etc/systemd/system/firstboot-timesync.service")
+
+	// - Ensure that we've got the chrony-wait service starting at boot
+	assert.Contains(t, foundContents, "systemctl enable chrony-wait")
 }

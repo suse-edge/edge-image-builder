@@ -57,10 +57,6 @@ func Configure(ctx *image.Context) error {
 			runnable: configureTime,
 		},
 		{
-			name:     timesyncComponentName,
-			runnable: configureTimesync,
-		},
-		{
 			name:     networkComponentName,
 			runnable: configureNetwork,
 		},
