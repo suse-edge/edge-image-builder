@@ -677,3 +677,68 @@ func TestValidateRawConfiguration(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateTimeSync(t *testing.T) {
+	tests := map[string]struct {
+		Definition             image.Definition
+		ExpectedFailedMessages []string
+	}{
+		`not included`: {
+			Definition: image.Definition{},
+		},
+		`forceWait specified and NTP sources valid`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+
+				OperatingSystem: image.OperatingSystem{
+					Time: image.Time{
+						Timezone: "Europe/London",
+						NtpConfiguration: image.NtpConfiguration{
+							Pools:     []string{"2.suse.pool.ntp.org"},
+							Servers:   []string{"10.0.0.1", "10.0.0.2"},
+							ForceWait: true,
+						},
+					},
+				},
+			},
+		},
+		`forceWait specified and NTP sources invalid`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+
+				OperatingSystem: image.OperatingSystem{
+					Time: image.Time{
+						Timezone: "Europe/London",
+						NtpConfiguration: image.NtpConfiguration{
+							ForceWait: true,
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"If you're wanting to wait for NTP synchronization at boot, please ensure that you provide at least one NTP time source.",
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			def := test.Definition
+			failures := validateTimesync(&def)
+			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+
+			var foundMessages []string
+			for _, foundValidation := range failures {
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+			}
+
+			for _, expectedMessage := range test.ExpectedFailedMessages {
+				assert.Contains(t, foundMessages, expectedMessage)
+			}
+		})
+	}
+}

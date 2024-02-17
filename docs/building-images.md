@@ -43,6 +43,7 @@ operatingSystem:
   time:
     timezone: Europe/London
     ntp:
+      forceWait: true
       pools:
         - 1.pool.server.com
       servers:
@@ -102,6 +103,7 @@ operatingSystem:
 * `time` - Optional; section where the user can provide timezone information and Chronyd configuration.
   * `timezone` - Optional; the timezone in the format of "Region/Locality", e.g. "Europe/London". Full list via `timedatectl list-timezones`.
   * `ntp` - Optional; contains attributes related to configuring NTP
+    * `forceWait` - Optional; requests that Chrony attempts to synchronize timesources before starting other services (with a 180s timeout).
     * `pools` - Optional; a list of pools that Chrony can use as data sources.
     * `servers` - Optional; a list of servers that Chrony can use as data sources.
 * `proxy` - Optional; section where the user can provide system-wide proxy information

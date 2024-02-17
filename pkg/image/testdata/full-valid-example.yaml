@@ -13,6 +13,7 @@ operatingSystem:
   time:
     timezone: Europe/London
     ntp:
+      forceWait: true
       pools:
         - 2.suse.pool.ntp.org
       servers:

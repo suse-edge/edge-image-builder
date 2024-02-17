@@ -112,8 +112,9 @@ type Time struct {
 }
 
 type NtpConfiguration struct {
-	Pools   []string `yaml:"pools"`
-	Servers []string `yaml:"servers"`
+	ForceWait bool     `yaml:"forceWait"`
+	Pools     []string `yaml:"pools"`
+	Servers   []string `yaml:"servers"`
 }
 
 type Proxy struct {
