@@ -26,9 +26,9 @@ func validateOperatingSystem(ctx *image.Context) []FailedValidation {
 	failures = append(failures, validateUsers(&def.OperatingSystem)...)
 	failures = append(failures, validateSuma(&def.OperatingSystem)...)
 	failures = append(failures, validatePackages(&def.OperatingSystem)...)
+	failures = append(failures, validateTimesync(&def.OperatingSystem)...)
 	failures = append(failures, validateUnattended(def)...)
 	failures = append(failures, validateRawConfig(def)...)
-	failures = append(failures, validateTimesync(def)...)
 
 	return failures
 }
@@ -247,14 +247,14 @@ func validateRawConfig(def *image.Definition) []FailedValidation {
 	return failures
 }
 
-func validateTimesync(def *image.Definition) []FailedValidation {
+func validateTimesync(os *image.OperatingSystem) []FailedValidation {
 	var failures []FailedValidation
 
-	if !def.OperatingSystem.Time.NtpConfiguration.ForceWait {
+	if !os.Time.NtpConfiguration.ForceWait {
 		return nil
 	}
 
-	if len(def.OperatingSystem.Time.NtpConfiguration.Pools) == 0 && len(def.OperatingSystem.Time.NtpConfiguration.Servers) == 0 {
+	if len(os.Time.NtpConfiguration.Pools) == 0 && len(os.Time.NtpConfiguration.Servers) == 0 {
 		msg := "If you're wanting to wait for NTP synchronization at boot, please ensure that you provide at least one NTP time source."
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,

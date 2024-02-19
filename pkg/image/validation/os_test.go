@@ -680,43 +680,35 @@ func TestValidateRawConfiguration(t *testing.T) {
 
 func TestValidateTimeSync(t *testing.T) {
 	tests := map[string]struct {
-		Definition             image.Definition
+		Time                   image.Time
 		ExpectedFailedMessages []string
 	}{
 		`not included`: {
-			Definition: image.Definition{},
+			Time: image.Time{},
 		},
-		`forceWait specified and NTP sources valid`: {
-			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeRAW,
-				},
-
-				OperatingSystem: image.OperatingSystem{
-					Time: image.Time{
-						Timezone: "Europe/London",
-						NtpConfiguration: image.NtpConfiguration{
-							Pools:     []string{"2.suse.pool.ntp.org"},
-							Servers:   []string{"10.0.0.1", "10.0.0.2"},
-							ForceWait: true,
-						},
-					},
+		`forceWait specified and only NTP pools configured`: {
+			Time: image.Time{
+				Timezone: "Europe/London",
+				NtpConfiguration: image.NtpConfiguration{
+					Pools:     []string{"2.suse.pool.ntp.org"},
+					ForceWait: true,
 				},
 			},
 		},
-		`forceWait specified and NTP sources invalid`: {
-			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeRAW,
+		`forceWait specified and only NTP servers configured`: {
+			Time: image.Time{
+				Timezone: "Europe/London",
+				NtpConfiguration: image.NtpConfiguration{
+					Servers:   []string{"10.0.0.1", "10.0.0.2"},
+					ForceWait: true,
 				},
-
-				OperatingSystem: image.OperatingSystem{
-					Time: image.Time{
-						Timezone: "Europe/London",
-						NtpConfiguration: image.NtpConfiguration{
-							ForceWait: true,
-						},
-					},
+			},
+		},
+		`forceWait specified and NTP sources missing`: {
+			Time: image.Time{
+				Timezone: "Europe/London",
+				NtpConfiguration: image.NtpConfiguration{
+					ForceWait: true,
 				},
 			},
 			ExpectedFailedMessages: []string{
@@ -727,8 +719,10 @@ func TestValidateTimeSync(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			def := test.Definition
-			failures := validateTimesync(&def)
+			os := image.OperatingSystem{
+				Time: test.Time,
+			}
+			failures := validateTimesync(&os)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
 
 			var foundMessages []string
