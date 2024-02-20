@@ -211,7 +211,8 @@ func createRegistryCommand(ctx *image.Context, commandName string, args []string
 func IsEmbeddedArtifactRegistryConfigured(ctx *image.Context) bool {
 	return len(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages) != 0 ||
 		len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0 ||
-		isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir))
+		isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) ||
+		isComponentConfigured(ctx, filepath.Join(k8sDir, k8sManifestsDir))
 }
 
 func getImageHostnames(containerImages []image.ContainerImage) []string {
