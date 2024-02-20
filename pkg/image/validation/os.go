@@ -26,6 +26,7 @@ func validateOperatingSystem(ctx *image.Context) []FailedValidation {
 	failures = append(failures, validateUsers(&def.OperatingSystem)...)
 	failures = append(failures, validateSuma(&def.OperatingSystem)...)
 	failures = append(failures, validatePackages(&def.OperatingSystem)...)
+	failures = append(failures, validateTimesync(&def.OperatingSystem)...)
 	failures = append(failures, validateUnattended(def)...)
 	failures = append(failures, validateRawConfig(def)...)
 
@@ -238,6 +239,23 @@ func validateRawConfig(def *image.Definition) []FailedValidation {
 
 	if !isValidSize(def.OperatingSystem.RawConfiguration.DiskSize) {
 		msg := fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW)
+		failures = append(failures, FailedValidation{
+			UserMessage: msg,
+		})
+	}
+
+	return failures
+}
+
+func validateTimesync(os *image.OperatingSystem) []FailedValidation {
+	var failures []FailedValidation
+
+	if !os.Time.NtpConfiguration.ForceWait {
+		return nil
+	}
+
+	if len(os.Time.NtpConfiguration.Pools) == 0 && len(os.Time.NtpConfiguration.Servers) == 0 {
+		msg := "If you're wanting to wait for NTP synchronization at boot, please ensure that you provide at least one NTP time source."
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
