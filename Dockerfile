@@ -33,7 +33,7 @@ RUN zypper addrepo https://download.opensuse.org/repositories/isv:SUSE:Edge:Edge
 # 5. Network configurator
 RUN zypper install -y \
     xorriso squashfs  \
-    libguestfs kernel-default e2fsprogs parted gptfdisk btrfsprogs guestfs-tools lvm2 \
+    libguestfs kernel-default-base e2fsprogs parted gptfdisk btrfsprogs guestfs-tools lvm2 \
     podman \
     createrepo_c \
     helm \
