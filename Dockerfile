@@ -37,7 +37,8 @@ RUN zypper install -y \
     podman \
     createrepo_c \
     helm \
-    nm-configurator
+    nm-configurator && \
+    zypper clean -a
 
 # TODO: Install nmc via zypper once an RPM package is available
 RUN curl -o /usr/local/bin/nmc -L https://github.com/suse-edge/nm-configurator/releases/download/${NMCVERSION}/nmc-linux-$(uname -m) && \
