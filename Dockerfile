@@ -36,13 +36,6 @@ RUN zypper install -y \
     helm \
     nm-configurator
 
-# TODO: Install nmc via zypper once an RPM package is available
-RUN curl -o nmc-aarch64 -L https://github.com/suse-edge/nm-configurator/releases/download/v0.2.0/nmc-linux-aarch64 && \
-    chmod +x nmc-aarch64 && \
-    curl -o nmc-x86_64 -L https://github.com/suse-edge/nm-configurator/releases/download/v0.2.0/nmc-linux-x86_64 && \
-    chmod +x nmc-x86_64 && \
-    cp nmc-$(uname -m) /usr/local/bin/nmc
-
 RUN curl -o hauler-amd64.tar -L https://github.com/rancherfederal/hauler/releases/download/v0.4.3/hauler_0.4.3_linux_amd64.tar.gz && \
     tar -xf hauler-amd64.tar && \
     mv hauler hauler-x86_64 && \
