@@ -61,14 +61,15 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("configuring helm: %w", err)
 	}
 
-	var configured bool
-	if configured, err = configureEmbeddedArtifactRegistry(ctx, helmTemplatePath, helmManifestHolderDir); err != nil {
+	configured, err := configureEmbeddedArtifactRegistry(ctx, helmTemplatePath, helmManifestHolderDir)
+	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("configuring embedded artifact registry: %w", err)
 	}
 
 	if !configured {
 		log.AuditComponentSkipped(registryComponentName)
+		log.Audit("Embedded Artifact Registry skipped: Provided manifests/helm charts contain no images.")
 		return nil, nil
 	}
 
