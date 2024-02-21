@@ -54,6 +54,8 @@ func HelmCharts(srcDir, buildDir string, helm Helm) ([]*HelmChart, error) {
 				if err = handleChartResource(resource, buildDir, helm, containerImages); err != nil {
 					return nil, fmt.Errorf("handling chart resource: %w", err)
 				}
+			} else {
+				storeManifestImages(resource, containerImages)
 			}
 
 			chart.Resources = append(chart.Resources, resource)
@@ -115,13 +117,11 @@ func handleChartResource(resource map[string]any, buildDir string, helm Helm, co
 	}
 
 	var chartName string
+	var modifyContent bool
 
 	if crd.Spec.ChartContent == "" {
 		chartName = crd.Spec.Chart
-
-		if err = setChartContent(resource, chartPath); err != nil {
-			return fmt.Errorf("setting chart content: %w", err)
-		}
+		modifyContent = true
 	} else {
 		chartName = crd.Metadata.Name
 	}
@@ -133,6 +133,12 @@ func handleChartResource(resource map[string]any, buildDir string, helm Helm, co
 
 	for _, chartResource := range chartResources {
 		storeManifestImages(chartResource, containerImages)
+	}
+
+	if modifyContent {
+		if err = setChartContent(resource, chartPath); err != nil {
+			return fmt.Errorf("setting chart content: %w", err)
+		}
 	}
 
 	return nil
