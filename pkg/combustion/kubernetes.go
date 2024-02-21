@@ -383,11 +383,18 @@ func configureManifests(ctx *image.Context) (string, error) {
 	manifestURLs := ctx.ImageDefinition.Kubernetes.Manifests.URLs
 	localManifestsConfigured := isComponentConfigured(ctx, filepath.Join(k8sDir, k8sManifestsDir))
 
+	manifestsPath := filepath.Join(k8sDir, k8sManifestsDir)
+
 	if !localManifestsConfigured && len(manifestURLs) == 0 {
+		// The registry component would have already created and populated the manifests path if helm resources
+		// are configured. This is a hack until the dependencies between the different combustion components are resolved.
+		if isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) {
+			return manifestsPath, nil
+		}
+
 		return "", nil
 	}
 
-	manifestsPath := filepath.Join(k8sDir, k8sManifestsDir)
 	manifestDestDir := filepath.Join(ctx.CombustionDir, manifestsPath)
 	err := os.MkdirAll(manifestDestDir, os.ModePerm)
 	if err != nil {
