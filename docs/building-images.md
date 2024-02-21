@@ -62,11 +62,14 @@ operatingSystem:
   users:
   - username: user1
     encryptedPassword: 123
-    sshKey: user1Key
+    sshKeys:
+      - user1Key1
+      - user1Key2
   - username: user2
     encryptedPassword: 456
   - username: user3
-    sshKey: user3Key
+    sshKeys:
+      - user3Key
   systemd:
     enable:
       - service0
@@ -113,12 +116,12 @@ operatingSystem:
   parameter is omitted. If this option is set, these may need to be manually added if they are still in use.
 * `kernelArgs` - Optional; Provides a list of flags that should be passed to the kernel on boot.
 * `users` - Optional; Defines a list of operating system users to be created. Each entry is made up of
-  the following fields:
+  the following fields (one or both of the password and SSH key must be provided per user):
   * `username` - Required; Username of the user to create. To set the password or SSH key for the root user,
     use the value `root` for this field.
   * `encryptedPassword` - Optional; Encrypted password to set for the use (for example, using `openssl passwd -6 $PASSWORD`
     to generate the value for this field).
-  * `sshKey` - Optional; Full public SSH key to configure for the user.
+  * `sshKeys` - Optional; List of public SSH keys to configure for the user.
 * `systemd` - Optional; Defines lists of services to enable/disable. Either or both of `enable` and `disable` may
   be included; if neither are provided, this section is ignored.
   * `enable` - Optional; List of systemd services to enable.

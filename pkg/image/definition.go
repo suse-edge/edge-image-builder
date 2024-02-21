@@ -91,9 +91,9 @@ type AddRepo struct {
 }
 
 type OperatingSystemUser struct {
-	Username          string `yaml:"username"`
-	EncryptedPassword string `yaml:"encryptedPassword"`
-	SSHKey            string `yaml:"sshKey"`
+	Username          string   `yaml:"username"`
+	EncryptedPassword string   `yaml:"encryptedPassword"`
+	SSHKeys           []string `yaml:"sshKeys"`
 }
 
 type Systemd struct {

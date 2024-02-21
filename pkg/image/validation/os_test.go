@@ -31,7 +31,7 @@ func TestValidateOperatingSystem(t *testing.T) {
 						{
 							Username:          "danny",
 							EncryptedPassword: "InternNoMore",
-							SSHKey:            "asdf",
+							SSHKeys:           []string{"asdf"},
 						},
 					},
 					Suma: image.Suma{
@@ -88,7 +88,7 @@ func TestValidateOperatingSystem(t *testing.T) {
 			ExpectedFailedMessages: []string{
 				"Kernel arguments must be specified as 'key=value'.",
 				"Systemd conflict found, 'confusedUser' is both enabled and disabled.",
-				"User 'danny' must have either a password or SSH key.",
+				"User 'danny' must have either a password or at least one SSH key.",
 				"The 'host' field is required for the 'suma' section.",
 				fmt.Sprintf("The 'isoConfiguration/unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO),
 				fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
@@ -292,7 +292,7 @@ func TestValidateUsers(t *testing.T) {
 				{
 					Username:          "jay",
 					EncryptedPassword: "foo",
-					SSHKey:            "key",
+					SSHKeys:           []string{"key"},
 				},
 				{
 					Username:          "rhys",
@@ -300,7 +300,7 @@ func TestValidateUsers(t *testing.T) {
 				},
 				{
 					Username: "atanas",
-					SSHKey:   "key2",
+					SSHKeys:  []string{"key2"},
 				},
 			},
 		},
@@ -311,7 +311,7 @@ func TestValidateUsers(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"User 'danny' must have either a password or SSH key.",
+				"User 'danny' must have either a password or at least one SSH key.",
 			},
 		},
 		`duplicate user`: {
@@ -322,7 +322,7 @@ func TestValidateUsers(t *testing.T) {
 				},
 				{
 					Username: "ivo",
-					SSHKey:   "key1",
+					SSHKeys:  []string{"key1"},
 				},
 			},
 			ExpectedFailedMessages: []string{
