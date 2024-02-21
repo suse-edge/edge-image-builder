@@ -53,6 +53,10 @@ podman run --rm -it \
 --build-dir /eib/_build
 ```
 
+**NOTE:**
+Build process which involves package resolution must include the [`--privileged`](https://docs.podman.io/en/latest/markdown/podman-run.1.html#privileged) flag.
+Package resolution will be automatically performed when requesting package installation or configuring components which require it (e.g. Elemental, Kubernetes SELinux, etc.)
+
 * `-v` - Used to mount a local directory (in this example, the value of $IMAGE_DIR) into the EIB container at `/eib`.
 * `--config-file` - Specifies which image configuration file to build. The path to this file will be relative to
   the image configuration directory. If the configuration file is in the root of the configuration directory, simply 
@@ -67,7 +71,6 @@ podman run --rm -it \
 * `--validate` - If specified, the specified image definition and configuration directory will be checked to ensure
   the build can proceed, however the image will not actually be built.
 
-> **_NOTE:_** When specifying packages for installation, you need to also pass the [`--privileged`](https://docs.podman.io/en/latest/markdown/podman-run.1.html#privileged) option as well. For more information on why this is needed, see the [Package resolution design](./docs/design/pkg-resolution.md#running-the-eib-container) documentation.
 
 ## Testing Images
 
