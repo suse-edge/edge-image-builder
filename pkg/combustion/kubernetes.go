@@ -143,22 +143,15 @@ func configureK3S(ctx *image.Context, cluster *kubernetes.Cluster) (string, erro
 
 	singleNode := len(ctx.ImageDefinition.Kubernetes.Nodes) < 2
 	if singleNode {
-		var vipManifest string
-
 		if ctx.ImageDefinition.Kubernetes.Network.APIVIP == "" {
 			zap.S().Info("Virtual IP address for k3s cluster is not provided and will not be configured")
 		} else {
 			log.Audit("WARNING: A Virtual IP address for the k3s cluster has been provided. " +
 				"An external IP address for the Ingress Controller (Traefik) must be manually configured.")
 			zap.S().Warn("Virtual IP address for k3s cluster is requested and will invalidate Traefik configuration")
-
-			if vipManifest, err = storeKubernetesVIPManifest(ctx); err != nil {
-				return "", fmt.Errorf("storing k3s VIP manifest: %w", err)
-			}
 		}
 
 		templateValues["configFile"] = k8sServerConfigFile
-		templateValues["vipManifest"] = vipManifest
 
 		return storeKubernetesInstaller(ctx, "single-node-k3s", k3sSingleNodeInstaller, templateValues)
 	}
@@ -166,15 +159,9 @@ func configureK3S(ctx *image.Context, cluster *kubernetes.Cluster) (string, erro
 	log.Audit("WARNING: An external IP address for the Ingress Controller (Traefik) must be manually configured in multi-node clusters.")
 	zap.S().Warn("Virtual IP address for k3s cluster is necessary for multi node clusters and will invalidate Traefik configuration")
 
-	vipManifest, err := storeKubernetesVIPManifest(ctx)
-	if err != nil {
-		return "", fmt.Errorf("storing k3s VIP manifest: %w", err)
-	}
-
 	templateValues["nodes"] = ctx.ImageDefinition.Kubernetes.Nodes
 	templateValues["initialiser"] = cluster.InitialiserName
 	templateValues["initialiserConfigFile"] = k8sInitServerConfigFile
-	templateValues["vipManifest"] = vipManifest
 
 	return storeKubernetesInstaller(ctx, "multi-node-k3s", k3sMultiNodeInstaller, templateValues)
 }
@@ -248,29 +235,18 @@ func configureRKE2(ctx *image.Context, cluster *kubernetes.Cluster) (string, err
 
 	singleNode := len(ctx.ImageDefinition.Kubernetes.Nodes) < 2
 	if singleNode {
-		var vipManifest string
-
 		if ctx.ImageDefinition.Kubernetes.Network.APIVIP == "" {
 			zap.S().Info("Virtual IP address for RKE2 cluster is not provided and will not be configured")
-		} else if vipManifest, err = storeKubernetesVIPManifest(ctx); err != nil {
-			return "", fmt.Errorf("storing RKE2 VIP manifest: %w", err)
 		}
 
 		templateValues["configFile"] = k8sServerConfigFile
-		templateValues["vipManifest"] = vipManifest
 
 		return storeKubernetesInstaller(ctx, "single-node-rke2", rke2SingleNodeInstaller, templateValues)
-	}
-
-	vipManifest, err := storeKubernetesVIPManifest(ctx)
-	if err != nil {
-		return "", fmt.Errorf("storing RKE2 VIP manifest: %w", err)
 	}
 
 	templateValues["nodes"] = ctx.ImageDefinition.Kubernetes.Nodes
 	templateValues["initialiser"] = cluster.InitialiserName
 	templateValues["initialiserConfigFile"] = k8sInitServerConfigFile
-	templateValues["vipManifest"] = vipManifest
 
 	return storeKubernetesInstaller(ctx, "multi-node-rke2", rke2MultiNodeInstaller, templateValues)
 }
@@ -321,28 +297,16 @@ func downloadRKE2Artefacts(ctx *image.Context, cluster *kubernetes.Cluster) (ins
 	return installPath, imagesPath, nil
 }
 
-func storeKubernetesVIPManifest(ctx *image.Context) (string, error) {
-	const vipManifest = "k8s-vip.yaml"
-
+func kubernetesVIPManifest(k *image.Kubernetes) (string, error) {
 	manifest := struct {
 		APIAddress string
 		RKE2       bool
 	}{
-		APIAddress: ctx.ImageDefinition.Kubernetes.Network.APIVIP,
-		RKE2:       strings.Contains(ctx.ImageDefinition.Kubernetes.Version, image.KubernetesDistroRKE2),
+		APIAddress: k.Network.APIVIP,
+		RKE2:       strings.Contains(k.Version, image.KubernetesDistroRKE2),
 	}
 
-	data, err := template.Parse("k8s-vip", k8sVIPManifest, &manifest)
-	if err != nil {
-		return "", fmt.Errorf("parsing kubernetes VIP template: %w", err)
-	}
-
-	installScript := filepath.Join(ctx.CombustionDir, vipManifest)
-	if err = os.WriteFile(installScript, []byte(data), fileio.NonExecutablePerms); err != nil {
-		return "", fmt.Errorf("writing kubernetes VIP manifest: %w", err)
-	}
-
-	return vipManifest, nil
+	return template.Parse("k8s-vip", k8sVIPManifest, &manifest)
 }
 
 func storeKubernetesClusterConfig(cluster *kubernetes.Cluster, destPath string) error {
@@ -384,18 +348,18 @@ func configureManifests(ctx *image.Context) (string, error) {
 	localManifestsConfigured := isComponentConfigured(ctx, filepath.Join(k8sDir, k8sManifestsDir))
 
 	manifestsPath := filepath.Join(k8sDir, k8sManifestsDir)
+	manifestDestDir := filepath.Join(ctx.CombustionDir, manifestsPath)
 
 	if !localManifestsConfigured && len(manifestURLs) == 0 {
-		// The registry component would have already created and populated the manifests path if helm resources
-		// are configured. This is a hack until the dependencies between the different combustion components are resolved.
-		if isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) {
+		// The registry component would have already created and populated the manifests path if helm resources are configured
+		// or required. This is a hack until the dependencies between the different combustion components are resolved.
+		if _, err := os.Stat(manifestDestDir); err == nil {
 			return manifestsPath, nil
 		}
 
 		return "", nil
 	}
 
-	manifestDestDir := filepath.Join(ctx.CombustionDir, manifestsPath)
 	err := os.MkdirAll(manifestDestDir, os.ModePerm)
 	if err != nil {
 		return "", fmt.Errorf("creating manifests destination dir: %w", err)

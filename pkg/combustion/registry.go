@@ -185,7 +185,8 @@ func IsEmbeddedArtifactRegistryConfigured(ctx *image.Context) bool {
 	return len(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages) != 0 ||
 		len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0 ||
 		isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) ||
-		isComponentConfigured(ctx, filepath.Join(k8sDir, k8sManifestsDir))
+		isComponentConfigured(ctx, filepath.Join(k8sDir, k8sManifestsDir)) ||
+		componentsRequireHelmCharts(ctx)
 }
 
 func getImageHostnames(containerImages []string) []string {
@@ -226,10 +227,19 @@ func writeRegistryMirrors(ctx *image.Context, hostnames []string) error {
 }
 
 func configureEmbeddedArtifactRegistry(ctx *image.Context) (bool, error) {
-	helmCharts, err := parseHelmCharts(ctx)
+	configuredCharts, err := parseConfiguredHelmCharts(ctx)
 	if err != nil {
-		return false, fmt.Errorf("parsing helm charts: %w", err)
+		return false, fmt.Errorf("parsing configured helm charts: %w", err)
 	}
+
+	componentCharts, err := parseComponentHelmCharts(ctx)
+	if err != nil {
+		return false, fmt.Errorf("parsing components' helm charts: %w", err)
+	}
+
+	var helmCharts []*registry.HelmChart
+	helmCharts = append(helmCharts, configuredCharts...)
+	helmCharts = append(helmCharts, componentCharts...)
 
 	if err = storeHelmCharts(ctx, helmCharts); err != nil {
 		return false, fmt.Errorf("storing helm charts: %w", err)
@@ -314,19 +324,74 @@ func parseManifests(ctx *image.Context) ([]string, error) {
 	return registry.ManifestImages(ctx.ImageDefinition.Kubernetes.Manifests.URLs, manifestSrcDir)
 }
 
-func parseHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error) {
+func componentsRequireHelmCharts(ctx *image.Context) bool {
+	return ctx.ImageDefinition.Kubernetes.Network.APIVIP != ""
+}
+
+func storeComponentsHelmCharts(ctx *image.Context) (string, error) {
+	// Key is filename. Value is populated Helm CRD manifest.
+	manifests := map[string]string{}
+
+	if ctx.ImageDefinition.Kubernetes.Network.APIVIP != "" {
+		vipManifest, err := kubernetesVIPManifest(&ctx.ImageDefinition.Kubernetes)
+		if err != nil {
+			return "", fmt.Errorf("parsing kubernetes VIP manifest: %w", err)
+		}
+
+		manifests["k8s-vip.yaml"] = vipManifest
+	}
+
+	if len(manifests) == 0 {
+		return "", nil
+	}
+
+	chartsDir := filepath.Join(ctx.BuildDir, "component-charts")
+	if err := os.MkdirAll(chartsDir, os.ModePerm); err != nil {
+		return "", fmt.Errorf("creating component charts dir: %w", err)
+	}
+
+	for filename, charts := range manifests {
+		chartPath := filepath.Join(chartsDir, filename)
+		if err := os.WriteFile(chartPath, []byte(charts), fileio.NonExecutablePerms); err != nil {
+			return "", fmt.Errorf("storing manifest %s: %w", filename, err)
+		}
+	}
+
+	return chartsDir, nil
+}
+
+func parseComponentHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error) {
+	chartsDir, err := storeComponentsHelmCharts(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("storing components' helm charts: %w", err)
+	}
+
+	if chartsDir == "" {
+		zap.S().Info("None of the combustion components require custom Helm charts")
+		return nil, nil
+	}
+
+	buildDir := filepath.Join(ctx.BuildDir, helmDir)
+	if err = os.MkdirAll(buildDir, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("creating helm dir: %w", err)
+	}
+
+	return registry.HelmCharts(chartsDir, buildDir, ctx.Helm)
+}
+
+func parseConfiguredHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error) {
 	if !isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) {
 		return nil, nil
 	}
 
-	helmBuildDir := filepath.Join(ctx.BuildDir, helmDir)
-	if err := os.MkdirAll(helmBuildDir, os.ModePerm); err != nil {
+	buildDir := filepath.Join(ctx.BuildDir, helmDir)
+	if err := os.MkdirAll(buildDir, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("creating helm dir: %w", err)
 	}
 
-	helmSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
+	chartsDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
 
-	return registry.HelmCharts(helmSrcDir, helmBuildDir, ctx.Helm)
+	return registry.HelmCharts(chartsDir, buildDir, ctx.Helm)
 }
 
 func storeHelmCharts(ctx *image.Context, helmCharts []*registry.HelmChart) error {

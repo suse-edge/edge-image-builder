@@ -6,11 +6,6 @@ mount /var
 mkdir -p /var/lib/rancher/rke2/agent/images/
 cp {{ .imagesPath }}/* /var/lib/rancher/rke2/agent/images/
 
-{{- if .vipManifest }}
-mkdir -p /var/lib/rancher/rke2/server/manifests/
-cp {{ .vipManifest }} /var/lib/rancher/rke2/server/manifests/{{ .vipManifest }}
-{{- end }}
-
 {{- if .manifestsPath }}
 mkdir -p /var/lib/rancher/rke2/server/manifests/
 cp {{ .manifestsPath }}/* /var/lib/rancher/rke2/server/manifests/
