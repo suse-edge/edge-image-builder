@@ -114,7 +114,7 @@ func validateUsers(os *image.OperatingSystem) []FailedValidation {
 			})
 		}
 
-		if user.EncryptedPassword == "" && user.SSHKeys == nil {
+		if user.EncryptedPassword == "" && len(user.SSHKeys) == 0 {
 			msg := fmt.Sprintf("User '%s' must have either a password or at least one SSH key.", user.Username)
 			failures = append(failures, FailedValidation{
 				UserMessage: msg,
