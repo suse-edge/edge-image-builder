@@ -27,6 +27,11 @@ func TestValidateOperatingSystem(t *testing.T) {
 						Enable:  []string{"runMe"},
 						Disable: []string{"dontRunMe"},
 					},
+					Groups: []image.OperatingSystemGroup{
+						{
+							Name: "eibTeam",
+						},
+					},
 					Users: []image.OperatingSystemUser{
 						{
 							Username:          "danny",
@@ -65,6 +70,14 @@ func TestValidateOperatingSystem(t *testing.T) {
 						Enable:  []string{"confusedUser"},
 						Disable: []string{"confusedUser"},
 					},
+					Groups: []image.OperatingSystemGroup{
+						{
+							Name: "dupeGroup",
+						},
+						{
+							Name: "dupeGroup",
+						},
+					},
 					Users: []image.OperatingSystemUser{
 						{
 							Username: "danny",
@@ -88,6 +101,7 @@ func TestValidateOperatingSystem(t *testing.T) {
 			ExpectedFailedMessages: []string{
 				"Kernel arguments must be specified as 'key=value'.",
 				"Systemd conflict found, 'confusedUser' is both enabled and disabled.",
+				"Duplicate group name found: dupeGroup",
 				"User 'danny' must have either a password or at least one SSH key.",
 				"The 'host' field is required for the 'suma' section.",
 				fmt.Sprintf("The 'isoConfiguration/unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO),
@@ -265,6 +279,77 @@ func TestValidateSystemd(t *testing.T) {
 				Systemd: test.Systemd,
 			}
 			failures := validateSystemd(&os)
+			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+
+			var foundMessages []string
+			for _, foundValidation := range failures {
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+			}
+
+			for _, expectedMessage := range test.ExpectedFailedMessages {
+				assert.Contains(t, foundMessages, expectedMessage)
+			}
+		})
+	}
+}
+
+func TestValidateGroups(t *testing.T) {
+	tests := map[string]struct {
+		Groups                 []image.OperatingSystemGroup
+		ExpectedFailedMessages []string
+	}{
+		`no groups`: {
+			Groups: []image.OperatingSystemGroup{},
+		},
+		`valid groups`: {
+			Groups: []image.OperatingSystemGroup{
+				{
+					Name: "group1",
+				},
+				{
+					Name: "group2",
+				},
+			},
+		},
+		`missing group name`: {
+			Groups: []image.OperatingSystemGroup{
+				{},
+			},
+			ExpectedFailedMessages: []string{
+				"The 'name' field is required for all entries under 'groups'.",
+			},
+		},
+		`duplicate group name`: {
+			Groups: []image.OperatingSystemGroup{
+				{
+					Name: "group1",
+				},
+				{
+					Name: "group1",
+				},
+				{
+					Name: "group2",
+				},
+				{
+					Name: "group2",
+				},
+				{
+					Name: "group3",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Duplicate group name found: group1",
+				"Duplicate group name found: group2",
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			os := image.OperatingSystem{
+				Groups: test.Groups,
+			}
+			failures := validateGroups(&os)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
 
 			var foundMessages []string
