@@ -69,7 +69,7 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 
 	if !configured {
 		log.AuditComponentSkipped(registryComponentName)
-		log.Audit("Embedded Artifact Registry skipped: Provided manifests/helm charts contain no images.")
+		zap.S().Info("Skipping embedded artifact registry since the provided manifests/helm charts contain no images")
 		return nil, nil
 	}
 
