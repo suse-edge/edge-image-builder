@@ -22,7 +22,7 @@ func TestConfigureUsers(t *testing.T) {
 				{
 					Username:          "alpha",
 					EncryptedPassword: "alpha123",
-					SSHKey:            "alphakey",
+					SSHKeys:           []string{"alphakey1", "alphakey2"},
 				},
 				{
 					Username:          "beta",
@@ -30,12 +30,12 @@ func TestConfigureUsers(t *testing.T) {
 				},
 				{
 					Username: "gamma",
-					SSHKey:   "gammakey",
+					SSHKeys:  []string{"gammakey"},
 				},
 				{
 					Username:          "root",
 					EncryptedPassword: "root123",
-					SSHKey:            "rootkey",
+					SSHKeys:           []string{"rootkey1", "rootkey2"},
 				},
 			},
 		},
@@ -64,7 +64,8 @@ func TestConfigureUsers(t *testing.T) {
 	assert.Contains(t, foundContents, "useradd -m alpha")
 	assert.Contains(t, foundContents, "echo 'alpha:alpha123' | chpasswd -e\n")
 	assert.Contains(t, foundContents, "mkdir -pm700 /home/alpha/.ssh/")
-	assert.Contains(t, foundContents, "echo 'alphakey' >> /home/alpha/.ssh/authorized_keys")
+	assert.Contains(t, foundContents, "echo 'alphakey1' >> /home/alpha/.ssh/authorized_keys")
+	assert.Contains(t, foundContents, "echo 'alphakey2' >> /home/alpha/.ssh/authorized_keys")
 	assert.Contains(t, foundContents, "chown -R alpha /home/alpha/.ssh")
 
 	// - Only a password set
@@ -85,7 +86,8 @@ func TestConfigureUsers(t *testing.T) {
 	assert.NotContains(t, foundContents, "useradd -m root")
 	assert.Contains(t, foundContents, "echo 'root:root123' | chpasswd -e\n")
 	assert.Contains(t, foundContents, "mkdir -pm700 /root/.ssh/")
-	assert.Contains(t, foundContents, "echo 'rootkey' >> /root/.ssh/authorized_keys")
+	assert.Contains(t, foundContents, "echo 'rootkey1' >> /root/.ssh/authorized_keys")
+	assert.Contains(t, foundContents, "echo 'rootkey2' >> /root/.ssh/authorized_keys")
 	assert.NotContains(t, foundContents, "chown -R root")
 }
 

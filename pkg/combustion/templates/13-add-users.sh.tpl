@@ -5,32 +5,32 @@ set -euo pipefail
 # is mounted it will hide the /home used during these user creations.
 mount /home
 
-{{- range . }}
-{{- if (ne .Username "root") }}
+{{- range $user := . }}
 
-# Non-root user
-useradd -m {{.Username}}
+{{- /* Non-root users */}}
+{{- if (ne $user.Username "root") }}
+useradd -m {{$user.Username}}
 
-{{- if .EncryptedPassword }}
-echo '{{.Username}}:{{.EncryptedPassword}}' | chpasswd -e
+{{- if $user.EncryptedPassword }}
+echo '{{$user.Username}}:{{$user.EncryptedPassword}}' | chpasswd -e
 {{- end }}
 
-{{- if .SSHKey }}
-mkdir -pm700 /home/{{.Username}}/.ssh/
-echo '{{.SSHKey}}' >> /home/{{.Username}}/.ssh/authorized_keys
-chown -R {{.Username}} /home/{{.Username}}/.ssh
+{{- range $user.SSHKeys }}
+mkdir -pm700 /home/{{$user.Username}}/.ssh/
+echo '{{.}}' >> /home/{{$user.Username}}/.ssh/authorized_keys
+chown -R {{$user.Username}} /home/{{$user.Username}}/.ssh
 {{- end }}
 
 {{- else }}
 
-# Root user
-{{- if .EncryptedPassword }}
-echo '{{.Username}}:{{.EncryptedPassword}}' | chpasswd -e
+{{- /* Root user */}}
+{{- if $user.EncryptedPassword }}
+echo '{{$user.Username}}:{{$user.EncryptedPassword}}' | chpasswd -e
 {{- end }}
 
-{{- if .SSHKey }}
-mkdir -pm700 /{{.Username}}/.ssh/
-echo '{{.SSHKey}}' >> /{{.Username}}/.ssh/authorized_keys
+{{- range $user.SSHKeys }}
+mkdir -pm700 /{{$user.Username}}/.ssh/
+echo '{{.}}' >> /{{$user.Username}}/.ssh/authorized_keys
 {{- end }}
 
 {{- end }}
