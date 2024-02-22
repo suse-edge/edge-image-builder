@@ -37,6 +37,12 @@ func TestParse(t *testing.T) {
 	}
 	assert.Equal(t, expectedKernelArgs, definition.OperatingSystem.KernelArgs)
 
+	// Operating System -> Groups
+	groupConfigs := definition.OperatingSystem.Groups
+	require.Len(t, groupConfigs, 2)
+	assert.Equal(t, "group1", groupConfigs[0].Name)
+	assert.Equal(t, "group2", groupConfigs[1].Name)
+
 	// Operating System -> Users
 	userConfigs := definition.OperatingSystem.Users
 	require.Len(t, userConfigs, 3)

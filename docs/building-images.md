@@ -59,6 +59,9 @@ operatingSystem:
   kernelArgs:
   - arg1
   - arg2
+  groups:
+    - name: group1
+    - name: group2
   users:
   - username: user1
     encryptedPassword: 123
@@ -115,6 +118,9 @@ operatingSystem:
   * `noProxy` - Optional; override the default `NO_PROXY` list. By default, this is "localhost, 127.0.0.1" if this
   parameter is omitted. If this option is set, these may need to be manually added if they are still in use.
 * `kernelArgs` - Optional; Provides a list of flags that should be passed to the kernel on boot.
+* `groups` - Optional; Defines a list of operating system groups to be created. This will not fail if the
+  group already exists. Each entry is made up of the following fields:
+  * `name` - Required; Name of the group to create.
 * `users` - Optional; Defines a list of operating system users to be created. Each entry is made up of
   the following fields (one or both of the password and SSH key must be provided per user):
   * `username` - Required; Username of the user to create. To set the password or SSH key for the root user,

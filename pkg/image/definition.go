@@ -57,16 +57,17 @@ type Image struct {
 }
 
 type OperatingSystem struct {
-	KernelArgs       []string              `yaml:"kernelArgs"`
-	Users            []OperatingSystemUser `yaml:"users"`
-	Systemd          Systemd               `yaml:"systemd"`
-	Suma             Suma                  `yaml:"suma"`
-	Packages         Packages              `yaml:"packages"`
-	IsoConfiguration IsoConfiguration      `yaml:"isoConfiguration"`
-	RawConfiguration RawConfiguration      `yaml:"rawConfiguration"`
-	Time             Time                  `yaml:"time"`
-	Proxy            Proxy                 `yaml:"proxy"`
-	Keymap           string                `yaml:"keymap"`
+	KernelArgs       []string               `yaml:"kernelArgs"`
+	Groups           []OperatingSystemGroup `yaml:"groups"`
+	Users            []OperatingSystemUser  `yaml:"users"`
+	Systemd          Systemd                `yaml:"systemd"`
+	Suma             Suma                   `yaml:"suma"`
+	Packages         Packages               `yaml:"packages"`
+	IsoConfiguration IsoConfiguration       `yaml:"isoConfiguration"`
+	RawConfiguration RawConfiguration       `yaml:"rawConfiguration"`
+	Time             Time                   `yaml:"time"`
+	Proxy            Proxy                  `yaml:"proxy"`
+	Keymap           string                 `yaml:"keymap"`
 }
 
 type IsoConfiguration struct {
@@ -94,6 +95,10 @@ type OperatingSystemUser struct {
 	Username          string   `yaml:"username"`
 	EncryptedPassword string   `yaml:"encryptedPassword"`
 	SSHKeys           []string `yaml:"sshKeys"`
+}
+
+type OperatingSystemGroup struct {
+	Name string `yaml:"name"`
 }
 
 type Systemd struct {

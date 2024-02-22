@@ -37,6 +37,9 @@ operatingSystem:
     disable:
       - disable0
   keymap: us
+  groups:
+    - name: group1
+    - name: group2
   users:
     - username: alpha
       encryptedPassword: $6$bZfTI3Wj05fdxQcB$W1HJQTKw/MaGTCwK75ic9putEquJvYO7vMnDBVAfuAMFW58/79abky4mx9.8znK0UZwSKng9dVosnYQR1toH71

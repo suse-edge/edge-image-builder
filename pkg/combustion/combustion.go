@@ -62,6 +62,10 @@ func Configure(ctx *image.Context) error {
 			runnable: configureNetwork,
 		},
 		{
+			name:     groupsComponentName,
+			runnable: configureGroups,
+		},
+		{
 			name:     usersComponentName,
 			runnable: configureUsers,
 		},
