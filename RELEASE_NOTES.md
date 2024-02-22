@@ -3,4 +3,5 @@
 ## Next
 
 * Added support for deploying user-provided Helm charts
+* Added support for custom network configuration scripts
 * Removed the `embeddedArtifactRegistry/images/supplyChainKey` attribute
