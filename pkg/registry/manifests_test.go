@@ -37,7 +37,7 @@ func TestReadManifest(t *testing.T) {
 	assert.Equal(t, "apps/v1", apiVersion)
 }
 
-func TestReadManifestNoManifest(t *testing.T) {
+func TestReadManifest_NoManifest(t *testing.T) {
 	// Setup
 	manifestPath := filepath.Join()
 
@@ -48,7 +48,7 @@ func TestReadManifestNoManifest(t *testing.T) {
 	require.ErrorContains(t, err, "no such file or directory")
 }
 
-func TestReadManifestInvalidManifest(t *testing.T) {
+func TestReadManifest_InvalidManifest(t *testing.T) {
 	// Setup
 	manifestPath := filepath.Join("testdata", "invalid-crd.yml")
 
@@ -59,7 +59,7 @@ func TestReadManifestInvalidManifest(t *testing.T) {
 	require.ErrorContains(t, err, "error unmarshalling manifest yaml")
 }
 
-func TestReadManifestEmptyManifest(t *testing.T) {
+func TestReadManifest_EmptyManifest(t *testing.T) {
 	// Setup
 	manifestPath := filepath.Join("testdata", "empty-crd.yaml")
 
@@ -70,9 +70,9 @@ func TestReadManifestEmptyManifest(t *testing.T) {
 	assert.Error(t, err, "invalid manifest")
 }
 
-func TestFindImagesInManifest(t *testing.T) {
+func TestStoreManifestImages(t *testing.T) {
 	// Setup
-	var extractedImagesSet = make(map[string]string)
+	var extractedImagesSet = make(map[string]bool)
 	manifestPath := filepath.Join("testdata", "sample-crd.yaml")
 	manifestData, err := readManifest(manifestPath)
 	require.NoError(t, err)
@@ -81,7 +81,7 @@ func TestFindImagesInManifest(t *testing.T) {
 
 	// Test
 	for _, manifest := range manifestData {
-		storeManifestImageNames(manifest, extractedImagesSet)
+		storeManifestImages(manifest, extractedImagesSet)
 	}
 	allImages := make([]string, 0, len(extractedImagesSet))
 	for uniqueImage := range extractedImagesSet {
@@ -92,19 +92,19 @@ func TestFindImagesInManifest(t *testing.T) {
 	assert.ElementsMatch(t, expectedImages, allImages)
 }
 
-func TestFindImagesInManifestEmptyManifest(t *testing.T) {
+func TestStoreManifestImages_EmptyManifest(t *testing.T) {
 	// Setup
-	var extractedImagesSet = make(map[string]string)
+	var extractedImagesSet = make(map[string]bool)
 	var manifestData map[string]any
 
 	// Test
-	storeManifestImageNames(manifestData, extractedImagesSet)
+	storeManifestImages(manifestData, extractedImagesSet)
 
 	// Verify
-	assert.Equal(t, map[string]string{}, extractedImagesSet)
+	assert.Equal(t, map[string]bool{}, extractedImagesSet)
 }
 
-func TestGetLocalManifestPaths(t *testing.T) {
+func TestGetManifestPaths(t *testing.T) {
 	// Setup
 	manifestSrcDir := "testdata"
 	expectedPaths := []string{"testdata/empty-crd.yaml", "testdata/invalid-crd.yml", "testdata/sample-crd.yaml"}
@@ -117,7 +117,7 @@ func TestGetLocalManifestPaths(t *testing.T) {
 	assert.Equal(t, expectedPaths, manifestPaths)
 }
 
-func TestGetLocalManifestPathsEmptySrc(t *testing.T) {
+func TestGetManifestPaths_EmptySrc(t *testing.T) {
 	// Setup
 	manifestSrcDir := ""
 
@@ -128,7 +128,7 @@ func TestGetLocalManifestPathsEmptySrc(t *testing.T) {
 	require.ErrorContains(t, err, "manifest source directory not defined")
 }
 
-func TestGetLocalManifestPathsInvalidSrc(t *testing.T) {
+func TestGetManifestPaths_InvalidSrc(t *testing.T) {
 	// Setup
 	manifestSrcDir := "not-real"
 
@@ -139,7 +139,7 @@ func TestGetLocalManifestPathsInvalidSrc(t *testing.T) {
 	require.ErrorContains(t, err, "reading manifest source dir 'not-real': open not-real: no such file or directory")
 }
 
-func TestGetLocalManifestPathsNoManifests(t *testing.T) {
+func TestGetManifestPaths_NoManifests(t *testing.T) {
 	// Setup
 	require.NoError(t, os.Mkdir("downloaded-manifests", 0o755))
 	defer func() {
@@ -154,7 +154,7 @@ func TestGetLocalManifestPathsNoManifests(t *testing.T) {
 	assert.Nil(t, manifestPaths)
 }
 
-func TestGetAllImagesInvalidURL(t *testing.T) {
+func TestManifestImages_InvalidURL(t *testing.T) {
 	// Setup
 	require.NoError(t, os.Mkdir("downloaded-manifests", 0o755))
 	defer func() {
@@ -166,45 +166,33 @@ func TestGetAllImagesInvalidURL(t *testing.T) {
 	}
 
 	// Test
-	_, err := GetAllImages(nil, manifestURLs, "", "", "", "downloaded-manifests")
+	_, err := ManifestImages(manifestURLs, "")
 
 	// Verify
-	require.ErrorContains(t, err, "error downloading manifests: downloading manifest 'k8s.io/examples/application/nginx-app.yaml': executing request: Get \"k8s.io/examples/application/nginx-app.yaml\": unsupported protocol scheme \"\"")
+	require.ErrorContains(t, err, "downloading manifests: downloading manifest 'k8s.io/examples/application/nginx-app.yaml': executing request: Get \"k8s.io/examples/application/nginx-app.yaml\": unsupported protocol scheme \"\"")
 }
 
-func TestGetAllImagesInvalidDownloadDestination(t *testing.T) {
-	// Setup
-	manifestURLs := []string{""}
-	manifestDownloadDest := ""
-
+func TestManifestImages_LocalManifestDirNotDefined(t *testing.T) {
 	// Test
-	_, err := GetAllImages(nil, manifestURLs, "", "", "", manifestDownloadDest)
-
-	// Verify
-	require.ErrorContains(t, err, "manifest download destination directory not defined")
-}
-
-func TestGetAllImagesLocalManifestDirNotDefined(t *testing.T) {
-	// Test
-	containerImages, err := GetAllImages(nil, nil, "", "", "", "")
+	containerImages, err := ManifestImages(nil, "")
 
 	// Verify
 	require.NoError(t, err)
 	assert.Empty(t, containerImages)
 }
 
-func TestGetAllImagesInvalidLocalManifestsDir(t *testing.T) {
+func TestManifestImages_InvalidLocalManifestsDir(t *testing.T) {
 	// Setup
 	localManifestsDir := "does-not-exist"
 
 	// Test
-	_, err := GetAllImages(nil, nil, localManifestsDir, "", "", "")
+	_, err := ManifestImages(nil, localManifestsDir)
 
 	// Verify
-	require.ErrorContains(t, err, "error getting local manifest paths: reading manifest source dir 'does-not-exist': open does-not-exist: no such file or directory")
+	require.ErrorContains(t, err, "getting local manifest paths: reading manifest source dir 'does-not-exist': open does-not-exist: no such file or directory")
 }
 
-func TestDownloadManifestsNoManifest(t *testing.T) {
+func TestDownloadManifests_NoManifest(t *testing.T) {
 	// Setup
 	manifestDownloadDest := ""
 
@@ -216,7 +204,7 @@ func TestDownloadManifestsNoManifest(t *testing.T) {
 	assert.Equal(t, 0, len(manifestPaths))
 }
 
-func TestDownloadManifestsInvalidURL(t *testing.T) {
+func TestDownloadManifests_InvalidURL(t *testing.T) {
 	// Setup
 	manifestURLs := []string{"k8s.io/examples/application/nginx-app.yaml"}
 	manifestDownloadDest := ""
@@ -229,7 +217,7 @@ func TestDownloadManifestsInvalidURL(t *testing.T) {
 	assert.Equal(t, 0, len(manifestPaths))
 }
 
-func TestGetAllImagesInvalidLocalManifest(t *testing.T) {
+func TestManifestImages_InvalidLocalManifest(t *testing.T) {
 	// Setup
 	require.NoError(t, os.Mkdir(localManifestsSrcDir, 0o755))
 	defer func() {
@@ -241,8 +229,8 @@ func TestGetAllImagesInvalidLocalManifest(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test
-	_, err = GetAllImages(nil, nil, localManifestsSrcDir, "", "", "")
+	_, err = ManifestImages(nil, localManifestsSrcDir)
 
 	// Verify
-	require.ErrorContains(t, err, "error reading manifest: error unmarshalling manifest yaml")
+	require.ErrorContains(t, err, "reading manifest: error unmarshalling manifest yaml")
 }

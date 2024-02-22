@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestDownloadManifests(t *testing.T) {
@@ -43,67 +42,31 @@ func TestDownloadManifests(t *testing.T) {
 	assert.Contains(t, found, "image: nginx:1.14.2")
 }
 
-func TestGetAllImages(t *testing.T) {
+func TestManifestImages(t *testing.T) {
 	// Setup
-	expectedContainerImages := []image.ContainerImage{
-		{
-			Name: "custom-api:1.2.3",
-		},
-		{
-			Name: "quay.io/podman/hello",
-		},
-		{
-			Name: "mysql:5.7",
-		},
-		{
-			Name: "redis:6.0",
-		},
-		{
-			Name: "nginx:latest",
-		},
-		{
-			Name: "node:14",
-		},
-		{
-			Name: "nginx:1.14.2",
-		},
-		{
-			Name: "docker.io/bitnami/apache:2.4.58-debian-11-r10",
-		},
-		{
-			Name: "registry.suse.com/bci/bci-micro:15.5",
-		},
+	expectedContainerImages := []string{
+		"custom-api:1.2.3",
+		"mysql:5.7",
+		"redis:6.0",
+		"nginx:latest",
+		"node:14",
+		"nginx:1.14.2",
 	}
 
-	manifestDownloadDest := "downloaded-manifests"
-	require.NoError(t, os.Mkdir(manifestDownloadDest, 0o755))
+	manifestSrcDir := "local-manifests"
+	require.NoError(t, os.Mkdir(manifestSrcDir, 0o755))
 	defer func() {
-		require.NoError(t, os.RemoveAll(manifestDownloadDest))
-	}()
-
-	localManifestSrcDir := "local-manifests"
-	require.NoError(t, os.Mkdir(localManifestSrcDir, 0o755))
-	defer func() {
-		require.NoError(t, os.RemoveAll(localManifestSrcDir))
+		assert.NoError(t, os.RemoveAll(manifestSrcDir))
 	}()
 
 	localSampleManifestPath := filepath.Join("testdata", "sample-crd.yaml")
-	err := fileio.CopyFile(localSampleManifestPath, filepath.Join(localManifestSrcDir, "sample-crd.yaml"), fileio.NonExecutablePerms)
+	err := fileio.CopyFile(localSampleManifestPath, filepath.Join(manifestSrcDir, "sample-crd.yaml"), fileio.NonExecutablePerms)
 	require.NoError(t, err)
 
-	embeddedContainerImages := []image.ContainerImage{
-		{
-			Name: "quay.io/podman/hello",
-		},
-	}
 	manifestURLs := []string{"https://k8s.io/examples/application/nginx-app.yaml"}
 
-	helmTemplatePath := filepath.Join("testdata", "helm", "helm-template.yaml")
-
-	helmManifestDir := filepath.Join("testdata", "helm", "valid")
-
 	// Test
-	containerImages, err := GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, helmManifestDir, helmTemplatePath, manifestDownloadDest)
+	containerImages, err := ManifestImages(manifestURLs, manifestSrcDir)
 
 	// Verify
 	require.NoError(t, err)

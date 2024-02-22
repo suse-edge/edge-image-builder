@@ -2,6 +2,8 @@ package image
 
 import (
 	"io"
+
+	"github.com/suse-edge/edge-image-builder/pkg/registry"
 )
 
 type networkConfigGenerator interface {
@@ -52,4 +54,5 @@ type Context struct {
 	// RPMResolver responsible for resolving rpm/package dependencies
 	RPMResolver    rpmResolver
 	RPMRepoCreator rpmRepoCreator
+	Helm           registry.Helm
 }
