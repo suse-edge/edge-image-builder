@@ -202,7 +202,9 @@ There are a number of optional directories that may be included in the image con
     `30-suma-register.sh`). Unless absolutely sure the default flow should be interrupted, all custom scripts
     should be prefixed within the range 50-99 (e.g. `60-my-script.sh`).
   * `files` - If present, all the files in this directory will be included in the built image.
-* `network` - If present, network configurations will be generated from all desired states in this directory
+* `network` - May be included to inject custom network configuration script or desired network configurations.
+  * `configure-network.sh` - If present, this script will be used to initialize the network during the combustion phase.
+  Otherwise, network configurations will be generated from all desired states in this directory
   and will be included in the built image. The configurations relevant for the particular host will be identified
   and applied during the combustion phase. Check [nm-configurator](https://github.com/suse-edge/nm-configurator/)
   for more information.

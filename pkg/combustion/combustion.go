@@ -9,6 +9,7 @@ import (
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"go.uber.org/zap"
 )
 
@@ -152,4 +153,13 @@ func isComponentConfigured(ctx *image.Context, componentDir string) bool {
 	}
 
 	return false
+}
+
+func logComponentStatus(component string, err error) {
+	if err != nil {
+		log.AuditComponentFailed(component)
+	} else {
+		log.AuditComponentSuccessful(component)
+		zap.S().Infof("Successfully configured %s component", component)
+	}
 }
