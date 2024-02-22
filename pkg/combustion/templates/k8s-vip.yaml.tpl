@@ -27,7 +27,7 @@ metadata:
   name: endpoint-copier-operator
   namespace: endpoint-copier-operator
 spec:
-  repo: https://suse-edge.github.io/endpoint-copier-operator
+  repo: https://suse-edge.github.io/charts
   chart: endpoint-copier-operator
   targetNamespace: endpoint-copier-operator
 ---
