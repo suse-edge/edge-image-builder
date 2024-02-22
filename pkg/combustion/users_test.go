@@ -23,10 +23,13 @@ func TestConfigureUsers(t *testing.T) {
 					Username:          "alpha",
 					EncryptedPassword: "alpha123",
 					SSHKeys:           []string{"alphakey1", "alphakey2"},
+					PrimaryGroup:      "alphagroup",
+					SecondaryGroups:   []string{"group1", "group2"},
 				},
 				{
 					Username:          "beta",
 					EncryptedPassword: "beta123",
+					SecondaryGroups:   []string{"group3"},
 				},
 				{
 					Username: "gamma",
@@ -61,29 +64,32 @@ func TestConfigureUsers(t *testing.T) {
 	foundContents := string(foundBytes)
 
 	// - All fields specified
-	assert.Contains(t, foundContents, "useradd -m alpha")
+	assert.Contains(t, foundContents, "PRIMARY_GROUP=\"-g alphagroup\"")
+	assert.Contains(t, foundContents, "SECONDARY_GROUPS=\"-G group1,group2\"")
+	assert.Contains(t, foundContents, "useradd $PRIMARY_GROUP $SECONDARY_GROUPS alpha")
 	assert.Contains(t, foundContents, "echo 'alpha:alpha123' | chpasswd -e\n")
 	assert.Contains(t, foundContents, "mkdir -pm700 /home/alpha/.ssh/")
 	assert.Contains(t, foundContents, "echo 'alphakey1' >> /home/alpha/.ssh/authorized_keys")
 	assert.Contains(t, foundContents, "echo 'alphakey2' >> /home/alpha/.ssh/authorized_keys")
 	assert.Contains(t, foundContents, "chown -R alpha /home/alpha/.ssh")
 
-	// - Only a password set
-	assert.Contains(t, foundContents, "useradd -m beta")
+	// - Password no SSH key | Only secondary groups
+	assert.Contains(t, foundContents, "useradd $PRIMARY_GROUP $SECONDARY_GROUPS beta")
+	assert.Contains(t, foundContents, "SECONDARY_GROUPS=\"-G group3\"")
 	assert.Contains(t, foundContents, "echo 'beta:beta123' | chpasswd -e\n")
 	assert.NotContains(t, foundContents, "mkdir -pm700 /home/beta/.ssh/")
 	assert.NotContains(t, foundContents, "/home/beta/.ssh/authorized_keys")
 	assert.NotContains(t, foundContents, "chown -R beta /home/beta/.ssh")
 
-	// - Only an SSH key specified
-	assert.Contains(t, foundContents, "useradd -m gamma")
+	// - SSH key no password | No Groups
+	assert.Contains(t, foundContents, "useradd $PRIMARY_GROUP $SECONDARY_GROUPS gamma")
 	assert.NotContains(t, foundContents, "echo 'gamma:")
 	assert.Contains(t, foundContents, "mkdir -pm700 /home/gamma/.ssh/")
 	assert.Contains(t, foundContents, "echo 'gammakey' >> /home/gamma/.ssh/authorized_keys")
 	assert.Contains(t, foundContents, "chown -R gamma /home/gamma/.ssh")
 
 	// - Special handling for root
-	assert.NotContains(t, foundContents, "useradd -m root")
+	assert.NotContains(t, foundContents, "useradd root")
 	assert.Contains(t, foundContents, "echo 'root:root123' | chpasswd -e\n")
 	assert.Contains(t, foundContents, "mkdir -pm700 /root/.ssh/")
 	assert.Contains(t, foundContents, "echo 'rootkey1' >> /root/.ssh/authorized_keys")

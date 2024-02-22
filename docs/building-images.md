@@ -68,8 +68,14 @@ operatingSystem:
     sshKeys:
       - user1Key1
       - user1Key2
+    primaryGroup: groupPrimary
+    secondaryGroups:
+      - group1
+      - group2
   - username: user2
     encryptedPassword: 456
+    secondaryGroups:
+      - group3
   - username: user3
     sshKeys:
       - user3Key
@@ -128,6 +134,11 @@ operatingSystem:
   * `encryptedPassword` - Optional; Encrypted password to set for the use (for example, using `openssl passwd -6 $PASSWORD`
     to generate the value for this field).
   * `sshKeys` - Optional; List of public SSH keys to configure for the user.
+  * `primaryGroup` - Optional; If specified, the user will be configured with this as the primary group. The group
+    must already exist, either as a default group or one defined in the `groups` field. May not be specified if the
+    user is "root".
+  * `secondaryGroups` - Optional; If specified, the user will be configured as part of each listed group. The
+    groups must already exist, either as default groups or as ones defined in the `groups` field.
 * `systemd` - Optional; Defines lists of services to enable/disable. Either or both of `enable` and `disable` may
   be included; if neither are provided, this section is ignored.
   * `enable` - Optional; List of systemd services to enable.

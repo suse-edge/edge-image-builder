@@ -95,6 +95,8 @@ type OperatingSystemUser struct {
 	Username          string   `yaml:"username"`
 	EncryptedPassword string   `yaml:"encryptedPassword"`
 	SSHKeys           []string `yaml:"sshKeys"`
+	PrimaryGroup      string   `yaml:"primaryGroup"`
+	SecondaryGroups   []string `yaml:"secondaryGroups"`
 }
 
 type OperatingSystemGroup struct {
