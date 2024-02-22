@@ -22,14 +22,12 @@ const (
 )
 
 type Helm struct {
-	execCommand func(name string, args ...string) *exec.Cmd
-	outputDir   string
+	outputDir string
 }
 
 func New(outputDir string) *Helm {
 	return &Helm{
-		execCommand: exec.Command,
-		outputDir:   outputDir,
+		outputDir: outputDir,
 	}
 }
 
@@ -63,18 +61,24 @@ func (h *Helm) AddRepo(chart, repository string) error {
 		}
 	}()
 
-	var args []string
-	args = append(args, "repo", "add", tempRepo(chart), repository)
-
-	cmd := h.execCommand("helm", args...)
-	cmd.Stdout = file
-	cmd.Stderr = file
+	cmd := addRepoCommand(chart, repository, file)
 
 	if _, err = fmt.Fprintf(file, "command: %s\n", cmd); err != nil {
 		return fmt.Errorf("writing command prefix to log file: %w", err)
 	}
 
 	return cmd.Run()
+}
+
+func addRepoCommand(chart, repository string, output io.Writer) *exec.Cmd {
+	var args []string
+	args = append(args, "repo", "add", tempRepo(chart), repository)
+
+	cmd := exec.Command("helm", args...)
+	cmd.Stdout = output
+	cmd.Stderr = output
+
+	return cmd
 }
 
 func (h *Helm) Pull(chart, repository, version, destDir string) (string, error) {
@@ -90,21 +94,7 @@ func (h *Helm) Pull(chart, repository, version, destDir string) (string, error) 
 		}
 	}()
 
-	repository = repositoryName(repository, chart)
-
-	var args []string
-	args = append(args, "pull", repository)
-
-	if version != "" {
-		args = append(args, "--version", version)
-	}
-	if destDir != "" {
-		args = append(args, "--destination", destDir)
-	}
-
-	cmd := h.execCommand("helm", args...)
-	cmd.Stdout = file
-	cmd.Stderr = file
+	cmd := pullCommand(chart, repository, version, destDir, file)
 
 	if _, err = fmt.Fprintf(file, "command: %s\n", cmd); err != nil {
 		return "", fmt.Errorf("writing command prefix to log file: %w", err)
@@ -127,6 +117,27 @@ func (h *Helm) Pull(chart, repository, version, destDir string) (string, error) 
 	return chartPath, nil
 }
 
+func pullCommand(chart, repository, version, destDir string, output io.Writer) *exec.Cmd {
+	repository = repositoryName(repository, chart)
+
+	var args []string
+	args = append(args, "pull", repository)
+
+	if version != "" {
+		args = append(args, "--version", version)
+	}
+	if destDir != "" {
+		args = append(args, "--destination", destDir)
+	}
+
+	cmd := exec.Command("helm", args...)
+
+	cmd.Stdout = output
+	cmd.Stderr = output
+
+	return cmd
+}
+
 func (h *Helm) Template(chart, repository, version, valuesFilePath string, setArgs []string) ([]map[string]any, error) {
 	logFile := filepath.Join(h.outputDir, templateLogFileName)
 
@@ -141,25 +152,7 @@ func (h *Helm) Template(chart, repository, version, valuesFilePath string, setAr
 	}()
 
 	chartContentsBuffer := new(strings.Builder)
-
-	var args []string
-	args = append(args, "template", "--skip-crds", chart, repository)
-
-	if version != "" {
-		args = append(args, "--version", version)
-	}
-
-	if len(setArgs) > 0 {
-		args = append(args, "--set", strings.Join(setArgs, ","))
-	}
-
-	if valuesFilePath != "" {
-		args = append(args, "-f", valuesFilePath)
-	}
-
-	cmd := h.execCommand("helm", args...)
-	cmd.Stdout = io.MultiWriter(file, chartContentsBuffer)
-	cmd.Stderr = file
+	cmd := templateCommand(chart, repository, version, valuesFilePath, setArgs, io.MultiWriter(file, chartContentsBuffer), file)
 
 	if _, err = fmt.Fprintf(file, "command: %s\n", cmd); err != nil {
 		return nil, fmt.Errorf("writing command prefix to log file: %w", err)
@@ -176,6 +169,29 @@ func (h *Helm) Template(chart, repository, version, valuesFilePath string, setAr
 	}
 
 	return resources, nil
+}
+
+func templateCommand(chart, repository, version, valuesFilePath string, setArgs []string, stdout, stderr io.Writer) *exec.Cmd {
+	var args []string
+	args = append(args, "template", "--skip-crds", chart, repository)
+
+	if version != "" {
+		args = append(args, "--version", version)
+	}
+
+	if len(setArgs) > 0 {
+		args = append(args, "--set", strings.Join(setArgs, ","))
+	}
+
+	if valuesFilePath != "" {
+		args = append(args, "-f", valuesFilePath)
+	}
+
+	cmd := exec.Command("helm", args...)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+
+	return cmd
 }
 
 func parseChartContents(chartContents string) ([]map[string]any, error) {
