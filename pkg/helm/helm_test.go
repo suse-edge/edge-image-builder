@@ -39,14 +39,14 @@ func TestHelmRepositoryName(t *testing.T) {
 
 func TestAddRepoCommand(t *testing.T) {
 	var buf bytes.Buffer
-	cmd := addRepoCommand("apache", "oci://registry-1.docker.io/bitnamicharts/apache", &buf)
+	cmd := addRepoCommand("kubevirt", "https://suse-edge.github.io/charts", &buf)
 
 	assert.Equal(t, []string{
 		"helm",
 		"repo",
 		"add",
-		"repo-apache",
-		"oci://registry-1.docker.io/bitnamicharts/apache",
+		"repo-kubevirt",
+		"https://suse-edge.github.io/charts",
 	}, cmd.Args)
 
 	assert.Equal(t, &buf, cmd.Stdout)
