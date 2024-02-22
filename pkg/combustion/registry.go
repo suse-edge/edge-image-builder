@@ -61,9 +61,16 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("configuring helm: %w", err)
 	}
 
-	if err = configureEmbeddedArtifactRegistry(ctx, helmTemplatePath, helmManifestHolderDir); err != nil {
+	configured, err := configureEmbeddedArtifactRegistry(ctx, helmTemplatePath, helmManifestHolderDir)
+	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("configuring embedded artifact registry: %w", err)
+	}
+
+	if !configured {
+		log.AuditComponentSkipped(registryComponentName)
+		zap.S().Info("Skipping embedded artifact registry since the provided manifests/helm charts contain no images")
+		return nil, nil
 	}
 
 	registryScriptNameResult, err := writeRegistryScript(ctx)
@@ -393,11 +400,11 @@ func writeUpdatedHelmManifests(k8sManifestsDir string, chartTars []string, manif
 	return nil
 }
 
-func configureEmbeddedArtifactRegistry(ctx *image.Context, helmTemplatePath string, helmManifestHolderDir string) error {
+func configureEmbeddedArtifactRegistry(ctx *image.Context, helmTemplatePath string, helmManifestHolderDir string) (bool, error) {
 	registriesDir := filepath.Join(ctx.CombustionDir, registryDir)
 	err := os.Mkdir(registriesDir, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("creating registry dir: %w", err)
+		return false, fmt.Errorf("creating registry dir: %w", err)
 	}
 
 	var localManifestSrcDir string
@@ -412,13 +419,17 @@ func configureEmbeddedArtifactRegistry(ctx *image.Context, helmTemplatePath stri
 		manifestDownloadDest = filepath.Join(ctx.BuildDir, "downloaded-manifests")
 		err = os.Mkdir(manifestDownloadDest, os.ModePerm)
 		if err != nil {
-			return fmt.Errorf("creating manifest download dir: %w", err)
+			return false, fmt.Errorf("creating manifest download dir: %w", err)
 		}
 	}
 
 	containerImages, err := registry.GetAllImages(embeddedContainerImages, manifestURLs, localManifestSrcDir, helmManifestHolderDir, helmTemplatePath, manifestDownloadDest)
 	if err != nil {
-		return fmt.Errorf("getting all container images: %w", err)
+		return false, fmt.Errorf("getting all container images: %w", err)
+	}
+
+	if len(containerImages) == 0 {
+		return false, nil
 	}
 
 	if ctx.ImageDefinition.Kubernetes.Version != "" {
@@ -426,32 +437,32 @@ func configureEmbeddedArtifactRegistry(ctx *image.Context, helmTemplatePath stri
 
 		err = writeRegistryMirrors(ctx, hostnames)
 		if err != nil {
-			return fmt.Errorf("writing registry mirrors: %w", err)
+			return false, fmt.Errorf("writing registry mirrors: %w", err)
 		}
 	}
 
 	err = writeHaulerManifest(ctx, containerImages)
 	if err != nil {
-		return fmt.Errorf("writing hauler manifest: %w", err)
+		return false, fmt.Errorf("writing hauler manifest: %w", err)
 	}
 
 	err = syncHaulerManifest(ctx)
 	if err != nil {
-		return fmt.Errorf("populating hauler store: %w", err)
+		return false, fmt.Errorf("populating hauler store: %w", err)
 	}
 
 	err = generateRegistryTar(ctx)
 	if err != nil {
-		return fmt.Errorf("generating hauler store tar: %w", err)
+		return false, fmt.Errorf("generating hauler store tar: %w", err)
 	}
 
 	haulerBinaryPath := fmt.Sprintf("hauler-%s", string(ctx.ImageDefinition.Image.Arch))
 	err = copyHaulerBinary(ctx, haulerBinaryPath)
 	if err != nil {
-		return fmt.Errorf("copying hauler binary: %w", err)
+		return false, fmt.Errorf("copying hauler binary: %w", err)
 	}
 
-	return nil
+	return true, nil
 }
 
 func configureHelm(ctx *image.Context) (helmTemplatePath string, helmManifestHolderDir string, err error) {
