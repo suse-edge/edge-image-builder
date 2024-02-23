@@ -135,8 +135,7 @@ operatingSystem:
     to generate the value for this field).
   * `sshKeys` - Optional; List of public SSH keys to configure for the user.
   * `primaryGroup` - Optional; If specified, the user will be configured with this as the primary group. The group
-    must already exist, either as a default group or one defined in the `groups` field. May not be specified if the
-    user is "root".
+    must already exist, either as a default group or one defined in the `groups` field. 
   * `secondaryGroups` - Optional; If specified, the user will be configured as part of each listed group. The
     groups must already exist, either as default groups or as ones defined in the `groups` field.
 * `systemd` - Optional; Defines lists of services to enable/disable. Either or both of `enable` and `disable` may
