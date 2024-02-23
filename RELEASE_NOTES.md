@@ -11,3 +11,4 @@
 * Added the ability to configure operating system groups under `operatingSystem/groups`
 * Added optional `primaryGroup` field for operating system users
 * Added optional `secondaryGroups` field for operating system users
+* Added optional `createHome` field for operating system users

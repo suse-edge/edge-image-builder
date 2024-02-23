@@ -131,11 +131,14 @@ operatingSystem:
   the following fields (one or both of the password and SSH key must be provided per user):
   * `username` - Required; Username of the user to create. To set the password or SSH key for the root user,
     use the value `root` for this field.
+  * `createHome` - Optional; If set to `true`, a home directory will be created for the user. Defaults to `false`
+    if unspecified.
   * `encryptedPassword` - Optional; Encrypted password to set for the use (for example, using `openssl passwd -6 $PASSWORD`
     to generate the value for this field).
   * `sshKeys` - Optional; List of public SSH keys to configure for the user.
   * `primaryGroup` - Optional; If specified, the user will be configured with this as the primary group. The group
-    must already exist, either as a default group or one defined in the `groups` field. 
+    must already exist, either as a default group or one defined in the `groups` field. If this is omitted, the
+    result will be the default for the operating system (on SLE Micro, this is `users`).
   * `secondaryGroups` - Optional; If specified, the user will be configured as part of each listed group. The
     groups must already exist, either as default groups or as ones defined in the `groups` field.
 * `systemd` - Optional; Defines lists of services to enable/disable. Either or both of `enable` and `disable` may

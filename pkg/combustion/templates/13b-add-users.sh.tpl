@@ -4,20 +4,23 @@ set -euo pipefail
 # Without this, the script will run successfully during combustion, but when /home
 # is mounted it will hide the /home used during these user creations.
 mount /home
-
+#---
 {{- range $user := . }}
-
 {{- /* Non-root users */}}
 {{- if (ne $user.Username "root") }}
-PRIMARY_GROUP=""
-SECONDARY_GROUPS=""
+{{- $create_home := ""}}
+{{- if $user.CreateHome }}
+  {{- $create_home = "-m "}}
+{{- end }}
+{{- $primary_group := ""}}
 {{- if $user.PrimaryGroup }}
-PRIMARY_GROUP="-g {{ $user.PrimaryGroup }}"
+  {{- $primary_group = (printf "-g %v " $user.PrimaryGroup) }}
 {{- end }}
+{{- $secondary_groups := ""}}
 {{- if $user.SecondaryGroups }}
-SECONDARY_GROUPS="-G {{ join $user.SecondaryGroups "," }}"
+  {{- $secondary_groups = (printf "-G %v " (join $user.SecondaryGroups ",")) }}
 {{- end }}
-useradd $PRIMARY_GROUP $SECONDARY_GROUPS {{$user.Username}}
+useradd {{ $create_home }}{{ $primary_group }}{{ $secondary_groups }}{{$user.Username}}
 
 {{- if $user.EncryptedPassword }}
 echo '{{$user.Username}}:{{$user.EncryptedPassword}}' | chpasswd -e
@@ -28,7 +31,7 @@ mkdir -pm700 /home/{{$user.Username}}/.ssh/
 echo '{{.}}' >> /home/{{$user.Username}}/.ssh/authorized_keys
 chown -R {{$user.Username}} /home/{{$user.Username}}/.ssh
 {{- end }}
-
+# ---
 {{- else }}
 
 {{- /* Root user */}}
