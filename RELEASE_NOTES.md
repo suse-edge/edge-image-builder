@@ -12,3 +12,4 @@
 * Added optional `primaryGroup` field for operating system users
 * Added optional `secondaryGroups` field for operating system users
 * Added optional `createHome` field for operating system users
+* Added optional `uid` field for operating system users

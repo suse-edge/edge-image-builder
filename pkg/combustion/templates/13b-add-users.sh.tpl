@@ -12,6 +12,10 @@ mount /home
 {{- if $user.CreateHome }}
   {{- $create_home = "-m "}}
 {{- end }}
+{{- $uid := ""}}
+{{- if (ne $user.UID 0)}}
+  {{- $uid = (printf "-u %v " $user.UID)}}
+{{- end }}
 {{- $primary_group := ""}}
 {{- if $user.PrimaryGroup }}
   {{- $primary_group = (printf "-g %v " $user.PrimaryGroup) }}
@@ -20,7 +24,7 @@ mount /home
 {{- if $user.SecondaryGroups }}
   {{- $secondary_groups = (printf "-G %v " (join $user.SecondaryGroups ",")) }}
 {{- end }}
-useradd {{ $create_home }}{{ $primary_group }}{{ $secondary_groups }}{{$user.Username}}
+useradd {{ $create_home }}{{ $uid }}{{ $primary_group }}{{ $secondary_groups }}{{$user.Username}}
 
 {{- if $user.EncryptedPassword }}
 echo '{{$user.Username}}:{{$user.EncryptedPassword}}' | chpasswd -e
@@ -43,7 +47,7 @@ echo '{{$user.Username}}:{{$user.EncryptedPassword}}' | chpasswd -e
 mkdir -pm700 /{{$user.Username}}/.ssh/
 echo '{{.}}' >> /{{$user.Username}}/.ssh/authorized_keys
 {{- end }}
-
+# ---
 {{- end }}
 
 {{- end }}

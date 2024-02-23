@@ -21,6 +21,7 @@ func TestConfigureUsers(t *testing.T) {
 			Users: []image.OperatingSystemUser{
 				{
 					Username:          "alpha",
+					UID:               2000,
 					EncryptedPassword: "alpha123",
 					SSHKeys:           []string{"alphakey1", "alphakey2"},
 					PrimaryGroup:      "alphagroup",
@@ -66,7 +67,7 @@ func TestConfigureUsers(t *testing.T) {
 	foundContents := string(foundBytes)
 
 	// - All fields specified
-	assert.Contains(t, foundContents, "useradd -m -g alphagroup -G group1,group2 alpha")
+	assert.Contains(t, foundContents, "useradd -m -u 2000 -g alphagroup -G group1,group2 alpha")
 	assert.Contains(t, foundContents, "echo 'alpha:alpha123' | chpasswd -e\n")
 	assert.Contains(t, foundContents, "mkdir -pm700 /home/alpha/.ssh/")
 	assert.Contains(t, foundContents, "echo 'alphakey1' >> /home/alpha/.ssh/authorized_keys")

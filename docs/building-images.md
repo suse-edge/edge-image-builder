@@ -127,10 +127,14 @@ operatingSystem:
 * `groups` - Optional; Defines a list of operating system groups to be created. This will not fail if the
   group already exists. Each entry is made up of the following fields:
   * `name` - Required; Name of the group to create.
+  * `gid` - Optional; If specified, the group will be created with the given ID. If omitted, the GID will be generated
+    by the operating system.
 * `users` - Optional; Defines a list of operating system users to be created. Each entry is made up of
   the following fields (one or both of the password and SSH key must be provided per user):
   * `username` - Required; Username of the user to create. To set the password or SSH key for the root user,
     use the value `root` for this field.
+  * `uid` - Optional; If specified, the user will be created with the given ID. If omitted, the UID will be generated
+    by the operating system.
   * `createHome` - Optional; If set to `true`, a home directory will be created for the user. Defaults to `false`
     if unspecified.
   * `encryptedPassword` - Optional; Encrypted password to set for the use (for example, using `openssl passwd -6 $PASSWORD`

@@ -21,6 +21,7 @@ func TestConfigureGroups(t *testing.T) {
 			Groups: []image.OperatingSystemGroup{
 				{
 					Name: "group1",
+					GID:  1000,
 				},
 				{
 					Name: "group2",
@@ -48,6 +49,6 @@ func TestConfigureGroups(t *testing.T) {
 
 	foundContents := string(foundBytes)
 
-	assert.Contains(t, foundContents, "groupadd -f group1")
+	assert.Contains(t, foundContents, "groupadd -f -g 1000 group1")
 	assert.Contains(t, foundContents, "groupadd -f group2")
 }

@@ -93,6 +93,7 @@ type AddRepo struct {
 
 type OperatingSystemUser struct {
 	Username          string   `yaml:"username"`
+	UID               int      `yaml:"uid"`
 	EncryptedPassword string   `yaml:"encryptedPassword"`
 	SSHKeys           []string `yaml:"sshKeys"`
 	PrimaryGroup      string   `yaml:"primaryGroup"`
@@ -102,6 +103,7 @@ type OperatingSystemUser struct {
 
 type OperatingSystemGroup struct {
 	Name string `yaml:"name"`
+	GID  int    `yaml:"gid"`
 }
 
 type Systemd struct {
