@@ -9,7 +9,15 @@ mount /home
 
 {{- /* Non-root users */}}
 {{- if (ne $user.Username "root") }}
-useradd -m {{$user.Username}}
+PRIMARY_GROUP=""
+SECONDARY_GROUPS=""
+{{- if $user.PrimaryGroup }}
+PRIMARY_GROUP="-g {{ $user.PrimaryGroup }}"
+{{- end }}
+{{- if $user.SecondaryGroups }}
+SECONDARY_GROUPS="-G {{ join $user.SecondaryGroups "," }}"
+{{- end }}
+useradd $PRIMARY_GROUP $SECONDARY_GROUPS {{$user.Username}}
 
 {{- if $user.EncryptedPassword }}
 echo '{{$user.Username}}:{{$user.EncryptedPassword}}' | chpasswd -e

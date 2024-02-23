@@ -3,6 +3,7 @@ package template
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"text/template"
 )
 
@@ -11,7 +12,9 @@ func Parse(name string, contents string, templateData any) (string, error) {
 		return "", fmt.Errorf("template data not provided")
 	}
 
-	tmpl, err := template.New(name).Parse(contents)
+	funcs := template.FuncMap{"join": strings.Join}
+
+	tmpl, err := template.New(name).Funcs(funcs).Parse(contents)
 	if err != nil {
 		return "", fmt.Errorf("parsing contents: %w", err)
 	}
