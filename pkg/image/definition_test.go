@@ -55,7 +55,7 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, userConfigs[0].PrimaryGroup, "admin")
 	assert.Len(t, userConfigs[0].SecondaryGroups, 1)
 	assert.Equal(t, "wheel", userConfigs[0].SecondaryGroups[0])
-	assert.True(t, userConfigs[0].CreateHome)
+	assert.True(t, userConfigs[0].CreateHomeDir)
 
 	assert.Equal(t, "beta", userConfigs[1].Username)
 	assert.Equal(t, 0, userConfigs[1].UID)
@@ -63,7 +63,7 @@ func TestParse(t *testing.T) {
 	assert.Nil(t, userConfigs[1].SSHKeys)
 	assert.Equal(t, userConfigs[1].PrimaryGroup, "")
 	assert.Len(t, userConfigs[1].SecondaryGroups, 0)
-	assert.False(t, userConfigs[1].CreateHome)
+	assert.False(t, userConfigs[1].CreateHomeDir)
 
 	assert.Equal(t, "gamma", userConfigs[2].Username)
 	assert.Equal(t, 0, userConfigs[2].UID)
@@ -72,7 +72,7 @@ func TestParse(t *testing.T) {
 	assert.Contains(t, userConfigs[2].SSHKeys[0], "ssh-rsa BBBBB3")
 	assert.Equal(t, userConfigs[2].PrimaryGroup, "")
 	assert.Len(t, userConfigs[2].SecondaryGroups, 0)
-	assert.False(t, userConfigs[2].CreateHome)
+	assert.False(t, userConfigs[2].CreateHomeDir)
 
 	// Operating System -> Systemd
 	systemd := definition.OperatingSystem.Systemd

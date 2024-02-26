@@ -98,7 +98,7 @@ type OperatingSystemUser struct {
 	SSHKeys           []string `yaml:"sshKeys"`
 	PrimaryGroup      string   `yaml:"primaryGroup"`
 	SecondaryGroups   []string `yaml:"secondaryGroups"`
-	CreateHome        bool     `yaml:"createHome"`
+	CreateHomeDir     bool     `yaml:"createHomeDir"`
 }
 
 type OperatingSystemGroup struct {

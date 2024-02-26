@@ -9,7 +9,7 @@ mount /home
 {{- /* Non-root users */}}
 {{- if (ne $user.Username "root") }}
 {{- $create_home := ""}}
-{{- if $user.CreateHome }}
+{{- if $user.CreateHomeDir }}
   {{- $create_home = "-m "}}
 {{- end }}
 {{- $uid := ""}}

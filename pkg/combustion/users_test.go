@@ -26,13 +26,13 @@ func TestConfigureUsers(t *testing.T) {
 					SSHKeys:           []string{"alphakey1", "alphakey2"},
 					PrimaryGroup:      "alphagroup",
 					SecondaryGroups:   []string{"group1", "group2"},
-					CreateHome:        true,
+					CreateHomeDir:     true,
 				},
 				{
 					Username:          "beta",
 					EncryptedPassword: "beta123",
 					SecondaryGroups:   []string{"group3"},
-					CreateHome:        false,
+					CreateHomeDir:     false,
 				},
 				{
 					Username: "gamma",

@@ -135,7 +135,7 @@ operatingSystem:
     use the value `root` for this field.
   * `uid` - Optional; If specified, the user will be created with the given ID. If omitted, the UID will be generated
     by the operating system.
-  * `createHome` - Optional; If set to `true`, a home directory will be created for the user. Defaults to `false`
+  * `createHomeDir` - Optional; If set to `true`, a home directory will be created for the user. Defaults to `false`
     if unspecified.
   * `encryptedPassword` - Optional; Encrypted password to set for the use (for example, using `openssl passwd -6 $PASSWORD`
     to generate the value for this field).
@@ -251,4 +251,8 @@ as follows:
 
 * `elemental` - This must contain a file named `elemental_config.yaml`. This file will be bundled in
   the built image and used to register with Elemental on boot.
-> **_NOTE:_** Elemental builds use EIB's package resolution process to download any necessary RPM packages. To ensure a successful build, this process requires the ```--privileged``` flag to be passed to the ```podman run``` command. For more info on why this is required, please see [Package resolution design](design/pkg-resolution.md#running-the-eib-container).
+
+> **_NOTE:_** Elemental builds use EIB's package resolution process to download any necessary RPM packages. 
+> To ensure a successful build, this process requires the ```--privileged``` flag to be passed to the
+> ```podman run``` command. For more info on why this is required, please see
+> [Package resolution design](design/pkg-resolution.md#running-the-eib-container).
