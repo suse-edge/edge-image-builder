@@ -9,6 +9,7 @@ import (
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"github.com/suse-edge/edge-image-builder/pkg/mount"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
 )
@@ -71,6 +72,16 @@ func New(workDir string, podman Podman, baseImageBuilder BaseResolverImageBuilde
 // - outputDir - directory in which the resolver will create a directory containing the resolved rpms.
 func (r *Resolver) Resolve(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDirPath string, pkgList []string, err error) {
 	zap.L().Info("Resolving package dependencies...")
+
+	revert, err := mount.DisableDefaultMounts("")
+	if err != nil {
+		return "", nil, fmt.Errorf("temporary disabling automatic volume mounts: %w", err)
+	}
+	defer func() {
+		if err = revert(); err != nil {
+			zap.S().Warnf("failed to enable default mounts: %w", err)
+		}
+	}()
 
 	if r.baseImageRef, err = r.baseResolverImageBuilder.Build(); err != nil {
 		return "", nil, fmt.Errorf("building base resolver image: %w", err)
