@@ -32,9 +32,9 @@ if [ "$HOSTNAME" = {{ .initialiser }} ]; then
     mkdir -p /var/lib/rancher/k3s/server/manifests/
     cp {{ .vipManifest }} /var/lib/rancher/k3s/server/manifests/{{ .vipManifest }}
 
-    {{- if .manifestsPath }}
-    cp {{ .manifestsPath }}/* /var/lib/rancher/k3s/server/manifests/
-    {{- end }}
+    if [ -f {{ .registryMirrors }} ]; then
+        cp {{ .registryMirrors }} /etc/rancher/k3s/registries.yaml
+    fi
 fi
 
 umount /var
