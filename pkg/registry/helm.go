@@ -16,7 +16,7 @@ import (
 type Helm interface {
 	AddRepo(chart, repository string) error
 	Pull(chart, repository, version, destDir string) (string, error)
-	Template(chart, repository, version, valuesFilePath string, setArgs []string) ([]map[string]any, error)
+	Template(chart, repository, version, valuesFilePath, kubeVersion string, setArgs []string) ([]map[string]any, error)
 }
 
 type HelmChart struct {
@@ -25,7 +25,7 @@ type HelmChart struct {
 	ContainerImages []string
 }
 
-func HelmCharts(srcDir, buildDir string, helm Helm) ([]*HelmChart, error) {
+func HelmCharts(srcDir, buildDir, kubeVersion string, helm Helm) ([]*HelmChart, error) {
 	manifestPaths, err := getManifestPaths(srcDir)
 	if err != nil {
 		return nil, fmt.Errorf("getting helm manifest paths: %w", err)
@@ -51,7 +51,7 @@ func HelmCharts(srcDir, buildDir string, helm Helm) ([]*HelmChart, error) {
 			}
 
 			if kind == helmChartKind {
-				if err = handleChartResource(resource, buildDir, helm, containerImages); err != nil {
+				if err = handleChartResource(resource, buildDir, kubeVersion, helm, containerImages); err != nil {
 					return nil, fmt.Errorf("handling chart resource: %w", err)
 				}
 			} else {
@@ -96,7 +96,7 @@ func parseManifest(path string) ([]map[string]any, error) {
 	return resources, nil
 }
 
-func handleChartResource(resource map[string]any, buildDir string, helm Helm, containerImages map[string]bool) error {
+func handleChartResource(resource map[string]any, buildDir, kubeVersion string, helm Helm, containerImages map[string]bool) error {
 	crd, err := parseHelmCRD(resource)
 	if err != nil {
 		return fmt.Errorf("parsing crd: %w", err)
@@ -126,7 +126,7 @@ func handleChartResource(resource map[string]any, buildDir string, helm Helm, co
 		chartName = crd.Metadata.Name
 	}
 
-	chartResources, err := helm.Template(chartName, chartPath, crd.Spec.Version, valuesPath, crd.parseSetArgs())
+	chartResources, err := helm.Template(chartName, chartPath, crd.Spec.Version, valuesPath, kubeVersion, crd.parseSetArgs())
 	if err != nil {
 		return fmt.Errorf("templating chart: %w", err)
 	}

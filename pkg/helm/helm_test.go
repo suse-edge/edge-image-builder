@@ -133,16 +133,18 @@ func TestTemplateCommand(t *testing.T) {
 		repo         string
 		chart        string
 		version      string
+		kubeVersion  string
 		valuesPath   string
 		setArgs      []string
 		expectedArgs []string
 	}{
 		{
-			name:       "Template with all parameters",
-			repo:       "https://suse-edge.github.io/charts",
-			chart:      "kubevirt",
-			version:    "0.2.1",
-			valuesPath: "/kubevirt/values.yaml",
+			name:        "Template with all parameters",
+			repo:        "https://suse-edge.github.io/charts",
+			chart:       "kubevirt",
+			version:     "0.2.1",
+			kubeVersion: "v1.28.0",
+			valuesPath:  "/kubevirt/values.yaml",
 			setArgs: []string{
 				"arg1",
 				"arg2",
@@ -159,18 +161,23 @@ func TestTemplateCommand(t *testing.T) {
 				"arg1,arg2",
 				"-f",
 				"/kubevirt/values.yaml",
+				"--kube-version",
+				"v1.28.0",
 			},
 		},
 		{
-			name:  "Template without optional parameters",
-			repo:  "https://suse-edge.github.io/charts",
-			chart: "kubevirt",
+			name:        "Template without optional parameters",
+			repo:        "https://suse-edge.github.io/charts",
+			chart:       "kubevirt",
+			kubeVersion: "v1.28.0",
 			expectedArgs: []string{
 				"helm",
 				"template",
 				"--skip-crds",
 				"kubevirt",
 				"https://suse-edge.github.io/charts",
+				"--kube-version",
+				"v1.28.0",
 			},
 		},
 	}
@@ -180,7 +187,7 @@ func TestTemplateCommand(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := templateCommand(test.chart, test.repo, test.version, test.valuesPath, test.setArgs, &stdout, &stderr)
+			cmd := templateCommand(test.chart, test.repo, test.version, test.valuesPath, test.kubeVersion, test.setArgs, &stdout, &stderr)
 
 			assert.Equal(t, test.expectedArgs, cmd.Args)
 			assert.Equal(t, &stdout, cmd.Stdout)
