@@ -29,10 +29,8 @@ CONFIGFILE=$NODETYPE.yaml
 if [ "$HOSTNAME" = {{ .initialiser }} ]; then
     CONFIGFILE={{ .initialiserConfigFile }}
 
-    mkdir -p /var/lib/rancher/k3s/server/manifests/
-    cp {{ .vipManifest }} /var/lib/rancher/k3s/server/manifests/{{ .vipManifest }}
-
     {{- if .manifestsPath }}
+    mkdir -p /var/lib/rancher/k3s/server/manifests/
     cp {{ .manifestsPath }}/* /var/lib/rancher/k3s/server/manifests/
     {{- end }}
 fi
