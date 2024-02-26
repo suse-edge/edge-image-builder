@@ -15,7 +15,7 @@ import (
 type mockHelm struct {
 	addRepoFunc  func(chart, repository string) error
 	pullFunc     func(chart, repository, version, destDir string) (string, error)
-	templateFunc func(chart, repository, version, valuesFilePath string, setArgs []string) ([]map[string]any, error)
+	templateFunc func(chart, repository, version, valuesFilePath, kubeVersion string, setArgs []string) ([]map[string]any, error)
 }
 
 func (m mockHelm) AddRepo(chart, repository string) error {
@@ -32,22 +32,22 @@ func (m mockHelm) Pull(chart, repository, version, destDir string) (string, erro
 	panic("not implemented")
 }
 
-func (m mockHelm) Template(chart, repository, version, valuesFilePath string, setArgs []string) ([]map[string]any, error) {
+func (m mockHelm) Template(chart, repository, version, valuesFilePath, kubeVersion string, setArgs []string) ([]map[string]any, error) {
 	if m.templateFunc != nil {
-		return m.templateFunc(chart, repository, version, valuesFilePath, setArgs)
+		return m.templateFunc(chart, repository, version, valuesFilePath, kubeVersion, setArgs)
 	}
 	panic("not implemented")
 }
 
 func TestHelmCharts_EmptySourceDir(t *testing.T) {
-	charts, err := HelmCharts("", "", nil)
+	charts, err := HelmCharts("", "", "", nil)
 	require.Error(t, err)
 	assert.EqualError(t, err, "getting helm manifest paths: manifest source directory not defined")
 	assert.Nil(t, charts)
 }
 
 func TestHelmCharts_MissingSourceDir(t *testing.T) {
-	charts, err := HelmCharts("oops!", "", nil)
+	charts, err := HelmCharts("oops!", "", "", nil)
 	require.Error(t, err)
 	assert.EqualError(t, err, "getting helm manifest paths: reading manifest source dir 'oops!': open oops!: no such file or directory")
 	assert.Nil(t, charts)
@@ -63,7 +63,7 @@ func TestHelmCharts_InvalidManifestFormat(t *testing.T) {
 	file := filepath.Join(dir, "invalid-format.yaml")
 	require.NoError(t, os.WriteFile(file, []byte("abc"), 0o600))
 
-	charts, err := HelmCharts(dir, "", nil)
+	charts, err := HelmCharts(dir, "", "", nil)
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "parsing manifest: unmarshaling resource: yaml: unmarshal errors")
 	assert.ErrorContains(t, err, "line 1: cannot unmarshal !!str `abc`")
@@ -83,7 +83,7 @@ func TestHelmCharts_InvalidManifestContents(t *testing.T) {
 	file := filepath.Join(dir, "invalid-crd.yaml")
 	require.NoError(t, os.WriteFile(file, b, 0o600))
 
-	charts, err := HelmCharts(dir, "", nil)
+	charts, err := HelmCharts(dir, "", "", nil)
 	require.Error(t, err)
 	assert.EqualError(t, err, "resource is missing 'kind' field")
 	assert.Nil(t, charts)
@@ -115,7 +115,7 @@ func TestHelmCharts_AddRepoError(t *testing.T) {
 		},
 	}
 
-	charts, err := HelmCharts(dir, "", helm)
+	charts, err := HelmCharts(dir, "", "", helm)
 	require.Error(t, err)
 	assert.EqualError(t, err, "handling chart resource: downloading chart: adding repo: adding chart some-chart from repository some-repo failed")
 	assert.Nil(t, charts)
@@ -150,7 +150,7 @@ func TestHelmCharts_PullError(t *testing.T) {
 		},
 	}
 
-	charts, err := HelmCharts(dir, "", helm)
+	charts, err := HelmCharts(dir, "", "", helm)
 	require.Error(t, err)
 	assert.EqualError(t, err, "handling chart resource: downloading chart: pulling chart: cannot pull chart some-chart from repository some-repo")
 	assert.Nil(t, charts)
@@ -183,12 +183,12 @@ func TestHelmCharts_TemplateError(t *testing.T) {
 		pullFunc: func(chart, repository, version, destDir string) (string, error) {
 			return "some-path", nil
 		},
-		templateFunc: func(chart, repository, version, valuesFilePath string, setArgs []string) ([]map[string]any, error) {
+		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion string, setArgs []string) ([]map[string]any, error) {
 			return nil, fmt.Errorf("chart %s is invalid", chart)
 		},
 	}
 
-	charts, err := HelmCharts(dir, "", helm)
+	charts, err := HelmCharts(dir, "", "", helm)
 	require.Error(t, err)
 	assert.EqualError(t, err, "handling chart resource: templating chart: chart some-chart is invalid")
 	assert.Nil(t, charts)
@@ -274,7 +274,7 @@ func TestHelmCharts(t *testing.T) {
 
 			return path, nil
 		},
-		templateFunc: func(chart, repository, version, valuesFilePath string, setArgs []string) ([]map[string]any, error) {
+		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion string, setArgs []string) ([]map[string]any, error) {
 			encodedChartResources := []map[string]any{
 				{
 					"apiVersion": "v1",
@@ -316,7 +316,7 @@ func TestHelmCharts(t *testing.T) {
 		},
 	}
 
-	charts, err := HelmCharts(srcDir, buildDir, helm)
+	charts, err := HelmCharts(srcDir, buildDir, "", helm)
 	require.NoError(t, err)
 	require.Len(t, charts, 2)
 
