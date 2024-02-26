@@ -143,7 +143,7 @@ func TestTemplateCommand(t *testing.T) {
 			repo:        "https://suse-edge.github.io/charts",
 			chart:       "kubevirt",
 			version:     "0.2.1",
-			kubeVersion: "v1.28.0",
+			kubeVersion: "v1.29.0+rke2r1",
 			valuesPath:  "/kubevirt/values.yaml",
 			setArgs: []string{
 				"arg1",
@@ -169,7 +169,7 @@ func TestTemplateCommand(t *testing.T) {
 			name:        "Template without optional parameters",
 			repo:        "https://suse-edge.github.io/charts",
 			chart:       "kubevirt",
-			kubeVersion: "v1.28.0",
+			kubeVersion: "v1.29.0+rke2r1",
 			expectedArgs: []string{
 				"helm",
 				"template",
