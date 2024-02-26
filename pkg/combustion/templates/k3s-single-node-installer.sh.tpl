@@ -25,9 +25,9 @@ echo "{{ .apiVIP }} {{ .apiHost }}" >> /etc/hosts
 mkdir -p /etc/rancher/k3s/
 cp {{ .configFile }} /etc/rancher/k3s/config.yaml
 
-{{- if .manifestsPath }}
+if [ -f {{ .registryMirrors }} ]; then
 cp {{ .registryMirrors }} /etc/rancher/k3s/registries.yaml
-{{- end }}
+fi
 
 export INSTALL_K3S_SKIP_DOWNLOAD=true
 export INSTALL_K3S_SKIP_START=true
