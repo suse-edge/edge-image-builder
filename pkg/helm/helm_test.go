@@ -162,7 +162,7 @@ func TestTemplateCommand(t *testing.T) {
 				"-f",
 				"/kubevirt/values.yaml",
 				"--kube-version",
-				"v1.28.0",
+				"v1.29.0+rke2r1",
 			},
 		},
 		{
@@ -177,7 +177,7 @@ func TestTemplateCommand(t *testing.T) {
 				"kubevirt",
 				"https://suse-edge.github.io/charts",
 				"--kube-version",
-				"v1.28.0",
+				"v1.29.0+rke2r1",
 			},
 		},
 	}
