@@ -32,9 +32,9 @@ if [ "$HOSTNAME" = {{ .initialiser }} ]; then
     mkdir -p /var/lib/rancher/k3s/server/manifests/
     cp {{ .vipManifest }} /var/lib/rancher/k3s/server/manifests/{{ .vipManifest }}
 
-    if [ -f {{ .registryMirrors }} ]; then
-    cp {{ .registryMirrors }} /etc/rancher/k3s/registries.yaml
-    fi
+    {{- if .manifestsPath }}
+    cp {{ .manifestsPath }}/* /var/lib/rancher/k3s/server/manifests/
+    {{- end }}
 fi
 
 umount /var
@@ -46,9 +46,9 @@ echo "{{ .apiVIP }} {{ .apiHost }}" >> /etc/hosts
 mkdir -p /etc/rancher/k3s/
 cp $CONFIGFILE /etc/rancher/k3s/config.yaml
 
-{{- if .manifestsPath }}
+if [ -f {{ .registryMirrors }} ]; then
 cp {{ .registryMirrors }} /etc/rancher/k3s/registries.yaml
-{{- end }}
+fi
 
 export INSTALL_K3S_EXEC=$NODETYPE
 export INSTALL_K3S_SKIP_DOWNLOAD=true
