@@ -2,5 +2,9 @@
 set -euo pipefail
 
 {{- range . }}
-groupadd -f {{ .Name }}
+{{- $gid := "" }}
+{{- if (ne .GID 0 )}}
+  {{- $gid = (printf "-g %v " .GID) }}
+{{- end }}
+groupadd -f {{ $gid }}{{ .Name }}
 {{- end }}
