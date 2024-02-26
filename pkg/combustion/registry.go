@@ -376,7 +376,7 @@ func parseComponentHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error)
 		return nil, fmt.Errorf("creating helm dir: %w", err)
 	}
 
-	return registry.HelmCharts(chartsDir, buildDir, ctx.Helm)
+	return registry.HelmCharts(chartsDir, buildDir, ctx.ImageDefinition.Kubernetes.Version, ctx.Helm)
 }
 
 func parseConfiguredHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error) {
