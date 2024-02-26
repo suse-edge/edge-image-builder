@@ -33,7 +33,7 @@ if [ "$HOSTNAME" = {{ .initialiser }} ]; then
     cp {{ .vipManifest }} /var/lib/rancher/k3s/server/manifests/{{ .vipManifest }}
 
     if [ -f {{ .registryMirrors }} ]; then
-        cp {{ .registryMirrors }} /etc/rancher/k3s/registries.yaml
+    cp {{ .registryMirrors }} /etc/rancher/k3s/registries.yaml
     fi
 fi
 
