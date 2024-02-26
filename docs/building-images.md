@@ -59,14 +59,23 @@ operatingSystem:
   kernelArgs:
   - arg1
   - arg2
+  groups:
+    - name: group1
+    - name: group2
   users:
   - username: user1
     encryptedPassword: 123
     sshKeys:
       - user1Key1
       - user1Key2
+    primaryGroup: groupPrimary
+    secondaryGroups:
+      - group1
+      - group2
   - username: user2
     encryptedPassword: 456
+    secondaryGroups:
+      - group3
   - username: user3
     sshKeys:
       - user3Key
@@ -115,13 +124,27 @@ operatingSystem:
   * `noProxy` - Optional; override the default `NO_PROXY` list. By default, this is "localhost, 127.0.0.1" if this
   parameter is omitted. If this option is set, these may need to be manually added if they are still in use.
 * `kernelArgs` - Optional; Provides a list of flags that should be passed to the kernel on boot.
+* `groups` - Optional; Defines a list of operating system groups to be created. This will not fail if the
+  group already exists. Each entry is made up of the following fields:
+  * `name` - Required; Name of the group to create.
+  * `gid` - Optional; If specified, the group will be created with the given ID. If omitted, the GID will be generated
+    by the operating system.
 * `users` - Optional; Defines a list of operating system users to be created. Each entry is made up of
   the following fields (one or both of the password and SSH key must be provided per user):
   * `username` - Required; Username of the user to create. To set the password or SSH key for the root user,
     use the value `root` for this field.
+  * `uid` - Optional; If specified, the user will be created with the given ID. If omitted, the UID will be generated
+    by the operating system.
+  * `createHomeDir` - Optional; If set to `true`, a home directory will be created for the user. Defaults to `false`
+    if unspecified.
   * `encryptedPassword` - Optional; Encrypted password to set for the use (for example, using `openssl passwd -6 $PASSWORD`
     to generate the value for this field).
   * `sshKeys` - Optional; List of public SSH keys to configure for the user.
+  * `primaryGroup` - Optional; If specified, the user will be configured with this as the primary group. The group
+    must already exist, either as a default group or one defined in the `groups` field. If this is omitted, the
+    result will be the default for the operating system (on SLE Micro, this is `users`).
+  * `secondaryGroups` - Optional; If specified, the user will be configured as part of each listed group. The
+    groups must already exist, either as default groups or as ones defined in the `groups` field.
 * `systemd` - Optional; Defines lists of services to enable/disable. Either or both of `enable` and `disable` may
   be included; if neither are provided, this section is ignored.
   * `enable` - Optional; List of systemd services to enable.
@@ -228,4 +251,8 @@ as follows:
 
 * `elemental` - This must contain a file named `elemental_config.yaml`. This file will be bundled in
   the built image and used to register with Elemental on boot.
-> **_NOTE:_** Elemental builds use EIB's package resolution process to download any necessary RPM packages. To ensure a successful build, this process requires the ```--privileged``` flag to be passed to the ```podman run``` command. For more info on why this is required, please see [Package resolution design](design/pkg-resolution.md#running-the-eib-container).
+
+> **_NOTE:_** Elemental builds use EIB's package resolution process to download any necessary RPM packages. 
+> To ensure a successful build, this process requires the ```--privileged``` flag to be passed to the
+> ```podman run``` command. For more info on why this is required, please see
+> [Package resolution design](design/pkg-resolution.md#running-the-eib-container).

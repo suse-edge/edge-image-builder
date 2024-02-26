@@ -20,9 +20,9 @@ echo "{{ .apiVIP }} {{ .apiHost }}" >> /etc/hosts
 mkdir -p /etc/rancher/rke2/
 cp {{ .configFile }} /etc/rancher/rke2/config.yaml
 
-{{- if .manifestsPath }}
+if [ -f {{ .registryMirrors }} ]; then
 cp {{ .registryMirrors }} /etc/rancher/rke2/registries.yaml
-{{- end }}
+fi
 
 export INSTALL_RKE2_TAR_PREFIX=/opt/rke2
 export INSTALL_RKE2_ARTIFACT_PATH={{ .installPath }}

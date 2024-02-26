@@ -37,21 +37,42 @@ func TestParse(t *testing.T) {
 	}
 	assert.Equal(t, expectedKernelArgs, definition.OperatingSystem.KernelArgs)
 
+	// Operating System -> Groups
+	groupConfigs := definition.OperatingSystem.Groups
+	require.Len(t, groupConfigs, 2)
+	assert.Equal(t, "group1", groupConfigs[0].Name)
+	assert.Equal(t, "group2", groupConfigs[1].Name)
+
 	// Operating System -> Users
 	userConfigs := definition.OperatingSystem.Users
 	require.Len(t, userConfigs, 3)
 	assert.Equal(t, "alpha", userConfigs[0].Username)
+	assert.Equal(t, 2000, userConfigs[0].UID)
 	assert.Equal(t, "$6$bZfTI3Wj05fdxQcB$W1HJQTKw/MaGTCwK75ic9putEquJvYO7vMnDBVAfuAMFW58/79abky4mx9.8znK0UZwSKng9dVosnYQR1toH71", userConfigs[0].EncryptedPassword)
 	assert.Len(t, userConfigs[0].SSHKeys, 2)
 	assert.Contains(t, userConfigs[0].SSHKeys[0], "ssh-rsa AAAAB3")
 	assert.Contains(t, userConfigs[0].SSHKeys[1], "ssh-rsa BBBBB3")
+	assert.Equal(t, userConfigs[0].PrimaryGroup, "admin")
+	assert.Len(t, userConfigs[0].SecondaryGroups, 1)
+	assert.Equal(t, "wheel", userConfigs[0].SecondaryGroups[0])
+	assert.True(t, userConfigs[0].CreateHomeDir)
+
 	assert.Equal(t, "beta", userConfigs[1].Username)
+	assert.Equal(t, 0, userConfigs[1].UID)
 	assert.Equal(t, "$6$GHjiVHm2AT.Qxznz$1CwDuEBM1546E/sVE1Gn1y4JoGzW58wrckyx3jj2QnphFmceS6b/qFtkjw1cp7LSJNW1OcLe/EeIxDDHqZU6o1", userConfigs[1].EncryptedPassword)
 	assert.Nil(t, userConfigs[1].SSHKeys)
+	assert.Equal(t, userConfigs[1].PrimaryGroup, "")
+	assert.Len(t, userConfigs[1].SecondaryGroups, 0)
+	assert.False(t, userConfigs[1].CreateHomeDir)
+
 	assert.Equal(t, "gamma", userConfigs[2].Username)
+	assert.Equal(t, 0, userConfigs[2].UID)
 	assert.Equal(t, "", userConfigs[2].EncryptedPassword)
 	assert.Len(t, userConfigs[2].SSHKeys, 1)
 	assert.Contains(t, userConfigs[2].SSHKeys[0], "ssh-rsa BBBBB3")
+	assert.Equal(t, userConfigs[2].PrimaryGroup, "")
+	assert.Len(t, userConfigs[2].SecondaryGroups, 0)
+	assert.False(t, userConfigs[2].CreateHomeDir)
 
 	// Operating System -> Systemd
 	systemd := definition.OperatingSystem.Systemd

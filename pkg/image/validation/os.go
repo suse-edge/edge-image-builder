@@ -23,6 +23,7 @@ func validateOperatingSystem(ctx *image.Context) []FailedValidation {
 
 	failures = append(failures, validateKernelArgs(&def.OperatingSystem)...)
 	failures = append(failures, validateSystemd(&def.OperatingSystem)...)
+	failures = append(failures, validateGroups(&def.OperatingSystem)...)
 	failures = append(failures, validateUsers(&def.OperatingSystem)...)
 	failures = append(failures, validateSuma(&def.OperatingSystem)...)
 	failures = append(failures, validatePackages(&def.OperatingSystem)...)
@@ -98,6 +99,31 @@ func validateSystemd(os *image.OperatingSystem) []FailedValidation {
 				})
 			}
 		}
+	}
+
+	return failures
+}
+
+func validateGroups(os *image.OperatingSystem) []FailedValidation {
+	var failures []FailedValidation
+
+	// The script is idempotent and will not fail on creating a duplicate group,
+	// but for consistency validate that duplicates aren't in the definition.
+	seenGroupNames := make(map[string]bool)
+	for _, group := range os.Groups {
+		if group.Name == "" {
+			failures = append(failures, FailedValidation{
+				UserMessage: "The 'name' field is required for all entries under 'groups'.",
+			})
+		}
+
+		if seenGroupNames[group.Name] {
+			msg := fmt.Sprintf("Duplicate group name found: %s", group.Name)
+			failures = append(failures, FailedValidation{
+				UserMessage: msg,
+			})
+		}
+		seenGroupNames[group.Name] = true
 	}
 
 	return failures

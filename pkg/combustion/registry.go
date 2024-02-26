@@ -391,7 +391,7 @@ func parseConfiguredHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error
 
 	chartsDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
 
-	return registry.HelmCharts(chartsDir, buildDir, ctx.Helm)
+	return registry.HelmCharts(chartsDir, buildDir, ctx.ImageDefinition.Kubernetes.Version, ctx.Helm)
 }
 
 func storeHelmCharts(ctx *image.Context, helmCharts []*registry.HelmChart) error {

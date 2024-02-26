@@ -57,16 +57,17 @@ type Image struct {
 }
 
 type OperatingSystem struct {
-	KernelArgs       []string              `yaml:"kernelArgs"`
-	Users            []OperatingSystemUser `yaml:"users"`
-	Systemd          Systemd               `yaml:"systemd"`
-	Suma             Suma                  `yaml:"suma"`
-	Packages         Packages              `yaml:"packages"`
-	IsoConfiguration IsoConfiguration      `yaml:"isoConfiguration"`
-	RawConfiguration RawConfiguration      `yaml:"rawConfiguration"`
-	Time             Time                  `yaml:"time"`
-	Proxy            Proxy                 `yaml:"proxy"`
-	Keymap           string                `yaml:"keymap"`
+	KernelArgs       []string               `yaml:"kernelArgs"`
+	Groups           []OperatingSystemGroup `yaml:"groups"`
+	Users            []OperatingSystemUser  `yaml:"users"`
+	Systemd          Systemd                `yaml:"systemd"`
+	Suma             Suma                   `yaml:"suma"`
+	Packages         Packages               `yaml:"packages"`
+	IsoConfiguration IsoConfiguration       `yaml:"isoConfiguration"`
+	RawConfiguration RawConfiguration       `yaml:"rawConfiguration"`
+	Time             Time                   `yaml:"time"`
+	Proxy            Proxy                  `yaml:"proxy"`
+	Keymap           string                 `yaml:"keymap"`
 }
 
 type IsoConfiguration struct {
@@ -92,8 +93,17 @@ type AddRepo struct {
 
 type OperatingSystemUser struct {
 	Username          string   `yaml:"username"`
+	UID               int      `yaml:"uid"`
 	EncryptedPassword string   `yaml:"encryptedPassword"`
 	SSHKeys           []string `yaml:"sshKeys"`
+	PrimaryGroup      string   `yaml:"primaryGroup"`
+	SecondaryGroups   []string `yaml:"secondaryGroups"`
+	CreateHomeDir     bool     `yaml:"createHomeDir"`
+}
+
+type OperatingSystemGroup struct {
+	Name string `yaml:"name"`
+	GID  int    `yaml:"gid"`
 }
 
 type Systemd struct {

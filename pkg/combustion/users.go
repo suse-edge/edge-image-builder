@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	usersScriptName    = "13-add-users.sh"
+	usersScriptName    = "13b-add-users.sh"
 	usersComponentName = "users"
 )
 
-//go:embed templates/13-add-users.sh.tpl
+//go:embed templates/13b-add-users.sh.tpl
 var usersScript string
 
 func configureUsers(ctx *image.Context) ([]string, error) {
