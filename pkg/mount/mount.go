@@ -17,7 +17,7 @@ const (
 // "mounts.conf" file at the override mount filepath provided by the user. Returns a function
 // that can revert to the previous mount setup if needed, or an error if a problem has occured.
 // If no filepath was provided, the default container override mount filepath will be used ("/etc/containers/mounts.conf").
-// For more info - https://github.com/containers/common/blob/main/docs/containers-mounts.conf.5.md
+// For more info - https://github.com/containers/common/blob/v0.57/docs/containers-mounts.conf.5.md
 func DisableDefaultMounts(overrideMountFilepath string) (revert func() error, err error) {
 	mountFile := overrideMountFilepath
 	if mountFile == "" {
