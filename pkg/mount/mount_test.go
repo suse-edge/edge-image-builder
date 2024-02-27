@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	mountsConfName    = "mounts.conf"
 	mountsConfContent = "/foo/bar:/foo/bar"
 )
 
@@ -36,7 +37,7 @@ func TestDisableDefaultMountsRevertFunc(t *testing.T) {
 			dir, err := os.MkdirTemp("", test.dirName)
 			require.NoError(t, err)
 
-			mountsConfPath := filepath.Join(dir, "mounts.conf")
+			mountsConfPath := filepath.Join(dir, mountsConfName)
 			if test.overrideMountsConfExists {
 				mountsConfPath = createMountConf(t, dir)
 			}
@@ -87,7 +88,7 @@ func TestDisableDefaultMounts(t *testing.T) {
 			dir, err := os.MkdirTemp("", test.dirName)
 			require.NoError(t, err)
 
-			mountsConfPath := filepath.Join(dir, "mounts.conf")
+			mountsConfPath := filepath.Join(dir, mountsConfName)
 			if test.overrideMountsConfExists {
 				mountsConfPath = createMountConf(t, dir)
 			}
@@ -125,7 +126,7 @@ func TestDisableDefaultMountsMissingMountPath(t *testing.T) {
 }
 
 func createMountConf(t *testing.T, localtion string) string {
-	mountsConf, err := os.Create(filepath.Join(localtion, "mounts.conf"))
+	mountsConf, err := os.Create(filepath.Join(localtion, mountsConfName))
 	require.NoError(t, err)
 
 	_, err = mountsConf.WriteString(mountsConfContent)
