@@ -49,13 +49,17 @@ type Resolver struct {
 	// helper property; contains the paths to the gpgKeys that will be used to validate
 	// the RPM signatures in the resolver image
 	gpgKeyPaths []string
+	// path to the mounts.conf filepath that overrides the default mounts.conf configuration;
+	// if left empty the default override path will be used. For more info - https://github.com/containers/common/blob/v0.57/docs/containers-mounts.conf.5.md
+	overrideMountsPath string
 }
 
-func New(workDir string, podman Podman, baseImageBuilder BaseResolverImageBuilder) *Resolver {
+func New(workDir string, podman Podman, baseImageBuilder BaseResolverImageBuilder, overrideMountsPath string) *Resolver {
 	return &Resolver{
 		dir:                      workDir,
 		podman:                   podman,
 		baseResolverImageBuilder: baseImageBuilder,
+		overrideMountsPath:       overrideMountsPath,
 	}
 }
 
@@ -73,7 +77,7 @@ func New(workDir string, podman Podman, baseImageBuilder BaseResolverImageBuilde
 func (r *Resolver) Resolve(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDirPath string, pkgList []string, err error) {
 	zap.L().Info("Resolving package dependencies...")
 
-	revert, err := mount.DisableDefaultMounts("")
+	revert, err := mount.DisableDefaultMounts(r.overrideMountsPath)
 	if err != nil {
 		return "", nil, fmt.Errorf("temporary disabling automatic volume mounts: %w", err)
 	}
