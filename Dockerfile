@@ -35,7 +35,8 @@ RUN zypper install -y \
     podman \
     createrepo_c \
     helm hauler \
-    nm-configurator
+    nm-configurator && \
+    zypper clean -a
 
 RUN curl -o rke2_installer.sh -L https://get.rke2.io && \
     curl -o k3s_installer.sh -L https://get.k3s.io
