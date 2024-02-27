@@ -145,7 +145,7 @@ operatingSystem:
     result will be the default for the operating system (on SLE Micro, this is `users`).
   * `secondaryGroups` - Optional; If specified, the user will be configured as part of each listed group. The
     groups must already exist, either as default groups or as ones defined in the `groups` field.
-* `systemd` - Optional; Defines lists of services to enable/disable. Either or both of `enable` and `disable` may
+* `systemd` - Optional; Defines lists of systemd units to enable/disable. Either or both of `enable` and `disable` may
   be included; if neither are provided, this section is ignored.
   * `enable` - Optional; List of systemd services to enable.
   * `disable` - Optional; List of systemd services to disable.
