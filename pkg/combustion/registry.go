@@ -281,7 +281,7 @@ func configureEmbeddedArtifactRegistry(ctx *image.Context) (bool, error) {
 		return false, fmt.Errorf("generating hauler store tar: %w", err)
 	}
 
-	haulerBinaryPath := fmt.Sprintf("hauler-%s", string(ctx.ImageDefinition.Image.Arch))
+	haulerBinaryPath := "/usr/bin/hauler"
 	if err = copyHaulerBinary(ctx, haulerBinaryPath); err != nil {
 		return false, fmt.Errorf("copying hauler binary: %w", err)
 	}
