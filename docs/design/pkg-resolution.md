@@ -14,7 +14,7 @@ After the desired specification has been made, the user runs the EIB container w
 An example of the command can be seen below:
 ```shell
 podman run --rm --privileged -it \
--v $IMAGE_DIR:/eib eib:dev /bin/eib build \
+-v $IMAGE_DIR:/eib eib:dev build \
 --config-file $CONFIG_FILE.yaml \
 --config-dir /eib \
 --build-dir /eib/_build

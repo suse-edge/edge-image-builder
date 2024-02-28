@@ -47,7 +47,7 @@ the host machine.
 The following example command attaches the directory and runs EIB:
 ```shell
 podman run --rm -it \
--v $IMAGE_DIR:/eib eib:dev /bin/eib build \
+-v $IMAGE_DIR:/eib eib:dev build \
 --config-file $CONFIG_FILE.yaml \
 --config-dir /eib \
 --build-dir /eib/_build
