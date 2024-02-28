@@ -118,7 +118,7 @@ func TestDisableDefaultMounts(t *testing.T) {
 }
 
 func TestDisableDefaultMountsMissingMountPath(t *testing.T) {
-	expectedErr := "creating empty /missing/file/path file: creating /missing/file/path: open /missing/file/path: no such file or directory"
+	expectedErr := "creating empty /missing/file/path mount override file: open /missing/file/path: no such file or directory"
 
 	_, err := DisableDefaultMounts("/missing/file/path")
 	require.Error(t, err)

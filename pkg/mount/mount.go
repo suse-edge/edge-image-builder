@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/containers/common/pkg/subscriptions"
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 const (
@@ -33,7 +34,7 @@ func DisableDefaultMounts(overrideMountFilepath string) (revert func() error, er
 			return nil, fmt.Errorf("renaming existing %s mount override file: %w", mountFile, err)
 		}
 
-		if err = createEmptyFile(mountFile); err != nil {
+		if err = os.WriteFile(mountFile, []byte{}, fileio.NonExecutablePerms); err != nil {
 			return nil, fmt.Errorf("creating empty %s mount override file: %w", mountFile, err)
 		}
 
@@ -48,8 +49,8 @@ func DisableDefaultMounts(overrideMountFilepath string) (revert func() error, er
 			return nil
 		}, nil
 	case errors.Is(err, fs.ErrNotExist):
-		if err = createEmptyFile(mountFile); err != nil {
-			return nil, fmt.Errorf("creating empty %s file: %w", mountFile, err)
+		if err = os.WriteFile(mountFile, []byte{}, fileio.NonExecutablePerms); err != nil {
+			return nil, fmt.Errorf("creating empty %s mount override file: %w", mountFile, err)
 		}
 
 		return func() error {
@@ -61,17 +62,4 @@ func DisableDefaultMounts(overrideMountFilepath string) (revert func() error, er
 	default:
 		return nil, fmt.Errorf("describing file %s: %w", mountFile, err)
 	}
-}
-
-func createEmptyFile(name string) error {
-	emptyFile, err := os.Create(name)
-	if err != nil {
-		return fmt.Errorf("creating %s: %w", name, err)
-	}
-
-	if err = emptyFile.Close(); err != nil {
-		return fmt.Errorf("closing %s: %w", emptyFile.Name(), err)
-	}
-
-	return nil
 }
