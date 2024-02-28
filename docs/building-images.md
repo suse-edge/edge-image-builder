@@ -195,7 +195,7 @@ kubernetes:
   * `type` - Required; Kubernetes node type - either `server` (for control plane nodes) or `agent` (for worker nodes)
   * `initializer` - Optional; specifies the cluster initializer. The initializer node is the server node which bootstraps the cluster
      and allows other nodes to join it. If unset, the first server in the node list will be selected as the initializer.
-* `manifests` - Optional; manifests to [apply](https://docs.rke2.io/advanced#auto-deploying-manifests) to the cluster.
+* `manifests` - Optional; manifests to apply to the cluster.
   Can be used separately or in combination with the [configuration directory](#kubernetes-1).
   * `urls` - Optional; list of HTTP(s) URLs to download the manifests from
 
@@ -283,12 +283,12 @@ The following sections further describe optional directories that may be include
     [RKE2](https://docs.rke2.io/install/configuration#configuration-file) cluster configuration files
     * `server.yaml` - If present, this configuration file will be applied to all control plane nodes
     * `agent.yaml` - If present, this configuration file will be applied to all worker nodes
-  * `manifests` - Contains locally provided manifests which will be [applied](https://docs.rke2.io/advanced#auto-deploying-manifests)
-    to the cluster. Can be used separately or in combination with the manifests section in the definition file. All files in this
-    directory will be parsed and the container images that they reference will be downloaded and served in an embedded artefact registry.
+  * `manifests` - Contains locally provided manifests which will be applied to the cluster. Can be used separately or
+    in combination with the manifests section in the definition file. All files in this directory will be parsed and
+    the container images that they reference will be downloaded and served in an embedded artefact registry.
   * `helm` - Contains locally provided ([K3s](https://docs.k3s.io/helm) / [RKE2](https://docs.rke2.io/helm)) Helm Custom Resources
-    which will be [applied](https://docs.rke2.io/advanced#auto-deploying-manifests) to the cluster as Helm charts. All files in this
-    directory will be parsed and the container images that they reference will be downloaded and served in an embedded artefact registry.
+    which will be applied to the cluster as Helm charts. All files in this directory will be parsed and
+    the container images that they reference will be downloaded and served in an embedded artefact registry.
 
 > **_NOTE:_** Image builds enabling SELinux mode in the configuration files use EIB's package resolution process
 > to download any necessary RPM packages. To ensure a successful build, this process requires the ```--privileged```
