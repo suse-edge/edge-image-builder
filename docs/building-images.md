@@ -193,7 +193,7 @@ kubernetes:
   * `hostname` - Required; hostname (usually FQDN) which identifies the particular node
   * `type` - Required; Kubernetes node type - either `server` (for control plane nodes) or `agent` (for worker nodes)
   * `initializer` - Optional; identifier of the node forming the cluster. If unset, the first server in the node list will be selected as the initializer.
-* `manifests` - Optional; manifests to apply to the cluster
+* `manifests` - Optional; manifests to apply to the cluster. Can be used separately or in combination with the [configuration directory](#kubernetes-1).
   * `urls` - Optional; list of HTTP(s) URLs to download the manifests from
 
 ### SUSE Manager (SUMA)
@@ -280,7 +280,8 @@ The following sections further describe optional directories that may be include
     [RKE2](https://docs.rke2.io/install/configuration#configuration-file) cluster configuration files
     * `server.yaml` - If present, this configuration file will be applied to all control plane nodes
     * `agent.yaml` - If present, this configuration file will be applied to all worker nodes
-  * `manifests` - Contains locally provided manifests which will be applied to the cluster. All files in this directory
+  * `manifests` - Contains locally provided manifests which will be applied to the cluster. Can be used separately
+    or in combination with the manifests section in the definition file. All files in this directory
     will be parsed and the container images that they reference will be downloaded and served in an embedded artefact registry.
   * `helm` - Contains locally provided ([k3s](https://docs.k3s.io/helm) / [RKE2](https://docs.rke2.io/helm)) Helm
     Custom Resources which will be applied to the cluster as Helm charts. All files in this directory will be parsed
