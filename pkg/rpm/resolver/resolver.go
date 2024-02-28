@@ -82,8 +82,8 @@ func (r *Resolver) Resolve(packages *image.Packages, localRPMConfig *image.Local
 		return "", nil, fmt.Errorf("temporary disabling automatic volume mounts: %w", err)
 	}
 	defer func() {
-		if err = revert(); err != nil {
-			zap.S().Warnf("failed to enable default mounts: %s", err)
+		if revertErr := revert(); revertErr != nil {
+			zap.S().Warnf("failed to enable default mounts: %s", revertErr)
 		}
 	}()
 
