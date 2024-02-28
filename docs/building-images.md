@@ -192,7 +192,8 @@ kubernetes:
 * `nodes` - Required for multi-node clusters; list of all nodes forming the cluster
   * `hostname` - Required; hostname (usually FQDN) which identifies the particular node
   * `type` - Required; Kubernetes node type - either `server` (for control plane nodes) or `agent` (for worker nodes)
-  * `initializer` - Optional; identifier of the node forming the cluster. If unset, the first server in the node list will be selected as the initializer.
+  * `initializer` - Optional; specifies the cluster initializer. The initializer node is the server node which bootstraps the cluster
+     and allows other nodes to join it. If unset, the first server in the node list will be selected as the initializer.
 * `manifests` - Optional; manifests to [apply](https://docs.rke2.io/advanced#auto-deploying-manifests) to the cluster.
   Can be used separately or in combination with the [configuration directory](#kubernetes-1).
   * `urls` - Optional; list of HTTP(s) URLs to download the manifests from
