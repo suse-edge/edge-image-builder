@@ -164,7 +164,7 @@ It contains all necessary settings to configure and bootstrap a Kubernetes clust
 
 ```yaml
 kubernetes:
-  version: v1.29.0+rke2r1
+  version: v1.28.0+rke2r1
   network:
     apiVIP: 192.168.122.100
     apiHost: api.cluster01.hosted.on.edge.suse.com
@@ -185,7 +185,7 @@ kubernetes:
       - https://k8s.io/examples/application/nginx-app.yaml
 ```
 
-* `version` - Required; version string of a particular k3s or RKE2 release e.g.`v1.28.7+k3s1` or `v1.29.0+rke2r1`
+* `version` - Required; version string of a particular k3s or RKE2 release e.g.`v1.28.0+k3s1` or `v1.28.0+rke2r1`
 * `network` - Required for multi node clusters, optional for single node clusters; network configuration for bootstrapping a cluster
   * `apiVIP` - Required for multi node clusters, optional for single node clusters; IP address which will serve as the cluster LoadBalancer (backed by MetalLB)
   * `apiHost` - Optional; domain address for accessing the cluster
