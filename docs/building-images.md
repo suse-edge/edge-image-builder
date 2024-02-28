@@ -190,7 +190,7 @@ kubernetes:
   * `apiVIP` - Required for multi-node clusters, optional for single-node clusters; IP address which will serve as the cluster LoadBalancer (backed by MetalLB)
   * `apiHost` - Optional; domain address for accessing the cluster
 * `nodes` - Required for multi-node clusters; list of all nodes forming the cluster
-  * `hostname` - Required; hostname (usually FQDN) which identifies the particular node
+  * `hostname` - Required; a fully qualified domain name (FQDN) which identifies the particular node
   * `type` - Required; Kubernetes node type - either `server` (for control plane nodes) or `agent` (for worker nodes)
   * `initializer` - Optional; specifies the cluster initializer. The initializer node is the server node which bootstraps the cluster
      and allows other nodes to join it. If unset, the first server in the node list will be selected as the initializer.
