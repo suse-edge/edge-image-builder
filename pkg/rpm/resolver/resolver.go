@@ -83,7 +83,7 @@ func (r *Resolver) Resolve(packages *image.Packages, localRPMConfig *image.Local
 	}
 	defer func() {
 		if err = revert(); err != nil {
-			zap.S().Warnf("failed to enable default mounts: %w", err)
+			zap.S().Warnf("failed to enable default mounts: %s", err)
 		}
 	}()
 

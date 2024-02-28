@@ -125,8 +125,8 @@ func TestDisableDefaultMountsMissingMountPath(t *testing.T) {
 	assert.EqualError(t, err, expectedErr)
 }
 
-func createMountConf(t *testing.T, localtion string) string {
-	mountsConf, err := os.Create(filepath.Join(localtion, mountsConfName))
+func createMountConf(t *testing.T, location string) string {
+	mountsConf, err := os.Create(filepath.Join(location, mountsConfName))
 	require.NoError(t, err)
 
 	_, err = mountsConf.WriteString(mountsConfContent)
