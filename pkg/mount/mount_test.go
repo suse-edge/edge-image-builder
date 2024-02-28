@@ -15,106 +15,90 @@ const (
 	mountsConfContent = "/foo/bar:/foo/bar"
 )
 
-func TestDisableDefaultMountsRevertFunc(t *testing.T) {
-	tests := []struct {
-		name                     string
-		dirName                  string
-		overrideMountsConfExists bool
-	}{
-		{
-			name:                     "Revert to the original mounts.conf override mount configuration",
-			dirName:                  "disable-default-mounts-revert-to-existing-override-mounts-conf-",
-			overrideMountsConfExists: true,
-		},
-		{
-			name:    "Rever to the default mounts.conf configuration",
-			dirName: "disable-default-mounts-revert-to-default-mounts-conf-",
-		},
-	}
+func TestDisableDefaultMountsRevertToOverridelMountsFile(t *testing.T) {
+	dir, err := os.MkdirTemp("", "disable-default-mounts-revert-to-override-mounts-file-")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(dir))
+	}()
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			dir, err := os.MkdirTemp("", test.dirName)
-			require.NoError(t, err)
+	mountsConfPath := createMountConf(t, dir)
 
-			mountsConfPath := filepath.Join(dir, mountsConfName)
-			if test.overrideMountsConfExists {
-				mountsConfPath = createMountConf(t, dir)
-			}
+	revert, err := DisableDefaultMounts(mountsConfPath)
+	require.NoError(t, err)
+	err = revert()
+	require.NoError(t, err)
 
-			revert, err := DisableDefaultMounts(mountsConfPath)
-			require.NoError(t, err)
-			err = revert()
-			require.NoError(t, err)
+	disabledMountsConfigPath := mountsConfPath + disableSuffix
+	_, err = os.Stat(disabledMountsConfigPath)
+	require.ErrorIs(t, err, fs.ErrNotExist)
 
-			if test.overrideMountsConfExists {
-				disabledMountsConfigPath := mountsConfPath + disableSuffix
-				_, err = os.Stat(disabledMountsConfigPath)
-				require.ErrorIs(t, err, fs.ErrNotExist)
-
-				var content []byte
-				content, err = os.ReadFile(mountsConfPath)
-				require.NoError(t, err)
-				assert.Equal(t, []byte(mountsConfContent), content)
-			} else {
-				_, err = os.Stat(mountsConfPath)
-				require.ErrorIs(t, err, fs.ErrNotExist)
-			}
-
-			require.NoError(t, os.RemoveAll(dir))
-		})
-	}
+	var content []byte
+	content, err = os.ReadFile(mountsConfPath)
+	require.NoError(t, err)
+	assert.Equal(t, []byte(mountsConfContent), content)
 }
 
-func TestDisableDefaultMounts(t *testing.T) {
-	tests := []struct {
-		name                     string
-		dirName                  string
-		overrideMountsConfExists bool
-	}{
-		{
-			name:                     "Replace existing mounts.conf file at mount override filepath",
-			dirName:                  "disable-default-mounts-replace-existing-mounts-conf-",
-			overrideMountsConfExists: true,
-		},
-		{
-			name:    "Create new mounts.conf file at mount override filepath",
-			dirName: "disable-default-mounts-create-new-mounts-conf-file-",
-		},
-	}
+func TestDisableDefaultMountsRevertToDefaultMountsFile(t *testing.T) {
+	dir, err := os.MkdirTemp("", "disable-default-mounts-revert-to-default-mounts-file-")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(dir))
+	}()
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			dir, err := os.MkdirTemp("", test.dirName)
-			require.NoError(t, err)
+	mountsConfPath := filepath.Join(dir, mountsConfName)
 
-			mountsConfPath := filepath.Join(dir, mountsConfName)
-			if test.overrideMountsConfExists {
-				mountsConfPath = createMountConf(t, dir)
-			}
+	revert, err := DisableDefaultMounts(mountsConfPath)
+	require.NoError(t, err)
+	err = revert()
+	require.NoError(t, err)
 
-			_, err = DisableDefaultMounts(mountsConfPath)
-			require.NoError(t, err)
+	_, err = os.Stat(mountsConfPath)
+	require.ErrorIs(t, err, fs.ErrNotExist)
+}
 
-			if test.overrideMountsConfExists {
-				disabledMountsConfigPath := mountsConfPath + disableSuffix
+func TestDisableDefaultMountsExistingOverrideMountsFile(t *testing.T) {
+	dir, err := os.MkdirTemp("", "disable-default-mounts-existing-override-mounts-file-")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(dir))
+	}()
 
-				_, err = os.Stat(disabledMountsConfigPath)
-				require.NoError(t, err)
+	mountsConfPath := createMountConf(t, dir)
 
-				var content []byte
-				content, err = os.ReadFile(disabledMountsConfigPath)
-				require.NoError(t, err)
-				assert.Equal(t, []byte(mountsConfContent), content)
-			}
+	_, err = DisableDefaultMounts(mountsConfPath)
+	require.NoError(t, err)
 
-			mountsFile, err := os.Stat(mountsConfPath)
-			require.NoError(t, err)
-			assert.Equal(t, int64(0), mountsFile.Size())
+	disabledMountsConfigPath := mountsConfPath + disableSuffix
 
-			require.NoError(t, os.RemoveAll(dir))
-		})
-	}
+	_, err = os.Stat(disabledMountsConfigPath)
+	require.NoError(t, err)
+
+	var content []byte
+	content, err = os.ReadFile(disabledMountsConfigPath)
+	require.NoError(t, err)
+	assert.Equal(t, []byte(mountsConfContent), content)
+
+	mountsFile, err := os.Stat(mountsConfPath)
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), mountsFile.Size())
+}
+
+func TestDisableDefaultMountsNoExistingOverrideMountsFile(t *testing.T) {
+	dir, err := os.MkdirTemp("", "disable-default-mounts-no-existing-override-mounts-file-")
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, os.RemoveAll(dir))
+	}()
+
+	mountsConfPath := filepath.Join(dir, mountsConfName)
+
+	_, err = DisableDefaultMounts(mountsConfPath)
+	require.NoError(t, err)
+
+	mountsFile, err := os.Stat(mountsConfPath)
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), mountsFile.Size())
 }
 
 func TestDisableDefaultMountsMissingMountPath(t *testing.T) {
