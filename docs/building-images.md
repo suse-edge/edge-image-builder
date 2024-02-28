@@ -161,6 +161,7 @@ operatingSystem:
 
 The Kubernetes configuration section is another entirely optional one.
 It contains all necessary settings to configure and bootstrap a Kubernetes cluster.
+The supported Kubernetes distributions are K3s and RKE2.
 
 ```yaml
 kubernetes:
@@ -185,7 +186,7 @@ kubernetes:
       - https://k8s.io/examples/application/nginx-app.yaml
 ```
 
-* `version` - Required; version string of a particular k3s or RKE2 release e.g.`v1.28.0+k3s1` or `v1.28.0+rke2r1`
+* `version` - Required; version string of a particular K3s or RKE2 release e.g.`v1.28.0+k3s1` or `v1.28.0+rke2r1`
 * `network` - Required for multi-node clusters, optional for single-node clusters; network configuration for bootstrapping a cluster
   * `apiVIP` - Required for multi-node clusters, optional for single-node clusters; IP address which will serve as the cluster LoadBalancer (backed by MetalLB)
   * `apiHost` - Optional; domain address for accessing the cluster
@@ -278,14 +279,14 @@ The following sections further describe optional directories that may be include
 ### Kubernetes
 
 * `kubernetes` - May be included to inject cluster specific configurations, apply manifests and install Helm charts.
-  * `config` - Contains [k3s](https://docs.k3s.io/installation/configuration#configuration-file) or
+  * `config` - Contains [K3s](https://docs.k3s.io/installation/configuration#configuration-file) or
     [RKE2](https://docs.rke2.io/install/configuration#configuration-file) cluster configuration files
     * `server.yaml` - If present, this configuration file will be applied to all control plane nodes
     * `agent.yaml` - If present, this configuration file will be applied to all worker nodes
   * `manifests` - Contains locally provided manifests which will be [applied](https://docs.rke2.io/advanced#auto-deploying-manifests)
     to the cluster. Can be used separately or in combination with the manifests section in the definition file. All files in this
     directory will be parsed and the container images that they reference will be downloaded and served in an embedded artefact registry.
-  * `helm` - Contains locally provided ([k3s](https://docs.k3s.io/helm) / [RKE2](https://docs.rke2.io/helm)) Helm Custom Resources
+  * `helm` - Contains locally provided ([K3s](https://docs.k3s.io/helm) / [RKE2](https://docs.rke2.io/helm)) Helm Custom Resources
     which will be [applied](https://docs.rke2.io/advanced#auto-deploying-manifests) to the cluster as Helm charts. All files in this
     directory will be parsed and the container images that they reference will be downloaded and served in an embedded artefact registry.
 
