@@ -270,18 +270,26 @@ There are a number of optional directories that may be included in the image con
   and will be included in the built image. The configurations relevant for the particular host will be identified
   and applied during the combustion phase. Check [nm-configurator](https://github.com/suse-edge/nm-configurator/)
   for more information.
-* `kubernetes` - May be included to inject cluster specific configurations.
-  * `config` - Contains [k3s](https://docs.k3s.io/installation/configuration#configuration-file) or 
-  [RKE2](https://docs.rke2.io/install/configuration#configuration-file) cluster configuration files
+
+The following sections further describe optional directories that may be included.
+
+### Kubernetes
+
+* `kubernetes` - May be included to inject cluster specific configurations, apply manifests and install Helm charts.
+  * `config` - Contains [k3s](https://docs.k3s.io/installation/configuration#configuration-file) or
+    [RKE2](https://docs.rke2.io/install/configuration#configuration-file) cluster configuration files
     * `server.yaml` - If present, this configuration file will be applied to all control plane nodes
     * `agent.yaml` - If present, this configuration file will be applied to all worker nodes
   * `manifests` - Contains locally provided manifests which will be applied to the cluster. All files in this directory
-  will be parsed and the container images that they reference will be downloaded and served in an embedded artefact registry.
-  * `helm` - Contains locally provided ([k3s](https://docs.k3s.io/helm) / [RKE2](https://docs.rke2.io/helm)) Helm CRDs
-  which will be applied to the cluster as Helm charts. All files in this directory will be parsed
-  and the container images that they reference will be downloaded and served in an embedded artefact registry.
+    will be parsed and the container images that they reference will be downloaded and served in an embedded artefact registry.
+  * `helm` - Contains locally provided ([k3s](https://docs.k3s.io/helm) / [RKE2](https://docs.rke2.io/helm)) Helm
+    Custom Resources which will be applied to the cluster as Helm charts. All files in this directory will be parsed
+    and the container images that they reference will be downloaded and served in an embedded artefact registry.
 
-The following sections further describe optional directories that may be included.
+> **_NOTE:_** Image builds enabling SELinux mode in the configuration files use EIB's package resolution process
+> to download any necessary RPM packages. To ensure a successful build, this process requires the ```--privileged```
+> flag to be passed to the ```podman run``` command. For more info on why this is required, please see
+> [Package resolution design](design/pkg-resolution.md#running-the-eib-container).
 
 ### RPMs
 
