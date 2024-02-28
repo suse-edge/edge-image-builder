@@ -186,10 +186,10 @@ kubernetes:
 ```
 
 * `version` - Required; version string of a particular k3s or RKE2 release e.g.`v1.28.0+k3s1` or `v1.28.0+rke2r1`
-* `network` - Required for multi node clusters, optional for single node clusters; network configuration for bootstrapping a cluster
-  * `apiVIP` - Required for multi node clusters, optional for single node clusters; IP address which will serve as the cluster LoadBalancer (backed by MetalLB)
+* `network` - Required for multi-node clusters, optional for single-node clusters; network configuration for bootstrapping a cluster
+  * `apiVIP` - Required for multi-node clusters, optional for single-node clusters; IP address which will serve as the cluster LoadBalancer (backed by MetalLB)
   * `apiHost` - Optional; domain address for accessing the cluster
-* `nodes` - Required for multi node clusters; list of all nodes forming the cluster
+* `nodes` - Required for multi-node clusters; list of all nodes forming the cluster
   * `hostname` - Required; hostname (usually FQDN) which identifies the particular node
   * `type` - Required; Kubernetes node type - either `server` (for control plane nodes) or `agent` (for worker nodes)
   * `initializer` - Optional; identifier of the node forming the cluster. If unset, the first server in the node list will be selected as the initializer.
