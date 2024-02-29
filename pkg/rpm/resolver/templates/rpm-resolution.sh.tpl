@@ -45,7 +45,7 @@ zypper \
   --no-gpg-checks \
   {{ end -}}
   install -y \
-  --download-only \breaking
+  --download-only \
   --force-resolution \
   --auto-agree-with-licenses \
   --allow-vendor-change \
