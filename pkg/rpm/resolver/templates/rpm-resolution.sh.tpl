@@ -14,6 +14,7 @@ set -euo pipefail
 suseconnect -r {{ .RegCode }}
 SLE_SP=$(cat /etc/rpm/macros.sle | awk '/sle/ {print $2};' | cut -c4) && suseconnect -p PackageHub/15.$SLE_SP/x86_64
 zypper ref
+trap "suseconnect -d" EXIT
 {{ end -}}
 
 {{- range $index, $repo := .AddRepo }}
@@ -51,7 +52,3 @@ zypper \
   -n {{.PKGList}} {{.LocalRPMList}}
 
 touch {{.CacheDir}}/zypper-success
-
-{{ if ne .RegCode "" }}
-suseconnect -d
-{{ end -}}
