@@ -15,14 +15,18 @@ import (
 )
 
 const (
-	resolverImageRef = "pkg-resolver"
-	dockerfileName   = "Dockerfile"
-	rpmRepoName      = "rpm-repo"
-	gpgDirName       = "gpg-keys"
+	resolverImageRef        = "pkg-resolver"
+	dockerfileName          = "Dockerfile"
+	rpmResolutionScriptName = "rpm-resolution.sh"
+	rpmRepoName             = "rpm-repo"
+	gpgDirName              = "gpg-keys"
 )
 
 //go:embed templates/Dockerfile.tpl
 var dockerfileTemplate string
+
+//go:embed templates/rpm-resolution.sh.tpl
+var rpmResolutionScriptTemplate string
 
 type Podman interface {
 	Build(context, name string) error
@@ -129,7 +133,11 @@ func (r *Resolver) prepare(localRPMConfig *image.LocalRPMConfig, packages *image
 		}
 	}
 
-	if err := r.writeDockerfile(localRPMConfig, packages); err != nil {
+	if err := r.writeRPMResolutionScript(localRPMConfig, packages); err != nil {
+		return fmt.Errorf("writing rpm resolution script: %w", err)
+	}
+
+	if err := r.writeDockerfile(localRPMConfig); err != nil {
 		return fmt.Errorf("writing dockerfile: %w", err)
 	}
 
@@ -168,22 +176,16 @@ func (r *Resolver) prepareLocalRPMs(localRPMConfig *image.LocalRPMConfig) error 
 	return nil
 }
 
-func (r *Resolver) writeDockerfile(localRPMConfig *image.LocalRPMConfig, packages *image.Packages) error {
+func (r *Resolver) writeRPMResolutionScript(localRPMConfig *image.LocalRPMConfig, packages *image.Packages) error {
 	values := struct {
-		BaseImage    string
 		RegCode      string
 		AddRepo      []image.AddRepo
 		CacheDir     string
 		PKGList      string
 		LocalRPMList string
 		LocalGPGList string
-		FromRPMPath  string
-		ToRPMPath    string
-		FromGPGPath  string
-		ToGPGPath    string
 		NoGPGCheck   bool
 	}{
-		BaseImage:  r.baseImageRef,
 		RegCode:    packages.RegCode,
 		AddRepo:    packages.AdditionalRepos,
 		CacheDir:   r.generateResolverImgRPMRepoPath(),
@@ -195,14 +197,46 @@ func (r *Resolver) writeDockerfile(localRPMConfig *image.LocalRPMConfig, package
 	}
 
 	if localRPMConfig != nil {
+		values.LocalRPMList = strings.Join(r.rpmPaths, " ")
+
+		if localRPMConfig.GPGKeysPath != "" {
+			values.LocalGPGList = strings.Join(r.gpgKeyPaths, " ")
+		}
+	}
+
+	data, err := template.Parse(rpmResolutionScriptName, rpmResolutionScriptTemplate, &values)
+	if err != nil {
+		return fmt.Errorf("parsing %s template: %w", rpmResolutionScriptName, err)
+	}
+
+	filename := filepath.Join(r.generateBuildContextPath(), rpmResolutionScriptName)
+	if err = os.WriteFile(filename, []byte(data), fileio.ExecutablePerms); err != nil {
+		return fmt.Errorf("writing prepare base image script %s: %w", filename, err)
+	}
+
+	return nil
+}
+
+func (r *Resolver) writeDockerfile(localRPMConfig *image.LocalRPMConfig) error {
+	values := struct {
+		BaseImage               string
+		FromRPMPath             string
+		ToRPMPath               string
+		FromGPGPath             string
+		ToGPGPath               string
+		RPMResolutionScriptName string
+	}{
+		BaseImage:               r.baseImageRef,
+		RPMResolutionScriptName: rpmResolutionScriptName,
+	}
+
+	if localRPMConfig != nil {
 		values.FromRPMPath = filepath.Base(r.generateRPMPathInBuildContext())
 		values.ToRPMPath = r.generateResolverImgLocalRPMDirPath()
-		values.LocalRPMList = strings.Join(r.rpmPaths, " ")
 
 		if localRPMConfig.GPGKeysPath != "" {
 			values.FromGPGPath = filepath.Base(r.generateGPGPathInBuildContext())
 			values.ToGPGPath = r.generateResolverImgGPGKeysPath()
-			values.LocalGPGList = strings.Join(r.gpgKeyPaths, " ")
 		}
 	}
 
