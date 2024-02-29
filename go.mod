@@ -6,6 +6,7 @@ require (
 	// version should match buildah version in the
 	// podman mod file https://github.com/containers/podman/blob/v4.8.3/go.mod#L14
 	github.com/containers/buildah v1.33.2
+	github.com/containers/common v0.57.1
 	github.com/containers/podman/v4 v4.8.3
 	github.com/google/uuid v1.6.0
 	github.com/schollz/progressbar/v3 v3.14.1
@@ -33,7 +34,6 @@ require (
 	github.com/containerd/containerd v1.7.9 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.15.1 // indirect
-	github.com/containers/common v0.57.1 // indirect
 	github.com/containers/image/v5 v5.29.0 // indirect
 	github.com/containers/libtrust v0.0.0-20230121012942-c1716e8a8d01 // indirect
 	github.com/containers/ocicrypt v1.1.9 // indirect
