@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	disableSuffix = "-disable"
+	disableSuffix = ".orig"
 )
 
 // DisableDefaultMounts disables default mounts for all containers by creating an empty
