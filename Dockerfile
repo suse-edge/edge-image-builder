@@ -19,9 +19,6 @@ RUN --mount=type=cache,id=gomod,target=/go/pkg/mod \
 # ----- Deliverable Image -----
 FROM opensuse/leap:15.5
 
-RUN zypper addrepo https://download.opensuse.org/repositories/isv:SUSE:Edge:EdgeImageBuilder/SLE-15-SP5/isv:SUSE:Edge:EdgeImageBuilder.repo && \
-    zypper --gpg-auto-import-keys refresh
-
 # Dependency uses by line
 # 1. ISO image building
 # 2. RAW image modification on x86_64
@@ -29,7 +26,9 @@ RUN zypper addrepo https://download.opensuse.org/repositories/isv:SUSE:Edge:Edge
 # 4. RPM resolution logic
 # 5. Embedded artefact registry
 # 6. Network configuration
-RUN zypper install -y \
+RUN zypper addrepo https://download.opensuse.org/repositories/isv:SUSE:Edge:EdgeImageBuilder/SLE-15-SP5/isv:SUSE:Edge:EdgeImageBuilder.repo && \
+    zypper --gpg-auto-import-keys refresh && \
+    zypper install -y \
     xorriso squashfs  \
     libguestfs kernel-default e2fsprogs parted gptfdisk btrfsprogs guestfs-tools lvm2 \
     podman \
