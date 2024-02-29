@@ -157,7 +157,49 @@ operatingSystem:
   * `additionalRepos` - Optional; List of third-party RPM repositories that will be added to the package manager of the OS.
   * `sccRegistrationCode` - Optional; SUSE Customer Center registration code, used to connect to SUSE's internal RPM repositories.
 
-## SUSE Manager (SUMA)
+### Kubernetes
+
+The Kubernetes configuration section is another entirely optional one.
+It contains all necessary settings to configure and bootstrap a Kubernetes cluster.
+The supported Kubernetes distributions are K3s and RKE2.
+
+```yaml
+kubernetes:
+  version: v1.28.0+rke2r1
+  network:
+    apiVIP: 192.168.122.100
+    apiHost: api.cluster01.hosted.on.edge.suse.com
+  nodes:
+    - hostname: node1.suse.com
+      type: server
+    - hostname: node2.suse.com
+      type: server
+      initializer: true
+    - hostname: node3.suse.com
+      type: agent
+    - hostname: node4.suse.com
+      type: server
+    - hostname: node5.suse.com
+      type: agent
+  manifests:
+    urls:
+      - https://k8s.io/examples/application/nginx-app.yaml
+```
+
+* `version` - Required; version string of a particular K3s or RKE2 release e.g.`v1.28.0+k3s1` or `v1.28.0+rke2r1`
+* `network` - Required for multi-node clusters, optional for single-node clusters; network configuration for bootstrapping a cluster
+  * `apiVIP` - Required for multi-node clusters, optional for single-node clusters; IP address which will serve as the cluster LoadBalancer (backed by MetalLB)
+  * `apiHost` - Optional; domain address for accessing the cluster
+* `nodes` - Required for multi-node clusters; list of all nodes forming the cluster
+  * `hostname` - Required; a fully qualified domain name (FQDN) which identifies the particular node
+  * `type` - Required; Kubernetes node type - either `server` (for control plane nodes) or `agent` (for worker nodes)
+  * `initializer` - Optional; specifies the cluster initializer. The initializer node is the server node which bootstraps the cluster
+     and allows other nodes to join it. If unset, the first server in the node list will be selected as the initializer.
+* `manifests` - Optional; manifests to apply to the cluster.
+  Can be used separately or in combination with the [configuration directory](#kubernetes-1).
+  * `urls` - Optional; list of HTTP(s) URLs to download the manifests from
+
+### SUSE Manager (SUMA)
 
 Automatic SUSE Manager registration can be configured for the image, which will happen at system-boot time. Therefore,
 your system will need to come up with networking, either via DHCP or configured statically, e.g. via `nmc` or via
@@ -176,7 +218,7 @@ Additionally, the appropriate *venv-salt-minion* RPM package must be supplied in
 installed at boot time prior to SUSE Manager registration taking place. This RPM can usually be found on the
 SUSE Manager host itself at `https://<suma-host>/pub/repositories/slemicro/5/5/bootstrap/x86_64/` as an example.
 
-## Embedded Artifact Registry
+### Embedded Artifact Registry
 
 The embedded artifact registry configuration section is entirely optional. This is an internal registry that hosts all container images manually specified, as well as all container images automatically detected within user provided Helm charts and manifests.
 
@@ -233,6 +275,25 @@ There are a number of optional directories that may be included in the image con
   for more information.
 
 The following sections further describe optional directories that may be included.
+
+### Kubernetes
+
+* `kubernetes` - May be included to inject cluster specific configurations, apply manifests and install Helm charts.
+  * `config` - Contains [K3s](https://docs.k3s.io/installation/configuration#configuration-file) or
+    [RKE2](https://docs.rke2.io/install/configuration#configuration-file) cluster configuration files
+    * `server.yaml` - If present, this configuration file will be applied to all control plane nodes
+    * `agent.yaml` - If present, this configuration file will be applied to all worker nodes
+  * `manifests` - Contains locally provided manifests which will be applied to the cluster. Can be used separately or
+    in combination with the manifests section in the definition file. All files in this directory will be parsed and
+    the container images that they reference will be downloaded and served in an embedded artefact registry.
+  * `helm` - Contains locally provided ([K3s](https://docs.k3s.io/helm) / [RKE2](https://docs.rke2.io/helm)) Helm Custom Resources
+    which will be applied to the cluster as Helm charts. All files in this directory will be parsed and
+    the container images that they reference will be downloaded and served in an embedded artefact registry.
+
+> **_NOTE:_** Image builds enabling SELinux mode in the configuration files use EIB's package resolution process
+> to download any necessary RPM packages. To ensure a successful build, this process requires the ```--privileged```
+> flag to be passed to the ```podman run``` command. For more info on why this is required, please see
+> [Package resolution design](design/pkg-resolution.md#running-the-eib-container).
 
 ### RPMs
 
