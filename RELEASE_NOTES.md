@@ -17,6 +17,6 @@
 
 ## Bug Fixes
 
-* #197 - Consider using ENTRYPOINT instead of CMD #197
+* #197 - Consider using ENTRYPOINT instead of CMD
 * #213 - zypper clean after zypper install
 * #216 - Update the docs to reflect that systemd can be used for any kind of systemd unit, not just services
