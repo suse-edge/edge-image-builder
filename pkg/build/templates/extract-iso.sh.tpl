@@ -12,7 +12,7 @@ RAW_EXTRACT_DIR={{.RawExtractDir}}
 ISO_SOURCE={{.IsoSource}}
 
 # Create the extract directories
-mkdir -p ${ISO_EXTRACT_DIR} ${RAW_EXTRACT_DIR}
+mkdir -p ${ISO_EXTRACT_DIR}
 
 # Extract the contents of the ISO to the build directory
 xorriso -osirrox on -indev ${ISO_SOURCE} extract / ${ISO_EXTRACT_DIR}
