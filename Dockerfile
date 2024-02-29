@@ -42,4 +42,4 @@ RUN curl -o rke2_installer.sh -L https://get.rke2.io && \
 
 COPY --from=0 /src/eib /bin/eib
 
-CMD ["/bin/eib"]
+ENTRYPOINT ["/bin/eib"]
