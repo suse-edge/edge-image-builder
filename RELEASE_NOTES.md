@@ -11,6 +11,7 @@
 ### Image Configuration Directory Changes
 
 ## Bug Fixes
+* [#239](https://github.com/suse-edge/edge-image-builder/issues/239)
 
 ---
 
