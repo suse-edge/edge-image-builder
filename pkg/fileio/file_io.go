@@ -103,7 +103,7 @@ func CopyFiles(src, dest, ext string, copySubDir bool) error {
 			}
 		} else {
 			if ext != "" && filepath.Ext(file.Name()) != ext {
-				zap.S().Warnf("Skipping %s as it is not a '%s' file", file.Name(), ext)
+				zap.S().Debugf("Skipping %s as it is not a '%s' file", file.Name(), ext)
 				continue
 			}
 
