@@ -18,7 +18,7 @@ func TestAssembleScript_DynamicNetwork(t *testing.T) {
 	assert.NotContains(t, script, "./configure-network.sh")
 
 	// alphabetic ordering
-	assert.Contains(t, script, "./bar.sh\n./baz.sh\n./foo.sh")
+	assert.Contains(t, script, "echo \"Running bar.sh\"\n./bar.sh\necho \"Running baz.sh\"\n./baz.sh\necho \"Running foo.sh\"\n./foo.sh\n")
 }
 
 func TestAssembleScript_StaticNetwork(t *testing.T) {
@@ -32,5 +32,5 @@ func TestAssembleScript_StaticNetwork(t *testing.T) {
 	assert.Contains(t, script, "./configure-network.sh")
 
 	// alphabetic ordering
-	assert.Contains(t, script, "./bar.sh\n./baz.sh\n./foo.sh")
+	assert.Contains(t, script, "echo \"Running bar.sh\"\n./bar.sh\necho \"Running baz.sh\"\n./baz.sh\necho \"Running foo.sh\"\n./foo.sh\n")
 }
