@@ -210,11 +210,7 @@ func (r *Resolver) writeRPMResolutionScript(localRPMConfig *image.LocalRPMConfig
 	}
 
 	filename := filepath.Join(r.generateBuildContextPath(), rpmResolutionScriptName)
-	if err = os.WriteFile(filename, []byte(data), fileio.ExecutablePerms); err != nil {
-		return fmt.Errorf("writing prepare base image script %s: %w", filename, err)
-	}
-
-	return nil
+	return os.WriteFile(filename, []byte(data), fileio.ExecutablePerms)
 }
 
 func (r *Resolver) writeDockerfile(localRPMConfig *image.LocalRPMConfig) error {
@@ -246,11 +242,7 @@ func (r *Resolver) writeDockerfile(localRPMConfig *image.LocalRPMConfig) error {
 	}
 
 	filename := filepath.Join(r.generateBuildContextPath(), dockerfileName)
-	if err = os.WriteFile(filename, []byte(data), fileio.NonExecutablePerms); err != nil {
-		return fmt.Errorf("writing prepare base image script %s: %w", filename, err)
-	}
-
-	return nil
+	return os.WriteFile(filename, []byte(data), fileio.NonExecutablePerms)
 }
 
 func (r *Resolver) generatePKGInstallList(packages *image.Packages) []string {
