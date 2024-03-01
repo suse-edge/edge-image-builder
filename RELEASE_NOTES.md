@@ -12,6 +12,8 @@
 
 ## Bug Fixes
 
+* [#259](https://github.com/suse-edge/edge-image-builder/issues/259) - SCC registration is not cleaned up if RPM resolution fails
+
 ---
 
 # v1.0.0-rc1
