@@ -55,6 +55,6 @@ export INSTALL_RKE2_ARTIFACT_PATH={{ .installPath }}
 # rke2-selinux package, but isn't executed during combustion.
 mkdir -p /opt/cni
 
-./rke2_installer.sh
+./{{ .installScript }}
 
 systemctl enable rke2-$NODETYPE.service

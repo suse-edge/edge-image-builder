@@ -14,8 +14,8 @@ type networkConfiguratorInstaller interface {
 	InstallConfigurator(sourcePath, installPath string) error
 }
 
-type kubernetesScriptInstaller interface {
-	InstallScript(distribution, sourcePath, destinationPath string) error
+type kubernetesScriptDownloader interface {
+	DownloadInstallScript(distribution, destinationPath string) (string, error)
 }
 
 type kubernetesArtefactDownloader interface {
@@ -49,7 +49,7 @@ type Context struct {
 	ImageDefinition              *Definition
 	NetworkConfigGenerator       networkConfigGenerator
 	NetworkConfiguratorInstaller networkConfiguratorInstaller
-	KubernetesScriptInstaller    kubernetesScriptInstaller
+	KubernetesScriptDownloader   kubernetesScriptDownloader
 	KubernetesArtefactDownloader kubernetesArtefactDownloader
 	// RPMResolver responsible for resolving rpm/package dependencies
 	RPMResolver    rpmResolver

@@ -32,4 +32,4 @@ mkdir -p $INSTALL_K3S_BIN_DIR
 chmod +x {{ .binaryPath }}
 cp {{ .binaryPath }} $INSTALL_K3S_BIN_DIR/k3s
 
-./k3s_installer.sh
+./{{ .installScript }}
