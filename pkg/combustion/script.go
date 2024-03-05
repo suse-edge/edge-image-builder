@@ -36,6 +36,11 @@ func assembleScript(scripts []string, networkScript string) (string, error) {
 
 	// Add a call to each script that was added to the combustion directory
 	for _, filename := range scripts {
+		message := fmt.Sprintf("echo \"Running %s\"\n", filename)
+		_, err = b.WriteString(message)
+		if err != nil {
+			return "", fmt.Errorf("writing script caller message: %w", err)
+		}
 		_, err = b.WriteString(scriptExecutor(filename))
 		if err != nil {
 			return "", fmt.Errorf("appending script %s: %w", filename, err)

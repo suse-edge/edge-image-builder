@@ -4,6 +4,8 @@
 
 ## General
 
+* Added output at combustion phase to observe the script being executed
+
 ## API
 
 ### Image Definition Changes
