@@ -5,6 +5,7 @@
 ## General
 
 * Added output at combustion phase to observe the script being executed
+* Kubernetes install scripts are now downloaded at runtime instead of during the container image build process
 
 ## API
 
