@@ -317,8 +317,12 @@ func containerImages(embeddedImages []image.ContainerImage, manifestImages []str
 
 func parseManifests(ctx *image.Context) ([]string, error) {
 	var manifestSrcDir string
-	if componentDir := filepath.Join(k8sDir, "manifests"); isComponentConfigured(ctx, componentDir) {
+	if componentDir := filepath.Join(k8sDir, k8sManifestsDir); isComponentConfigured(ctx, componentDir) {
 		manifestSrcDir = filepath.Join(ctx.ImageConfigDir, componentDir)
+	}
+
+	if manifestSrcDir != "" && ctx.ImageDefinition.Kubernetes.Version == "" {
+		return nil, fmt.Errorf("kubernetes manifests are provided but kubernetes version is not configured")
 	}
 
 	return registry.ManifestImages(ctx.ImageDefinition.Kubernetes.Manifests.URLs, manifestSrcDir)
