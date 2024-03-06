@@ -361,6 +361,10 @@ func storeComponentsHelmCharts(ctx *image.Context) (string, error) {
 }
 
 func parseComponentHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error) {
+	if ctx.ImageDefinition.Kubernetes.Version == "" {
+		return nil, nil
+	}
+
 	chartsDir, err := storeComponentsHelmCharts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("storing components' helm charts: %w", err)
@@ -382,6 +386,10 @@ func parseComponentHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error)
 func parseConfiguredHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error) {
 	if !isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) {
 		return nil, nil
+	}
+
+	if ctx.ImageDefinition.Kubernetes.Version == "" {
+		return nil, fmt.Errorf("helm charts are provided but kubernetes version is not configured")
 	}
 
 	buildDir := filepath.Join(ctx.BuildDir, helmDir)
