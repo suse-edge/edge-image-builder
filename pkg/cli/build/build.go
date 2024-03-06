@@ -309,7 +309,7 @@ func bootstrapDependencyServices(ctx *image.Context, rootDir string) bool {
 			return false
 		}
 
-		ctx.KubernetesScriptInstaller = kubernetes.ScriptInstaller{}
+		ctx.KubernetesScriptDownloader = kubernetes.ScriptDownloader{}
 		ctx.KubernetesArtefactDownloader = kubernetes.ArtefactDownloader{
 			Cache: c,
 		}

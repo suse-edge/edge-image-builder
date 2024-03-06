@@ -37,9 +37,6 @@ RUN zypper addrepo https://download.opensuse.org/repositories/isv:SUSE:Edge:Edge
     nm-configurator && \
     zypper clean -a
 
-RUN curl -o rke2_installer.sh -L https://get.rke2.io && \
-    curl -o k3s_installer.sh -L https://get.k3s.io
-
 COPY --from=0 /src/eib /bin/eib
 
 ENTRYPOINT ["/bin/eib"]

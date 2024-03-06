@@ -5,6 +5,7 @@
 ## General
 
 * Added output at combustion phase to observe the script being executed
+* Kubernetes install scripts are now downloaded at runtime instead of during the container image build process
 
 ## API
 
@@ -16,6 +17,7 @@
 
 * [#239](https://github.com/suse-edge/edge-image-builder/issues/239) - Incorrect warning when checking for both .yml and .yaml files
 * [#259](https://github.com/suse-edge/edge-image-builder/issues/259) - SCC registration is not cleaned up if RPM resolution fails
+* [#260](https://github.com/suse-edge/edge-image-builder/issues/260) - Empty network directory produces a network configuration script
 * [#267](https://github.com/suse-edge/edge-image-builder/issues/267) - Embedded registry renders Kubernetes resources even when Kubernetes is not configured
 
 ---
