@@ -176,6 +176,13 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "agent", kubernetes.Nodes[4].Type)
 	assert.Equal(t, false, kubernetes.Nodes[4].Initialiser)
 	assert.Equal(t, "https://k8s.io/examples/application/nginx-app.yaml", kubernetes.Manifests.URLs[0])
+	assert.Equal(t, "apache", kubernetes.HelmCharts[0].Name)
+	assert.Equal(t, "oci://registry-1.docker.io/bitnamicharts/apache", kubernetes.HelmCharts[0].Repo)
+	assert.Equal(t, "10.7.0", kubernetes.HelmCharts[0].Version)
+	assert.Equal(t, "web", kubernetes.HelmCharts[0].TargetNamespace)
+	assert.Equal(t, true, kubernetes.HelmCharts[0].CreateNamespace)
+	assert.Equal(t, "kube-system", kubernetes.HelmCharts[0].InstallationNamespace)
+	assert.Equal(t, "apache-values.yaml", kubernetes.HelmCharts[0].ValuesFile)
 }
 
 func TestParseBadConfig_InvalidFormat(t *testing.T) {
