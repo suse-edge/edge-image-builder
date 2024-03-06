@@ -18,7 +18,7 @@ import (
 type HelmChart struct {
 	Filename        string
 	Resources       []map[string]any
-	CRD             helmCRD
+	CRD             HelmCRD
 	ContainerImages []string
 }
 
@@ -47,7 +47,7 @@ func HelmCharts(srcDir, buildDir, kubeVersion string, helm image.Helm) ([]*HelmC
 				return nil, fmt.Errorf("resource is missing 'kind' field")
 			}
 
-			if kind == helmChartKind {
+			if kind == HelmChartKind {
 				if err = handleChartResource(resource, buildDir, kubeVersion, helm, containerImages); err != nil {
 					return nil, fmt.Errorf("handling chart resource: %w", err)
 				}
@@ -201,13 +201,13 @@ func handleChart(chart *image.HelmChart, valuesDir, buildDir, kubeVersion string
 	return &helmChart, nil
 }
 
-func parseHelmCRD(resource map[string]any) (*helmCRD, error) {
+func parseHelmCRD(resource map[string]any) (*HelmCRD, error) {
 	b, err := yaml.Marshal(resource)
 	if err != nil {
 		return nil, fmt.Errorf("marshaling resource: %w", err)
 	}
 
-	var crd helmCRD
+	var crd HelmCRD
 	if err = yaml.Unmarshal(b, &crd); err != nil {
 		return nil, fmt.Errorf("unmarshaling CRD: %w", err)
 	}
@@ -215,7 +215,7 @@ func parseHelmCRD(resource map[string]any) (*helmCRD, error) {
 	return &crd, nil
 }
 
-func downloadCRDChart(crd *helmCRD, helm image.Helm, destDir string) (string, error) {
+func downloadCRDChart(crd *HelmCRD, helm image.Helm, destDir string) (string, error) {
 	if crd.Spec.ChartContent == "" {
 		if err := helm.AddRepo(crd.Spec.Chart, crd.Spec.Repo); err != nil {
 			return "", fmt.Errorf("adding repo: %w", err)

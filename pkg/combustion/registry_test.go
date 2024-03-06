@@ -339,6 +339,38 @@ func TestStoreHelmCharts(t *testing.T) {
 				},
 			},
 		},
+		{
+			CRD: registry.HelmCRD{
+				APIVersion: registry.HelmChartAPIVersion,
+				Kind:       registry.HelmChartKind,
+				Metadata: struct {
+					Name      string `yaml:"name"`
+					Namespace string `yaml:"namespace,omitempty"`
+				}{
+					Name:      "apache",
+					Namespace: "kube-system",
+				},
+				Spec: struct {
+					Repo            string         `yaml:"repo,omitempty"`
+					Chart           string         `yaml:"chart,omitempty"`
+					Version         string         `yaml:"version"`
+					Set             map[string]any `yaml:"set,omitempty"`
+					ValuesContent   string         `yaml:"valuesContent,omitempty"`
+					ChartContent    string         `yaml:"chartContent"`
+					TargetNamespace string         `yaml:"targetNamespace,omitempty"`
+					CreateNamespace bool           `yaml:"createNamespace,omitempty"`
+				}{
+					Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
+					Chart:   "apache",
+					Version: "10.7.0",
+					ValuesContent: `
+values: content`,
+					ChartContent:    "Hxxx",
+					TargetNamespace: "web",
+					CreateNamespace: true,
+				},
+			},
+		},
 	}
 
 	require.NoError(t, storeHelmCharts(ctx, charts))
@@ -388,4 +420,25 @@ spec:
 	require.NoError(t, err)
 
 	assert.Equal(t, endpointCopierOperatorContents, string(contents))
+
+	apachePath := filepath.Join(ctx.CombustionDir, k8sDir, k8sManifestsDir, "apache.yaml")
+	apacheContent := `apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+    name: apache
+    namespace: kube-system
+spec:
+    repo: oci://registry-1.docker.io/bitnamicharts/apache
+    chart: apache
+    version: 10.7.0
+    valuesContent: |4-
+        values: content
+    chartContent: Hxxx
+    targetNamespace: web
+    createNamespace: true
+`
+	contents, err = os.ReadFile(apachePath)
+	require.NoError(t, err)
+
+	assert.Equal(t, apacheContent, string(contents))
 }

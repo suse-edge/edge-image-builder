@@ -6,10 +6,10 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-const helmChartAPIVersion = "helm.cattle.io/v1"
-const helmChartKind = "HelmChart"
+const HelmChartAPIVersion = "helm.cattle.io/v1"
+const HelmChartKind = "HelmChart"
 
-type helmCRD struct {
+type HelmCRD struct {
 	APIVersion string `yaml:"apiVersion"`
 	Kind       string `yaml:"kind"`
 	Metadata   struct {
@@ -28,7 +28,7 @@ type helmCRD struct {
 	} `yaml:"spec"`
 }
 
-func (c *helmCRD) parseSetArgs() []string {
+func (c *HelmCRD) parseSetArgs() []string {
 	if len(c.Spec.Set) > 0 {
 		return parseSetArgs("", c.Spec.Set)
 	}
@@ -68,22 +68,32 @@ func parseSetArgs(prefix string, m map[string]any) []string {
 	return args
 }
 
-func newHelmCRD(chart *image.HelmChart, chartContent, valuesContent string) helmCRD {
-	crd := helmCRD{}
-
-	crd.APIVersion = helmChartAPIVersion
-	crd.Kind = helmChartKind
-
-	crd.Metadata.Name = chart.Name
-	crd.Metadata.Namespace = chart.InstallationNamespace
-
-	crd.Spec.ChartContent = chartContent
-	crd.Spec.Version = chart.Version
-	crd.Spec.CreateNamespace = chart.CreateNamespace
-	crd.Spec.TargetNamespace = chart.TargetNamespace
-	if valuesContent != "" {
-		crd.Spec.ValuesContent = valuesContent
+func newHelmCRD(chart *image.HelmChart, chartContent, valuesContent string) HelmCRD {
+	return HelmCRD{
+		APIVersion: HelmChartAPIVersion,
+		Kind:       HelmChartKind,
+		Metadata: struct {
+			Name      string `yaml:"name"`
+			Namespace string `yaml:"namespace,omitempty"`
+		}{
+			Name:      chart.Name,
+			Namespace: chart.InstallationNamespace,
+		},
+		Spec: struct {
+			Repo            string         `yaml:"repo,omitempty"`
+			Chart           string         `yaml:"chart,omitempty"`
+			Version         string         `yaml:"version"`
+			Set             map[string]any `yaml:"set,omitempty"`
+			ValuesContent   string         `yaml:"valuesContent,omitempty"`
+			ChartContent    string         `yaml:"chartContent"`
+			TargetNamespace string         `yaml:"targetNamespace,omitempty"`
+			CreateNamespace bool           `yaml:"createNamespace,omitempty"`
+		}{
+			Version:         chart.Version,
+			ValuesContent:   valuesContent,
+			ChartContent:    chartContent,
+			TargetNamespace: chart.TargetNamespace,
+			CreateNamespace: chart.CreateNamespace,
+		},
 	}
-
-	return crd
 }
