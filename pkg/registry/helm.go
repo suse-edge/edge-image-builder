@@ -191,20 +191,8 @@ func handleChart(chart image.HelmChart, valuesDir, buildDir, kubeVersion string,
 		return nil, fmt.Errorf("getting chart content: %w", err)
 	}
 
-	crd := helmCRD{}
-	crd.Metadata.Name = chart.Name
-	crd.Metadata.Namespace = chart.InstallationNamespace
-	crd.Spec.ChartContent = chartContent
-	crd.Spec.Version = chart.Version
-	crd.Spec.CreateNamespace = chart.CreateNamespace
-	crd.Spec.TargetNamespace = chart.TargetNamespace
-	if len(valuesContent) != 0 {
-		crd.Spec.ValuesContent = string(valuesContent)
-	}
-
 	helmChart := HelmChart{
-		Filename:        fmt.Sprintf("%s.yaml", chart.Name),
-		CRD:             crd,
+		CRD:             newHelmCRD(chart, chartContent, string(valuesContent)),
 		ContainerImages: images,
 	}
 

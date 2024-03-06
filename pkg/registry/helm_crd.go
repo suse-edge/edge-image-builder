@@ -2,24 +2,28 @@ package registry
 
 import (
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
+const helmChartApiVersion = "helm.cattle.io/v1"
 const helmChartKind = "HelmChart"
 
 type helmCRD struct {
-	Metadata struct {
+	ApiVersion string `yaml:"apiVersion"`
+	Kind       string `yaml:"kind"`
+	Metadata   struct {
 		Name      string `yaml:"name"`
-		Namespace string `yaml:"namespace"`
+		Namespace string `yaml:"namespace,omitempty"`
 	} `yaml:"metadata"`
 	Spec struct {
-		Repo            string         `yaml:"repo"`
-		Chart           string         `yaml:"chart"`
+		Repo            string         `yaml:"repo,omitempty"`
+		Chart           string         `yaml:"chart,omitempty"`
 		Version         string         `yaml:"version"`
-		Set             map[string]any `yaml:"set"`
-		ValuesContent   string         `yaml:"valuesContent"`
+		Set             map[string]any `yaml:"set,omitempty"`
+		ValuesContent   string         `yaml:"valuesContent,omitempty"`
 		ChartContent    string         `yaml:"chartContent"`
-		TargetNamespace string         `yaml:"targetNamespace"`
-		CreateNamespace bool           `yaml:"createNamespace"`
+		TargetNamespace string         `yaml:"targetNamespace,omitempty"`
+		CreateNamespace bool           `yaml:"createNamespace,omitempty"`
 	} `yaml:"spec"`
 }
 
@@ -61,4 +65,24 @@ func parseSetArgs(prefix string, m map[string]any) []string {
 	}
 
 	return args
+}
+
+func newHelmCRD(chart image.HelmChart, chartContent, valuesContent string) helmCRD {
+	crd := helmCRD{}
+
+	crd.ApiVersion = helmChartApiVersion
+	crd.Kind = helmChartKind
+
+	crd.Metadata.Name = chart.Name
+	crd.Metadata.Namespace = chart.InstallationNamespace
+
+	crd.Spec.ChartContent = chartContent
+	crd.Spec.Version = chart.Version
+	crd.Spec.CreateNamespace = chart.CreateNamespace
+	crd.Spec.TargetNamespace = chart.TargetNamespace
+	if len(valuesContent) != 0 {
+		crd.Spec.ValuesContent = valuesContent
+	}
+
+	return crd
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,7 +17,6 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/registry"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
-	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -418,20 +418,33 @@ func storeHelmCharts(ctx *image.Context, helmCharts []*registry.HelmChart) error
 	}
 
 	for _, chart := range helmCharts {
-		var buf bytes.Buffer
+		if chart.Resources != nil {
+			var buf bytes.Buffer
 
-		for _, resource := range chart.Resources {
-			data, err := yaml.Marshal(resource)
-			if err != nil {
-				return fmt.Errorf("marshaling resource: %w", err)
+			for _, resource := range chart.Resources {
+				data, err := yaml.Marshal(resource)
+				if err != nil {
+					return fmt.Errorf("marshaling resource: %w", err)
+				}
+
+				buf.WriteString("---\n")
+				buf.Write(data)
 			}
 
-			buf.WriteString("---\n")
-			buf.Write(data)
+			if err := os.WriteFile(filepath.Join(manifestsDir, chart.Filename), buf.Bytes(), fileio.NonExecutablePerms); err != nil {
+				return fmt.Errorf("storing manifest '%s: %w", chart.Filename, err)
+			}
+			continue
 		}
 
-		if err := os.WriteFile(filepath.Join(manifestsDir, chart.Filename), buf.Bytes(), fileio.NonExecutablePerms); err != nil {
-			return fmt.Errorf("storing manifest '%s: %w", chart.Filename, err)
+		data, err := yaml.Marshal(chart.CRD)
+		if err != nil {
+			return fmt.Errorf("marshaling resource: %w", err)
+		}
+
+		chartFileName := fmt.Sprintf("%s.yaml", chart.CRD.Metadata.Name)
+		if err = os.WriteFile(filepath.Join(manifestsDir, chartFileName), data, fileio.NonExecutablePerms); err != nil {
+			return fmt.Errorf("storing manifest '%s: %w", chartFileName, err)
 		}
 	}
 
