@@ -2,9 +2,13 @@ package image
 
 import (
 	"io"
-
-	"github.com/suse-edge/edge-image-builder/pkg/registry"
 )
+
+type Helm interface {
+	AddRepo(chart, repository string) error
+	Pull(chart, repository, version, destDir string) (string, error)
+	Template(chart, repository, version, valuesFilePath, kubeVersion string, setArgs []string) ([]map[string]any, error)
+}
 
 type networkConfigGenerator interface {
 	GenerateNetworkConfig(configDir, outputDir string, outputWriter io.Writer) error
@@ -54,5 +58,5 @@ type Context struct {
 	// RPMResolver responsible for resolving rpm/package dependencies
 	RPMResolver    rpmResolver
 	RPMRepoCreator rpmRepoCreator
-	Helm           registry.Helm
+	Helm           Helm
 }

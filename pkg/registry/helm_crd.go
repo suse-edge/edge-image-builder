@@ -8,15 +8,18 @@ const helmChartKind = "HelmChart"
 
 type helmCRD struct {
 	Metadata struct {
-		Name string `yaml:"name"`
+		Name      string `yaml:"name"`
+		Namespace string `yaml:"namespace"`
 	} `yaml:"metadata"`
 	Spec struct {
-		Repo          string         `yaml:"repo"`
-		Chart         string         `yaml:"chart"`
-		Version       string         `yaml:"version"`
-		Set           map[string]any `yaml:"set"`
-		ValuesContent string         `yaml:"valuesContent"`
-		ChartContent  string         `yaml:"chartContent"`
+		Repo            string         `yaml:"repo"`
+		Chart           string         `yaml:"chart"`
+		Version         string         `yaml:"version"`
+		Set             map[string]any `yaml:"set"`
+		ValuesContent   string         `yaml:"valuesContent"`
+		ChartContent    string         `yaml:"chartContent"`
+		TargetNamespace string         `yaml:"targetNamespace"`
+		CreateNamespace bool           `yaml:"createNamespace"`
 	} `yaml:"spec"`
 }
 

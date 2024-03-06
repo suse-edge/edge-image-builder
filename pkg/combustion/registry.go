@@ -30,7 +30,8 @@ const (
 	registryPort            = "6545"
 	registryMirrorsFileName = "registries.yaml"
 
-	helmDir = "helm"
+	helmDir   = "helm"
+	valuesDir = "values"
 )
 
 //go:embed templates/hauler-manifest.yaml.tpl
@@ -388,7 +389,7 @@ func parseComponentHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error)
 }
 
 func parseConfiguredHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error) {
-	if !isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) {
+	if len(ctx.ImageDefinition.Kubernetes.HelmCharts) == 0 {
 		return nil, nil
 	}
 
@@ -401,9 +402,9 @@ func parseConfiguredHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error
 		return nil, fmt.Errorf("creating helm dir: %w", err)
 	}
 
-	chartsDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
+	helmValuesDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir, valuesDir)
 
-	return registry.HelmCharts(chartsDir, buildDir, ctx.ImageDefinition.Kubernetes.Version, ctx.Helm)
+	return registry.ConfiguredHelmCharts(ctx.ImageDefinition.Kubernetes.HelmCharts, helmValuesDir, buildDir, ctx.ImageDefinition.Kubernetes.Version, ctx.Helm)
 }
 
 func storeHelmCharts(ctx *image.Context, helmCharts []*registry.HelmChart) error {
