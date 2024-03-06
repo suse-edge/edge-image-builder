@@ -56,6 +56,19 @@ func TestConfigureNetwork_NotConfigured(t *testing.T) {
 	assert.Nil(t, scripts)
 }
 
+func TestConfigureNetwork_EmptyDirectory(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	networkDir := filepath.Join(ctx.ImageConfigDir, networkConfigDir)
+	require.NoError(t, os.Mkdir(networkDir, 0o700))
+
+	scripts, err := configureNetwork(ctx)
+	require.Error(t, err)
+	assert.EqualError(t, err, "network directory is present but empty")
+	assert.Nil(t, scripts)
+}
+
 func TestConfigureNetwork(t *testing.T) {
 	tests := []struct {
 		name                  string
@@ -106,6 +119,9 @@ func TestConfigureNetwork(t *testing.T) {
 
 	networkDir := filepath.Join(ctx.ImageConfigDir, networkConfigDir)
 	require.NoError(t, os.Mkdir(networkDir, 0o700))
+
+	networkConfig := filepath.Join(networkDir, "config.yaml")
+	require.NoError(t, os.WriteFile(networkConfig, []byte("some-config"), fileio.NonExecutablePerms))
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
