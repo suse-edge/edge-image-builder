@@ -169,7 +169,7 @@ func validateHelmCharts(k8s *image.Kubernetes, buildDir string) []FailedValidati
 			})
 		}
 
-		if chart.CreateNamespace == true && chart.TargetNamespace == "" {
+		if chart.CreateNamespace && chart.TargetNamespace == "" {
 			failures = append(failures, FailedValidation{
 				UserMessage: "Helm Chart 'createNamespace' field cannot be true without 'targetNamespace' being defined.",
 			})
@@ -199,16 +199,16 @@ func validateHelmChartValues(valuesFile string, buildDir string) string {
 		return "Helm Chart 'valuesFile' field must be the name of a valid yaml file ending in '.yaml' or '.yml'."
 	}
 
-	//valuesFilePath := filepath.Join(buildDir, "values", valuesFile)
-	//_, err := os.Stat(valuesFilePath)
-	//if err != nil {
+	// valuesFilePath := filepath.Join(buildDir, "values", valuesFile)
+	// _, err := os.Stat(valuesFilePath)
+	// if err != nil {
 	//	if errors.Is(err, os.ErrNotExist) {
 	//		return fmt.Sprintf("Helm Chart Values File '%s' could not be found at '%s'.", valuesFile, valuesFilePath)
 	//	}
 	//
-	//	// The real issue is the case where the check itself has an error
+	// The real issue is the case where the check itself has an error
 	// Not sure what we want to do with this, or if we want to do this at all
-	//}
+	// }
 
 	return ""
 }

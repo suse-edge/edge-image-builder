@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/suse-edge/edge-image-builder/pkg/image"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -346,4 +348,327 @@ func TestHelmCharts(t *testing.T) {
 
 	assert.FileExists(t, filepath.Join(buildDir, "encoded-chart.tgz"))
 	assert.FileExists(t, filepath.Join(buildDir, "non-encoded-chart.tgz"))
+}
+
+func TestConfiguredHelmCharts_Error(t *testing.T) {
+	helmCharts := []image.HelmChart{
+		{
+			Name:       "apache",
+			Repo:       "oci://registry-1.docker.io/bitnamicharts/apache",
+			Version:    "10.7.0",
+			ValuesFile: "apache-values.yaml",
+		},
+	}
+
+	charts, err := ConfiguredHelmCharts(helmCharts, "", "", "", nil)
+	require.Error(t, err)
+	assert.EqualError(t, err, "handling chart resource: reading values content: open apache-values.yaml: no such file or directory")
+	assert.Nil(t, charts)
+}
+
+func TestHandleChart_MissingValuesDir(t *testing.T) {
+	helmChart := &image.HelmChart{
+		Name:       "apache",
+		Repo:       "oci://registry-1.docker.io/bitnamicharts/apache",
+		Version:    "10.7.0",
+		ValuesFile: "apache-values.yaml",
+	}
+
+	chart, err := handleChart(helmChart, "oops!", "", "", nil)
+	assert.EqualError(t, err, "reading values content: open oops!/apache-values.yaml: no such file or directory")
+	assert.Nil(t, chart)
+}
+
+func TestHandleChart_FailedDownload(t *testing.T) {
+	helmChart := &image.HelmChart{
+		Name:    "apache",
+		Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
+		Version: "10.7.0",
+	}
+
+	helm := mockHelm{
+		addRepoFunc: func(chart, repository string) error {
+			return fmt.Errorf("failed downloading")
+		},
+	}
+
+	charts, err := handleChart(helmChart, "", "", "", helm)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "downloading chart: adding repo: failed downloading")
+	assert.Nil(t, charts)
+}
+
+func TestHandleChart_FailedTemplate(t *testing.T) {
+	helmChart := &image.HelmChart{
+		Name:    "apache",
+		Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
+		Version: "10.7.0",
+	}
+
+	helm := mockHelm{
+		addRepoFunc: func(chart, repository string) error {
+			return nil
+		},
+		pullFunc: func(chart, repository, version, destDir string) (string, error) {
+			return "", nil
+		},
+		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion string, setArgs []string) ([]map[string]any, error) {
+			return nil, fmt.Errorf("failed templating")
+		},
+	}
+
+	charts, err := handleChart(helmChart, "", "", "", helm)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "templating chart: failed templating")
+	assert.Nil(t, charts)
+}
+
+func TestHandleChart_FailedGetChartContent(t *testing.T) {
+	helmChart := &image.HelmChart{
+		Name:    "apache",
+		Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
+		Version: "10.7.0",
+	}
+
+	helm := mockHelm{
+		addRepoFunc: func(chart, repository string) error {
+			return nil
+		},
+		pullFunc: func(chart, repository, version, destDir string) (string, error) {
+			return "does-not-exist.tgz", nil
+		},
+		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion string, setArgs []string) ([]map[string]any, error) {
+			return nil, nil
+		},
+	}
+
+	charts, err := handleChart(helmChart, "", "", "", helm)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "getting chart content: reading chart: open does-not-exist.tgz: no such file or directory")
+	assert.Nil(t, charts)
+}
+
+func TestDownloadChart_FailedAddingRepo(t *testing.T) {
+	helmChart := &image.HelmChart{}
+
+	helm := mockHelm{
+		addRepoFunc: func(chart, repository string) error {
+			return fmt.Errorf("failed to add repo")
+		},
+	}
+
+	chartPath, err := downloadChart(helmChart, helm, "")
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "adding repo: failed to add repo")
+	assert.Empty(t, chartPath)
+}
+
+func TestDownloadChart_FailedPulling(t *testing.T) {
+	helmChart := &image.HelmChart{}
+
+	helm := mockHelm{
+		addRepoFunc: func(chart, repository string) error {
+			return nil
+		},
+		pullFunc: func(chart, repository, version, destDir string) (string, error) {
+			return "", fmt.Errorf("failed pulling chart")
+		},
+	}
+
+	chartPath, err := downloadChart(helmChart, helm, "")
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "pulling chart: failed pulling chart")
+	assert.Empty(t, chartPath)
+}
+
+func TestDownloadChart(t *testing.T) {
+	helmChart := &image.HelmChart{
+		Name:    "apache",
+		Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
+		Version: "10.7.0",
+	}
+
+	dir, err := os.MkdirTemp("", "helm-chart-charts-")
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, os.RemoveAll(dir))
+	}()
+
+	file := filepath.Join(dir, "apache-chart.tgz")
+	require.NoError(t, os.WriteFile(file, []byte("abc"), 0o600))
+
+	helm := mockHelm{
+		addRepoFunc: func(chart, repository string) error {
+			return nil
+		},
+		pullFunc: func(chart, repository, version, destDir string) (string, error) {
+			return "apache-chart.tgz", nil
+		},
+	}
+
+	chartPath, err := downloadChart(helmChart, helm, "")
+	require.NoError(t, err)
+	assert.Equal(t, "apache-chart.tgz", chartPath)
+}
+
+func TestHandleChart(t *testing.T) {
+	helmChart := &image.HelmChart{
+		Name:                  "apache",
+		Repo:                  "oci://registry-1.docker.io/bitnamicharts/apache",
+		Version:               "10.7.0",
+		InstallationNamespace: "apache-system",
+		CreateNamespace:       true,
+		TargetNamespace:       "web",
+	}
+
+	dir, err := os.MkdirTemp("", "helm-chart-charts-")
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, os.RemoveAll(dir))
+	}()
+
+	file := filepath.Join(dir, "apache-chart.tgz")
+	require.NoError(t, os.WriteFile(file, []byte("abc"), 0o600))
+
+	helm := mockHelm{
+		addRepoFunc: func(chart, repository string) error {
+			return nil
+		},
+		pullFunc: func(chart, repository, version, destDir string) (string, error) {
+			return file, nil
+		},
+		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion string, setArgs []string) ([]map[string]any, error) {
+			chartResource := []map[string]any{
+				{
+					"apiVersion": "v1",
+					"kind":       "CronJob",
+					"spec": map[string]any{
+						"image": "cronjob-image:0.5.6",
+					},
+				},
+				{
+					"apiVersion": "v1",
+					"kind":       "Job",
+					"spec": map[string]any{
+						"image": "job-image:6.1.0",
+					},
+				},
+			}
+
+			return chartResource, nil
+		},
+	}
+
+	chart, err := handleChart(helmChart, "", "", "", helm)
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, chart.ContainerImages, []string{"cronjob-image:0.5.6", "job-image:6.1.0"})
+	assert.Equal(t, HelmCRD{
+		APIVersion: HelmChartAPIVersion,
+		Kind:       HelmChartKind,
+		Metadata: struct {
+			Name      string `yaml:"name"`
+			Namespace string `yaml:"namespace,omitempty"`
+		}{
+			Name:      "apache",
+			Namespace: "apache-system",
+		},
+		Spec: struct {
+			Repo            string         `yaml:"repo,omitempty"`
+			Chart           string         `yaml:"chart,omitempty"`
+			Version         string         `yaml:"version"`
+			Set             map[string]any `yaml:"set,omitempty"`
+			ValuesContent   string         `yaml:"valuesContent,omitempty"`
+			ChartContent    string         `yaml:"chartContent"`
+			TargetNamespace string         `yaml:"targetNamespace,omitempty"`
+			CreateNamespace bool           `yaml:"createNamespace,omitempty"`
+		}{
+			Version:         "10.7.0",
+			ChartContent:    "YWJj",
+			TargetNamespace: "web",
+			CreateNamespace: true,
+		},
+	}, chart.CRD)
+}
+
+func TestConfiguredHelmCharts(t *testing.T) {
+	helmCharts := []image.HelmChart{
+		{
+			Name:                  "apache",
+			Repo:                  "oci://registry-1.docker.io/bitnamicharts/apache",
+			Version:               "10.7.0",
+			InstallationNamespace: "apache-system",
+			CreateNamespace:       true,
+			TargetNamespace:       "web",
+		},
+	}
+
+	dir, err := os.MkdirTemp("", "helm-chart-charts-")
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, os.RemoveAll(dir))
+	}()
+
+	file := filepath.Join(dir, "apache-chart.tgz")
+	require.NoError(t, os.WriteFile(file, []byte("abc"), 0o600))
+
+	helm := mockHelm{
+		addRepoFunc: func(chart, repository string) error {
+			return nil
+		},
+		pullFunc: func(chart, repository, version, destDir string) (string, error) {
+			return file, nil
+		},
+		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion string, setArgs []string) ([]map[string]any, error) {
+			chartResource := []map[string]any{
+				{
+					"apiVersion": "v1",
+					"kind":       "CronJob",
+					"spec": map[string]any{
+						"image": "cronjob-image:0.5.6",
+					},
+				},
+				{
+					"apiVersion": "v1",
+					"kind":       "Job",
+					"spec": map[string]any{
+						"image": "job-image:6.1.0",
+					},
+				},
+			}
+
+			return chartResource, nil
+		},
+	}
+
+	charts, err := ConfiguredHelmCharts(helmCharts, "", "", "", helm)
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, charts[0].ContainerImages, []string{"cronjob-image:0.5.6", "job-image:6.1.0"})
+	assert.Equal(t, HelmCRD{
+		APIVersion: HelmChartAPIVersion,
+		Kind:       HelmChartKind,
+		Metadata: struct {
+			Name      string `yaml:"name"`
+			Namespace string `yaml:"namespace,omitempty"`
+		}{
+			Name:      "apache",
+			Namespace: "apache-system",
+		},
+		Spec: struct {
+			Repo            string         `yaml:"repo,omitempty"`
+			Chart           string         `yaml:"chart,omitempty"`
+			Version         string         `yaml:"version"`
+			Set             map[string]any `yaml:"set,omitempty"`
+			ValuesContent   string         `yaml:"valuesContent,omitempty"`
+			ChartContent    string         `yaml:"chartContent"`
+			TargetNamespace string         `yaml:"targetNamespace,omitempty"`
+			CreateNamespace bool           `yaml:"createNamespace,omitempty"`
+		}{
+			Version:         "10.7.0",
+			ChartContent:    "YWJj",
+			TargetNamespace: "web",
+			CreateNamespace: true,
+		},
+	}, charts[0].CRD)
 }

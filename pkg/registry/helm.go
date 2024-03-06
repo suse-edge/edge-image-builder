@@ -158,19 +158,20 @@ func handleChartResource(resource map[string]any, buildDir, kubeVersion string, 
 }
 
 func handleChart(chart *image.HelmChart, valuesDir, buildDir, kubeVersion string, helm image.Helm) (*HelmChart, error) {
-	chartPath, err := downloadChart(chart, helm, buildDir)
-	if err != nil {
-		return nil, fmt.Errorf("downloading chart: %w", err)
-	}
-
 	var valuesPath string
 	var valuesContent []byte
 	if chart.ValuesFile != "" {
+		var err error
 		valuesPath = filepath.Join(valuesDir, chart.ValuesFile)
 		valuesContent, err = os.ReadFile(valuesPath)
 		if err != nil {
 			return nil, fmt.Errorf("reading values content: %w", err)
 		}
+	}
+
+	chartPath, err := downloadChart(chart, helm, buildDir)
+	if err != nil {
+		return nil, fmt.Errorf("downloading chart: %w", err)
 	}
 
 	chartResources, err := helm.Template(chart.Name, chartPath, chart.Version, valuesPath, kubeVersion, nil)
