@@ -25,6 +25,7 @@ func validateKubernetes(ctx *image.Context) []FailedValidation {
 
 	failures = append(failures, validateNodes(&def.Kubernetes)...)
 	failures = append(failures, validateManifestURLs(&def.Kubernetes)...)
+	failures = append(failures, validateHelmCharts(&def.Kubernetes, ctx.ImageConfigDir)...)
 
 	return failures
 }
@@ -133,4 +134,81 @@ func validateManifestURLs(k8s *image.Kubernetes) []FailedValidation {
 	}
 
 	return failures
+}
+
+func validateHelmCharts(k8s *image.Kubernetes, buildDir string) []FailedValidation {
+	var failures []FailedValidation
+
+	if len(k8s.HelmCharts) == 0 {
+		return failures
+	}
+
+	seenHelmCharts := make(map[string]bool)
+	for _, chart := range k8s.HelmCharts {
+		if chart.Name == "" {
+			failures = append(failures, FailedValidation{
+				UserMessage: "Helm Chart 'name' field must be defined.",
+			})
+		}
+
+		if chart.Repo == "" {
+			failures = append(failures, FailedValidation{
+				UserMessage: "Helm Chart 'repo' field must be defined.",
+			})
+		}
+
+		if chart.Repo != "" && !strings.HasPrefix(chart.Repo, "http") && !strings.HasPrefix(chart.Repo, "oci://") {
+			failures = append(failures, FailedValidation{
+				UserMessage: "Helm Chart 'repo' field must begin with either 'oci://', 'http://', or 'https://'.",
+			})
+		}
+
+		if chart.Version == "" {
+			failures = append(failures, FailedValidation{
+				UserMessage: "Helm Chart 'version' field must be defined.",
+			})
+		}
+
+		if chart.CreateNamespace == true && chart.TargetNamespace == "" {
+			failures = append(failures, FailedValidation{
+				UserMessage: "Helm Chart 'createNamespace' field cannot be true without 'targetNamespace' being defined.",
+			})
+		}
+
+		if failure := validateHelmChartValues(chart.ValuesFile, buildDir); failure != "" {
+			failures = append(failures, FailedValidation{
+				UserMessage: failure,
+			})
+		}
+
+		if _, exists := seenHelmCharts[chart.Name]; exists {
+			msg := fmt.Sprintf("The 'helmCharts' field contains duplicate entries: %s", chart.Name)
+			failures = append(failures, FailedValidation{
+				UserMessage: msg,
+			})
+		}
+
+		seenHelmCharts[chart.Name] = true
+	}
+
+	return failures
+}
+
+func validateHelmChartValues(valuesFile string, buildDir string) string {
+	if valuesFile != "" && !strings.Contains(strings.ToLower(valuesFile), ".yaml") && !strings.Contains(strings.ToLower(valuesFile), ".yml") {
+		return "Helm Chart 'valuesFile' field must be the name of a valid yaml file ending in '.yaml' or '.yml'."
+	}
+
+	//valuesFilePath := filepath.Join(buildDir, "values", valuesFile)
+	//_, err := os.Stat(valuesFilePath)
+	//if err != nil {
+	//	if errors.Is(err, os.ErrNotExist) {
+	//		return fmt.Sprintf("Helm Chart Values File '%s' could not be found at '%s'.", valuesFile, valuesFilePath)
+	//	}
+	//
+	//	// The real issue is the case where the check itself has an error
+	// Not sure what we want to do with this, or if we want to do this at all
+	//}
+
+	return ""
 }
