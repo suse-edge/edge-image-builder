@@ -5,10 +5,11 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"gopkg.in/yaml.v3"
@@ -71,7 +72,8 @@ func ConfiguredHelmCharts(helmCharts []image.HelmChart, valuesDir, buildDir, kub
 	var charts []*HelmChart
 
 	for _, helmChart := range helmCharts {
-		chart, err := handleChart(helmChart, valuesDir, buildDir, kubeVersion, helm)
+		c := helmChart
+		chart, err := handleChart(&c, valuesDir, buildDir, kubeVersion, helm)
 		if err != nil {
 			return nil, fmt.Errorf("handling chart resource: %w", err)
 		}
@@ -155,7 +157,7 @@ func handleChartResource(resource map[string]any, buildDir, kubeVersion string, 
 	return nil
 }
 
-func handleChart(chart image.HelmChart, valuesDir, buildDir, kubeVersion string, helm image.Helm) (*HelmChart, error) {
+func handleChart(chart *image.HelmChart, valuesDir, buildDir, kubeVersion string, helm image.Helm) (*HelmChart, error) {
 	chartPath, err := downloadChart(chart, helm, buildDir)
 	if err != nil {
 		return nil, fmt.Errorf("downloading chart: %w", err)
@@ -240,7 +242,7 @@ func downloadCRDChart(crd *helmCRD, helm image.Helm, destDir string) (string, er
 	return chartPath, nil
 }
 
-func downloadChart(chart image.HelmChart, helm image.Helm, destDir string) (string, error) {
+func downloadChart(chart *image.HelmChart, helm image.Helm, destDir string) (string, error) {
 	if err := helm.AddRepo(chart.Name, chart.Repo); err != nil {
 		return "", fmt.Errorf("adding repo: %w", err)
 	}

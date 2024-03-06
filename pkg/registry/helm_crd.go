@@ -2,14 +2,15 @@ package registry
 
 import (
 	"fmt"
+
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-const helmChartApiVersion = "helm.cattle.io/v1"
+const helmChartAPIVersion = "helm.cattle.io/v1"
 const helmChartKind = "HelmChart"
 
 type helmCRD struct {
-	ApiVersion string `yaml:"apiVersion"`
+	APIVersion string `yaml:"apiVersion"`
 	Kind       string `yaml:"kind"`
 	Metadata   struct {
 		Name      string `yaml:"name"`
@@ -67,10 +68,10 @@ func parseSetArgs(prefix string, m map[string]any) []string {
 	return args
 }
 
-func newHelmCRD(chart image.HelmChart, chartContent, valuesContent string) helmCRD {
+func newHelmCRD(chart *image.HelmChart, chartContent, valuesContent string) helmCRD {
 	crd := helmCRD{}
 
-	crd.ApiVersion = helmChartApiVersion
+	crd.APIVersion = helmChartAPIVersion
 	crd.Kind = helmChartKind
 
 	crd.Metadata.Name = chart.Name
@@ -80,7 +81,7 @@ func newHelmCRD(chart image.HelmChart, chartContent, valuesContent string) helmC
 	crd.Spec.Version = chart.Version
 	crd.Spec.CreateNamespace = chart.CreateNamespace
 	crd.Spec.TargetNamespace = chart.TargetNamespace
-	if len(valuesContent) != 0 {
+	if valuesContent != "" {
 		crd.Spec.ValuesContent = valuesContent
 	}
 
