@@ -1,9 +1,14 @@
 package validation
 
 import (
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
+
+	"go.uber.org/zap"
 
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
@@ -136,7 +141,7 @@ func validateManifestURLs(k8s *image.Kubernetes) []FailedValidation {
 	return failures
 }
 
-func validateHelmCharts(k8s *image.Kubernetes, buildDir string) []FailedValidation {
+func validateHelmCharts(k8s *image.Kubernetes, imageConfigDir string) []FailedValidation {
 	var failures []FailedValidation
 
 	if len(k8s.HelmCharts) == 0 {
@@ -155,9 +160,7 @@ func validateHelmCharts(k8s *image.Kubernetes, buildDir string) []FailedValidati
 			failures = append(failures, FailedValidation{
 				UserMessage: "Helm Chart 'repo' field must be defined.",
 			})
-		}
-
-		if chart.Repo != "" && !strings.HasPrefix(chart.Repo, "http") && !strings.HasPrefix(chart.Repo, "oci://") {
+		} else if !strings.HasPrefix(chart.Repo, "http") && !strings.HasPrefix(chart.Repo, "oci://") {
 			failures = append(failures, FailedValidation{
 				UserMessage: "Helm Chart 'repo' field must begin with either 'oci://', 'http://', or 'https://'.",
 			})
@@ -175,7 +178,7 @@ func validateHelmCharts(k8s *image.Kubernetes, buildDir string) []FailedValidati
 			})
 		}
 
-		if failure := validateHelmChartValues(chart.ValuesFile, buildDir); failure != "" {
+		if failure := validateHelmChartValues(chart.ValuesFile, imageConfigDir); failure != "" {
 			failures = append(failures, FailedValidation{
 				UserMessage: failure,
 			})
@@ -194,21 +197,25 @@ func validateHelmCharts(k8s *image.Kubernetes, buildDir string) []FailedValidati
 	return failures
 }
 
-func validateHelmChartValues(valuesFile string, buildDir string) string {
-	if valuesFile != "" && !strings.Contains(strings.ToLower(valuesFile), ".yaml") && !strings.Contains(strings.ToLower(valuesFile), ".yml") {
+func validateHelmChartValues(valuesFile string, imageConfigDir string) string {
+	if valuesFile == "" {
+		return ""
+	}
+
+	if filepath.Ext(valuesFile) != ".yaml" && filepath.Ext(valuesFile) != ".yml" {
 		return "Helm Chart 'valuesFile' field must be the name of a valid yaml file ending in '.yaml' or '.yml'."
 	}
 
-	// valuesFilePath := filepath.Join(buildDir, "values", valuesFile)
-	// _, err := os.Stat(valuesFilePath)
-	// if err != nil {
-	//	if errors.Is(err, os.ErrNotExist) {
-	//		return fmt.Sprintf("Helm Chart Values File '%s' could not be found at '%s'.", valuesFile, valuesFilePath)
-	//	}
-	//
-	// The real issue is the case where the check itself has an error
-	// Not sure what we want to do with this, or if we want to do this at all
-	// }
+	valuesFilePath := filepath.Join(imageConfigDir, "values", valuesFile)
+	_, err := os.Stat(valuesFilePath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return fmt.Sprintf("Helm Chart Values File '%s' could not be found at '%s'.", valuesFile, valuesFilePath)
+		}
+
+		zap.S().Errorf("values file '%s' could not be read: %s", valuesFile, err)
+		return fmt.Sprintf("Helm Chart Values File '%s' could not be read.", valuesFile)
+	}
 
 	return ""
 }

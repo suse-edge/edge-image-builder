@@ -410,7 +410,6 @@ func TestValidateHelmCharts(t *testing.T) {
 						CreateNamespace:       true,
 						InstallationNamespace: "kube-system",
 						Version:               "10.7.0",
-						ValuesFile:            "apache-values.yaml",
 					},
 				},
 			},
@@ -514,6 +513,21 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 			ExpectedFailedMessages: []string{
 				"Helm Chart 'valuesFile' field must be the name of a valid yaml file ending in '.yaml' or '.yml'.",
+			},
+		},
+		`nonexistent values file`: {
+			K8s: image.Kubernetes{
+				HelmCharts: []image.HelmChart{
+					{
+						Name:       "apache",
+						Repo:       "https://suse-edge.github.io/charts",
+						Version:    "0.13.10",
+						ValuesFile: "nonexistent.yaml",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm Chart Values File 'nonexistent.yaml' could not be found at 'values/nonexistent.yaml'.",
 			},
 		},
 	}
