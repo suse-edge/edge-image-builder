@@ -350,7 +350,7 @@ func TestHelmCharts(t *testing.T) {
 	assert.FileExists(t, filepath.Join(buildDir, "non-encoded-chart.tgz"))
 }
 
-func TestConfiguredHelmCharts_Error(t *testing.T) {
+func TestConfiguredHelmCharts_ValuesFileNotFoundError(t *testing.T) {
 	helmCharts := []image.HelmChart{
 		{
 			Name:       "apache",
@@ -488,15 +488,6 @@ func TestDownloadChart(t *testing.T) {
 		Version: "10.7.0",
 	}
 
-	dir, err := os.MkdirTemp("", "helm-chart-charts-")
-	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, os.RemoveAll(dir))
-	}()
-
-	file := filepath.Join(dir, "apache-chart.tgz")
-	require.NoError(t, os.WriteFile(file, []byte("abc"), 0o600))
-
 	helm := mockHelm{
 		addRepoFunc: func(chart, repository string) error {
 			return nil
@@ -509,86 +500,6 @@ func TestDownloadChart(t *testing.T) {
 	chartPath, err := downloadChart(helmChart, helm, "")
 	require.NoError(t, err)
 	assert.Equal(t, "apache-chart.tgz", chartPath)
-}
-
-func TestHandleChart(t *testing.T) {
-	helmChart := &image.HelmChart{
-		Name:                  "apache",
-		Repo:                  "oci://registry-1.docker.io/bitnamicharts/apache",
-		Version:               "10.7.0",
-		InstallationNamespace: "apache-system",
-		CreateNamespace:       true,
-		TargetNamespace:       "web",
-	}
-
-	dir, err := os.MkdirTemp("", "helm-chart-charts-")
-	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, os.RemoveAll(dir))
-	}()
-
-	file := filepath.Join(dir, "apache-chart.tgz")
-	require.NoError(t, os.WriteFile(file, []byte("abc"), 0o600))
-
-	helm := mockHelm{
-		addRepoFunc: func(chart, repository string) error {
-			return nil
-		},
-		pullFunc: func(chart, repository, version, destDir string) (string, error) {
-			return file, nil
-		},
-		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion string, setArgs []string) ([]map[string]any, error) {
-			chartResource := []map[string]any{
-				{
-					"apiVersion": "v1",
-					"kind":       "CronJob",
-					"spec": map[string]any{
-						"image": "cronjob-image:0.5.6",
-					},
-				},
-				{
-					"apiVersion": "v1",
-					"kind":       "Job",
-					"spec": map[string]any{
-						"image": "job-image:6.1.0",
-					},
-				},
-			}
-
-			return chartResource, nil
-		},
-	}
-
-	chart, err := handleChart(helmChart, "", "", "", helm)
-	require.NoError(t, err)
-
-	assert.ElementsMatch(t, chart.ContainerImages, []string{"cronjob-image:0.5.6", "job-image:6.1.0"})
-	assert.Equal(t, HelmCRD{
-		APIVersion: helmChartAPIVersion,
-		Kind:       helmChartKind,
-		Metadata: struct {
-			Name      string `yaml:"name"`
-			Namespace string `yaml:"namespace,omitempty"`
-		}{
-			Name:      "apache",
-			Namespace: "apache-system",
-		},
-		Spec: struct {
-			Repo            string         `yaml:"repo,omitempty"`
-			Chart           string         `yaml:"chart,omitempty"`
-			Version         string         `yaml:"version"`
-			Set             map[string]any `yaml:"set,omitempty"`
-			ValuesContent   string         `yaml:"valuesContent,omitempty"`
-			ChartContent    string         `yaml:"chartContent"`
-			TargetNamespace string         `yaml:"targetNamespace,omitempty"`
-			CreateNamespace bool           `yaml:"createNamespace,omitempty"`
-		}{
-			Version:         "10.7.0",
-			ChartContent:    "YWJj",
-			TargetNamespace: "web",
-			CreateNamespace: true,
-		},
-	}, chart.CRD)
 }
 
 func TestConfiguredHelmCharts(t *testing.T) {
@@ -645,30 +556,15 @@ func TestConfiguredHelmCharts(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, charts[0].ContainerImages, []string{"cronjob-image:0.5.6", "job-image:6.1.0"})
-	assert.Equal(t, HelmCRD{
-		APIVersion: helmChartAPIVersion,
-		Kind:       helmChartKind,
-		Metadata: struct {
-			Name      string `yaml:"name"`
-			Namespace string `yaml:"namespace,omitempty"`
-		}{
-			Name:      "apache",
-			Namespace: "apache-system",
-		},
-		Spec: struct {
-			Repo            string         `yaml:"repo,omitempty"`
-			Chart           string         `yaml:"chart,omitempty"`
-			Version         string         `yaml:"version"`
-			Set             map[string]any `yaml:"set,omitempty"`
-			ValuesContent   string         `yaml:"valuesContent,omitempty"`
-			ChartContent    string         `yaml:"chartContent"`
-			TargetNamespace string         `yaml:"targetNamespace,omitempty"`
-			CreateNamespace bool           `yaml:"createNamespace,omitempty"`
-		}{
-			Version:         "10.7.0",
-			ChartContent:    "YWJj",
-			TargetNamespace: "web",
-			CreateNamespace: true,
-		},
-	}, charts[0].CRD)
+
+	assert.Equal(t, helmChartAPIVersion, charts[0].CRD.APIVersion)
+	assert.Equal(t, helmChartKind, charts[0].CRD.Kind)
+
+	assert.Equal(t, "apache", charts[0].CRD.Metadata.Name)
+	assert.Equal(t, "apache-system", charts[0].CRD.Metadata.Namespace)
+
+	assert.Equal(t, "10.7.0", charts[0].CRD.Spec.Version)
+	assert.Equal(t, "YWJj", charts[0].CRD.Spec.ChartContent)
+	assert.Equal(t, "web", charts[0].CRD.Spec.TargetNamespace)
+	assert.Equal(t, true, charts[0].CRD.Spec.CreateNamespace)
 }
