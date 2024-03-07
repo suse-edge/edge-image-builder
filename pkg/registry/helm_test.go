@@ -564,8 +564,8 @@ func TestHandleChart(t *testing.T) {
 
 	assert.ElementsMatch(t, chart.ContainerImages, []string{"cronjob-image:0.5.6", "job-image:6.1.0"})
 	assert.Equal(t, HelmCRD{
-		APIVersion: HelmChartAPIVersion,
-		Kind:       HelmChartKind,
+		APIVersion: helmChartAPIVersion,
+		Kind:       helmChartKind,
 		Metadata: struct {
 			Name      string `yaml:"name"`
 			Namespace string `yaml:"namespace,omitempty"`
@@ -646,8 +646,8 @@ func TestConfiguredHelmCharts(t *testing.T) {
 
 	assert.ElementsMatch(t, charts[0].ContainerImages, []string{"cronjob-image:0.5.6", "job-image:6.1.0"})
 	assert.Equal(t, HelmCRD{
-		APIVersion: HelmChartAPIVersion,
-		Kind:       HelmChartKind,
+		APIVersion: helmChartAPIVersion,
+		Kind:       helmChartKind,
 		Metadata: struct {
 			Name      string `yaml:"name"`
 			Namespace string `yaml:"namespace,omitempty"`

@@ -47,7 +47,7 @@ func HelmCharts(srcDir, buildDir, kubeVersion string, helm image.Helm) ([]*HelmC
 				return nil, fmt.Errorf("resource is missing 'kind' field")
 			}
 
-			if kind == HelmChartKind {
+			if kind == helmChartKind {
 				if err = handleChartResource(resource, buildDir, kubeVersion, helm, containerImages); err != nil {
 					return nil, fmt.Errorf("handling chart resource: %w", err)
 				}
@@ -195,7 +195,7 @@ func handleChart(chart *image.HelmChart, valuesDir, buildDir, kubeVersion string
 	}
 
 	helmChart := HelmChart{
-		CRD:             newHelmCRD(chart, chartContent, string(valuesContent)),
+		CRD:             NewHelmCRD(chart, chartContent, string(valuesContent)),
 		ContainerImages: images,
 	}
 

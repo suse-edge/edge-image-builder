@@ -6,8 +6,8 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-const HelmChartAPIVersion = "helm.cattle.io/v1"
-const HelmChartKind = "HelmChart"
+const helmChartAPIVersion = "helm.cattle.io/v1"
+const helmChartKind = "HelmChart"
 
 type HelmCRD struct {
 	APIVersion string `yaml:"apiVersion"`
@@ -68,10 +68,10 @@ func parseSetArgs(prefix string, m map[string]any) []string {
 	return args
 }
 
-func newHelmCRD(chart *image.HelmChart, chartContent, valuesContent string) HelmCRD {
+func NewHelmCRD(chart *image.HelmChart, chartContent, valuesContent string) HelmCRD {
 	return HelmCRD{
-		APIVersion: HelmChartAPIVersion,
-		Kind:       HelmChartKind,
+		APIVersion: helmChartAPIVersion,
+		Kind:       helmChartKind,
 		Metadata: struct {
 			Name      string `yaml:"name"`
 			Namespace string `yaml:"namespace,omitempty"`
