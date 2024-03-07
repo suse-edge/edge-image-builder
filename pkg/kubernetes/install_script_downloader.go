@@ -3,8 +3,10 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/http"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
@@ -32,7 +34,11 @@ func (d ScriptDownloader) DownloadInstallScript(distribution, destinationPath st
 	destinationPath = filepath.Join(destinationPath, installer)
 
 	if err := http.DownloadFile(context.Background(), scriptURL, destinationPath, nil); err != nil {
-		return "", err
+		return "", fmt.Errorf("downloading script: %w", err)
+	}
+
+	if err := os.Chmod(destinationPath, fileio.ExecutablePerms); err != nil {
+		return "", fmt.Errorf("modifying script permissions: %w", err)
 	}
 
 	return installer, nil
