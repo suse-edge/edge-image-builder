@@ -15,7 +15,7 @@ func ComponentHelmCharts(ctx *image.Context) []image.HelmChart {
 			Repo:                  "https://suse-edge.github.io/charts",
 			TargetNamespace:       "metallb-system",
 			CreateNamespace:       true,
-			InstallationNamespace: "metallb-system",
+			InstallationNamespace: "kube-system",
 			Version:               "0.14.3",
 		}
 
@@ -24,7 +24,7 @@ func ComponentHelmCharts(ctx *image.Context) []image.HelmChart {
 			Repo:                  "https://suse-edge.github.io/charts",
 			TargetNamespace:       "endpoint-copier-operator",
 			CreateNamespace:       true,
-			InstallationNamespace: "endpoint-copier-operator",
+			InstallationNamespace: "kube-system",
 			Version:               "0.2.0",
 		}
 
