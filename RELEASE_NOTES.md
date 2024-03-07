@@ -5,6 +5,7 @@
 ## General
 
 * Added output at combustion phase to observe the script being executed
+* Bumped Go Version to 1.22
 
 ## API
 
