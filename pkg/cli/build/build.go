@@ -74,6 +74,8 @@ func Run(_ *cli.Context) error {
 
 	appendElementalRPMs(ctx)
 
+	appendHelmCharts(ctx)
+
 	if !bootstrapDependencyServices(ctx, args.RootBuildDir) {
 		os.Exit(1)
 	}
@@ -274,6 +276,12 @@ func appendRPMs(ctx *image.Context, repository image.AddRepo, packages ...string
 
 	ctx.ImageDefinition.OperatingSystem.Packages.PKGList = packageList
 	ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos = repositories
+}
+
+func appendHelmCharts(ctx *image.Context) {
+	componentCharts := combustion.ComponentHelmCharts(ctx)
+
+	ctx.ImageDefinition.Kubernetes.HelmCharts = append(ctx.ImageDefinition.Kubernetes.HelmCharts, componentCharts...)
 }
 
 // If the image definition requires it, starts the necessary services, displaying appropriate messages
