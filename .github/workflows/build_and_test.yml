@@ -9,9 +9,11 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.21'
+          go-version: '1.22'
       - name: Install dependency libraries
-        run: sudo apt-get install -y libgpgme-dev libdevmapper-dev build-essential pkg-config libbtrfs-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgpgme-dev libdevmapper-dev build-essential pkg-config libbtrfs-dev
       - name: Build
         run: go build -v ./...
       - name: Test
