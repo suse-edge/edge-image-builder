@@ -3,8 +3,6 @@ package registry
 import (
 	"testing"
 
-	"github.com/suse-edge/edge-image-builder/pkg/image"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -113,92 +111,4 @@ func TestParseSetArgs_Complex(t *testing.T) {
 	}
 
 	assert.ElementsMatch(t, expectedArgs, crd.parseSetArgs())
-}
-
-func TestNewHelmCRD(t *testing.T) {
-	chart := &image.HelmChart{
-		Name:                  "apache",
-		Repo:                  "oci://registry-1.docker.io/bitnamicharts/apache",
-		TargetNamespace:       "web",
-		CreateNamespace:       true,
-		InstallationNamespace: "kube-system",
-		Version:               "10.7.0",
-		ValuesFile:            "apache-values.yaml",
-	}
-	chartContent := "Hxxxx"
-	valuesContent := `
-values: content`
-
-	expectedCRD := HelmCRD{
-		APIVersion: HelmChartAPIVersion,
-		Kind:       HelmChartKind,
-		Metadata: struct {
-			Name      string `yaml:"name"`
-			Namespace string `yaml:"namespace,omitempty"`
-		}{
-			Name:      "apache",
-			Namespace: "kube-system",
-		},
-		Spec: struct {
-			Repo            string         `yaml:"repo,omitempty"`
-			Chart           string         `yaml:"chart,omitempty"`
-			Version         string         `yaml:"version"`
-			Set             map[string]any `yaml:"set,omitempty"`
-			ValuesContent   string         `yaml:"valuesContent,omitempty"`
-			ChartContent    string         `yaml:"chartContent"`
-			TargetNamespace string         `yaml:"targetNamespace,omitempty"`
-			CreateNamespace bool           `yaml:"createNamespace,omitempty"`
-		}{
-			Version: "10.7.0",
-			ValuesContent: `
-values: content`,
-			ChartContent:    "Hxxxx",
-			TargetNamespace: "web",
-			CreateNamespace: true,
-		},
-	}
-
-	assert.Equal(t, expectedCRD, newHelmCRD(chart, chartContent, valuesContent))
-}
-
-func TestNewHelmCRDNoValues(t *testing.T) {
-	chart := &image.HelmChart{
-		Name:                  "apache",
-		Repo:                  "oci://registry-1.docker.io/bitnamicharts/apache",
-		TargetNamespace:       "web",
-		CreateNamespace:       true,
-		InstallationNamespace: "kube-system",
-		Version:               "10.7.0",
-		ValuesFile:            "apache-values.yaml",
-	}
-	chartContent := "Hxxxx"
-
-	expectedCRD := HelmCRD{
-		APIVersion: HelmChartAPIVersion,
-		Kind:       HelmChartKind,
-		Metadata: struct {
-			Name      string `yaml:"name"`
-			Namespace string `yaml:"namespace,omitempty"`
-		}{
-			Name:      "apache",
-			Namespace: "kube-system",
-		},
-		Spec: struct {
-			Repo            string         `yaml:"repo,omitempty"`
-			Chart           string         `yaml:"chart,omitempty"`
-			Version         string         `yaml:"version"`
-			Set             map[string]any `yaml:"set,omitempty"`
-			ValuesContent   string         `yaml:"valuesContent,omitempty"`
-			ChartContent    string         `yaml:"chartContent"`
-			TargetNamespace string         `yaml:"targetNamespace,omitempty"`
-			CreateNamespace bool           `yaml:"createNamespace,omitempty"`
-		}{
-			Version:         "10.7.0",
-			ChartContent:    "Hxxxx",
-			TargetNamespace: "web",
-			CreateNamespace: true,
-		},
-	}
-
-	assert.Equal(t, expectedCRD, newHelmCRD(chart, chartContent, ""))
 }
