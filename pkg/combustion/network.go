@@ -62,11 +62,20 @@ func configureNetwork(ctx *image.Context) (scripts []string, err error) {
 		logComponentStatus(networkComponentName, err)
 	}()
 
+	networkPath := generateComponentPath(ctx, networkConfigDir)
+
+	entries, err := os.ReadDir(networkPath)
+	if err != nil {
+		return nil, fmt.Errorf("reading network directory: %w", err)
+	} else if len(entries) == 0 {
+		return nil, fmt.Errorf("network directory is present but empty")
+	}
+
 	if err = installNetworkConfigurator(ctx); err != nil {
 		return nil, fmt.Errorf("installing configurator: %w", err)
 	}
 
-	customScript := filepath.Join(generateComponentPath(ctx, networkConfigDir), networkCustomScriptName)
+	customScript := filepath.Join(networkPath, networkCustomScriptName)
 	combustionScript := filepath.Join(ctx.CombustionDir, networkConfigScriptName)
 	scripts = append(scripts, networkConfigScriptName)
 

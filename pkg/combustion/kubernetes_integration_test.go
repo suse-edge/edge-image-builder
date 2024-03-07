@@ -59,9 +59,9 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 		},
 	}
-	ctx.KubernetesScriptInstaller = mockKubernetesScriptInstaller{
-		installScript: func(distribution, sourcePath, destPath string) error {
-			return nil
+	ctx.KubernetesScriptDownloader = mockKubernetesScriptDownloader{
+		downloadScript: func(distribution, destPath string) (string, error) {
+			return "install-k8s.sh", nil
 		},
 	}
 	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
@@ -104,6 +104,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	assert.Contains(t, contents, "cp server.yaml /etc/rancher/rke2/config.yaml")
 	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
 	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=kubernetes/install")
+	assert.Contains(t, contents, "./install-k8s.sh")
 	assert.Contains(t, contents, "systemctl enable rke2-server.service")
 	assert.Contains(t, contents, "mkdir -p /var/lib/rancher/rke2/server/manifests/")
 	assert.Contains(t, contents, "cp kubernetes/manifests/* /var/lib/rancher/rke2/server/manifests/")

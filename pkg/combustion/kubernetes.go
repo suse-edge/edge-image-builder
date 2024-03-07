@@ -108,18 +108,12 @@ func kubernetesConfigurator(version string) func(*image.Context, *kubernetes.Clu
 	}
 }
 
-func installKubernetesScript(ctx *image.Context, distribution string) error {
-	sourcePath := "/" // root level of the container image
-	destPath := ctx.CombustionDir
-
-	return ctx.KubernetesScriptInstaller.InstallScript(distribution, sourcePath, destPath)
-}
-
 func configureK3S(ctx *image.Context, cluster *kubernetes.Cluster) (string, error) {
 	zap.S().Info("Configuring K3s cluster")
 
-	if err := installKubernetesScript(ctx, image.KubernetesDistroK3S); err != nil {
-		return "", fmt.Errorf("copying k3s installer script: %w", err)
+	installScript, err := ctx.KubernetesScriptDownloader.DownloadInstallScript(image.KubernetesDistroK3S, ctx.CombustionDir)
+	if err != nil {
+		return "", fmt.Errorf("downloading k3s install script: %w", err)
 	}
 
 	binaryPath, imagesPath, err := downloadK3sArtefacts(ctx)
@@ -133,6 +127,7 @@ func configureK3S(ctx *image.Context, cluster *kubernetes.Cluster) (string, erro
 	}
 
 	templateValues := map[string]any{
+		"installScript":   installScript,
 		"apiVIP":          ctx.ImageDefinition.Kubernetes.Network.APIVIP,
 		"apiHost":         ctx.ImageDefinition.Kubernetes.Network.APIHost,
 		"binaryPath":      binaryPath,
@@ -210,8 +205,9 @@ func downloadK3sArtefacts(ctx *image.Context) (binaryPath, imagesPath string, er
 func configureRKE2(ctx *image.Context, cluster *kubernetes.Cluster) (string, error) {
 	zap.S().Info("Configuring RKE2 cluster")
 
-	if err := installKubernetesScript(ctx, image.KubernetesDistroRKE2); err != nil {
-		return "", fmt.Errorf("copying RKE2 installer script: %w", err)
+	installScript, err := ctx.KubernetesScriptDownloader.DownloadInstallScript(image.KubernetesDistroRKE2, ctx.CombustionDir)
+	if err != nil {
+		return "", fmt.Errorf("downloading RKE2 install script: %w", err)
 	}
 
 	installPath, imagesPath, err := downloadRKE2Artefacts(ctx, cluster)
@@ -225,6 +221,7 @@ func configureRKE2(ctx *image.Context, cluster *kubernetes.Cluster) (string, err
 	}
 
 	templateValues := map[string]any{
+		"installScript":   installScript,
 		"apiVIP":          ctx.ImageDefinition.Kubernetes.Network.APIVIP,
 		"apiHost":         ctx.ImageDefinition.Kubernetes.Network.APIHost,
 		"installPath":     installPath,
