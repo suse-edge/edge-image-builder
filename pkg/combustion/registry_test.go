@@ -383,7 +383,7 @@ values: content`
 
 	require.NoError(t, storeHelmCharts(ctx, charts))
 
-	metalLBPath := filepath.Join(ctx.CombustionDir, k8sDir, k8sManifestsDir, "metallb.yaml")
+	metalLBPath := filepath.Join(ctx.CombustionDir, K8sDir, k8sManifestsDir, "metallb.yaml")
 	metalLBContents := `---
 apiVersion: helm.cattle.io/v1
 kind: HelmChart
@@ -406,7 +406,7 @@ spec: {}
 
 	assert.Equal(t, metalLBContents, string(contents))
 
-	endpointCopierOperatorPath := filepath.Join(ctx.CombustionDir, k8sDir, k8sManifestsDir, "endpoint-copier-operator.yaml")
+	endpointCopierOperatorPath := filepath.Join(ctx.CombustionDir, K8sDir, k8sManifestsDir, "endpoint-copier-operator.yaml")
 	endpointCopierOperatorContents := `---
 apiVersion: v1
 kind: Namespace
@@ -429,7 +429,7 @@ spec:
 
 	assert.Equal(t, endpointCopierOperatorContents, string(contents))
 
-	apachePath := filepath.Join(ctx.CombustionDir, k8sDir, k8sManifestsDir, "apache.yaml")
+	apachePath := filepath.Join(ctx.CombustionDir, K8sDir, k8sManifestsDir, "apache.yaml")
 	apacheContent := `apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:

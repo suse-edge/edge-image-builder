@@ -20,7 +20,7 @@ import (
 const (
 	k8sComponentName = "kubernetes"
 
-	k8sDir          = "kubernetes"
+	K8sDir          = "kubernetes"
 	k8sConfigDir    = "config"
 	k8sInstallDir   = "install"
 	k8sImagesDir    = "images"
@@ -73,7 +73,7 @@ func configureKubernetes(ctx *image.Context) ([]string, error) {
 		zap.S().Warn("Kubernetes cluster of two server nodes has been requested")
 	}
 
-	configDir := generateComponentPath(ctx, k8sDir)
+	configDir := generateComponentPath(ctx, K8sDir)
 	configPath := filepath.Join(configDir, k8sConfigDir)
 
 	cluster, err := kubernetes.NewCluster(&ctx.ImageDefinition.Kubernetes, configPath)
@@ -162,13 +162,13 @@ func configureK3S(ctx *image.Context, cluster *kubernetes.Cluster) (string, erro
 }
 
 func downloadK3sArtefacts(ctx *image.Context) (binaryPath, imagesPath string, err error) {
-	imagesPath = filepath.Join(k8sDir, k8sImagesDir)
+	imagesPath = filepath.Join(K8sDir, k8sImagesDir)
 	imagesDestination := filepath.Join(ctx.CombustionDir, imagesPath)
 	if err = os.MkdirAll(imagesDestination, os.ModePerm); err != nil {
 		return "", "", fmt.Errorf("creating kubernetes images dir: %w", err)
 	}
 
-	installPath := filepath.Join(k8sDir, k8sInstallDir)
+	installPath := filepath.Join(K8sDir, k8sInstallDir)
 	installDestination := filepath.Join(ctx.CombustionDir, installPath)
 	if err = os.MkdirAll(installDestination, os.ModePerm); err != nil {
 		return "", "", fmt.Errorf("creating kubernetes install dir: %w", err)
@@ -268,13 +268,13 @@ func downloadRKE2Artefacts(ctx *image.Context, cluster *kubernetes.Cluster) (ins
 		return "", "", fmt.Errorf("extracting CNI from cluster config: %w", err)
 	}
 
-	imagesPath = filepath.Join(k8sDir, k8sImagesDir)
+	imagesPath = filepath.Join(K8sDir, k8sImagesDir)
 	imagesDestination := filepath.Join(ctx.CombustionDir, imagesPath)
 	if err = os.MkdirAll(imagesDestination, os.ModePerm); err != nil {
 		return "", "", fmt.Errorf("creating kubernetes images dir: %w", err)
 	}
 
-	installPath = filepath.Join(k8sDir, k8sInstallDir)
+	installPath = filepath.Join(K8sDir, k8sInstallDir)
 	installDestination := filepath.Join(ctx.CombustionDir, installPath)
 	if err = os.MkdirAll(installDestination, os.ModePerm); err != nil {
 		return "", "", fmt.Errorf("creating kubernetes install dir: %w", err)
@@ -342,9 +342,9 @@ func storeKubernetesConfig(config map[string]any, configPath string) error {
 
 func configureManifests(ctx *image.Context) (string, error) {
 	manifestURLs := ctx.ImageDefinition.Kubernetes.Manifests.URLs
-	localManifestsConfigured := isComponentConfigured(ctx, filepath.Join(k8sDir, k8sManifestsDir))
+	localManifestsConfigured := isComponentConfigured(ctx, filepath.Join(K8sDir, k8sManifestsDir))
 
-	manifestsPath := filepath.Join(k8sDir, k8sManifestsDir)
+	manifestsPath := filepath.Join(K8sDir, k8sManifestsDir)
 	manifestDestDir := filepath.Join(ctx.CombustionDir, manifestsPath)
 
 	if !localManifestsConfigured && len(manifestURLs) == 0 {
@@ -363,7 +363,7 @@ func configureManifests(ctx *image.Context) (string, error) {
 	}
 
 	if localManifestsConfigured {
-		localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sManifestsDir)
+		localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, K8sDir, k8sManifestsDir)
 		err = fileio.CopyFiles(localManifestsSrcDir, manifestDestDir, ".yaml", false)
 		if err != nil {
 			return "", fmt.Errorf("copying local manifests to combustion dir: %w", err)
@@ -385,5 +385,5 @@ func configureManifests(ctx *image.Context) (string, error) {
 }
 
 func KubernetesConfigPath(ctx *image.Context) string {
-	return filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir, k8sServerConfigFile)
+	return filepath.Join(ctx.ImageConfigDir, K8sDir, k8sConfigDir, k8sServerConfigFile)
 }
