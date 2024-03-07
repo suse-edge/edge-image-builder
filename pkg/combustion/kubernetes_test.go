@@ -278,7 +278,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sCluster(t *testing.T) {
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, k8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -471,7 +471,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, k8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -569,7 +569,7 @@ func TestConfigureKubernetes_InvalidManifestURL(t *testing.T) {
 	ctx.ImageDefinition.Kubernetes.Manifests.URLs = []string{
 		"k8s.io/examples/application/nginx-app.yaml",
 	}
-	k8sCombDir := filepath.Join(ctx.CombustionDir, k8sDir)
+	k8sCombDir := filepath.Join(ctx.CombustionDir, K8sDir)
 	require.NoError(t, os.Mkdir(k8sCombDir, os.ModePerm))
 
 	_, err := configureKubernetes(ctx)

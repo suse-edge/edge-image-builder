@@ -187,7 +187,7 @@ func IsEmbeddedArtifactRegistryConfigured(ctx *image.Context) bool {
 	return len(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages) != 0 ||
 		len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0 ||
 		len(ctx.ImageDefinition.Kubernetes.HelmCharts) != 0 ||
-		isComponentConfigured(ctx, filepath.Join(k8sDir, k8sManifestsDir)) ||
+		isComponentConfigured(ctx, filepath.Join(K8sDir, k8sManifestsDir)) ||
 		componentsRequireHelmCharts(ctx)
 }
 
@@ -319,7 +319,7 @@ func containerImages(embeddedImages []image.ContainerImage, manifestImages []str
 
 func parseManifests(ctx *image.Context) ([]string, error) {
 	var manifestSrcDir string
-	if componentDir := filepath.Join(k8sDir, k8sManifestsDir); isComponentConfigured(ctx, componentDir) {
+	if componentDir := filepath.Join(K8sDir, k8sManifestsDir); isComponentConfigured(ctx, componentDir) {
 		manifestSrcDir = filepath.Join(ctx.ImageConfigDir, componentDir)
 	}
 
@@ -403,7 +403,7 @@ func parseConfiguredHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error
 		return nil, fmt.Errorf("creating helm dir: %w", err)
 	}
 
-	helmValuesDir := filepath.Join(ctx.ImageConfigDir, k8sDir, HelmDir, ValuesDir)
+	helmValuesDir := filepath.Join(ctx.ImageConfigDir, K8sDir, HelmDir, ValuesDir)
 
 	return registry.ConfiguredHelmCharts(ctx.ImageDefinition.Kubernetes.HelmCharts, helmValuesDir, buildDir, ctx.ImageDefinition.Kubernetes.Version, ctx.Helm)
 }
@@ -413,7 +413,7 @@ func storeHelmCharts(ctx *image.Context, helmCharts []*registry.HelmChart) error
 		return nil
 	}
 
-	manifestsDir := filepath.Join(ctx.CombustionDir, k8sDir, k8sManifestsDir)
+	manifestsDir := filepath.Join(ctx.CombustionDir, K8sDir, k8sManifestsDir)
 	if err := os.MkdirAll(manifestsDir, os.ModePerm); err != nil {
 		return fmt.Errorf("creating kubernetes manifests dir: %w", err)
 	}

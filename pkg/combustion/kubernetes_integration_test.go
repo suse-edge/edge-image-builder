@@ -23,10 +23,10 @@ func TestConfigureManifestsValidDownload(t *testing.T) {
 		"https://k8s.io/examples/application/nginx-app.yaml",
 	}
 
-	k8sCombDir := filepath.Join(ctx.CombustionDir, k8sDir)
+	k8sCombDir := filepath.Join(ctx.CombustionDir, K8sDir)
 	require.NoError(t, os.Mkdir(k8sCombDir, os.ModePerm))
 
-	downloadedManifestsPath := filepath.Join(k8sDir, k8sManifestsDir)
+	downloadedManifestsPath := filepath.Join(K8sDir, k8sManifestsDir)
 	downloadedManifestsDestDir := filepath.Join(k8sCombDir, k8sManifestsDir)
 	expectedDownloadedFilePath := filepath.Join(downloadedManifestsDestDir, "dl-manifest-1.yaml")
 
@@ -74,10 +74,10 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 		"https://k8s.io/examples/application/nginx-app.yaml",
 	}
 
-	k8sCombDir := filepath.Join(ctx.CombustionDir, k8sDir)
+	k8sCombDir := filepath.Join(ctx.CombustionDir, K8sDir)
 	require.NoError(t, os.Mkdir(k8sCombDir, os.ModePerm))
 
-	localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sManifestsDir)
+	localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, K8sDir, k8sManifestsDir)
 	require.NoError(t, os.MkdirAll(localManifestsSrcDir, 0o755))
 
 	localSampleManifestPath := filepath.Join("..", "registry", "testdata", "sample-crd.yaml")
