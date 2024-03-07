@@ -527,7 +527,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Chart Values File 'nonexistent.yaml' could not be found at 'values/nonexistent.yaml'.",
+				"Helm Chart Values File 'nonexistent.yaml' could not be found at 'helm/values/nonexistent.yaml'.",
 			},
 		},
 	}
