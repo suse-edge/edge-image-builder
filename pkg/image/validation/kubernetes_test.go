@@ -36,9 +36,20 @@ func TestValidateKubernetes(t *testing.T) {
 						Type:     image.KubernetesNodeTypeAgent,
 					},
 				},
+				HelmCharts: []image.HelmChart{
+					{
+						Name:                  "apache",
+						Repo:                  "oci://registry-1.docker.io/bitnamicharts/apache",
+						TargetNamespace:       "web",
+						CreateNamespace:       true,
+						InstallationNamespace: "kube-system",
+						Version:               "10.7.0",
+						ValuesFile:            "apache-values.yaml",
+					},
+				},
 			},
 		},
-		`failures both sections`: {
+		`failures all sections`: {
 			K8s: image.Kubernetes{
 				Version: "1.0",
 				Network: validNetwork,
@@ -57,10 +68,18 @@ func TestValidateKubernetes(t *testing.T) {
 						"example.com",
 					},
 				},
+				HelmCharts: []image.HelmChart{
+					{
+						Name:    "",
+						Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
+						Version: "10.7.0",
+					},
+				},
 			},
 			ExpectedFailedMessages: []string{
 				"The 'hostname' field is required for entries in the 'nodes' section.",
 				"Entries in 'urls' must begin with either 'http://' or 'https://'.",
+				"Helm Chart 'name' field must be defined.",
 			},
 		},
 	}
@@ -95,9 +114,10 @@ func TestIsKubernetesDefined(t *testing.T) {
 	assert.True(t, result)
 
 	result = isKubernetesDefined(&image.Kubernetes{
-		Network:   image.Network{},
-		Nodes:     []image.Node{},
-		Manifests: image.Manifests{},
+		Network:    image.Network{},
+		Nodes:      []image.Node{},
+		Manifests:  image.Manifests{},
+		HelmCharts: []image.HelmChart{},
 	})
 	assert.False(t, result)
 }
@@ -361,6 +381,161 @@ func TestValidateManifestURLs(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			k := test.K8s
 			failures := validateManifestURLs(&k)
+			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+
+			var foundMessages []string
+			for _, foundValidation := range failures {
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+			}
+
+			for _, expectedMessage := range test.ExpectedFailedMessages {
+				assert.Contains(t, foundMessages, expectedMessage)
+			}
+		})
+	}
+}
+
+func TestValidateHelmCharts(t *testing.T) {
+	tests := map[string]struct {
+		K8s                    image.Kubernetes
+		ExpectedFailedMessages []string
+	}{
+		`valid`: {
+			K8s: image.Kubernetes{
+				HelmCharts: []image.HelmChart{
+					{
+						Name:                  "apache",
+						Repo:                  "oci://registry-1.docker.io/bitnamicharts/apache",
+						TargetNamespace:       "web",
+						CreateNamespace:       true,
+						InstallationNamespace: "kube-system",
+						Version:               "10.7.0",
+					},
+				},
+			},
+		},
+		`no name`: {
+			K8s: image.Kubernetes{
+				HelmCharts: []image.HelmChart{
+					{
+						Name:    "",
+						Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
+						Version: "10.7.0",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm Chart 'name' field must be defined.",
+			},
+		},
+		`duplicate name`: {
+			K8s: image.Kubernetes{
+				HelmCharts: []image.HelmChart{
+					{
+						Name:    "apache",
+						Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
+						Version: "10.7.0",
+					},
+					{
+						Name:    "apache",
+						Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
+						Version: "10.7.0",
+					},
+					{
+						Name:    "metallb",
+						Repo:    "https://suse-edge.github.io/charts",
+						Version: "0.13.10",
+					},
+					{
+						Name:    "metallb",
+						Repo:    "https://suse-edge.github.io/charts",
+						Version: "0.13.10",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"The 'helmCharts' field contains duplicate entries: apache",
+				"The 'helmCharts' field contains duplicate entries: metallb",
+			},
+		},
+		`no repo`: {
+			K8s: image.Kubernetes{
+				HelmCharts: []image.HelmChart{
+					{
+						Name:    "apache",
+						Version: "10.7.0",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm Chart 'repo' field must be defined.",
+			},
+		},
+		`no version`: {
+			K8s: image.Kubernetes{
+				HelmCharts: []image.HelmChart{
+					{
+						Name:    "apache",
+						Repo:    "https://suse-edge.github.io/charts",
+						Version: "",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm Chart 'version' field must be defined.",
+			},
+		},
+		`create namespace no target`: {
+			K8s: image.Kubernetes{
+				HelmCharts: []image.HelmChart{
+					{
+						Name:            "apache",
+						Repo:            "https://suse-edge.github.io/charts",
+						Version:         "0.13.10",
+						CreateNamespace: true,
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm Chart 'createNamespace' field cannot be true without 'targetNamespace' being defined.",
+			},
+		},
+		`invalid values file`: {
+			K8s: image.Kubernetes{
+				HelmCharts: []image.HelmChart{
+					{
+						Name:       "apache",
+						Repo:       "https://suse-edge.github.io/charts",
+						Version:    "0.13.10",
+						ValuesFile: "invalid",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm Chart 'valuesFile' field must be the name of a valid yaml file ending in '.yaml' or '.yml'.",
+			},
+		},
+		`nonexistent values file`: {
+			K8s: image.Kubernetes{
+				HelmCharts: []image.HelmChart{
+					{
+						Name:       "apache",
+						Repo:       "https://suse-edge.github.io/charts",
+						Version:    "0.13.10",
+						ValuesFile: "nonexistent.yaml",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm Chart Values File 'nonexistent.yaml' could not be found at 'helm/values/nonexistent.yaml'.",
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			k := test.K8s
+			failures := validateHelmCharts(&k, "")
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
 
 			var foundMessages []string

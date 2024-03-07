@@ -2,25 +2,33 @@ package registry
 
 import (
 	"fmt"
+
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
+const helmChartAPIVersion = "helm.cattle.io/v1"
 const helmChartKind = "HelmChart"
 
-type helmCRD struct {
-	Metadata struct {
-		Name string `yaml:"name"`
+type HelmCRD struct {
+	APIVersion string `yaml:"apiVersion"`
+	Kind       string `yaml:"kind"`
+	Metadata   struct {
+		Name      string `yaml:"name"`
+		Namespace string `yaml:"namespace,omitempty"`
 	} `yaml:"metadata"`
 	Spec struct {
-		Repo          string         `yaml:"repo"`
-		Chart         string         `yaml:"chart"`
-		Version       string         `yaml:"version"`
-		Set           map[string]any `yaml:"set"`
-		ValuesContent string         `yaml:"valuesContent"`
-		ChartContent  string         `yaml:"chartContent"`
+		Repo            string         `yaml:"repo,omitempty"`
+		Chart           string         `yaml:"chart,omitempty"`
+		Version         string         `yaml:"version"`
+		Set             map[string]any `yaml:"set,omitempty"`
+		ValuesContent   string         `yaml:"valuesContent,omitempty"`
+		ChartContent    string         `yaml:"chartContent"`
+		TargetNamespace string         `yaml:"targetNamespace,omitempty"`
+		CreateNamespace bool           `yaml:"createNamespace,omitempty"`
 	} `yaml:"spec"`
 }
 
-func (c *helmCRD) parseSetArgs() []string {
+func (c *HelmCRD) parseSetArgs() []string {
 	if len(c.Spec.Set) > 0 {
 		return parseSetArgs("", c.Spec.Set)
 	}
@@ -58,4 +66,34 @@ func parseSetArgs(prefix string, m map[string]any) []string {
 	}
 
 	return args
+}
+
+func NewHelmCRD(chart *image.HelmChart, chartContent, valuesContent string) HelmCRD {
+	return HelmCRD{
+		APIVersion: helmChartAPIVersion,
+		Kind:       helmChartKind,
+		Metadata: struct {
+			Name      string `yaml:"name"`
+			Namespace string `yaml:"namespace,omitempty"`
+		}{
+			Name:      chart.Name,
+			Namespace: chart.InstallationNamespace,
+		},
+		Spec: struct {
+			Repo            string         `yaml:"repo,omitempty"`
+			Chart           string         `yaml:"chart,omitempty"`
+			Version         string         `yaml:"version"`
+			Set             map[string]any `yaml:"set,omitempty"`
+			ValuesContent   string         `yaml:"valuesContent,omitempty"`
+			ChartContent    string         `yaml:"chartContent"`
+			TargetNamespace string         `yaml:"targetNamespace,omitempty"`
+			CreateNamespace bool           `yaml:"createNamespace,omitempty"`
+		}{
+			Version:         chart.Version,
+			ValuesContent:   valuesContent,
+			ChartContent:    chartContent,
+			TargetNamespace: chart.TargetNamespace,
+			CreateNamespace: chart.CreateNamespace,
+		},
+	}
 }

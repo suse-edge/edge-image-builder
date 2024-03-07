@@ -10,13 +10,14 @@ import (
 	"slices"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/registry"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
-	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -30,7 +31,8 @@ const (
 	registryPort            = "6545"
 	registryMirrorsFileName = "registries.yaml"
 
-	helmDir = "helm"
+	HelmDir   = "helm"
+	ValuesDir = "values"
 )
 
 //go:embed templates/hauler-manifest.yaml.tpl
@@ -184,7 +186,7 @@ func createRegistryCommand(ctx *image.Context, commandName string, args []string
 func IsEmbeddedArtifactRegistryConfigured(ctx *image.Context) bool {
 	return len(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages) != 0 ||
 		len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0 ||
-		isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) ||
+		len(ctx.ImageDefinition.Kubernetes.HelmCharts) != 0 ||
 		isComponentConfigured(ctx, filepath.Join(k8sDir, k8sManifestsDir)) ||
 		componentsRequireHelmCharts(ctx)
 }
@@ -379,7 +381,7 @@ func parseComponentHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error)
 		return nil, nil
 	}
 
-	buildDir := filepath.Join(ctx.BuildDir, helmDir)
+	buildDir := filepath.Join(ctx.BuildDir, HelmDir)
 	if err = os.MkdirAll(buildDir, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("creating helm dir: %w", err)
 	}
@@ -388,7 +390,7 @@ func parseComponentHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error)
 }
 
 func parseConfiguredHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error) {
-	if !isComponentConfigured(ctx, filepath.Join(k8sDir, helmDir)) {
+	if len(ctx.ImageDefinition.Kubernetes.HelmCharts) == 0 {
 		return nil, nil
 	}
 
@@ -396,14 +398,14 @@ func parseConfiguredHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error
 		return nil, fmt.Errorf("helm charts are provided but kubernetes version is not configured")
 	}
 
-	buildDir := filepath.Join(ctx.BuildDir, helmDir)
+	buildDir := filepath.Join(ctx.BuildDir, HelmDir)
 	if err := os.MkdirAll(buildDir, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("creating helm dir: %w", err)
 	}
 
-	chartsDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir)
+	helmValuesDir := filepath.Join(ctx.ImageConfigDir, k8sDir, HelmDir, ValuesDir)
 
-	return registry.HelmCharts(chartsDir, buildDir, ctx.ImageDefinition.Kubernetes.Version, ctx.Helm)
+	return registry.ConfiguredHelmCharts(ctx.ImageDefinition.Kubernetes.HelmCharts, helmValuesDir, buildDir, ctx.ImageDefinition.Kubernetes.Version, ctx.Helm)
 }
 
 func storeHelmCharts(ctx *image.Context, helmCharts []*registry.HelmChart) error {
@@ -417,20 +419,33 @@ func storeHelmCharts(ctx *image.Context, helmCharts []*registry.HelmChart) error
 	}
 
 	for _, chart := range helmCharts {
-		var buf bytes.Buffer
+		if chart.Resources != nil {
+			var buf bytes.Buffer
 
-		for _, resource := range chart.Resources {
-			data, err := yaml.Marshal(resource)
-			if err != nil {
-				return fmt.Errorf("marshaling resource: %w", err)
+			for _, resource := range chart.Resources {
+				data, err := yaml.Marshal(resource)
+				if err != nil {
+					return fmt.Errorf("marshaling resource: %w", err)
+				}
+
+				buf.WriteString("---\n")
+				buf.Write(data)
 			}
 
-			buf.WriteString("---\n")
-			buf.Write(data)
+			if err := os.WriteFile(filepath.Join(manifestsDir, chart.Filename), buf.Bytes(), fileio.NonExecutablePerms); err != nil {
+				return fmt.Errorf("storing manifest '%s: %w", chart.Filename, err)
+			}
+			continue
 		}
 
-		if err := os.WriteFile(filepath.Join(manifestsDir, chart.Filename), buf.Bytes(), fileio.NonExecutablePerms); err != nil {
-			return fmt.Errorf("storing manifest '%s: %w", chart.Filename, err)
+		data, err := yaml.Marshal(chart.CRD)
+		if err != nil {
+			return fmt.Errorf("marshaling resource: %w", err)
+		}
+
+		chartFileName := fmt.Sprintf("%s.yaml", chart.CRD.Metadata.Name)
+		if err = os.WriteFile(filepath.Join(manifestsDir, chartFileName), data, fileio.NonExecutablePerms); err != nil {
+			return fmt.Errorf("storing manifest '%s: %w", chartFileName, err)
 		}
 	}
 

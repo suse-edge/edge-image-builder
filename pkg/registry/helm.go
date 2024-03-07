@@ -9,23 +9,20 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/suse-edge/edge-image-builder/pkg/image"
+
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"gopkg.in/yaml.v3"
 )
 
-type Helm interface {
-	AddRepo(chart, repository string) error
-	Pull(chart, repository, version, destDir string) (string, error)
-	Template(chart, repository, version, valuesFilePath, kubeVersion string, setArgs []string) ([]map[string]any, error)
-}
-
 type HelmChart struct {
 	Filename        string
 	Resources       []map[string]any
+	CRD             HelmCRD
 	ContainerImages []string
 }
 
-func HelmCharts(srcDir, buildDir, kubeVersion string, helm Helm) ([]*HelmChart, error) {
+func HelmCharts(srcDir, buildDir, kubeVersion string, helm image.Helm) ([]*HelmChart, error) {
 	manifestPaths, err := getManifestPaths(srcDir)
 	if err != nil {
 		return nil, fmt.Errorf("getting helm manifest paths: %w", err)
@@ -61,8 +58,24 @@ func HelmCharts(srcDir, buildDir, kubeVersion string, helm Helm) ([]*HelmChart, 
 			chart.Resources = append(chart.Resources, resource)
 		}
 
-		for image := range containerImages {
-			chart.ContainerImages = append(chart.ContainerImages, image)
+		for i := range containerImages {
+			chart.ContainerImages = append(chart.ContainerImages, i)
+		}
+
+		charts = append(charts, chart)
+	}
+
+	return charts, nil
+}
+
+func ConfiguredHelmCharts(helmCharts []image.HelmChart, valuesDir, buildDir, kubeVersion string, helm image.Helm) ([]*HelmChart, error) {
+	var charts []*HelmChart
+
+	for _, helmChart := range helmCharts {
+		c := helmChart
+		chart, err := handleChart(&c, valuesDir, buildDir, kubeVersion, helm)
+		if err != nil {
+			return nil, fmt.Errorf("handling chart resource: %w", err)
 		}
 
 		charts = append(charts, chart)
@@ -96,13 +109,13 @@ func parseManifest(path string) ([]map[string]any, error) {
 	return resources, nil
 }
 
-func handleChartResource(resource map[string]any, buildDir, kubeVersion string, helm Helm, containerImages map[string]bool) error {
+func handleChartResource(resource map[string]any, buildDir, kubeVersion string, helm image.Helm, containerImages map[string]bool) error {
 	crd, err := parseHelmCRD(resource)
 	if err != nil {
 		return fmt.Errorf("parsing crd: %w", err)
 	}
 
-	chartPath, err := downloadChart(crd, helm, buildDir)
+	chartPath, err := downloadCRDChart(crd, helm, buildDir)
 	if err != nil {
 		return fmt.Errorf("downloading chart: %w", err)
 	}
@@ -144,13 +157,58 @@ func handleChartResource(resource map[string]any, buildDir, kubeVersion string, 
 	return nil
 }
 
-func parseHelmCRD(resource map[string]any) (*helmCRD, error) {
+func handleChart(chart *image.HelmChart, valuesDir, buildDir, kubeVersion string, helm image.Helm) (*HelmChart, error) {
+	var valuesPath string
+	var valuesContent []byte
+	if chart.ValuesFile != "" {
+		var err error
+		valuesPath = filepath.Join(valuesDir, chart.ValuesFile)
+		valuesContent, err = os.ReadFile(valuesPath)
+		if err != nil {
+			return nil, fmt.Errorf("reading values content: %w", err)
+		}
+	}
+
+	chartPath, err := downloadChart(chart, helm, buildDir)
+	if err != nil {
+		return nil, fmt.Errorf("downloading chart: %w", err)
+	}
+
+	chartResources, err := helm.Template(chart.Name, chartPath, chart.Version, valuesPath, kubeVersion, nil)
+	if err != nil {
+		return nil, fmt.Errorf("templating chart: %w", err)
+	}
+
+	containerImages := map[string]bool{}
+	for _, chartResource := range chartResources {
+		storeManifestImages(chartResource, containerImages)
+	}
+
+	var images []string
+	for i := range containerImages {
+		images = append(images, i)
+	}
+
+	chartContent, err := getChartContent(chartPath)
+	if err != nil {
+		return nil, fmt.Errorf("getting chart content: %w", err)
+	}
+
+	helmChart := HelmChart{
+		CRD:             NewHelmCRD(chart, chartContent, string(valuesContent)),
+		ContainerImages: images,
+	}
+
+	return &helmChart, nil
+}
+
+func parseHelmCRD(resource map[string]any) (*HelmCRD, error) {
 	b, err := yaml.Marshal(resource)
 	if err != nil {
 		return nil, fmt.Errorf("marshaling resource: %w", err)
 	}
 
-	var crd helmCRD
+	var crd HelmCRD
 	if err = yaml.Unmarshal(b, &crd); err != nil {
 		return nil, fmt.Errorf("unmarshaling CRD: %w", err)
 	}
@@ -158,7 +216,7 @@ func parseHelmCRD(resource map[string]any) (*helmCRD, error) {
 	return &crd, nil
 }
 
-func downloadChart(crd *helmCRD, helm Helm, destDir string) (string, error) {
+func downloadCRDChart(crd *HelmCRD, helm image.Helm, destDir string) (string, error) {
 	if crd.Spec.ChartContent == "" {
 		if err := helm.AddRepo(crd.Spec.Chart, crd.Spec.Repo); err != nil {
 			return "", fmt.Errorf("adding repo: %w", err)
@@ -185,6 +243,19 @@ func downloadChart(crd *helmCRD, helm Helm, destDir string) (string, error) {
 	return chartPath, nil
 }
 
+func downloadChart(chart *image.HelmChart, helm image.Helm, destDir string) (string, error) {
+	if err := helm.AddRepo(chart.Name, chart.Repo); err != nil {
+		return "", fmt.Errorf("adding repo: %w", err)
+	}
+
+	chartPath, err := helm.Pull(chart.Name, chart.Repo, chart.Version, destDir)
+	if err != nil {
+		return "", fmt.Errorf("pulling chart: %w", err)
+	}
+
+	return chartPath, nil
+}
+
 func setChartContent(resource map[string]any, chartPath string) error {
 	spec, ok := resource["spec"].(map[string]any)
 	if !ok {
@@ -205,4 +276,13 @@ func setChartContent(resource map[string]any, chartPath string) error {
 	delete(spec, "chart")
 
 	return nil
+}
+
+func getChartContent(chartPath string) (string, error) {
+	data, err := os.ReadFile(chartPath)
+	if err != nil {
+		return "", fmt.Errorf("reading chart: %w", err)
+	}
+
+	return base64.StdEncoding.EncodeToString(data), nil
 }

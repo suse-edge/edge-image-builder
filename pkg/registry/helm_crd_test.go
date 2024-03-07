@@ -9,7 +9,7 @@ import (
 )
 
 func TestParseSetArgs_Empty(t *testing.T) {
-	var crd helmCRD
+	var crd HelmCRD
 
 	assert.Empty(t, crd.parseSetArgs())
 }
@@ -29,7 +29,7 @@ func TestParseSetArgs_Simple(t *testing.T) {
       - port: 22
         host: example2`
 
-	var crd helmCRD
+	var crd HelmCRD
 	require.NoError(t, yaml.Unmarshal([]byte(data), &crd))
 
 	expectedArgs := []string{
@@ -81,7 +81,7 @@ func TestParseSetArgs_Complex(t *testing.T) {
       - port: 443
         host: "secure.example.com"`
 
-	var crd helmCRD
+	var crd HelmCRD
 	require.NoError(t, yaml.Unmarshal([]byte(data), &crd))
 
 	expectedArgs := []string{

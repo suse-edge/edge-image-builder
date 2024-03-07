@@ -147,6 +147,13 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 								"https://k8s.io/examples/application/nginx-app.yaml",
 							},
 						},
+						HelmCharts: []image.HelmChart{
+							{
+								Name:    "apache",
+								Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
+								Version: "10.7.0",
+							},
+						},
 					},
 				},
 			},
@@ -175,6 +182,23 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 						Manifests: image.Manifests{
 							URLs: []string{
 								"https://k8s.io/examples/application/nginx-app.yaml",
+							},
+						},
+					},
+				},
+			},
+			isConfigured: true,
+		},
+		{
+			name: "Helm Charts Defined",
+			ctx: &image.Context{
+				ImageDefinition: &image.Definition{
+					Kubernetes: image.Kubernetes{
+						HelmCharts: []image.HelmChart{
+							{
+								Name:    "apache",
+								Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
+								Version: "10.7.0",
 							},
 						},
 					},
@@ -286,6 +310,19 @@ func TestStoreHelmCharts(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
+	chartContent := "Hxxx"
+	valuesContent := `
+values: content`
+	helmChart := &image.HelmChart{
+		Name:                  "apache",
+		Repo:                  "oci://registry-1.docker.io/bitnamicharts/apache",
+		TargetNamespace:       "web",
+		CreateNamespace:       true,
+		InstallationNamespace: "kube-system",
+		Version:               "10.7.0",
+		ValuesFile:            "",
+	}
+
 	charts := []*registry.HelmChart{
 		{
 			Filename: "metallb.yaml",
@@ -339,6 +376,9 @@ func TestStoreHelmCharts(t *testing.T) {
 				},
 			},
 		},
+		{
+			CRD: registry.NewHelmCRD(helmChart, chartContent, valuesContent),
+		},
 	}
 
 	require.NoError(t, storeHelmCharts(ctx, charts))
@@ -388,4 +428,23 @@ spec:
 	require.NoError(t, err)
 
 	assert.Equal(t, endpointCopierOperatorContents, string(contents))
+
+	apachePath := filepath.Join(ctx.CombustionDir, k8sDir, k8sManifestsDir, "apache.yaml")
+	apacheContent := `apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+    name: apache
+    namespace: kube-system
+spec:
+    version: 10.7.0
+    valuesContent: |4-
+        values: content
+    chartContent: Hxxx
+    targetNamespace: web
+    createNamespace: true
+`
+	contents, err = os.ReadFile(apachePath)
+	require.NoError(t, err)
+
+	assert.Equal(t, apacheContent, string(contents))
 }
