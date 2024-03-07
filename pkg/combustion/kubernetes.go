@@ -347,6 +347,22 @@ func configureManifests(ctx *image.Context) (string, error) {
 	manifestsPath := filepath.Join(K8sDir, k8sManifestsDir)
 	manifestDestDir := filepath.Join(ctx.CombustionDir, manifestsPath)
 
+	if ctx.ImageDefinition.Kubernetes.Network.APIVIP != "" {
+		if err := os.MkdirAll(manifestDestDir, os.ModePerm); err != nil {
+			return "", fmt.Errorf("creating manifests destination dir: %w", err)
+		}
+
+		manifest, err := kubernetesVIPManifest(&ctx.ImageDefinition.Kubernetes)
+		if err != nil {
+			return "", fmt.Errorf("parsing VIP manifest: %w", err)
+		}
+
+		manifestPath := filepath.Join(manifestDestDir, "k8s-vip.yaml")
+		if err = os.WriteFile(manifestPath, []byte(manifest), fileio.NonExecutablePerms); err != nil {
+			return "", fmt.Errorf("storing VIP manifest: %w", err)
+		}
+	}
+
 	if !localManifestsConfigured && len(manifestURLs) == 0 {
 		// The registry component would have already created and populated the manifests path if helm resources are configured
 		// or required. This is a hack until the dependencies between the different combustion components are resolved.
