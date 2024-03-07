@@ -47,19 +47,9 @@ func handleChart(chart *image.HelmChart, valuesDir, buildDir, kubeVersion string
 		return nil, fmt.Errorf("downloading chart: %w", err)
 	}
 
-	chartResources, err := helm.Template(chart.Name, chartPath, chart.Version, valuesPath, kubeVersion)
+	images, err := getChartContainerImages(chart, helm, chartPath, valuesPath, kubeVersion)
 	if err != nil {
-		return nil, fmt.Errorf("templating chart: %w", err)
-	}
-
-	containerImages := map[string]bool{}
-	for _, chartResource := range chartResources {
-		storeManifestImages(chartResource, containerImages)
-	}
-
-	var images []string
-	for i := range containerImages {
-		images = append(images, i)
+		return nil, fmt.Errorf("getting chart container images: %w", err)
 	}
 
 	chartContent, err := getChartContent(chartPath)
@@ -95,4 +85,23 @@ func getChartContent(chartPath string) (string, error) {
 	}
 
 	return base64.StdEncoding.EncodeToString(data), nil
+}
+
+func getChartContainerImages(chart *image.HelmChart, helm image.Helm, chartPath, valuesPath, kubeVersion string) ([]string, error) {
+	chartResources, err := helm.Template(chart.Name, chartPath, chart.Version, valuesPath, kubeVersion)
+	if err != nil {
+		return nil, fmt.Errorf("templating chart: %w", err)
+	}
+
+	containerImages := map[string]bool{}
+	for _, resource := range chartResources {
+		storeManifestImages(resource, containerImages)
+	}
+
+	var images []string
+	for i := range containerImages {
+		images = append(images, i)
+	}
+
+	return images, nil
 }
