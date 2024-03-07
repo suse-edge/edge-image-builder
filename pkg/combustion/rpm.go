@@ -97,16 +97,48 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 	return []string{script}, nil
 }
 
-// determine whether RPM configuration is needed
+// SkipRPMComponent determines whether RPM configuration is needed
 func SkipRPMComponent(ctx *image.Context) bool {
 	pkg := ctx.ImageDefinition.OperatingSystem.Packages
 
 	if isComponentConfigured(ctx, userRPMsDir) {
-		// User provided standalone or third party RPMs
+		// isComponentConfigured will indicate if the directory exists, but not
+		// if there are RPMs in there. If there aren't any, it is still possible to
+		// continue if there have been packages specified in the definition.
+		rpmsDir := RPMsPath(ctx)
+
+		dirListing, err := os.ReadDir(rpmsDir)
+		if err != nil {
+			zap.S().Errorf("checking for side-loaded RPMs: %s", err)
+			return true
+		}
+
+		// Simply look for at least one .rpm file, the actual amount doesn't matter
+		foundRpm := false
+		for _, foundFile := range dirListing {
+			if filepath.Ext(foundFile.Name()) == ".rpm" {
+				foundRpm = true
+				break
+			}
+		}
+
+		if !foundRpm && len(pkg.PKGList) == 0 {
+			// Rare case where the rpms directory is specified but empty and no packages
+			// are listed. Without this, RPM resolution will trigger and error out about there
+			// being "Too few arguments".
+			// Ideally, this should probably be done in the validation step, but
+			// there is already a precedent for considering this in the custom files handling.
+			// For simplicity in solving #242 for the 1.0 release, issue #276 has been created
+			// to ensure this logic gets revisited when we get some time to readdress things on
+			// a larger scale. jdob, Mar 7, 2024
+			return true
+		}
+
+		// User provided standalone or third party RPMs, so do not skip the RPM component
 		return false
 	}
 	if len(pkg.PKGList) > 0 {
-		// User provided PackageHub or third party packages
+		// User provided PackageHub or third party packages, so do not skip the RPM component
 		return false
 	}
 

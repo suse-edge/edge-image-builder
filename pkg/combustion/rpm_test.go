@@ -91,7 +91,7 @@ func TestSkipRPMComponentProvidedPKGList(t *testing.T) {
 	assert.False(t, SkipRPMComponent(ctx))
 }
 
-func TestSkipRPMComponentRPMInDir(t *testing.T) {
+func TestSkipRPMComponentRPMDirNoRPMs(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -101,7 +101,7 @@ func TestSkipRPMComponentRPMInDir(t *testing.T) {
 		require.NoError(t, os.RemoveAll(rpmDir))
 	}()
 
-	assert.False(t, SkipRPMComponent(ctx))
+	assert.True(t, SkipRPMComponent(ctx))
 }
 
 func TestSkipRPMComponentFullConfig(t *testing.T) {
@@ -228,6 +228,8 @@ func TestConfigureRPMSGPGDirError(t *testing.T) {
 
 	rpmDir := filepath.Join(ctx.ImageConfigDir, userRPMsDir)
 	require.NoError(t, os.Mkdir(rpmDir, 0o755))
+	_, err := os.Create(filepath.Join(rpmDir, "test.rpm"))
+	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, os.RemoveAll(rpmDir))
 	}()
