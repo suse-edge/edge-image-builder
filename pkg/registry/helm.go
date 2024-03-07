@@ -47,7 +47,7 @@ func handleChart(chart *image.HelmChart, valuesDir, buildDir, kubeVersion string
 		return nil, fmt.Errorf("downloading chart: %w", err)
 	}
 
-	chartResources, err := helm.Template(chart.Name, chartPath, chart.Version, valuesPath, kubeVersion, nil)
+	chartResources, err := helm.Template(chart.Name, chartPath, chart.Version, valuesPath, kubeVersion)
 	if err != nil {
 		return nil, fmt.Errorf("templating chart: %w", err)
 	}
