@@ -31,8 +31,8 @@ const (
 	registryPort            = "6545"
 	registryMirrorsFileName = "registries.yaml"
 
-	helmDir   = "helm"
-	valuesDir = "values"
+	HelmDir   = "helm"
+	ValuesDir = "values"
 )
 
 //go:embed templates/hauler-manifest.yaml.tpl
@@ -381,7 +381,7 @@ func parseComponentHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error)
 		return nil, nil
 	}
 
-	buildDir := filepath.Join(ctx.BuildDir, helmDir)
+	buildDir := filepath.Join(ctx.BuildDir, HelmDir)
 	if err = os.MkdirAll(buildDir, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("creating helm dir: %w", err)
 	}
@@ -398,12 +398,12 @@ func parseConfiguredHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error
 		return nil, fmt.Errorf("helm charts are provided but kubernetes version is not configured")
 	}
 
-	buildDir := filepath.Join(ctx.BuildDir, helmDir)
+	buildDir := filepath.Join(ctx.BuildDir, HelmDir)
 	if err := os.MkdirAll(buildDir, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("creating helm dir: %w", err)
 	}
 
-	helmValuesDir := filepath.Join(ctx.ImageConfigDir, k8sDir, helmDir, valuesDir)
+	helmValuesDir := filepath.Join(ctx.ImageConfigDir, k8sDir, HelmDir, ValuesDir)
 
 	return registry.ConfiguredHelmCharts(ctx.ImageDefinition.Kubernetes.HelmCharts, helmValuesDir, buildDir, ctx.ImageDefinition.Kubernetes.Version, ctx.Helm)
 }

@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/suse-edge/edge-image-builder/pkg/combustion"
+
 	"go.uber.org/zap"
 
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -206,7 +208,7 @@ func validateHelmChartValues(valuesFile string, imageConfigDir string) string {
 		return "Helm Chart 'valuesFile' field must be the name of a valid yaml file ending in '.yaml' or '.yml'."
 	}
 
-	valuesFilePath := filepath.Join(imageConfigDir, "values", valuesFile)
+	valuesFilePath := filepath.Join(imageConfigDir, combustion.HelmDir, combustion.ValuesDir, valuesFile)
 	_, err := os.Stat(valuesFilePath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
