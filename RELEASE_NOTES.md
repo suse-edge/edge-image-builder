@@ -12,7 +12,11 @@
 
 ### Image Definition Changes
 
+* Added the ability to configure Helm charts under `kubernetes/helmCharts`
+
 ### Image Configuration Directory Changes
+
+* Helm chart values files can be specified under `kubernetes/helm/values`
 
 ## Bug Fixes
 
