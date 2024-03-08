@@ -185,7 +185,7 @@ func createRegistryCommand(ctx *image.Context, commandName string, args []string
 func IsEmbeddedArtifactRegistryConfigured(ctx *image.Context) bool {
 	return len(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages) != 0 ||
 		len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0 ||
-		len(ctx.ImageDefinition.Kubernetes.HelmCharts) != 0 ||
+		len(ctx.ImageDefinition.Kubernetes.Helm.Charts) != 0 ||
 		isComponentConfigured(ctx, filepath.Join(K8sDir, k8sManifestsDir))
 }
 
@@ -320,7 +320,7 @@ func parseManifests(ctx *image.Context) ([]string, error) {
 }
 
 func parseHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error) {
-	if len(ctx.ImageDefinition.Kubernetes.HelmCharts) == 0 {
+	if len(ctx.ImageDefinition.Kubernetes.Helm.Charts) == 0 {
 		return nil, nil
 	}
 
@@ -335,7 +335,7 @@ func parseHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error) {
 
 	helmValuesDir := filepath.Join(ctx.ImageConfigDir, K8sDir, HelmDir, ValuesDir)
 
-	return registry.HelmCharts(ctx.ImageDefinition.Kubernetes.Helm.Charts, helmValuesDir, buildDir, ctx.ImageDefinition.Kubernetes.Version, ctx.HelmClient)
+	return registry.HelmCharts(&ctx.ImageDefinition.Kubernetes.Helm, helmValuesDir, buildDir, ctx.ImageDefinition.Kubernetes.Version, ctx.HelmClient)
 }
 
 func storeHelmCharts(ctx *image.Context, helmCharts []*registry.HelmChart) error {
