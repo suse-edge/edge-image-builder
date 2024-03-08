@@ -7,24 +7,29 @@ func ComponentHelmCharts(ctx *image.Context) []image.HelmChart {
 		return nil
 	}
 
+	const (
+		suseEdgeRepository    = "https://suse-edge.github.io/charts"
+		installationNamespace = "kube-system"
+	)
+
 	var charts []image.HelmChart
 
 	if ctx.ImageDefinition.Kubernetes.Network.APIVIP != "" {
 		metalLBChart := image.HelmChart{
 			Name:                  "metallb",
-			Repo:                  "https://suse-edge.github.io/charts",
+			Repo:                  suseEdgeRepository,
 			TargetNamespace:       "metallb-system",
 			CreateNamespace:       true,
-			InstallationNamespace: "kube-system",
+			InstallationNamespace: installationNamespace,
 			Version:               "0.14.3",
 		}
 
 		endpointCopierOperatorChart := image.HelmChart{
 			Name:                  "endpoint-copier-operator",
-			Repo:                  "https://suse-edge.github.io/charts",
+			Repo:                  suseEdgeRepository,
 			TargetNamespace:       "endpoint-copier-operator",
 			CreateNamespace:       true,
-			InstallationNamespace: "kube-system",
+			InstallationNamespace: installationNamespace,
 			Version:               "0.2.0",
 		}
 
