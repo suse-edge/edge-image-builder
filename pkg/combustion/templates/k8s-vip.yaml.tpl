@@ -1,38 +1,4 @@
 ---
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: metallb-system
-spec: {}
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: endpoint-copier-operator
-spec: {}
----
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: metallb
-  namespace: metallb-system
-spec:
-  repo: https://suse-edge.github.io/charts
-  chart: metallb
-  version: 0.13.10
-  targetNamespace: metallb-system
----
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: endpoint-copier-operator
-  namespace: endpoint-copier-operator
-spec:
-  repo: https://suse-edge.github.io/charts
-  chart: endpoint-copier-operator
-  version: 0.2.0
-  targetNamespace: endpoint-copier-operator
----
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:

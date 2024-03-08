@@ -310,9 +310,6 @@ func TestStoreHelmCharts(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
-	chartContent := "Hxxx"
-	valuesContent := `
-values: content`
 	helmChart := &image.HelmChart{
 		Name:                  "apache",
 		Repo:                  "oci://registry-1.docker.io/bitnamicharts/apache",
@@ -325,109 +322,12 @@ values: content`
 
 	charts := []*registry.HelmChart{
 		{
-			Filename: "metallb.yaml",
-			Resources: []map[string]any{
-				{
-					"apiVersion": "helm.cattle.io/v1",
-					"kind":       "HelmChart",
-					"metadata": map[string]any{
-						"name":      "metallb",
-						"namespace": "metallb-system",
-					},
-					"spec": map[string]any{
-						"chart":           "metallb",
-						"repo":            "https://suse-edge.github.io/charts",
-						"targetNamespace": "metallb-system",
-					},
-				},
-				{
-					"apiVersion": "v1",
-					"kind":       "Namespace",
-					"metadata": map[string]any{
-						"name": "metallb-system",
-					},
-					"spec": map[string]any{},
-				},
-			},
-		},
-		{
-			Filename: "endpoint-copier-operator.yaml",
-			Resources: []map[string]any{
-				{
-					"apiVersion": "v1",
-					"kind":       "Namespace",
-					"metadata": map[string]any{
-						"name": "endpoint-copier-operator",
-					},
-					"spec": map[string]any{},
-				},
-				{
-					"apiVersion": "helm.cattle.io/v1",
-					"kind":       "HelmChart",
-					"metadata": map[string]any{
-						"name":      "endpoint-copier-operator",
-						"namespace": "endpoint-copier-operator",
-					},
-					"spec": map[string]any{
-						"chart":           "endpoint-copier-operator",
-						"repo":            "https://suse-edge.github.io/charts",
-						"targetNamespace": "endpoint-copier-operator",
-					},
-				},
-			},
-		},
-		{
-			CRD: registry.NewHelmCRD(helmChart, chartContent, valuesContent),
+			CRD: registry.NewHelmCRD(helmChart, "some-content", `
+values: content`),
 		},
 	}
 
 	require.NoError(t, storeHelmCharts(ctx, charts))
-
-	metalLBPath := filepath.Join(ctx.CombustionDir, K8sDir, k8sManifestsDir, "metallb.yaml")
-	metalLBContents := `---
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-    name: metallb
-    namespace: metallb-system
-spec:
-    chart: metallb
-    repo: https://suse-edge.github.io/charts
-    targetNamespace: metallb-system
----
-apiVersion: v1
-kind: Namespace
-metadata:
-    name: metallb-system
-spec: {}
-`
-	contents, err := os.ReadFile(metalLBPath)
-	require.NoError(t, err)
-
-	assert.Equal(t, metalLBContents, string(contents))
-
-	endpointCopierOperatorPath := filepath.Join(ctx.CombustionDir, K8sDir, k8sManifestsDir, "endpoint-copier-operator.yaml")
-	endpointCopierOperatorContents := `---
-apiVersion: v1
-kind: Namespace
-metadata:
-    name: endpoint-copier-operator
-spec: {}
----
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-    name: endpoint-copier-operator
-    namespace: endpoint-copier-operator
-spec:
-    chart: endpoint-copier-operator
-    repo: https://suse-edge.github.io/charts
-    targetNamespace: endpoint-copier-operator
-`
-	contents, err = os.ReadFile(endpointCopierOperatorPath)
-	require.NoError(t, err)
-
-	assert.Equal(t, endpointCopierOperatorContents, string(contents))
 
 	apachePath := filepath.Join(ctx.CombustionDir, K8sDir, k8sManifestsDir, "apache.yaml")
 	apacheContent := `apiVersion: helm.cattle.io/v1
@@ -439,11 +339,11 @@ spec:
     version: 10.7.0
     valuesContent: |4-
         values: content
-    chartContent: Hxxx
+    chartContent: some-content
     targetNamespace: web
     createNamespace: true
 `
-	contents, err = os.ReadFile(apachePath)
+	contents, err := os.ReadFile(apachePath)
 	require.NoError(t, err)
 
 	assert.Equal(t, apacheContent, string(contents))
