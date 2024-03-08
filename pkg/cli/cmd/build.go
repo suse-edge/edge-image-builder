@@ -23,7 +23,7 @@ func NewBuildCommand(action func(*cli.Context) error) *cli.Command {
 		Action:    action,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:        "config-file",
+				Name:        "definition-file",
 				Usage:       "Name of the image definition file",
 				Destination: &BuildArgs.DefinitionFile,
 			},

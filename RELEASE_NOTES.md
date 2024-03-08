@@ -10,6 +10,8 @@
 
 ## API
 
+* The `--config-file` argument to the EIB CLI has been renamed to `--definition-file`.
+
 ### Image Definition Changes
 
 * Added the ability to configure Helm charts under `kubernetes/helmCharts`
@@ -25,6 +27,7 @@
 * [#260](https://github.com/suse-edge/edge-image-builder/issues/260) - Empty network directory produces a network configuration script
 * [#267](https://github.com/suse-edge/edge-image-builder/issues/267) - Embedded registry renders Kubernetes resources even when Kubernetes is not configured
 * [#242](https://github.com/suse-edge/edge-image-builder/issues/242) - Empty rpms directory triggers resolution
+* [#283](https://github.com/suse-edge/edge-image-builder/issues/283) - Definition file argument to EIB is incorrect
 
 ---
 

@@ -8,7 +8,7 @@ Two things are necessary to build an image using EIB:
 ## Image Definition File
 
 The Image Definition File is a YAML document describing a single image to build. The file is specified using
-the `-config-file` argument. Only a single image may be built at a time, however the same image configuration
+the `--definition-file` argument. Only a single image may be built at a time, however the same image configuration
 directory may be used to build multiple images by creating multiple definition files.
 
 The following can be used as the minimum configuration required to create an image:

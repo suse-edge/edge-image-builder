@@ -35,32 +35,33 @@ more mature, an example configuration directory will be added to this repository
 
 ### Image Definition
 
-For details on how to create the configuration artifacts needed to build an image, see the
+For details on how to create the artifacts needed to build an image, see the
 [Building Images](docs/building-images.md) guide.
 
 ### Running EIB
 
 The image configuration directory must be attached to the container at runtime. This serves as both the mechanism
-to introduce image configuration files and provide a way to get the built image out of the container and onto
+to introduce image definition files and provide a way to get the built image out of the container and onto
 the host machine. 
 
 The following example command attaches the directory and runs EIB:
 ```shell
 podman run --rm -it \
 -v $IMAGE_DIR:/eib eib:dev build \
---config-file $CONFIG_FILE.yaml \
+--definition-file $DEFINITION_FILE.yaml \
 --config-dir /eib \
 --build-dir /eib/_build
 ```
 
 **NOTE:**
-Build process which involves package resolution must include the [`--privileged`](https://docs.podman.io/en/latest/markdown/podman-run.1.html#privileged) flag.
-Package resolution will be automatically performed when requesting package installation or configuring components which require it (e.g. Elemental, Kubernetes SELinux, etc.)
+Image builds which involve package resolution must include the [`--privileged`](https://docs.podman.io/en/latest/markdown/podman-run.1.html#privileged)
+flag. Package resolution will be automatically performed when requesting package installation or configuring components
+which require it (e.g. Elemental, Kubernetes SELinux, etc.).
 
 * `-v` - Used to mount a local directory (in this example, the value of $IMAGE_DIR) into the EIB container at `/eib`.
-* `--config-file` - Specifies which image configuration file to build. The path to this file will be relative to
-  the image configuration directory. If the configuration file is in the root of the configuration directory, simply 
-  specify the name of the configuration file 
+* `--definition-file` - Specifies which image definition file to build. The path to this file will be relative to
+  the image configuration directory. If the definition file is in the root of the configuration directory, simply 
+  specify the name of the configuration file.
 * `--config-dir` - Specifies the image configuration directory. Keep in mind that this is relative to the running
   container, so its value must match the mounted volume.
 * `--build-dir` - (optional) If unspecified, EIB will use a temporary directory inside the container for
