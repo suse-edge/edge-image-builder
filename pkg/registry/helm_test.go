@@ -11,27 +11,27 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-type mockHelm struct {
+type mockHelmClient struct {
 	addRepoFunc  func(chart, repository string) error
 	pullFunc     func(chart, repository, version, destDir string) (string, error)
 	templateFunc func(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error)
 }
 
-func (m mockHelm) AddRepo(chart, repository string) error {
+func (m mockHelmClient) AddRepo(chart, repository string) error {
 	if m.addRepoFunc != nil {
 		return m.addRepoFunc(chart, repository)
 	}
 	panic("not implemented")
 }
 
-func (m mockHelm) Pull(chart, repository, version, destDir string) (string, error) {
+func (m mockHelmClient) Pull(chart, repository, version, destDir string) (string, error) {
 	if m.pullFunc != nil {
 		return m.pullFunc(chart, repository, version, destDir)
 	}
 	panic("not implemented")
 }
 
-func (m mockHelm) Template(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error) {
+func (m mockHelmClient) Template(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error) {
 	if m.templateFunc != nil {
 		return m.templateFunc(chart, repository, version, valuesFilePath, kubeVersion)
 	}
@@ -74,7 +74,7 @@ func TestHandleChart_FailedDownload(t *testing.T) {
 		Version: "10.7.0",
 	}
 
-	helm := mockHelm{
+	helm := mockHelmClient{
 		addRepoFunc: func(chart, repository string) error {
 			return fmt.Errorf("failed downloading")
 		},
@@ -93,7 +93,7 @@ func TestHandleChart_FailedTemplate(t *testing.T) {
 		Version: "10.7.0",
 	}
 
-	helm := mockHelm{
+	helm := mockHelmClient{
 		addRepoFunc: func(chart, repository string) error {
 			return nil
 		},
@@ -118,7 +118,7 @@ func TestHandleChart_FailedGetChartContent(t *testing.T) {
 		Version: "10.7.0",
 	}
 
-	helm := mockHelm{
+	helm := mockHelmClient{
 		addRepoFunc: func(chart, repository string) error {
 			return nil
 		},
@@ -139,7 +139,7 @@ func TestHandleChart_FailedGetChartContent(t *testing.T) {
 func TestDownloadChart_FailedAddingRepo(t *testing.T) {
 	helmChart := &image.HelmChart{}
 
-	helm := mockHelm{
+	helm := mockHelmClient{
 		addRepoFunc: func(chart, repository string) error {
 			return fmt.Errorf("failed to add repo")
 		},
@@ -154,7 +154,7 @@ func TestDownloadChart_FailedAddingRepo(t *testing.T) {
 func TestDownloadChart_FailedPulling(t *testing.T) {
 	helmChart := &image.HelmChart{}
 
-	helm := mockHelm{
+	helm := mockHelmClient{
 		addRepoFunc: func(chart, repository string) error {
 			return nil
 		},
@@ -176,7 +176,7 @@ func TestDownloadChart(t *testing.T) {
 		Version: "10.7.0",
 	}
 
-	helm := mockHelm{
+	helm := mockHelmClient{
 		addRepoFunc: func(chart, repository string) error {
 			return nil
 		},
@@ -211,7 +211,7 @@ func TestHelmCharts(t *testing.T) {
 	file := filepath.Join(dir, "apache-chart.tgz")
 	require.NoError(t, os.WriteFile(file, []byte("abc"), 0o600))
 
-	helm := mockHelm{
+	helm := mockHelmClient{
 		addRepoFunc: func(chart, repository string) error {
 			return nil
 		},

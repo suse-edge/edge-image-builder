@@ -306,7 +306,7 @@ func bootstrapDependencyServices(ctx *image.Context, rootDir string) bool {
 	}
 
 	if combustion.IsEmbeddedArtifactRegistryConfigured(ctx) {
-		ctx.Helm = helm.New(ctx.BuildDir)
+		ctx.HelmClient = helm.New(ctx.BuildDir)
 	}
 
 	if ctx.ImageDefinition.Kubernetes.Version != "" {
