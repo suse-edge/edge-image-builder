@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,19 +13,19 @@ import (
 )
 
 type mockHelmClient struct {
-	addRepoFunc  func(chart, repository string) error
-	pullFunc     func(chart, repository, version, destDir string) (string, error)
+	addRepoFunc  func(repository *image.HelmRepository) error
+	pullFunc     func(chart string, repository *image.HelmRepository, version, destDir string) (string, error)
 	templateFunc func(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error)
 }
 
-func (m mockHelmClient) AddRepo(chart, repository string) error {
+func (m mockHelmClient) AddRepo(repository *image.HelmRepository) error {
 	if m.addRepoFunc != nil {
-		return m.addRepoFunc(chart, repository)
+		return m.addRepoFunc(repository)
 	}
 	panic("not implemented")
 }
 
-func (m mockHelmClient) Pull(chart, repository, version, destDir string) (string, error) {
+func (m mockHelmClient) Pull(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
 	if m.pullFunc != nil {
 		return m.pullFunc(chart, repository, version, destDir)
 	}
@@ -39,16 +40,24 @@ func (m mockHelmClient) Template(chart, repository, version, valuesFilePath, kub
 }
 
 func TestHelmCharts_ValuesFileNotFoundError(t *testing.T) {
-	helmCharts := []image.HelmChart{
-		{
-			Name:       "apache",
-			Repo:       "oci://registry-1.docker.io/bitnamicharts/apache",
-			Version:    "10.7.0",
-			ValuesFile: "apache-values.yaml",
+	helm := &image.Helm{
+		Charts: []image.HelmChart{
+			{
+				Name:           "apache",
+				RepositoryName: "apache-repo",
+				Version:        "10.7.0",
+				ValuesFile:     "apache-values.yaml",
+			},
+		},
+		Repositories: []image.HelmRepository{
+			{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+			},
 		},
 	}
 
-	charts, err := HelmCharts(helmCharts, "", "", "", nil)
+	charts, err := HelmCharts(helm, "", "", "", nil)
 	require.Error(t, err)
 	assert.EqualError(t, err, "handling chart resource: reading values content: open apache-values.yaml: no such file or directory")
 	assert.Nil(t, charts)
@@ -56,31 +65,39 @@ func TestHelmCharts_ValuesFileNotFoundError(t *testing.T) {
 
 func TestHandleChart_MissingValuesDir(t *testing.T) {
 	helmChart := &image.HelmChart{
-		Name:       "apache",
-		Repo:       "oci://registry-1.docker.io/bitnamicharts/apache",
-		Version:    "10.7.0",
-		ValuesFile: "apache-values.yaml",
+		Name:           "apache",
+		RepositoryName: "apache-repo",
+		Version:        "10.7.0",
+		ValuesFile:     "apache-values.yaml",
+	}
+	helmRepo := &image.HelmRepository{
+		Name: "apache-repo",
+		URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
 	}
 
-	chart, err := handleChart(helmChart, "oops!", "", "", nil)
+	chart, err := handleChart(helmChart, helmRepo, "oops!", "", "", nil)
 	assert.EqualError(t, err, "reading values content: open oops!/apache-values.yaml: no such file or directory")
 	assert.Nil(t, chart)
 }
 
 func TestHandleChart_FailedDownload(t *testing.T) {
 	helmChart := &image.HelmChart{
-		Name:    "apache",
-		Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
-		Version: "10.7.0",
+		Name:           "apache",
+		RepositoryName: "apache-repo",
+		Version:        "10.7.0",
+	}
+	helmRepo := &image.HelmRepository{
+		Name: "apache-repo",
+		URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
 	}
 
-	helm := mockHelmClient{
-		addRepoFunc: func(chart, repository string) error {
+	helmClient := mockHelmClient{
+		addRepoFunc: func(repository *image.HelmRepository) error {
 			return fmt.Errorf("failed downloading")
 		},
 	}
 
-	charts, err := handleChart(helmChart, "", "", "", helm)
+	charts, err := handleChart(helmChart, helmRepo, "", "", "", helmClient)
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "downloading chart: adding repo: failed downloading")
 	assert.Nil(t, charts)
@@ -88,16 +105,20 @@ func TestHandleChart_FailedDownload(t *testing.T) {
 
 func TestHandleChart_FailedTemplate(t *testing.T) {
 	helmChart := &image.HelmChart{
-		Name:    "apache",
-		Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
-		Version: "10.7.0",
+		Name:           "apache",
+		RepositoryName: "apache-repo",
+		Version:        "10.7.0",
+	}
+	helmRepo := &image.HelmRepository{
+		Name: "apache-repo",
+		URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
 	}
 
-	helm := mockHelmClient{
-		addRepoFunc: func(chart, repository string) error {
+	helmClient := mockHelmClient{
+		addRepoFunc: func(repository *image.HelmRepository) error {
 			return nil
 		},
-		pullFunc: func(chart, repository, version, destDir string) (string, error) {
+		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
 			return "", nil
 		},
 		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error) {
@@ -105,7 +126,7 @@ func TestHandleChart_FailedTemplate(t *testing.T) {
 		},
 	}
 
-	charts, err := handleChart(helmChart, "", "", "", helm)
+	charts, err := handleChart(helmChart, helmRepo, "", "", "", helmClient)
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "templating chart: failed templating")
 	assert.Nil(t, charts)
@@ -113,16 +134,20 @@ func TestHandleChart_FailedTemplate(t *testing.T) {
 
 func TestHandleChart_FailedGetChartContent(t *testing.T) {
 	helmChart := &image.HelmChart{
-		Name:    "apache",
-		Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
-		Version: "10.7.0",
+		Name:           "apache",
+		RepositoryName: "apache-repo",
+		Version:        "10.7.0",
+	}
+	helmRepo := &image.HelmRepository{
+		Name: "apache-repo",
+		URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
 	}
 
-	helm := mockHelmClient{
-		addRepoFunc: func(chart, repository string) error {
+	helmClient := mockHelmClient{
+		addRepoFunc: func(repository *image.HelmRepository) error {
 			return nil
 		},
-		pullFunc: func(chart, repository, version, destDir string) (string, error) {
+		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
 			return "does-not-exist.tgz", nil
 		},
 		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error) {
@@ -130,7 +155,7 @@ func TestHandleChart_FailedGetChartContent(t *testing.T) {
 		},
 	}
 
-	charts, err := handleChart(helmChart, "", "", "", helm)
+	charts, err := handleChart(helmChart, helmRepo, "", "", "", helmClient)
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "getting chart content: reading chart: open does-not-exist.tgz: no such file or directory")
 	assert.Nil(t, charts)
@@ -138,14 +163,15 @@ func TestHandleChart_FailedGetChartContent(t *testing.T) {
 
 func TestDownloadChart_FailedAddingRepo(t *testing.T) {
 	helmChart := &image.HelmChart{}
+	helmRepo := &image.HelmRepository{}
 
-	helm := mockHelmClient{
-		addRepoFunc: func(chart, repository string) error {
+	helmClient := mockHelmClient{
+		addRepoFunc: func(repository *image.HelmRepository) error {
 			return fmt.Errorf("failed to add repo")
 		},
 	}
 
-	chartPath, err := downloadChart(helmChart, helm, "")
+	chartPath, err := downloadChart(helmChart, helmRepo, helmClient, "")
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "adding repo: failed to add repo")
 	assert.Empty(t, chartPath)
@@ -153,17 +179,18 @@ func TestDownloadChart_FailedAddingRepo(t *testing.T) {
 
 func TestDownloadChart_FailedPulling(t *testing.T) {
 	helmChart := &image.HelmChart{}
+	helmRepo := &image.HelmRepository{}
 
-	helm := mockHelmClient{
-		addRepoFunc: func(chart, repository string) error {
+	helmClient := mockHelmClient{
+		addRepoFunc: func(repository *image.HelmRepository) error {
 			return nil
 		},
-		pullFunc: func(chart, repository, version, destDir string) (string, error) {
+		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
 			return "", fmt.Errorf("failed pulling chart")
 		},
 	}
 
-	chartPath, err := downloadChart(helmChart, helm, "")
+	chartPath, err := downloadChart(helmChart, helmRepo, helmClient, "")
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "pulling chart: failed pulling chart")
 	assert.Empty(t, chartPath)
@@ -171,34 +198,46 @@ func TestDownloadChart_FailedPulling(t *testing.T) {
 
 func TestDownloadChart(t *testing.T) {
 	helmChart := &image.HelmChart{
-		Name:    "apache",
-		Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
-		Version: "10.7.0",
+		Name:           "apache",
+		RepositoryName: "apache-repo",
+		Version:        "10.7.0",
+	}
+	helmRepo := &image.HelmRepository{
+		Name: "apache-repo",
+		URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
 	}
 
-	helm := mockHelmClient{
-		addRepoFunc: func(chart, repository string) error {
+	helmClient := mockHelmClient{
+		addRepoFunc: func(repository *image.HelmRepository) error {
 			return nil
 		},
-		pullFunc: func(chart, repository, version, destDir string) (string, error) {
+		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
 			return "apache-chart.tgz", nil
 		},
 	}
 
-	chartPath, err := downloadChart(helmChart, helm, "")
+	chartPath, err := downloadChart(helmChart, helmRepo, helmClient, "")
 	require.NoError(t, err)
 	assert.Equal(t, "apache-chart.tgz", chartPath)
 }
 
 func TestHelmCharts(t *testing.T) {
-	helmCharts := []image.HelmChart{
-		{
-			Name:                  "apache",
-			Repo:                  "oci://registry-1.docker.io/bitnamicharts/apache",
-			Version:               "10.7.0",
-			InstallationNamespace: "apache-system",
-			CreateNamespace:       true,
-			TargetNamespace:       "web",
+	helm := &image.Helm{
+		Charts: []image.HelmChart{
+			{
+				Name:                  "apache",
+				RepositoryName:        "apache-repo",
+				Version:               "10.7.0",
+				InstallationNamespace: "apache-system",
+				CreateNamespace:       true,
+				TargetNamespace:       "web",
+			},
+		},
+		Repositories: []image.HelmRepository{
+			{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+			},
 		},
 	}
 
@@ -211,11 +250,11 @@ func TestHelmCharts(t *testing.T) {
 	file := filepath.Join(dir, "apache-chart.tgz")
 	require.NoError(t, os.WriteFile(file, []byte("abc"), 0o600))
 
-	helm := mockHelmClient{
-		addRepoFunc: func(chart, repository string) error {
+	helmClient := mockHelmClient{
+		addRepoFunc: func(repository *image.HelmRepository) error {
 			return nil
 		},
-		pullFunc: func(chart, repository, version, destDir string) (string, error) {
+		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
 			return file, nil
 		},
 		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error) {
@@ -240,7 +279,7 @@ func TestHelmCharts(t *testing.T) {
 		},
 	}
 
-	charts, err := HelmCharts(helmCharts, "", "", "", helm)
+	charts, err := HelmCharts(helm, "", "", "", helmClient)
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, charts[0].ContainerImages, []string{"cronjob-image:0.5.6", "job-image:6.1.0"})
@@ -255,4 +294,44 @@ func TestHelmCharts(t *testing.T) {
 	assert.Equal(t, "YWJj", charts[0].CRD.Spec.ChartContent)
 	assert.Equal(t, "web", charts[0].CRD.Spec.TargetNamespace)
 	assert.Equal(t, true, charts[0].CRD.Spec.CreateNamespace)
+}
+
+func TestMapChartRepos(t *testing.T) {
+	helm := &image.Helm{
+		Charts: []image.HelmChart{
+			{
+				Name:           "apache",
+				RepositoryName: "apache-repo",
+				Version:        "10.7.0",
+			},
+			{
+				Name:           "metallb",
+				RepositoryName: "suse-edge",
+				Version:        "0.14.3",
+			},
+		},
+		Repositories: []image.HelmRepository{
+			{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+			},
+			{
+				Name: "suse-edge",
+				URL:  "https://suse-edge.github.io/charts",
+			},
+		},
+	}
+
+	expectedMap := map[string]*image.HelmRepository{
+		"apache-repo": {
+			Name: "apache-repo",
+			URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+		},
+		"suse-edge": {
+			Name: "suse-edge",
+			URL:  "https://suse-edge.github.io/charts",
+		},
+	}
+
+	assert.True(t, reflect.DeepEqual(expectedMap, mapChartRepos(helm)))
 }
