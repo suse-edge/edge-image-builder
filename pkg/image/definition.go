@@ -142,11 +142,11 @@ type ContainerImage struct {
 }
 
 type Kubernetes struct {
-	Version    string      `yaml:"version"`
-	Network    Network     `yaml:"network"`
-	Nodes      []Node      `yaml:"nodes"`
-	Manifests  Manifests   `yaml:"manifests"`
-	HelmCharts []HelmChart `yaml:"helmCharts"`
+	Version   string    `yaml:"version"`
+	Network   Network   `yaml:"network"`
+	Nodes     []Node    `yaml:"nodes"`
+	Manifests Manifests `yaml:"manifests"`
+	Helm      Helm      `yaml:"helm"`
 }
 
 type Network struct {
@@ -164,14 +164,24 @@ type Manifests struct {
 	URLs []string `yaml:"urls"`
 }
 
+type Helm struct {
+	Charts       []HelmChart      `yaml:"charts"`
+	Repositories []HelmRepository `yaml:"repositories"`
+}
+
 type HelmChart struct {
 	Name                  string `yaml:"name"`
-	Repo                  string `yaml:"repo"`
+	RepositoryName        string `yaml:"repositoryName"`
+	Version               string `yaml:"version"`
 	TargetNamespace       string `yaml:"targetNamespace"`
 	CreateNamespace       bool   `yaml:"createNamespace"`
 	InstallationNamespace string `yaml:"installationNamespace"`
-	Version               string `yaml:"version"`
 	ValuesFile            string `yaml:"valuesFile"`
+}
+
+type HelmRepository struct {
+	Name string `yaml:"name"`
+	URL  string `yaml:"url"`
 }
 
 func ParseDefinition(data []byte) (*Definition, error) {
