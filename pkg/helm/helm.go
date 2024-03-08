@@ -2,6 +2,7 @@ package helm
 
 import (
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"io"
 	"os"
 	"os/exec"
@@ -31,21 +32,17 @@ func New(outputDir string) *Helm {
 	}
 }
 
-func tempRepo(chart string) string {
-	return fmt.Sprintf("repo-%s", chart)
-}
-
-func repositoryName(repoURL, chart string) string {
+func repositoryName(repoName, repoURL, chart string) string {
 	if strings.HasPrefix(repoURL, "http") {
-		return fmt.Sprintf("%s/%s", tempRepo(chart), chart)
+		return fmt.Sprintf("%s/%s", repoName, chart)
 	}
 
 	return repoURL
 }
 
-func (h *Helm) AddRepo(chart, repository string) error {
-	if !strings.HasPrefix(repository, "http") {
-		zap.S().Infof("Skipping 'helm repo add' for non-http(s) repository: %s", repository)
+func (h *Helm) AddRepo(repo *image.HelmRepository) error {
+	if !strings.HasPrefix(repo.URL, "http") {
+		zap.S().Infof("Skipping 'helm repo add' for non-http(s) repository: %s", repo.Name)
 		return nil
 	}
 
@@ -61,7 +58,7 @@ func (h *Helm) AddRepo(chart, repository string) error {
 		}
 	}()
 
-	cmd := addRepoCommand(chart, repository, file)
+	cmd := addRepoCommand(repo, file)
 
 	if _, err = fmt.Fprintf(file, "command: %s\n", cmd); err != nil {
 		return fmt.Errorf("writing command prefix to log file: %w", err)
@@ -70,9 +67,9 @@ func (h *Helm) AddRepo(chart, repository string) error {
 	return cmd.Run()
 }
 
-func addRepoCommand(chart, repository string, output io.Writer) *exec.Cmd {
+func addRepoCommand(repo *image.HelmRepository, output io.Writer) *exec.Cmd {
 	var args []string
-	args = append(args, "repo", "add", tempRepo(chart), repository)
+	args = append(args, "repo", "add", repo.Name, repo.URL)
 
 	cmd := exec.Command("helm", args...)
 	cmd.Stdout = output
@@ -81,7 +78,7 @@ func addRepoCommand(chart, repository string, output io.Writer) *exec.Cmd {
 	return cmd
 }
 
-func (h *Helm) Pull(chart, repository, version, destDir string) (string, error) {
+func (h *Helm) Pull(chart string, repo *image.HelmRepository, version, destDir string) (string, error) {
 	logFile := filepath.Join(h.outputDir, pullLogFileName)
 
 	file, err := os.OpenFile(logFile, outputFileFlags, fileio.NonExecutablePerms)
@@ -94,7 +91,7 @@ func (h *Helm) Pull(chart, repository, version, destDir string) (string, error) 
 		}
 	}()
 
-	cmd := pullCommand(chart, repository, version, destDir, file)
+	cmd := pullCommand(chart, repo, version, destDir, file)
 
 	if _, err = fmt.Fprintf(file, "command: %s\n", cmd); err != nil {
 		return "", fmt.Errorf("writing command prefix to log file: %w", err)
@@ -117,8 +114,8 @@ func (h *Helm) Pull(chart, repository, version, destDir string) (string, error) 
 	return chartPath, nil
 }
 
-func pullCommand(chart, repository, version, destDir string, output io.Writer) *exec.Cmd {
-	repository = repositoryName(repository, chart)
+func pullCommand(chart string, repo *image.HelmRepository, version, destDir string, output io.Writer) *exec.Cmd {
+	repository := repositoryName(repo.Name, repo.URL, chart)
 
 	var args []string
 	args = append(args, "pull", repository)

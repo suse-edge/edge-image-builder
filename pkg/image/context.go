@@ -5,8 +5,8 @@ import (
 )
 
 type HelmClient interface {
-	AddRepo(chart, repository string) error
-	Pull(chart, repository, version, destDir string) (string, error)
+	AddRepo(repository *HelmRepository) error
+	Pull(chart string, repository *HelmRepository, version, destDir string) (string, error)
 	Template(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error)
 }
 

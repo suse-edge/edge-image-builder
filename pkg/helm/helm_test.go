@@ -2,6 +2,7 @@ package helm
 
 import (
 	"bytes"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,27 +12,30 @@ import (
 func TestHelmRepositoryName(t *testing.T) {
 	tests := []struct {
 		name           string
+		repoName       string
 		repoURL        string
 		chart          string
 		expectedOutput string
 	}{
 		{
 			name:           "OCI",
+			repoName:       "apache-repo",
 			repoURL:        "oci://registry-1.docker.io/bitnamicharts/apache",
 			chart:          "apache",
 			expectedOutput: "oci://registry-1.docker.io/bitnamicharts/apache",
 		},
 		{
 			name:           "HTTP",
+			repoName:       "suse-edge",
 			repoURL:        "https://suse-edge.github.io/charts",
 			chart:          "metallb",
-			expectedOutput: "repo-metallb/metallb",
+			expectedOutput: "suse-edge/metallb",
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			repoName := repositoryName(test.repoURL, test.chart)
+			repoName := repositoryName(test.repoName, test.repoURL, test.chart)
 			assert.Equal(t, test.expectedOutput, repoName)
 		})
 	}
@@ -39,13 +43,18 @@ func TestHelmRepositoryName(t *testing.T) {
 
 func TestAddRepoCommand(t *testing.T) {
 	var buf bytes.Buffer
-	cmd := addRepoCommand("kubevirt", "https://suse-edge.github.io/charts", &buf)
+	repo := &image.HelmRepository{
+		Name: "suse-edge",
+		URL:  "https://suse-edge.github.io/charts",
+	}
+
+	cmd := addRepoCommand(repo, &buf)
 
 	assert.Equal(t, []string{
 		"helm",
 		"repo",
 		"add",
-		"repo-kubevirt",
+		"suse-edge",
 		"https://suse-edge.github.io/charts",
 	}, cmd.Args)
 
@@ -56,15 +65,18 @@ func TestAddRepoCommand(t *testing.T) {
 func TestPullCommand(t *testing.T) {
 	tests := []struct {
 		name         string
-		repo         string
+		repo         *image.HelmRepository
 		chart        string
 		version      string
 		destDir      string
 		expectedArgs []string
 	}{
 		{
-			name:    "OCI repository",
-			repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
+			name: "OCI repository",
+			repo: &image.HelmRepository{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+			},
 			version: "10.5.2",
 			destDir: "charts",
 			expectedArgs: []string{
@@ -78,15 +90,18 @@ func TestPullCommand(t *testing.T) {
 			},
 		},
 		{
-			name:    "HTTP repository",
-			repo:    "https://suse-edge.github.io/charts",
+			name: "HTTP repository",
+			repo: &image.HelmRepository{
+				Name: "suse-edge",
+				URL:  "https://suse-edge.github.io/charts",
+			},
 			chart:   "kubevirt",
 			version: "0.2.1",
 			destDir: "charts",
 			expectedArgs: []string{
 				"helm",
 				"pull",
-				"repo-kubevirt/kubevirt",
+				"suse-edge/kubevirt",
 				"--version",
 				"0.2.1",
 				"--destination",
@@ -95,7 +110,10 @@ func TestPullCommand(t *testing.T) {
 		},
 		{
 			name: "OCI repository without optional args",
-			repo: "oci://registry-1.docker.io/bitnamicharts/apache",
+			repo: &image.HelmRepository{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+			},
 			expectedArgs: []string{
 				"helm",
 				"pull",
@@ -103,13 +121,16 @@ func TestPullCommand(t *testing.T) {
 			},
 		},
 		{
-			name:  "HTTP repository without optional args",
-			repo:  "https://suse-edge.github.io/charts",
+			name: "HTTP repository without optional args",
+			repo: &image.HelmRepository{
+				Name: "suse-edge",
+				URL:  "https://suse-edge.github.io/charts",
+			},
 			chart: "kubevirt",
 			expectedArgs: []string{
 				"helm",
 				"pull",
-				"repo-kubevirt/kubevirt",
+				"suse-edge/kubevirt",
 			},
 		},
 	}
@@ -139,7 +160,7 @@ func TestTemplateCommand(t *testing.T) {
 	}{
 		{
 			name:        "Template with all parameters",
-			repo:        "https://suse-edge.github.io/charts",
+			repo:        "suse-edge/kubevirt",
 			chart:       "kubevirt",
 			version:     "0.2.1",
 			kubeVersion: "v1.29.0+rke2r1",
@@ -149,7 +170,7 @@ func TestTemplateCommand(t *testing.T) {
 				"template",
 				"--skip-crds",
 				"kubevirt",
-				"https://suse-edge.github.io/charts",
+				"suse-edge/kubevirt",
 				"--version",
 				"0.2.1",
 				"-f",
@@ -160,7 +181,7 @@ func TestTemplateCommand(t *testing.T) {
 		},
 		{
 			name:        "Template without optional parameters",
-			repo:        "https://suse-edge.github.io/charts",
+			repo:        "suse-edge/kubevirt",
 			chart:       "kubevirt",
 			kubeVersion: "v1.29.0+rke2r1",
 			expectedArgs: []string{
@@ -168,7 +189,7 @@ func TestTemplateCommand(t *testing.T) {
 				"template",
 				"--skip-crds",
 				"kubevirt",
-				"https://suse-edge.github.io/charts",
+				"suse-edge/kubevirt",
 				"--kube-version",
 				"v1.29.0+rke2r1",
 			},
