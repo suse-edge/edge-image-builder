@@ -3,14 +3,12 @@ package validation
 import (
 	"errors"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/combustion"
+	"go.uber.org/zap"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
-
-	"github.com/suse-edge/edge-image-builder/pkg/combustion"
-
-	"go.uber.org/zap"
 
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
@@ -32,7 +30,7 @@ func validateKubernetes(ctx *image.Context) []FailedValidation {
 
 	failures = append(failures, validateNodes(&def.Kubernetes)...)
 	failures = append(failures, validateManifestURLs(&def.Kubernetes)...)
-	failures = append(failures, validateHelmCharts(&def.Kubernetes, ctx.ImageConfigDir)...)
+	failures = append(failures, validateHelm(&def.Kubernetes, ctx.ImageConfigDir)...)
 
 	return failures
 }
@@ -143,44 +141,49 @@ func validateManifestURLs(k8s *image.Kubernetes) []FailedValidation {
 	return failures
 }
 
-func validateHelmCharts(k8s *image.Kubernetes, imageConfigDir string) []FailedValidation {
+func validateHelm(k8s *image.Kubernetes, imageConfigDir string) []FailedValidation {
 	var failures []FailedValidation
 
-	if len(k8s.HelmCharts) == 0 {
+	if len(k8s.Helm.Charts) == 0 {
+		return failures
+	}
+
+	if len(k8s.Helm.Repositories) == 0 {
+		failures = append(failures, FailedValidation{
+			UserMessage: "Helm Charts defined with no Helm Repository defined.",
+		})
+
 		return failures
 	}
 
 	seenHelmCharts := make(map[string]bool)
-	for _, chart := range k8s.HelmCharts {
+	seenHelmRepos := make(map[string]bool)
+	for _, chart := range k8s.Helm.Charts {
 		if chart.Name == "" {
 			failures = append(failures, FailedValidation{
 				UserMessage: "Helm Chart 'name' field must be defined.",
 			})
 		}
 
-		if chart.Repo == "" {
+		if chart.RepositoryName == "" {
 			failures = append(failures, FailedValidation{
-				UserMessage: "Helm Chart 'repo' field must be defined.",
-			})
-		} else if !strings.HasPrefix(chart.Repo, "http") && !strings.HasPrefix(chart.Repo, "oci://") {
-			failures = append(failures, FailedValidation{
-				UserMessage: "Helm Chart 'repo' field must begin with either 'oci://', 'http://', or 'https://'.",
+				UserMessage: fmt.Sprintf("Helm Chart 'repositoryName' field for \"%s\" must be defined.", chart.Name),
 			})
 		}
 
 		if chart.Version == "" {
 			failures = append(failures, FailedValidation{
-				UserMessage: "Helm Chart 'version' field must be defined.",
+				UserMessage: fmt.Sprintf("Helm Chart 'version' field for \"%s\" field must be defined.", chart.Name),
 			})
 		}
 
 		if chart.CreateNamespace && chart.TargetNamespace == "" {
 			failures = append(failures, FailedValidation{
-				UserMessage: "Helm Chart 'createNamespace' field cannot be true without 'targetNamespace' being defined.",
+				UserMessage: fmt.Sprintf("Helm Chart 'createNamespace' field for \"%s\" cannot be true without 'targetNamespace' being defined.", chart.Name),
 			})
 		}
 
-		if failure := validateHelmChartValues(chart.ValuesFile, imageConfigDir); failure != "" {
+		if failure := validateHelmChartValues(chart.Name, chart.ValuesFile, imageConfigDir); failure != "" {
 			failures = append(failures, FailedValidation{
 				UserMessage: failure,
 			})
@@ -194,18 +197,41 @@ func validateHelmCharts(k8s *image.Kubernetes, imageConfigDir string) []FailedVa
 		}
 
 		seenHelmCharts[chart.Name] = true
+		seenHelmRepos[chart.RepositoryName] = true
+	}
+
+	for _, repo := range k8s.Helm.Repositories {
+		if repo.Name == "" {
+			failures = append(failures, FailedValidation{
+				UserMessage: "Helm Repository 'name' field must be defined.",
+			})
+		} else if !seenHelmRepos[repo.Name] {
+			failures = append(failures, FailedValidation{
+				UserMessage: fmt.Sprintf("Helm Repository 'name' field for \"%s\" must match the 'repositoryName' field in at least one defined Helm Chart.", repo.Name),
+			})
+		}
+
+		if repo.URL == "" {
+			failures = append(failures, FailedValidation{
+				UserMessage: fmt.Sprintf("Helm Repository 'url' field for \"%s\" must be defined.", repo.Name),
+			})
+		} else if !strings.HasPrefix(repo.URL, "http") && !strings.HasPrefix(repo.URL, "oci://") {
+			failures = append(failures, FailedValidation{
+				UserMessage: fmt.Sprintf("Helm Repository 'url' field for \"%s\" must begin with either 'oci://', 'http://', or 'https://'.", repo.Name),
+			})
+		}
 	}
 
 	return failures
 }
 
-func validateHelmChartValues(valuesFile string, imageConfigDir string) string {
+func validateHelmChartValues(chartName, valuesFile string, imageConfigDir string) string {
 	if valuesFile == "" {
 		return ""
 	}
 
 	if filepath.Ext(valuesFile) != ".yaml" && filepath.Ext(valuesFile) != ".yml" {
-		return "Helm Chart 'valuesFile' field must be the name of a valid yaml file ending in '.yaml' or '.yml'."
+		return fmt.Sprintf("Helm Chart 'valuesFile' field for \"%s\" must be the name of a valid yaml file ending in '.yaml' or '.yml'.", chartName)
 	}
 
 	valuesFilePath := filepath.Join(imageConfigDir, combustion.K8sDir, combustion.HelmDir, combustion.ValuesDir, valuesFile)
