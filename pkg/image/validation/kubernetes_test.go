@@ -439,7 +439,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 		},
-		`no helm repos`: {
+		`helm no repos`: {
 			K8s: image.Kubernetes{
 				Helm: image.Helm{
 					Charts: []image.HelmChart{
@@ -455,7 +455,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				"Helm Charts defined with no Helm Repository defined.",
 			},
 		},
-		`no helm chart name`: {
+		`helm chart no name`: {
 			K8s: image.Kubernetes{
 				Helm: image.Helm{
 					Charts: []image.HelmChart{
@@ -477,7 +477,34 @@ func TestValidateHelmCharts(t *testing.T) {
 				"Helm Chart 'name' field must be defined.",
 			},
 		},
-		`no helm chart version`: {
+		`helm chart no repository name`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "kubevirt",
+							RepositoryName: "suse-edge",
+							Version:        "1.1.1",
+						},
+						{
+							Name:           "metallb",
+							RepositoryName: "",
+							Version:        "0.14.3",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "suse-edge",
+							URL:  "https://suse-edge.github.io/charts",
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm Chart 'repositoryName' field for \"metallb\" must be defined.",
+			},
+		},
+		`helm chart no version`: {
 			K8s: image.Kubernetes{
 				Helm: image.Helm{
 					Charts: []image.HelmChart{
@@ -522,7 +549,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				"Helm Chart 'createNamespace' field for \"apache\" cannot be true without 'targetNamespace' being defined.",
 			},
 		},
-		`duplicate helm chart name`: {
+		`helm chart duplicate name`: {
 			K8s: image.Kubernetes{
 				Helm: image.Helm{
 					Charts: []image.HelmChart{
