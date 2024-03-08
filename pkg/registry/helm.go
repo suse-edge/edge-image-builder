@@ -114,7 +114,8 @@ func mapChartRepos(helm *image.Helm) map[string]*image.HelmRepository {
 	for _, chart := range helm.Charts {
 		for _, repo := range helm.Repositories {
 			if chart.RepositoryName == repo.Name {
-				chartRepoMap[chart.RepositoryName] = &repo
+				r := repo
+				chartRepoMap[chart.RepositoryName] = &r
 			}
 		}
 	}

@@ -2,12 +2,13 @@ package helm
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"go.uber.org/zap"
