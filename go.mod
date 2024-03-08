@@ -1,6 +1,6 @@
 module github.com/suse-edge/edge-image-builder
 
-go 1.22
+go 1.22.0
 
 require (
 	// version should match buildah version in the
