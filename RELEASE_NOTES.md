@@ -14,7 +14,7 @@
 
 ### Image Definition Changes
 
-* Added the ability to configure Helm charts under `kubernetes/helmCharts`
+* Added the ability to configure Helm charts under `kubernetes/helm`
 
 ### Image Configuration Directory Changes
 

@@ -147,11 +147,13 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 								"https://k8s.io/examples/application/nginx-app.yaml",
 							},
 						},
-						HelmCharts: []image.HelmChart{
-							{
-								Name:    "apache",
-								Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
-								Version: "10.7.0",
+						Helm: image.Helm{
+							Charts: []image.HelmChart{
+								{
+									Name:           "apache",
+									RepositoryName: "apache-repo",
+									Version:        "10.7.0",
+								},
 							},
 						},
 					},
@@ -194,11 +196,13 @@ func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
 			ctx: &image.Context{
 				ImageDefinition: &image.Definition{
 					Kubernetes: image.Kubernetes{
-						HelmCharts: []image.HelmChart{
-							{
-								Name:    "apache",
-								Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
-								Version: "10.7.0",
+						Helm: image.Helm{
+							Charts: []image.HelmChart{
+								{
+									Name:           "apache",
+									RepositoryName: "apache-repo",
+									Version:        "10.7.0",
+								},
 							},
 						},
 					},
@@ -312,7 +316,7 @@ func TestStoreHelmCharts(t *testing.T) {
 
 	helmChart := &image.HelmChart{
 		Name:                  "apache",
-		Repo:                  "oci://registry-1.docker.io/bitnamicharts/apache",
+		RepositoryName:        "apache-repo",
 		TargetNamespace:       "web",
 		CreateNamespace:       true,
 		InstallationNamespace: "kube-system",

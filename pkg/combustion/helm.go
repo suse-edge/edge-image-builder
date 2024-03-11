@@ -2,22 +2,24 @@ package combustion
 
 import "github.com/suse-edge/edge-image-builder/pkg/image"
 
-func ComponentHelmCharts(ctx *image.Context) []image.HelmChart {
+func ComponentHelmCharts(ctx *image.Context) ([]image.HelmChart, []image.HelmRepository) {
 	if ctx.ImageDefinition.Kubernetes.Version == "" {
-		return nil
+		return nil, nil
 	}
 
 	const (
-		suseEdgeRepository    = "https://suse-edge.github.io/charts"
-		installationNamespace = "kube-system"
+		suseEdgeRepositoryName = "suse-edge"
+		suseEdgeRepositoryURL  = "https://suse-edge.github.io/charts"
+		installationNamespace  = "kube-system"
 	)
 
 	var charts []image.HelmChart
+	var repos []image.HelmRepository
 
 	if ctx.ImageDefinition.Kubernetes.Network.APIVIP != "" {
 		metalLBChart := image.HelmChart{
 			Name:                  "metallb",
-			Repo:                  suseEdgeRepository,
+			RepositoryName:        suseEdgeRepositoryName,
 			TargetNamespace:       "metallb-system",
 			CreateNamespace:       true,
 			InstallationNamespace: installationNamespace,
@@ -26,7 +28,7 @@ func ComponentHelmCharts(ctx *image.Context) []image.HelmChart {
 
 		endpointCopierOperatorChart := image.HelmChart{
 			Name:                  "endpoint-copier-operator",
-			Repo:                  suseEdgeRepository,
+			RepositoryName:        suseEdgeRepositoryName,
 			TargetNamespace:       "endpoint-copier-operator",
 			CreateNamespace:       true,
 			InstallationNamespace: installationNamespace,
@@ -34,7 +36,14 @@ func ComponentHelmCharts(ctx *image.Context) []image.HelmChart {
 		}
 
 		charts = append(charts, metalLBChart, endpointCopierOperatorChart)
+
+		suseEdgeRepo := image.HelmRepository{
+			Name: suseEdgeRepositoryName,
+			URL:  suseEdgeRepositoryURL,
+		}
+
+		repos = append(repos, suseEdgeRepo)
 	}
 
-	return charts
+	return charts, repos
 }

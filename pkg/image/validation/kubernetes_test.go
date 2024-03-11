@@ -36,15 +36,23 @@ func TestValidateKubernetes(t *testing.T) {
 						Type:     image.KubernetesNodeTypeAgent,
 					},
 				},
-				HelmCharts: []image.HelmChart{
-					{
-						Name:                  "apache",
-						Repo:                  "oci://registry-1.docker.io/bitnamicharts/apache",
-						TargetNamespace:       "web",
-						CreateNamespace:       true,
-						InstallationNamespace: "kube-system",
-						Version:               "10.7.0",
-						ValuesFile:            "apache-values.yaml",
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:                  "apache",
+							RepositoryName:        "apache-repo",
+							TargetNamespace:       "web",
+							CreateNamespace:       true,
+							InstallationNamespace: "kube-system",
+							Version:               "10.7.0",
+							ValuesFile:            "apache-values.yaml",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "apache-repo",
+							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+						},
 					},
 				},
 			},
@@ -68,18 +76,27 @@ func TestValidateKubernetes(t *testing.T) {
 						"example.com",
 					},
 				},
-				HelmCharts: []image.HelmChart{
-					{
-						Name:    "",
-						Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
-						Version: "10.7.0",
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "",
+							RepositoryName: "another-apache-repo",
+							Version:        "10.7.0",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "apache-repo",
+							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+						},
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
 				"The 'hostname' field is required for entries in the 'nodes' section.",
 				"Entries in 'urls' must begin with either 'http://' or 'https://'.",
-				"Helm Chart 'name' field must be defined.",
+				"Helm chart 'name' field must be defined.",
+				"Helm repository 'name' field for \"apache-repo\" must match the 'repositoryName' field in at least one defined Helm chart.",
 			},
 		},
 	}
@@ -114,10 +131,10 @@ func TestIsKubernetesDefined(t *testing.T) {
 	assert.True(t, result)
 
 	result = isKubernetesDefined(&image.Kubernetes{
-		Network:    image.Network{},
-		Nodes:      []image.Node{},
-		Manifests:  image.Manifests{},
-		HelmCharts: []image.HelmChart{},
+		Network:   image.Network{},
+		Nodes:     []image.Node{},
+		Manifests: image.Manifests{},
+		Helm:      image.Helm{},
 	})
 	assert.False(t, result)
 }
@@ -402,132 +419,277 @@ func TestValidateHelmCharts(t *testing.T) {
 	}{
 		`valid`: {
 			K8s: image.Kubernetes{
-				HelmCharts: []image.HelmChart{
-					{
-						Name:                  "apache",
-						Repo:                  "oci://registry-1.docker.io/bitnamicharts/apache",
-						TargetNamespace:       "web",
-						CreateNamespace:       true,
-						InstallationNamespace: "kube-system",
-						Version:               "10.7.0",
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:                  "apache",
+							RepositoryName:        "apache-repo",
+							TargetNamespace:       "web",
+							CreateNamespace:       true,
+							InstallationNamespace: "kube-system",
+							Version:               "10.7.0",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "apache-repo",
+							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+						},
 					},
 				},
 			},
 		},
-		`no name`: {
+		`helm no repos`: {
 			K8s: image.Kubernetes{
-				HelmCharts: []image.HelmChart{
-					{
-						Name:    "",
-						Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
-						Version: "10.7.0",
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "apache",
+							RepositoryName: "apache-repo",
+							Version:        "10.7.0",
+						},
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Chart 'name' field must be defined.",
+				"Helm charts defined with no Helm repositories defined.",
 			},
 		},
-		`duplicate name`: {
+		`helm chart no name`: {
 			K8s: image.Kubernetes{
-				HelmCharts: []image.HelmChart{
-					{
-						Name:    "apache",
-						Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
-						Version: "10.7.0",
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "",
+							RepositoryName: "apache-repo",
+							Version:        "10.7.0",
+						},
 					},
-					{
-						Name:    "apache",
-						Repo:    "oci://registry-1.docker.io/bitnamicharts/apache",
-						Version: "10.7.0",
+					Repositories: []image.HelmRepository{
+						{
+							Name: "apache-repo",
+							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+						},
 					},
-					{
-						Name:    "metallb",
-						Repo:    "https://suse-edge.github.io/charts",
-						Version: "0.13.10",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm chart 'name' field must be defined.",
+			},
+		},
+		`helm chart no repository name`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "kubevirt",
+							RepositoryName: "suse-edge",
+							Version:        "0.2.2",
+						},
+						{
+							Name:           "metallb",
+							RepositoryName: "",
+							Version:        "0.14.3",
+						},
 					},
-					{
-						Name:    "metallb",
-						Repo:    "https://suse-edge.github.io/charts",
-						Version: "0.13.10",
+					Repositories: []image.HelmRepository{
+						{
+							Name: "suse-edge",
+							URL:  "https://suse-edge.github.io/charts",
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm chart 'repositoryName' field for \"metallb\" must be defined.",
+			},
+		},
+		`helm chart no version`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "apache",
+							RepositoryName: "apache-repo",
+							Version:        "",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "apache-repo",
+							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm chart 'version' field for \"apache\" field must be defined.",
+			},
+		},
+		`helm chart create namespace no target`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:            "apache",
+							RepositoryName:  "apache-repo",
+							Version:         "10.7.0",
+							CreateNamespace: true,
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "apache-repo",
+							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm chart 'createNamespace' field for \"apache\" cannot be true without 'targetNamespace' being defined.",
+			},
+		},
+		`helm chart duplicate name`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "apache",
+							RepositoryName: "apache-repo",
+							Version:        "10.7.0",
+						},
+						{
+							Name:           "apache",
+							RepositoryName: "apache-repo",
+							Version:        "10.7.0",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "apache-repo",
+							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+						},
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
 				"The 'helmCharts' field contains duplicate entries: apache",
-				"The 'helmCharts' field contains duplicate entries: metallb",
 			},
 		},
-		`no repo`: {
+		`helm chart invalid values file`: {
 			K8s: image.Kubernetes{
-				HelmCharts: []image.HelmChart{
-					{
-						Name:    "apache",
-						Version: "10.7.0",
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "apache",
+							RepositoryName: "apache-repo",
+							Version:        "10.7.0",
+							ValuesFile:     "invalid",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "apache-repo",
+							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+						},
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Chart 'repo' field must be defined.",
+				"Helm chart 'valuesFile' field for \"apache\" must be the name of a valid yaml file ending in '.yaml' or '.yml'.",
 			},
 		},
-		`no version`: {
+		`helm chart nonexistent values file`: {
 			K8s: image.Kubernetes{
-				HelmCharts: []image.HelmChart{
-					{
-						Name:    "apache",
-						Repo:    "https://suse-edge.github.io/charts",
-						Version: "",
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "apache",
+							RepositoryName: "apache-repo",
+							Version:        "10.7.0",
+							ValuesFile:     "nonexistent.yaml",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "apache-repo",
+							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+						},
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Chart 'version' field must be defined.",
+				"Helm chart values file 'nonexistent.yaml' could not be found at 'kubernetes/helm/values/nonexistent.yaml'.",
 			},
 		},
-		`create namespace no target`: {
+		`helm repository no name`: {
 			K8s: image.Kubernetes{
-				HelmCharts: []image.HelmChart{
-					{
-						Name:            "apache",
-						Repo:            "https://suse-edge.github.io/charts",
-						Version:         "0.13.10",
-						CreateNamespace: true,
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "apache",
+							RepositoryName: "apache-repo",
+							Version:        "10.7.0",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "",
+							URL:  "https://suse-edge.github.io/charts",
+						},
+						{
+							Name: "apache-repo",
+							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+						},
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Chart 'createNamespace' field cannot be true without 'targetNamespace' being defined.",
+				"Helm repository 'name' field must be defined.",
 			},
 		},
-		`invalid values file`: {
+		`helm repository no url`: {
 			K8s: image.Kubernetes{
-				HelmCharts: []image.HelmChart{
-					{
-						Name:       "apache",
-						Repo:       "https://suse-edge.github.io/charts",
-						Version:    "0.13.10",
-						ValuesFile: "invalid",
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "apache",
+							RepositoryName: "apache-repo",
+							Version:        "10.7.0",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "apache-repo",
+							URL:  "",
+						},
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Chart 'valuesFile' field must be the name of a valid yaml file ending in '.yaml' or '.yml'.",
+				"Helm repository 'url' field for \"apache-repo\" must be defined.",
 			},
 		},
-		`nonexistent values file`: {
+		`helm repository invalid url`: {
 			K8s: image.Kubernetes{
-				HelmCharts: []image.HelmChart{
-					{
-						Name:       "apache",
-						Repo:       "https://suse-edge.github.io/charts",
-						Version:    "0.13.10",
-						ValuesFile: "nonexistent.yaml",
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "apache",
+							RepositoryName: "apache-repo",
+							Version:        "10.7.0",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "apache-repo",
+							URL:  "invalid.repo.io/bitnami/apache",
+						},
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Chart Values File 'nonexistent.yaml' could not be found at 'kubernetes/helm/values/nonexistent.yaml'.",
+				"Helm repository 'url' field for \"apache-repo\" must begin with either 'oci://', 'http://', or 'https://'.",
 			},
 		},
 	}
@@ -535,7 +697,7 @@ func TestValidateHelmCharts(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			k := test.K8s
-			failures := validateHelmCharts(&k, "")
+			failures := validateHelm(&k, "")
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
 
 			var foundMessages []string

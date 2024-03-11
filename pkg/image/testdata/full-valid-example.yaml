@@ -99,11 +99,20 @@ kubernetes:
   manifests:
     urls:
       - https://k8s.io/examples/application/nginx-app.yaml
-  helmCharts:
-    - name: apache
-      repo: oci://registry-1.docker.io/bitnamicharts/apache
-      version: 10.7.0
-      targetNamespace: web
-      createNamespace: true
-      installationNamespace: kube-system
-      valuesFile: apache-values.yaml
+  helm:
+    charts:
+      - name: apache
+        repositoryName: bitnami
+        version: 10.7.0
+        targetNamespace: web
+        createNamespace: true
+        installationNamespace: apache-system
+        valuesFile: apache-values.yaml
+      - name: metallb
+        repositoryName: suse-edge
+        version: 0.14.3
+    repositories:
+      - name: suse-edge
+        url: https://suse-edge.github.io/charts
+      - name: bitnami
+        url: oci://registry-1.docker.io/bitnamicharts/apache

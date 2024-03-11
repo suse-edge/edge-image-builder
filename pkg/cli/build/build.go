@@ -74,7 +74,7 @@ func Run(_ *cli.Context) error {
 
 	appendElementalRPMs(ctx)
 
-	appendHelmCharts(ctx)
+	appendHelm(ctx)
 
 	if !bootstrapDependencyServices(ctx, args.RootBuildDir) {
 		os.Exit(1)
@@ -278,10 +278,11 @@ func appendRPMs(ctx *image.Context, repository image.AddRepo, packages ...string
 	ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos = repositories
 }
 
-func appendHelmCharts(ctx *image.Context) {
-	componentCharts := combustion.ComponentHelmCharts(ctx)
+func appendHelm(ctx *image.Context) {
+	componentCharts, componentRepos := combustion.ComponentHelmCharts(ctx)
 
-	ctx.ImageDefinition.Kubernetes.HelmCharts = append(ctx.ImageDefinition.Kubernetes.HelmCharts, componentCharts...)
+	ctx.ImageDefinition.Kubernetes.Helm.Charts = append(ctx.ImageDefinition.Kubernetes.Helm.Charts, componentCharts...)
+	ctx.ImageDefinition.Kubernetes.Helm.Repositories = append(ctx.ImageDefinition.Kubernetes.Helm.Repositories, componentRepos...)
 }
 
 // If the image definition requires it, starts the necessary services, displaying appropriate messages
@@ -306,7 +307,7 @@ func bootstrapDependencyServices(ctx *image.Context, rootDir string) bool {
 	}
 
 	if combustion.IsEmbeddedArtifactRegistryConfigured(ctx) {
-		ctx.Helm = helm.New(ctx.BuildDir)
+		ctx.HelmClient = helm.New(ctx.BuildDir)
 	}
 
 	if ctx.ImageDefinition.Kubernetes.Version != "" {
