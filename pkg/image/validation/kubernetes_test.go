@@ -484,7 +484,7 @@ func TestValidateHelmCharts(t *testing.T) {
 						{
 							Name:           "kubevirt",
 							RepositoryName: "suse-edge",
-							Version:        "1.1.1",
+							Version:        "0.2.2",
 						},
 						{
 							Name:           "metallb",
