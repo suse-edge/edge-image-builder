@@ -151,7 +151,7 @@ func validateHelm(k8s *image.Kubernetes, imageConfigDir string) []FailedValidati
 
 	if len(k8s.Helm.Repositories) == 0 {
 		failures = append(failures, FailedValidation{
-			UserMessage: "Helm Charts defined with no Helm Repository defined.",
+			UserMessage: "Helm charts defined with no Helm Repository defined.",
 		})
 
 		return failures

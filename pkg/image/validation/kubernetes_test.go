@@ -474,7 +474,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Chart 'name' field must be defined.",
+				"Helm chart 'name' field must be defined.",
 			},
 		},
 		`helm chart no repository name`: {
@@ -619,7 +619,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm chart Values File 'nonexistent.yaml' could not be found at 'kubernetes/helm/values/nonexistent.yaml'.",
+				"Helm chart values file 'nonexistent.yaml' could not be found at 'kubernetes/helm/values/nonexistent.yaml'.",
 			},
 		},
 		`helm repository no name`: {
