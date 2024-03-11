@@ -319,7 +319,7 @@ The following sections further describe optional directories that may be include
     in combination with the manifests section in the definition file. All files in this directory will be parsed and
     the container images that they reference will be downloaded and served in an embedded artefact registry.
   * `helm`
-    * `values` Contains [Helm values files](https://helm.sh/docs/chart_template_guide/values_files/). Must be present for each Helm deployment that requires specified values.
+    * `values` Contains [Helm values files](https://helm.sh/docs/chart_template_guide/values_files/). Each Helm chart that requires specified values must have its own values file.
 
 > **_NOTE:_** Image builds enabling SELinux mode in the configuration files use EIB's package resolution process
 > to download any necessary RPM packages. To ensure a successful build, this process requires the ```--privileged```
