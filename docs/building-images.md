@@ -223,10 +223,10 @@ kubernetes:
     * `name` - Required; This must match the name of the actual Helm chart.
     * `repositoryName` - Required; This is the name of the corresponding `name` for a repository/registry specified within `repositories` that contains this Helm chart.
     * `version` - Required; The version of the Helm chart to be deployed.
-    * `installationNamespace` - Optional; The namespace where the Helm installation is executed. The default is `kube-system`.
+    * `installationNamespace` - Optional; The namespace where the Helm installation is executed. The default is `default`.
     * `targetNamespace` - Optional; The namespace where the Helm chart will be deployed. The default is `default`.
     * `createNamespace` - Optional; If `true` the `targetNamespace` will be created, if `false` it assumes the `targetNamespace` already exists.
-    * `valuesFile` - Optional; The name of the [Helm values files](https://helm.sh/docs/chart_template_guide/values_files/), placed under `kubernetes/helm/values`, for the specified chart. e.g. the input for `kubernetes/helm/values/metallb-values.yaml` is  `metallb-values.yaml`.
+    * `valuesFile` - Optional; The name of the [Helm values files](https://helm.sh/docs/chart_template_guide/values_files/), placed under `kubernetes/helm/values`, for the specified chart e.g. the input for `kubernetes/helm/values/metallb-values.yaml` is  `metallb-values.yaml`.
   * `repositories` - Required for charts; Defines a list of Helm repositories/registries required for each chart.
     * `name` - Required; Defines the name for this repository. This name doesn't have to match the name of the actual repository, but must correspond with the `repositoryName` of one or more charts.
     * `url` - Required; Defines the URL which contains the Helm repository containing a chart, or the OCI registry URL to a chart.
