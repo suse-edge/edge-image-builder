@@ -184,6 +184,26 @@ kubernetes:
   manifests:
     urls:
       - https://k8s.io/examples/application/nginx-app.yaml
+  helm:
+    charts:
+      - name: metallb
+        version: 0.14.3
+        repositoryName: suse-edge
+        valuesFile: metallb-values.yaml
+        targetNamespace: metallb-system
+        createNamespace: true
+        installationNamespace: kube-system
+      - name: kubevirt
+        version: 0.2.2
+        repositoryName: suse-edge
+      - name: apache
+        version: 10.7.0
+        repositoryName: apache-repo
+    repositories:
+      - name: suse-edge
+        url: https://suse-edge.github.io/charts
+      - name: apache-repo
+        url: oci://registry-1.docker.io/bitnamicharts/apache
 ```
 
 * `version` - Required; version string of a particular K3s or RKE2 release e.g.`v1.28.0+k3s1` or `v1.28.0+rke2r1`
@@ -198,6 +218,18 @@ kubernetes:
 * `manifests` - Optional; manifests to apply to the cluster.
   Can be used separately or in combination with the [configuration directory](#kubernetes-1).
   * `urls` - Optional; list of HTTP(s) URLs to download the manifests from
+* `helm` - Optional; Helm charts to be deployed to the cluster.
+  * `charts` - Optional; Defines a list of Helm charts and configuration for each Helm chart.
+    * `name` - Required; This must match the name of the actual Helm chart.
+    * `repositoryName` - Required; This is the name of the corresponding repository `name` specified within `repositories` that contains this Helm chart.
+    * `version` - Required; The version of the Helm chart to be deployed.
+    * `installationNamespace` - Optional; The namespace where the Helm installation is executed. The default is `kube-system`.
+    * `targetNamespace` - Optional; The namespace where the Helm chart will be deployed. The default is `default`.
+    * `createNamespace` - Optional; If `true` the `targetNamespace` will be created, if `false` it assumes the `targetNamespace` must already exist.
+    * `valuesFile` - Optional; The name of the [Helm values files](https://helm.sh/docs/chart_template_guide/values_files/), found in `kubernetes/helm/values`, for the specified chart. e.g. the input for `kubernetes/helm/values/metallb-values.yaml` is  `metallb-values.yaml`.
+  * `repositories` - Required for charts; Defines a list of Helm repositories/registries required for each chart.
+    * `name` - Required; Defines the name for this repository. This name doesn't have to match the name of the actual repository, but must correspond with the `repositoryName` of one or more charts.
+    * `url` - Required; Defines the URL which contains the Helm repository containing a chart, or the OCI registry URL to a chart.
 
 ### SUSE Manager (SUMA)
 
@@ -286,9 +318,8 @@ The following sections further describe optional directories that may be include
   * `manifests` - Contains locally provided manifests which will be applied to the cluster. Can be used separately or
     in combination with the manifests section in the definition file. All files in this directory will be parsed and
     the container images that they reference will be downloaded and served in an embedded artefact registry.
-  * `helm` - Contains locally provided ([K3s](https://docs.k3s.io/helm) / [RKE2](https://docs.rke2.io/helm)) Helm Custom Resources
-    which will be applied to the cluster as Helm charts. All files in this directory will be parsed and
-    the container images that they reference will be downloaded and served in an embedded artefact registry.
+  * `helm`
+    * `values` Contains [Helm values files](https://helm.sh/docs/chart_template_guide/values_files/). Must be present for each Helm deployment that requires specified values.
 
 > **_NOTE:_** Image builds enabling SELinux mode in the configuration files use EIB's package resolution process
 > to download any necessary RPM packages. To ensure a successful build, this process requires the ```--privileged```
