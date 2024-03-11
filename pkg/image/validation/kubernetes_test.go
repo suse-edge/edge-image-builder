@@ -452,7 +452,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm charts defined with no Helm Repository defined.",
+				"Helm charts defined with no Helm repositories defined.",
 			},
 		},
 		`helm chart no name`: {

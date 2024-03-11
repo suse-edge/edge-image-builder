@@ -151,17 +151,22 @@ func validateHelm(k8s *image.Kubernetes, imageConfigDir string) []FailedValidati
 
 	if len(k8s.Helm.Repositories) == 0 {
 		failures = append(failures, FailedValidation{
-			UserMessage: "Helm charts defined with no Helm Repository defined.",
+			UserMessage: "Helm charts defined with no Helm repositories defined.",
 		})
 
 		return failures
 	}
 
-	seenHelmCharts := make(map[string]bool)
+	if failure := validateHelmChartDuplicates(k8s.Helm.Charts); failure != "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: failure,
+		})
+	}
+
 	seenHelmRepos := make(map[string]bool)
 	for _, chart := range k8s.Helm.Charts {
 		c := chart
-		failures = append(failures, validateChart(&c, seenHelmCharts, imageConfigDir)...)
+		failures = append(failures, validateChart(&c, imageConfigDir)...)
 
 		seenHelmRepos[chart.RepositoryName] = true
 	}
@@ -174,7 +179,7 @@ func validateHelm(k8s *image.Kubernetes, imageConfigDir string) []FailedValidati
 	return failures
 }
 
-func validateChart(chart *image.HelmChart, seenHelmCharts map[string]bool, imageConfigDir string) []FailedValidation {
+func validateChart(chart *image.HelmChart, imageConfigDir string) []FailedValidation {
 	var failures []FailedValidation
 
 	if chart.Name == "" {
@@ -206,14 +211,6 @@ func validateChart(chart *image.HelmChart, seenHelmCharts map[string]bool, image
 			UserMessage: failure,
 		})
 	}
-
-	if _, exists := seenHelmCharts[chart.Name]; exists {
-		msg := fmt.Sprintf("The 'helmCharts' field contains duplicate entries: %s", chart.Name)
-		failures = append(failures, FailedValidation{
-			UserMessage: msg,
-		})
-	}
-	seenHelmCharts[chart.Name] = true
 
 	return failures
 }
@@ -261,7 +258,21 @@ func validateHelmChartValues(chartName, valuesFile string, imageConfigDir string
 		}
 
 		zap.S().Errorf("values file '%s' could not be read: %s", valuesFile, err)
-		return fmt.Sprintf("Helm chart values File '%s' could not be read.", valuesFile)
+		return fmt.Sprintf("Helm chart values file '%s' could not be read.", valuesFile)
+	}
+
+	return ""
+}
+
+func validateHelmChartDuplicates(charts []image.HelmChart) string {
+	seenHelmCharts := make(map[string]bool)
+
+	for _, chart := range charts {
+		if _, exists := seenHelmCharts[chart.Name]; exists {
+			return fmt.Sprintf("The 'helmCharts' field contains duplicate entries: %s", chart.Name)
+		}
+
+		seenHelmCharts[chart.Name] = true
 	}
 
 	return ""
