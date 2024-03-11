@@ -80,13 +80,13 @@ func TestValidateKubernetes(t *testing.T) {
 					Charts: []image.HelmChart{
 						{
 							Name:           "",
-							RepositoryName: "apache-repo",
+							RepositoryName: "another-apache-repo",
 							Version:        "10.7.0",
 						},
 					},
 					Repositories: []image.HelmRepository{
 						{
-							Name: "invalid-repo",
+							Name: "apache-repo",
 							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
 						},
 					},
@@ -95,8 +95,8 @@ func TestValidateKubernetes(t *testing.T) {
 			ExpectedFailedMessages: []string{
 				"The 'hostname' field is required for entries in the 'nodes' section.",
 				"Entries in 'urls' must begin with either 'http://' or 'https://'.",
-				"Helm Chart 'name' field must be defined.",
-				"Helm Repository 'name' field for \"invalid-repo\" must match the 'repositoryName' field in at least one defined Helm Chart.",
+				"Helm chart 'name' field must be defined.",
+				"Helm repository 'name' field for \"apache-repo\" must match the 'repositoryName' field in at least one defined Helm chart.",
 			},
 		},
 	}
@@ -452,7 +452,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Charts defined with no Helm Repository defined.",
+				"Helm charts defined with no Helm Repository defined.",
 			},
 		},
 		`helm chart no name`: {
@@ -501,7 +501,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Chart 'repositoryName' field for \"metallb\" must be defined.",
+				"Helm chart 'repositoryName' field for \"metallb\" must be defined.",
 			},
 		},
 		`helm chart no version`: {
@@ -523,7 +523,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Chart 'version' field for \"apache\" field must be defined.",
+				"Helm chart 'version' field for \"apache\" field must be defined.",
 			},
 		},
 		`helm chart create namespace no target`: {
@@ -546,7 +546,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Chart 'createNamespace' field for \"apache\" cannot be true without 'targetNamespace' being defined.",
+				"Helm chart 'createNamespace' field for \"apache\" cannot be true without 'targetNamespace' being defined.",
 			},
 		},
 		`helm chart duplicate name`: {
@@ -596,7 +596,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Chart 'valuesFile' field for \"apache\" must be the name of a valid yaml file ending in '.yaml' or '.yml'.",
+				"Helm chart 'valuesFile' field for \"apache\" must be the name of a valid yaml file ending in '.yaml' or '.yml'.",
 			},
 		},
 		`helm chart nonexistent values file`: {
@@ -619,7 +619,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Chart Values File 'nonexistent.yaml' could not be found at 'kubernetes/helm/values/nonexistent.yaml'.",
+				"Helm chart Values File 'nonexistent.yaml' could not be found at 'kubernetes/helm/values/nonexistent.yaml'.",
 			},
 		},
 		`helm repository no name`: {
@@ -645,7 +645,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Repository 'name' field must be defined.",
+				"Helm repository 'name' field must be defined.",
 			},
 		},
 		`helm repository no url`: {
@@ -667,7 +667,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Repository 'url' field for \"apache-repo\" must be defined.",
+				"Helm repository 'url' field for \"apache-repo\" must be defined.",
 			},
 		},
 		`helm repository invalid url`: {
@@ -689,7 +689,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm Repository 'url' field for \"apache-repo\" must begin with either 'oci://', 'http://', or 'https://'.",
+				"Helm repository 'url' field for \"apache-repo\" must begin with either 'oci://', 'http://', or 'https://'.",
 			},
 		},
 	}

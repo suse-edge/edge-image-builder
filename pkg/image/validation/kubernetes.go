@@ -163,7 +163,6 @@ func validateHelm(k8s *image.Kubernetes, imageConfigDir string) []FailedValidati
 		c := chart
 		failures = append(failures, validateChart(&c, seenHelmCharts, imageConfigDir)...)
 
-		seenHelmCharts[chart.Name] = true
 		seenHelmRepos[chart.RepositoryName] = true
 	}
 
@@ -180,25 +179,25 @@ func validateChart(chart *image.HelmChart, seenHelmCharts map[string]bool, image
 
 	if chart.Name == "" {
 		failures = append(failures, FailedValidation{
-			UserMessage: "Helm Chart 'name' field must be defined.",
+			UserMessage: "Helm chart 'name' field must be defined.",
 		})
 	}
 
 	if chart.RepositoryName == "" {
 		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Helm Chart 'repositoryName' field for %q must be defined.", chart.Name),
+			UserMessage: fmt.Sprintf("Helm chart 'repositoryName' field for %q must be defined.", chart.Name),
 		})
 	}
 
 	if chart.Version == "" {
 		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Helm Chart 'version' field for %q field must be defined.", chart.Name),
+			UserMessage: fmt.Sprintf("Helm chart 'version' field for %q field must be defined.", chart.Name),
 		})
 	}
 
 	if chart.CreateNamespace && chart.TargetNamespace == "" {
 		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Helm Chart 'createNamespace' field for %q cannot be true without 'targetNamespace' being defined.", chart.Name),
+			UserMessage: fmt.Sprintf("Helm chart 'createNamespace' field for %q cannot be true without 'targetNamespace' being defined.", chart.Name),
 		})
 	}
 
@@ -214,6 +213,7 @@ func validateChart(chart *image.HelmChart, seenHelmCharts map[string]bool, image
 			UserMessage: msg,
 		})
 	}
+	seenHelmCharts[chart.Name] = true
 
 	return failures
 }
@@ -223,21 +223,21 @@ func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool) []F
 
 	if repo.Name == "" {
 		failures = append(failures, FailedValidation{
-			UserMessage: "Helm Repository 'name' field must be defined.",
+			UserMessage: "Helm repository 'name' field must be defined.",
 		})
 	} else if !seenHelmRepos[repo.Name] {
 		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Helm Repository 'name' field for %q must match the 'repositoryName' field in at least one defined Helm Chart.", repo.Name),
+			UserMessage: fmt.Sprintf("Helm repository 'name' field for %q must match the 'repositoryName' field in at least one defined Helm chart.", repo.Name),
 		})
 	}
 
 	if repo.URL == "" {
 		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Helm Repository 'url' field for %q must be defined.", repo.Name),
+			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q must be defined.", repo.Name),
 		})
 	} else if !strings.HasPrefix(repo.URL, "http") && !strings.HasPrefix(repo.URL, "oci://") {
 		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Helm Repository 'url' field for %q must begin with either 'oci://', 'http://', or 'https://'.", repo.Name),
+			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q must begin with either 'oci://', 'http://', or 'https://'.", repo.Name),
 		})
 	}
 
@@ -250,18 +250,18 @@ func validateHelmChartValues(chartName, valuesFile string, imageConfigDir string
 	}
 
 	if filepath.Ext(valuesFile) != ".yaml" && filepath.Ext(valuesFile) != ".yml" {
-		return fmt.Sprintf("Helm Chart 'valuesFile' field for %q must be the name of a valid yaml file ending in '.yaml' or '.yml'.", chartName)
+		return fmt.Sprintf("Helm chart 'valuesFile' field for %q must be the name of a valid yaml file ending in '.yaml' or '.yml'.", chartName)
 	}
 
 	valuesFilePath := filepath.Join(imageConfigDir, combustion.K8sDir, combustion.HelmDir, combustion.ValuesDir, valuesFile)
 	_, err := os.Stat(valuesFilePath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return fmt.Sprintf("Helm Chart Values File '%s' could not be found at '%s'.", valuesFile, valuesFilePath)
+			return fmt.Sprintf("Helm chart values file '%s' could not be found at '%s'.", valuesFile, valuesFilePath)
 		}
 
 		zap.S().Errorf("values file '%s' could not be read: %s", valuesFile, err)
-		return fmt.Sprintf("Helm Chart Values File '%s' could not be read.", valuesFile)
+		return fmt.Sprintf("Helm chart values File '%s' could not be read.", valuesFile)
 	}
 
 	return ""

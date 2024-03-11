@@ -20,7 +20,11 @@ func HelmCharts(helm *image.Helm, valuesDir, buildDir, kubeVersion string, helmC
 
 	for _, helmChart := range helm.Charts {
 		c := helmChart
-		r := chartRepoMap[c.RepositoryName]
+		r, ok := chartRepoMap[c.RepositoryName]
+		if !ok {
+			return nil, fmt.Errorf("repository not found for chart %s", c.Name)
+		}
+
 		chart, err := handleChart(&c, r, valuesDir, buildDir, kubeVersion, helmClient)
 		if err != nil {
 			return nil, fmt.Errorf("handling chart resource: %w", err)

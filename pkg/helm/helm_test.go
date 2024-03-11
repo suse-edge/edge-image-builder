@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/suse-edge/edge-image-builder/pkg/image"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestHelmRepositoryName(t *testing.T) {

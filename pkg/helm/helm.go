@@ -8,9 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/suse-edge/edge-image-builder/pkg/image"
-
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
