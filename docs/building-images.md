@@ -219,14 +219,14 @@ kubernetes:
   Can be used separately or in combination with the [configuration directory](#kubernetes-1).
   * `urls` - Optional; list of HTTP(s) URLs to download the manifests from
 * `helm` - Optional; Helm charts to be deployed to the cluster.
-  * `charts` - Optional; Defines a list of Helm charts and configuration for each Helm chart.
+  * `charts` - Required; Defines a list of Helm charts and configuration for each Helm chart.
     * `name` - Required; This must match the name of the actual Helm chart.
     * `repositoryName` - Required; This is the name of the corresponding `name` for a repository/registry specified within `repositories` that contains this Helm chart.
     * `version` - Required; The version of the Helm chart to be deployed.
     * `installationNamespace` - Optional; The namespace where the Helm installation is executed. The default is `default`.
     * `targetNamespace` - Optional; The namespace where the Helm chart will be deployed. The default is `default`.
-    * `createNamespace` - Optional; If `true` the `targetNamespace` will be created, if `false` it assumes the `targetNamespace` already exists.
-    * `valuesFile` - Optional; The name of the [Helm values files](https://helm.sh/docs/chart_template_guide/values_files/), placed under `kubernetes/helm/values`, for the specified chart e.g. the input for `kubernetes/helm/values/metallb-values.yaml` is  `metallb-values.yaml`.
+    * `createNamespace` - Optional; If `true` the `targetNamespace` will be created, if `false` it assumes the `targetNamespace` already exists. If `false` and the namespace doesn't exist, the deployment will fail at boot time.
+    * `valuesFile` - Optional; The name of the [Helm values file](https://helm.sh/docs/chart_template_guide/values_files/) (not including the path), placed under `kubernetes/helm/values`, for the specified chart (e.g. the input for `kubernetes/helm/values/metallb-values.yaml` is  `metallb-values.yaml`).
   * `repositories` - Required for charts; Defines a list of Helm repositories/registries required for each chart.
     * `name` - Required; Defines the name for this repository. This name doesn't have to match the name of the actual repository, but must correspond with the `repositoryName` of one or more charts.
     * `url` - Required; Defines the URL which contains the Helm repository containing a chart, or the OCI registry URL to a chart.
@@ -319,7 +319,7 @@ The following sections further describe optional directories that may be include
     in combination with the manifests section in the definition file. All files in this directory will be parsed and
     the container images that they reference will be downloaded and served in an embedded artefact registry.
   * `helm`
-    * `values` Contains [Helm values files](https://helm.sh/docs/chart_template_guide/values_files/). Each Helm chart that requires specified values must have its own values file.
+    * `values` Contains [Helm values files](https://helm.sh/docs/chart_template_guide/values_files/). Helm charts that require specified values must have a values file.
 
 > **_NOTE:_** Image builds enabling SELinux mode in the configuration files use EIB's package resolution process
 > to download any necessary RPM packages. To ensure a successful build, this process requires the ```--privileged```
