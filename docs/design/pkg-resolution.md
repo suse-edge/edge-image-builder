@@ -15,7 +15,7 @@ An example of the command can be seen below:
 ```shell
 podman run --rm --privileged -it \
 -v $IMAGE_DIR:/eib eib:dev build \
---config-file $CONFIG_FILE.yaml \
+--definition-file $DEFINITION_FILE.yaml \
 --config-dir /eib \
 --build-dir /eib/_build
 ```
