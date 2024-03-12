@@ -12,6 +12,7 @@
 ## API
 
 * The `--config-file` argument to the EIB CLI has been renamed to `--definition-file`.
+* The `--build-dir` argument to the EIB CLI now defaults to `<config-dir>/_build`.
 
 ### Image Definition Changes
 
