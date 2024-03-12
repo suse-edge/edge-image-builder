@@ -8,6 +8,7 @@
 * Kubernetes install scripts are now downloaded at runtime instead of during the container image build process
 * Bumped Go Version to 1.22
 * Added support for using Helm charts from authenticated repositories/registries
+* Added support for skipping Helm chart TLS verification and for using Helm charts from plain HTTP repositories/registries
 
 ## API
 
