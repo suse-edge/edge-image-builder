@@ -204,6 +204,9 @@ kubernetes:
         url: https://suse-edge.github.io/charts
       - name: apache-repo
         url: oci://registry-1.docker.io/bitnamicharts/apache
+        authentication:
+          username: user
+          password: pass
 ```
 
 * `version` - Required; version string of a particular K3s or RKE2 release e.g.`v1.28.0+k3s1` or `v1.28.0+rke2r1`
@@ -230,6 +233,9 @@ kubernetes:
   * `repositories` - Required for charts; Defines a list of Helm repositories/registries required for each chart.
     * `name` - Required; Defines the name for this repository. This name doesn't have to match the name of the actual repository, but must correspond with the `repositoryName` of one or more charts.
     * `url` - Required; Defines the URL which contains the Helm repository containing a chart, or the OCI registry URL to a chart.
+    * `authentication` - Required for authenticated repositories/registries.
+      * `username` - Required; Defines the username for accessing the specified repository/registry. 
+      * `password` - Required; Defines the password for accessing the specified repository/registry.
 
 ### SUSE Manager (SUMA)
 
