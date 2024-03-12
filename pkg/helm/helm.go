@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/suse-edge/edge-image-builder/pkg/combustion"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"go.uber.org/zap"
@@ -75,6 +76,10 @@ func addRepoCommand(repo *image.HelmRepository, output io.Writer) *exec.Cmd {
 	if repo.SkipTLSVerify {
 		args = append(args, "--insecure-skip-tls-verify")
 	}
+	if repo.CAFile != "" {
+		caFilePath := filepath.Join(combustion.K8sDir, combustion.HelmDir, combustion.CertsDir, repo.CAFile)
+		args = append(args, "--ca-file", caFilePath)
+	}
 
 	cmd := exec.Command("helm", args...)
 	cmd.Stdout = output
@@ -120,6 +125,10 @@ func registryLoginCommand(host string, repo *image.HelmRepository, output io.Wri
 
 	if repo.SkipTLSVerify || repo.PlainHTTP {
 		args = append(args, "--insecure")
+	}
+	if repo.CAFile != "" {
+		caFilePath := filepath.Join(combustion.K8sDir, combustion.HelmDir, combustion.CertsDir, repo.CAFile)
+		args = append(args, "--ca-file", caFilePath)
 	}
 
 	cmd := exec.Command("helm", args...)
@@ -182,6 +191,10 @@ func pullCommand(chart string, repo *image.HelmRepository, version, destDir stri
 		args = append(args, "--insecure-skip-tls-verify")
 	} else if repo.PlainHTTP {
 		args = append(args, "--plain-http")
+	}
+	if repo.CAFile != "" {
+		caFilePath := filepath.Join(combustion.K8sDir, combustion.HelmDir, combustion.CertsDir, repo.CAFile)
+		args = append(args, "--ca-file", caFilePath)
 	}
 
 	cmd := exec.Command("helm", args...)
