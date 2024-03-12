@@ -3,6 +3,7 @@ package helm
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,9 +16,10 @@ import (
 )
 
 const (
-	templateLogFileName = "helm-template.log"
-	pullLogFileName     = "helm-pull.log"
-	repoAddLogFileName  = "helm-repo-add.log"
+	templateLogFileName   = "helm-template.log"
+	pullLogFileName       = "helm-pull.log"
+	repoAddLogFileName    = "helm-repo-add.log"
+	registryLoginFileName = "helm-registry-login.log"
 
 	outputFileFlags = os.O_APPEND | os.O_CREATE | os.O_WRONLY
 )
@@ -41,11 +43,6 @@ func repositoryName(repoName, repoURL, chart string) string {
 }
 
 func (h *Helm) AddRepo(repo *image.HelmRepository) error {
-	if !strings.HasPrefix(repo.URL, "http") {
-		zap.S().Infof("Skipping 'helm repo add' for non-http(s) repository: %s", repo.Name)
-		return nil
-	}
-
 	logFile := filepath.Join(h.outputDir, repoAddLogFileName)
 
 	file, err := os.OpenFile(logFile, outputFileFlags, fileio.NonExecutablePerms)
@@ -70,6 +67,52 @@ func (h *Helm) AddRepo(repo *image.HelmRepository) error {
 func addRepoCommand(repo *image.HelmRepository, output io.Writer) *exec.Cmd {
 	var args []string
 	args = append(args, "repo", "add", repo.Name, repo.URL)
+
+	if repo.Authentication.Username != "" && repo.Authentication.Password != "" {
+		args = append(args, "--username", repo.Authentication.Username, "--password", repo.Authentication.Password)
+	}
+
+	cmd := exec.Command("helm", args...)
+	cmd.Stdout = output
+	cmd.Stderr = output
+
+	return cmd
+}
+
+func (h *Helm) RegistryLogin(repo *image.HelmRepository) error {
+	logFile := filepath.Join(h.outputDir, registryLoginFileName)
+
+	file, err := os.OpenFile(logFile, outputFileFlags, fileio.NonExecutablePerms)
+	if err != nil {
+		return fmt.Errorf("opening log file: %w", err)
+	}
+	defer func() {
+		if err = file.Close(); err != nil {
+			zap.S().Warnf("Closing %s file failed: %s", logFile, err)
+		}
+	}()
+
+	hostURL, err := getHost(repo.URL)
+	if err != nil {
+		return fmt.Errorf("getting host url: %w", err)
+	}
+
+	cmd := registryLoginCommand(hostURL, repo, file)
+
+	if _, err = fmt.Fprintf(file, "command: %s\n", cmd); err != nil {
+		return fmt.Errorf("writing command prefix to log file: %w", err)
+	}
+
+	return cmd.Run()
+}
+
+func registryLoginCommand(hostURL string, repo *image.HelmRepository, output io.Writer) *exec.Cmd {
+	var args []string
+	args = append(args, "registry", "login", hostURL)
+
+	if repo.Authentication.Username != "" && repo.Authentication.Password != "" {
+		args = append(args, "--username", repo.Authentication.Username, "--password", repo.Authentication.Password)
+	}
 
 	cmd := exec.Command("helm", args...)
 	cmd.Stdout = output
@@ -211,4 +254,13 @@ func parseChartContents(chartContents string) ([]map[string]any, error) {
 	}
 
 	return resources, nil
+}
+
+func getHost(repoURL string) (string, error) {
+	parsedURL, err := url.Parse(repoURL)
+	if err != nil {
+		return "", fmt.Errorf("parsing url %q: %w", repoURL, err)
+	}
+
+	return parsedURL.Host, nil
 }

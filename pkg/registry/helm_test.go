@@ -13,14 +13,22 @@ import (
 )
 
 type mockHelmClient struct {
-	addRepoFunc  func(repository *image.HelmRepository) error
-	pullFunc     func(chart string, repository *image.HelmRepository, version, destDir string) (string, error)
-	templateFunc func(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error)
+	addRepoFunc       func(repository *image.HelmRepository) error
+	registryLoginFunc func(repository *image.HelmRepository) error
+	pullFunc          func(chart string, repository *image.HelmRepository, version, destDir string) (string, error)
+	templateFunc      func(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error)
 }
 
 func (m mockHelmClient) AddRepo(repository *image.HelmRepository) error {
 	if m.addRepoFunc != nil {
 		return m.addRepoFunc(repository)
+	}
+	panic("not implemented")
+}
+
+func (m mockHelmClient) RegistryLogin(repository *image.HelmRepository) error {
+	if m.registryLoginFunc != nil {
+		return m.registryLoginFunc(repository)
 	}
 	panic("not implemented")
 }
@@ -87,8 +95,8 @@ func TestHandleChart_FailedDownload(t *testing.T) {
 		Version:        "10.7.0",
 	}
 	helmRepo := &image.HelmRepository{
-		Name: "apache-repo",
-		URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+		Name: "suse-edge",
+		URL:  "https://suse-edge.github.io/charts",
 	}
 
 	helmClient := mockHelmClient{
@@ -116,6 +124,9 @@ func TestHandleChart_FailedTemplate(t *testing.T) {
 
 	helmClient := mockHelmClient{
 		addRepoFunc: func(repository *image.HelmRepository) error {
+			return nil
+		},
+		registryLoginFunc: func(repository *image.HelmRepository) error {
 			return nil
 		},
 		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
@@ -147,6 +158,9 @@ func TestHandleChart_FailedGetChartContent(t *testing.T) {
 		addRepoFunc: func(repository *image.HelmRepository) error {
 			return nil
 		},
+		registryLoginFunc: func(repository *image.HelmRepository) error {
+			return nil
+		},
 		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
 			return "does-not-exist.tgz", nil
 		},
@@ -163,7 +177,9 @@ func TestHandleChart_FailedGetChartContent(t *testing.T) {
 
 func TestDownloadChart_FailedAddingRepo(t *testing.T) {
 	helmChart := &image.HelmChart{}
-	helmRepo := &image.HelmRepository{}
+	helmRepo := &image.HelmRepository{
+		URL: "https://suse-edge.github.io/charts",
+	}
 
 	helmClient := mockHelmClient{
 		addRepoFunc: func(repository *image.HelmRepository) error {
@@ -177,9 +193,32 @@ func TestDownloadChart_FailedAddingRepo(t *testing.T) {
 	assert.Empty(t, chartPath)
 }
 
+func TestDownloadChart_FailedRegistryLogin(t *testing.T) {
+	helmChart := &image.HelmChart{}
+	helmRepo := &image.HelmRepository{
+		URL: "oci://registry-1.docker.io/bitnamicharts/apache",
+	}
+
+	helmClient := mockHelmClient{
+		addRepoFunc: func(repository *image.HelmRepository) error {
+			return nil
+		},
+		registryLoginFunc: func(repository *image.HelmRepository) error {
+			return fmt.Errorf("wrong credentials")
+		},
+	}
+
+	chartPath, err := downloadChart(helmChart, helmRepo, helmClient, "")
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "logging into registry: wrong credentials")
+	assert.Empty(t, chartPath)
+}
+
 func TestDownloadChart_FailedPulling(t *testing.T) {
 	helmChart := &image.HelmChart{}
-	helmRepo := &image.HelmRepository{}
+	helmRepo := &image.HelmRepository{
+		URL: "https://suse-edge.github.io/charts",
+	}
 
 	helmClient := mockHelmClient{
 		addRepoFunc: func(repository *image.HelmRepository) error {
@@ -209,6 +248,9 @@ func TestDownloadChart(t *testing.T) {
 
 	helmClient := mockHelmClient{
 		addRepoFunc: func(repository *image.HelmRepository) error {
+			return nil
+		},
+		registryLoginFunc: func(repository *image.HelmRepository) error {
 			return nil
 		},
 		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
@@ -252,6 +294,9 @@ func TestHelmCharts(t *testing.T) {
 
 	helmClient := mockHelmClient{
 		addRepoFunc: func(repository *image.HelmRepository) error {
+			return nil
+		},
+		registryLoginFunc: func(repository *image.HelmRepository) error {
 			return nil
 		},
 		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {

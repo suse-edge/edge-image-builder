@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
@@ -72,8 +73,14 @@ func handleChart(chart *image.HelmChart, repo *image.HelmRepository, valuesDir, 
 }
 
 func downloadChart(chart *image.HelmChart, repo *image.HelmRepository, helmClient image.HelmClient, destDir string) (string, error) {
-	if err := helmClient.AddRepo(repo); err != nil {
-		return "", fmt.Errorf("adding repo: %w", err)
+	if strings.HasPrefix(repo.URL, "http") {
+		if err := helmClient.AddRepo(repo); err != nil {
+			return "", fmt.Errorf("adding repo: %w", err)
+		}
+	} else {
+		if err := helmClient.RegistryLogin(repo); err != nil {
+			return "", fmt.Errorf("logging into registry: %w", err)
+		}
 	}
 
 	chartPath, err := helmClient.Pull(chart.Name, repo, chart.Version, destDir)
