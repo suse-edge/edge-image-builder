@@ -101,13 +101,13 @@ func TestAddRepoCommand(t *testing.T) {
 func TestRegistryLoginCommand(t *testing.T) {
 	tests := []struct {
 		name         string
-		hostURL      string
+		host         string
 		repo         *image.HelmRepository
 		expectedArgs []string
 	}{
 		{
-			name:    "Valid Registry With Auth",
-			hostURL: "registry-1.docker.io",
+			name: "Valid Registry With Auth",
+			host: "registry-1.docker.io",
 			repo: &image.HelmRepository{
 				Name: "apache-repo",
 				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
@@ -133,7 +133,7 @@ func TestRegistryLoginCommand(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := registryLoginCommand(test.hostURL, test.repo, &buf)
+			cmd := registryLoginCommand(test.host, test.repo, &buf)
 
 			assert.Equal(t, test.expectedArgs, cmd.Args)
 			assert.Equal(t, &buf, cmd.Stdout)

@@ -92,12 +92,12 @@ func (h *Helm) RegistryLogin(repo *image.HelmRepository) error {
 		}
 	}()
 
-	hostURL, err := getHost(repo.URL)
+	host, err := getHost(repo.URL)
 	if err != nil {
 		return fmt.Errorf("getting host url: %w", err)
 	}
 
-	cmd := registryLoginCommand(hostURL, repo, file)
+	cmd := registryLoginCommand(host, repo, file)
 
 	if _, err = fmt.Fprintf(file, "command: %s\n", cmd); err != nil {
 		return fmt.Errorf("writing command prefix to log file: %w", err)
@@ -106,9 +106,9 @@ func (h *Helm) RegistryLogin(repo *image.HelmRepository) error {
 	return cmd.Run()
 }
 
-func registryLoginCommand(hostURL string, repo *image.HelmRepository, output io.Writer) *exec.Cmd {
+func registryLoginCommand(host string, repo *image.HelmRepository, output io.Writer) *exec.Cmd {
 	var args []string
-	args = append(args, "registry", "login", hostURL)
+	args = append(args, "registry", "login", host)
 
 	if repo.Authentication.Username != "" && repo.Authentication.Password != "" {
 		args = append(args, "--username", repo.Authentication.Username, "--password", repo.Authentication.Password)
