@@ -228,6 +228,8 @@ func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool) []F
 		failures = append(failures, FailedValidation{
 			UserMessage: fmt.Sprintf("url '%s' could not be parsed", repo.URL),
 		})
+
+		return failures
 	}
 
 	failures = append(failures, validateHelmRepoName(repo, seenHelmRepos)...)
