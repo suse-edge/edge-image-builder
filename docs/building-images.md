@@ -40,6 +40,8 @@ operatingSystem:
   isoConfiguration:
     installDevice: /path/to/disk
     unattended: false
+  rawConfiguration:
+    diskSize: 20G
   time:
     timezone: Europe/London
     ntp:
