@@ -218,6 +218,17 @@ func validateChart(chart *image.HelmChart, imageConfigDir string) []FailedValida
 func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool) []FailedValidation {
 	var failures []FailedValidation
 
+	failures = append(failures, validateHelmRepoName(repo, seenHelmRepos)...)
+	failures = append(failures, validateHelmRepoURL(repo)...)
+	failures = append(failures, validateHelmRepoAuth(repo)...)
+	failures = append(failures, validateHelmRepoArgs(repo)...)
+
+	return failures
+}
+
+func validateHelmRepoName(repo *image.HelmRepository, seenHelmRepos map[string]bool) []FailedValidation {
+	var failures []FailedValidation
+
 	if repo.Name == "" {
 		failures = append(failures, FailedValidation{
 			UserMessage: "Helm repository 'name' field must be defined.",
@@ -228,6 +239,12 @@ func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool) []F
 		})
 	}
 
+	return failures
+}
+
+func validateHelmRepoURL(repo *image.HelmRepository) []FailedValidation {
+	var failures []FailedValidation
+
 	if repo.URL == "" {
 		failures = append(failures, FailedValidation{
 			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q must be defined.", repo.Name),
@@ -237,6 +254,12 @@ func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool) []F
 			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q must begin with either 'oci://', 'http://', or 'https://'.", repo.Name),
 		})
 	}
+
+	return failures
+}
+
+func validateHelmRepoAuth(repo *image.HelmRepository) []FailedValidation {
+	var failures []FailedValidation
 
 	if repo.Authentication.Username != "" && repo.Authentication.Password == "" {
 		failures = append(failures, FailedValidation{
@@ -249,6 +272,12 @@ func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool) []F
 			UserMessage: fmt.Sprintf("Helm repository 'username' field not defined for %q.", repo.Name),
 		})
 	}
+
+	return failures
+}
+
+func validateHelmRepoArgs(repo *image.HelmRepository) []FailedValidation {
+	var failures []FailedValidation
 
 	if repo.SkipTLSVerify && repo.PlainHTTP {
 		failures = append(failures, FailedValidation{

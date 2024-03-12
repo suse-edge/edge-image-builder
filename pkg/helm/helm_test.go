@@ -175,7 +175,7 @@ func TestRegistryLoginCommand(t *testing.T) {
 			},
 		},
 		{
-			name:    "Valid registry with auth and skip TLS verify",
+			name: "Valid registry with auth and skip TLS verify",
 			host: "registry-1.docker.io",
 			repo: &image.HelmRepository{
 				Name: "apache-repo",
@@ -199,7 +199,7 @@ func TestRegistryLoginCommand(t *testing.T) {
 			},
 		},
 		{
-			name:    "Valid registry with auth and plain HTTP",
+			name: "Valid registry with auth and plain HTTP",
 			host: "registry-1.docker.io",
 			repo: &image.HelmRepository{
 				Name: "apache-repo",
