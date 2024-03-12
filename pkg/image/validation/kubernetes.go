@@ -3,6 +3,7 @@ package validation
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -218,10 +219,18 @@ func validateChart(chart *image.HelmChart, imageConfigDir string) []FailedValida
 func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool) []FailedValidation {
 	var failures []FailedValidation
 
+	parsedURL, err := url.Parse(repo.URL)
+	if err != nil {
+		zap.S().Errorf("url '%s' could not be parsed: %s", repo.URL, err)
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("url '%s' could not be parsed", repo.URL),
+		})
+	}
+
 	failures = append(failures, validateHelmRepoName(repo, seenHelmRepos)...)
-	failures = append(failures, validateHelmRepoURL(repo)...)
+	failures = append(failures, validateHelmRepoURL(parsedURL, repo)...)
 	failures = append(failures, validateHelmRepoAuth(repo)...)
-	failures = append(failures, validateHelmRepoArgs(repo)...)
+	failures = append(failures, validateHelmRepoArgs(parsedURL, repo)...)
 
 	return failures
 }
@@ -242,14 +251,14 @@ func validateHelmRepoName(repo *image.HelmRepository, seenHelmRepos map[string]b
 	return failures
 }
 
-func validateHelmRepoURL(repo *image.HelmRepository) []FailedValidation {
+func validateHelmRepoURL(parsedURL *url.URL, repo *image.HelmRepository) []FailedValidation {
 	var failures []FailedValidation
 
 	if repo.URL == "" {
 		failures = append(failures, FailedValidation{
 			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q must be defined.", repo.Name),
 		})
-	} else if !strings.HasPrefix(repo.URL, "http") && !strings.HasPrefix(repo.URL, "oci://") {
+	} else if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" && parsedURL.Scheme != "oci" {
 		failures = append(failures, FailedValidation{
 			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q must begin with either 'oci://', 'http://', or 'https://'.", repo.Name),
 		})
@@ -276,7 +285,7 @@ func validateHelmRepoAuth(repo *image.HelmRepository) []FailedValidation {
 	return failures
 }
 
-func validateHelmRepoArgs(repo *image.HelmRepository) []FailedValidation {
+func validateHelmRepoArgs(parsedURL *url.URL, repo *image.HelmRepository) []FailedValidation {
 	var failures []FailedValidation
 
 	if repo.SkipTLSVerify && repo.PlainHTTP {
@@ -285,19 +294,19 @@ func validateHelmRepoArgs(repo *image.HelmRepository) []FailedValidation {
 		})
 	}
 
-	if strings.HasPrefix(repo.URL, "http://") && !repo.PlainHTTP {
+	if parsedURL.Scheme == "http" && !repo.PlainHTTP {
 		failures = append(failures, FailedValidation{
 			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q contains 'http://' but 'plainHTTP' field is false.", repo.Name),
 		})
 	}
 
-	if strings.HasPrefix(repo.URL, "https://") && repo.PlainHTTP {
+	if parsedURL.Scheme == "https" && repo.PlainHTTP {
 		failures = append(failures, FailedValidation{
 			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q contains 'https://' but 'plainHTTP' field is true.", repo.Name),
 		})
 	}
 
-	if strings.HasPrefix(repo.URL, "http://") && repo.SkipTLSVerify {
+	if parsedURL.Scheme == "http" && repo.SkipTLSVerify {
 		failures = append(failures, FailedValidation{
 			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q contains 'http://' but 'skipTLSVerify' field is true.", repo.Name),
 		})

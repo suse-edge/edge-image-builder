@@ -208,7 +208,7 @@ func TestRegistryLoginCommand(t *testing.T) {
 					Username: "user",
 					Password: "pass",
 				},
-				SkipTLSVerify: true,
+				PlainHTTP: true,
 			},
 			expectedArgs: []string{
 				"helm",

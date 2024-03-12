@@ -180,8 +180,7 @@ func pullCommand(chart string, repo *image.HelmRepository, version, destDir stri
 
 	if repo.SkipTLSVerify {
 		args = append(args, "--insecure-skip-tls-verify")
-	}
-	if repo.PlainHTTP {
+	} else if repo.PlainHTTP {
 		args = append(args, "--plain-http")
 	}
 
