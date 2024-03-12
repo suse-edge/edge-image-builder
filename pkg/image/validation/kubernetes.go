@@ -17,6 +17,9 @@ import (
 
 const (
 	k8sComponent = "Kubernetes"
+	httpScheme   = "http"
+	httpsScheme  = "https"
+	ociScheme    = "oci"
 )
 
 var validNodeTypes = []string{image.KubernetesNodeTypeServer, image.KubernetesNodeTypeAgent}
@@ -258,7 +261,7 @@ func validateHelmRepoURL(parsedURL *url.URL, repo *image.HelmRepository) []Faile
 		failures = append(failures, FailedValidation{
 			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q must be defined.", repo.Name),
 		})
-	} else if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" && parsedURL.Scheme != "oci" {
+	} else if parsedURL.Scheme != httpScheme && parsedURL.Scheme != httpsScheme && parsedURL.Scheme != ociScheme {
 		failures = append(failures, FailedValidation{
 			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q must begin with either 'oci://', 'http://', or 'https://'.", repo.Name),
 		})
@@ -294,19 +297,19 @@ func validateHelmRepoArgs(parsedURL *url.URL, repo *image.HelmRepository) []Fail
 		})
 	}
 
-	if parsedURL.Scheme == "http" && !repo.PlainHTTP {
+	if parsedURL.Scheme == httpScheme && !repo.PlainHTTP {
 		failures = append(failures, FailedValidation{
 			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q contains 'http://' but 'plainHTTP' field is false.", repo.Name),
 		})
 	}
 
-	if parsedURL.Scheme == "https" && repo.PlainHTTP {
+	if parsedURL.Scheme == httpsScheme && repo.PlainHTTP {
 		failures = append(failures, FailedValidation{
 			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q contains 'https://' but 'plainHTTP' field is true.", repo.Name),
 		})
 	}
 
-	if parsedURL.Scheme == "http" && repo.SkipTLSVerify {
+	if parsedURL.Scheme == httpScheme && repo.SkipTLSVerify {
 		failures = append(failures, FailedValidation{
 			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q contains 'http://' but 'skipTLSVerify' field is true.", repo.Name),
 		})
