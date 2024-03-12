@@ -42,24 +42,104 @@ func TestHelmRepositoryName(t *testing.T) {
 }
 
 func TestAddRepoCommand(t *testing.T) {
-	var buf bytes.Buffer
-	repo := &image.HelmRepository{
-		Name: "suse-edge",
-		URL:  "https://suse-edge.github.io/charts",
+	tests := []struct {
+		name         string
+		repo         *image.HelmRepository
+		expectedArgs []string
+	}{
+		{
+			name: "Valid Repository",
+			repo: &image.HelmRepository{
+				Name: "suse-edge",
+				URL:  "https://suse-edge.github.io/charts",
+			},
+			expectedArgs: []string{
+				"helm",
+				"repo",
+				"add",
+				"suse-edge",
+				"https://suse-edge.github.io/charts",
+			},
+		},
+		{
+			name: "Valid Repository With Auth",
+			repo: &image.HelmRepository{
+				Name: "suse-edge",
+				URL:  "https://suse-edge.github.io/charts",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+			},
+			expectedArgs: []string{
+				"helm",
+				"repo",
+				"add",
+				"suse-edge",
+				"https://suse-edge.github.io/charts",
+				"--username",
+				"user",
+				"--password",
+				"pass",
+			},
+		},
 	}
 
-	cmd := addRepoCommand(repo, &buf)
+	var buf bytes.Buffer
 
-	assert.Equal(t, []string{
-		"helm",
-		"repo",
-		"add",
-		"suse-edge",
-		"https://suse-edge.github.io/charts",
-	}, cmd.Args)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cmd := addRepoCommand(test.repo, &buf)
 
-	assert.Equal(t, &buf, cmd.Stdout)
-	assert.Equal(t, &buf, cmd.Stderr)
+			assert.Equal(t, test.expectedArgs, cmd.Args)
+			assert.Equal(t, &buf, cmd.Stdout)
+			assert.Equal(t, &buf, cmd.Stderr)
+		})
+	}
+}
+
+func TestRegistryLoginCommand(t *testing.T) {
+	tests := []struct {
+		name         string
+		host         string
+		repo         *image.HelmRepository
+		expectedArgs []string
+	}{
+		{
+			name: "Valid Registry With Auth",
+			host: "registry-1.docker.io",
+			repo: &image.HelmRepository{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+			},
+			expectedArgs: []string{
+				"helm",
+				"registry",
+				"login",
+				"registry-1.docker.io",
+				"--username",
+				"user",
+				"--password",
+				"pass",
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cmd := registryLoginCommand(test.host, test.repo, &buf)
+
+			assert.Equal(t, test.expectedArgs, cmd.Args)
+			assert.Equal(t, &buf, cmd.Stdout)
+			assert.Equal(t, &buf, cmd.Stderr)
+		})
+	}
 }
 
 func TestPullCommand(t *testing.T) {

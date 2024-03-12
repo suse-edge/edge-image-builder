@@ -238,6 +238,18 @@ func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool) []F
 		})
 	}
 
+	if repo.Authentication.Username != "" && repo.Authentication.Password == "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Helm repository 'password' field not defined for %q.", repo.Name),
+		})
+	}
+
+	if repo.Authentication.Username == "" && repo.Authentication.Password != "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Helm repository 'username' field not defined for %q.", repo.Name),
+		})
+	}
+
 	return failures
 }
 

@@ -156,9 +156,15 @@ func TestParse(t *testing.T) {
 
 	// Kubernetes
 	kubernetes := definition.Kubernetes
+
+	// Version
 	assert.Equal(t, "v1.29.0+rke2r1", kubernetes.Version)
+
+	// Network
 	assert.Equal(t, "192.168.122.100", kubernetes.Network.APIVIP)
 	assert.Equal(t, "api.cluster01.hosted.on.edge.suse.com", kubernetes.Network.APIHost)
+
+	// Nodes
 	require.Len(t, kubernetes.Nodes, 5)
 	assert.Equal(t, "node1.suse.com", kubernetes.Nodes[0].Hostname)
 	assert.Equal(t, "server", kubernetes.Nodes[0].Type)
@@ -175,7 +181,11 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "node5.suse.com", kubernetes.Nodes[4].Hostname)
 	assert.Equal(t, "agent", kubernetes.Nodes[4].Type)
 	assert.Equal(t, false, kubernetes.Nodes[4].Initialiser)
+
+	// Manifests
 	assert.Equal(t, "https://k8s.io/examples/application/nginx-app.yaml", kubernetes.Manifests.URLs[0])
+
+	// Helm Charts
 	assert.Equal(t, "apache", kubernetes.Helm.Charts[0].Name)
 	assert.Equal(t, "bitnami", kubernetes.Helm.Charts[0].RepositoryName)
 	assert.Equal(t, "10.7.0", kubernetes.Helm.Charts[0].Version)
@@ -183,11 +193,17 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, true, kubernetes.Helm.Charts[0].CreateNamespace)
 	assert.Equal(t, "apache-system", kubernetes.Helm.Charts[0].InstallationNamespace)
 	assert.Equal(t, "apache-values.yaml", kubernetes.Helm.Charts[0].ValuesFile)
+
 	assert.Equal(t, "metallb", kubernetes.Helm.Charts[1].Name)
 	assert.Equal(t, "suse-edge", kubernetes.Helm.Charts[1].RepositoryName)
 	assert.Equal(t, "0.14.3", kubernetes.Helm.Charts[1].Version)
+
+	// Helm Repositories
 	assert.Equal(t, "suse-edge", kubernetes.Helm.Repositories[0].Name)
 	assert.Equal(t, "https://suse-edge.github.io/charts", kubernetes.Helm.Repositories[0].URL)
+	assert.Equal(t, "user", kubernetes.Helm.Repositories[0].Authentication.Username)
+	assert.Equal(t, "pass", kubernetes.Helm.Repositories[0].Authentication.Password)
+
 	assert.Equal(t, "bitnami", kubernetes.Helm.Repositories[1].Name)
 	assert.Equal(t, "oci://registry-1.docker.io/bitnamicharts/apache", kubernetes.Helm.Repositories[1].URL)
 }

@@ -180,8 +180,14 @@ type HelmChart struct {
 }
 
 type HelmRepository struct {
-	Name string `yaml:"name"`
-	URL  string `yaml:"url"`
+	Name           string             `yaml:"name"`
+	URL            string             `yaml:"url"`
+	Authentication HelmAuthentication `yaml:"authentication"`
+}
+
+type HelmAuthentication struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
 }
 
 func ParseDefinition(data []byte) (*Definition, error) {

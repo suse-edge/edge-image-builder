@@ -7,6 +7,7 @@
 * Added output at combustion phase to observe the script being executed
 * Kubernetes install scripts are now downloaded at runtime instead of during the container image build process
 * Bumped Go Version to 1.22
+* Added support for using Helm charts from authenticated repositories/registries
 
 ## API
 
@@ -28,6 +29,7 @@
 * [#267](https://github.com/suse-edge/edge-image-builder/issues/267) - Embedded registry renders Kubernetes resources even when Kubernetes is not configured
 * [#242](https://github.com/suse-edge/edge-image-builder/issues/242) - Empty rpms directory triggers resolution
 * [#283](https://github.com/suse-edge/edge-image-builder/issues/283) - Definition file argument to EIB is incorrect
+* [#245](https://github.com/suse-edge/edge-image-builder/issues/245) - Pass additional arguments to Helm resolver
 
 ---
 
