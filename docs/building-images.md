@@ -204,6 +204,8 @@ kubernetes:
         url: https://suse-edge.github.io/charts
       - name: apache-repo
         url: oci://registry-1.docker.io/bitnamicharts/apache
+        plainHTTP: false
+        skipTLSVerify: true
         authentication:
           username: user
           password: pass
@@ -233,6 +235,8 @@ kubernetes:
   * `repositories` - Required for charts; Defines a list of Helm repositories/registries required for each chart.
     * `name` - Required; Defines the name for this repository. This name doesn't have to match the name of the actual repository, but must correspond with the `repositoryName` of one or more charts.
     * `url` - Required; Defines the URL which contains the Helm repository containing a chart, or the OCI registry URL to a chart.
+    * `plainHTTP` Required for plain HTTP repositories/registries; If `true` the Helm resolver will use `HTTP`, if `false` it will use `HTTPS`.
+    * `skipTLSVerify` Required if repository/registry TLS certificates aren't trusted; If `true` the Helm resolver will skip TLS certificate checks, if `false` the Helm resolver will check if certificates are trusted.
     * `authentication` - Required for authenticated repositories/registries.
       * `username` - Required; Defines the username for accessing the specified repository/registry. 
       * `password` - Required; Defines the password for accessing the specified repository/registry.
