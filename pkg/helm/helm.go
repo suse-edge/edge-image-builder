@@ -72,6 +72,10 @@ func addRepoCommand(repo *image.HelmRepository, output io.Writer) *exec.Cmd {
 		args = append(args, "--username", repo.Authentication.Username, "--password", repo.Authentication.Password)
 	}
 
+	if repo.SkipTLSVerify {
+		args = append(args, "--insecure-skip-tls-verify")
+	}
+
 	cmd := exec.Command("helm", args...)
 	cmd.Stdout = output
 	cmd.Stderr = output
@@ -112,6 +116,10 @@ func registryLoginCommand(host string, repo *image.HelmRepository, output io.Wri
 
 	if repo.Authentication.Username != "" && repo.Authentication.Password != "" {
 		args = append(args, "--username", repo.Authentication.Username, "--password", repo.Authentication.Password)
+	}
+
+	if repo.SkipTLSVerify || repo.PlainHTTP {
+		args = append(args, "--insecure")
 	}
 
 	cmd := exec.Command("helm", args...)
@@ -168,6 +176,13 @@ func pullCommand(chart string, repo *image.HelmRepository, version, destDir stri
 	}
 	if destDir != "" {
 		args = append(args, "--destination", destDir)
+	}
+
+	if repo.SkipTLSVerify {
+		args = append(args, "--insecure-skip-tls-verify")
+	}
+	if repo.PlainHTTP {
+		args = append(args, "--plain-http")
 	}
 
 	cmd := exec.Command("helm", args...)

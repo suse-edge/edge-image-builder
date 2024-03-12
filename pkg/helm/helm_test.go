@@ -48,7 +48,7 @@ func TestAddRepoCommand(t *testing.T) {
 		expectedArgs []string
 	}{
 		{
-			name: "Valid Repository",
+			name: "Valid repository",
 			repo: &image.HelmRepository{
 				Name: "suse-edge",
 				URL:  "https://suse-edge.github.io/charts",
@@ -62,7 +62,7 @@ func TestAddRepoCommand(t *testing.T) {
 			},
 		},
 		{
-			name: "Valid Repository With Auth",
+			name: "Valid repository with auth",
 			repo: &image.HelmRepository{
 				Name: "suse-edge",
 				URL:  "https://suse-edge.github.io/charts",
@@ -77,6 +77,53 @@ func TestAddRepoCommand(t *testing.T) {
 				"add",
 				"suse-edge",
 				"https://suse-edge.github.io/charts",
+				"--username",
+				"user",
+				"--password",
+				"pass",
+			},
+		},
+		{
+			name: "Valid repository with auth and skip TLS verify",
+			repo: &image.HelmRepository{
+				Name: "suse-edge",
+				URL:  "https://suse-edge.github.io/charts",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				SkipTLSVerify: true,
+			},
+			expectedArgs: []string{
+				"helm",
+				"repo",
+				"add",
+				"suse-edge",
+				"https://suse-edge.github.io/charts",
+				"--username",
+				"user",
+				"--password",
+				"pass",
+				"--insecure-skip-tls-verify",
+			},
+		},
+		{
+			name: "Valid repository with auth and plain HTTP",
+			repo: &image.HelmRepository{
+				Name: "suse-edge",
+				URL:  "http://suse-edge.github.io/charts",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				PlainHTTP: true,
+			},
+			expectedArgs: []string{
+				"helm",
+				"repo",
+				"add",
+				"suse-edge",
+				"http://suse-edge.github.io/charts",
 				"--username",
 				"user",
 				"--password",
@@ -125,6 +172,54 @@ func TestRegistryLoginCommand(t *testing.T) {
 				"user",
 				"--password",
 				"pass",
+			},
+		},
+		{
+			name:    "Valid registry with auth and skip TLS verify",
+			host: "registry-1.docker.io",
+			repo: &image.HelmRepository{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				SkipTLSVerify: true,
+			},
+			expectedArgs: []string{
+				"helm",
+				"registry",
+				"login",
+				"registry-1.docker.io",
+				"--username",
+				"user",
+				"--password",
+				"pass",
+				"--insecure",
+			},
+		},
+		{
+			name:    "Valid registry with auth and plain HTTP",
+			host: "registry-1.docker.io",
+			repo: &image.HelmRepository{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				SkipTLSVerify: true,
+			},
+			expectedArgs: []string{
+				"helm",
+				"registry",
+				"login",
+				"registry-1.docker.io",
+				"--username",
+				"user",
+				"--password",
+				"pass",
+				"--insecure",
 			},
 		},
 	}
@@ -211,6 +306,80 @@ func TestPullCommand(t *testing.T) {
 				"helm",
 				"pull",
 				"suse-edge/kubevirt",
+			},
+		},
+		{
+			name: "HTTP repository with auth and skip TLS verify",
+			repo: &image.HelmRepository{
+				Name: "suse-edge",
+				URL:  "https://suse-edge.github.io/charts",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				SkipTLSVerify: true,
+			},
+			chart: "kubevirt",
+			expectedArgs: []string{
+				"helm",
+				"pull",
+				"suse-edge/kubevirt",
+				"--insecure-skip-tls-verify",
+			},
+		},
+		{
+			name: "HTTP repository with auth and plain HTTP",
+			repo: &image.HelmRepository{
+				Name: "suse-edge",
+				URL:  "http://suse-edge.github.io/charts",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				PlainHTTP: true,
+			},
+			chart: "kubevirt",
+			expectedArgs: []string{
+				"helm",
+				"pull",
+				"suse-edge/kubevirt",
+				"--plain-http",
+			},
+		},
+		{
+			name: "OCI repository with auth and skip TLS verify",
+			repo: &image.HelmRepository{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				SkipTLSVerify: true,
+			},
+			expectedArgs: []string{
+				"helm",
+				"pull",
+				"oci://registry-1.docker.io/bitnamicharts/apache",
+				"--insecure-skip-tls-verify",
+			},
+		},
+		{
+			name: "OCI repository with auth and plain HTTP",
+			repo: &image.HelmRepository{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				PlainHTTP: true,
+			},
+			expectedArgs: []string{
+				"helm",
+				"pull",
+				"oci://registry-1.docker.io/bitnamicharts/apache",
+				"--plain-http",
 			},
 		},
 	}
