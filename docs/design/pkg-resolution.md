@@ -16,8 +16,7 @@ An example of the command can be seen below:
 podman run --rm --privileged -it \
 -v $IMAGE_DIR:/eib eib:dev build \
 --definition-file $DEFINITION_FILE.yaml \
---config-dir /eib \
---build-dir /eib/_build
+--config-dir /eib
 ```
 
 > **_NOTE:_** Depending on the `cgroupVersion` that Podman operates with, you might also need to run the command with `root` permissions. This is the case for `cgroupVersion: v1`. In this version, non-root usage of the `--privileged` option is not supported. For `cgroupVersion: v2`, non-root usage is supported. 
