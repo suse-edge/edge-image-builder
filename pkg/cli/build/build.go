@@ -35,9 +35,20 @@ const (
 func Run(_ *cli.Context) error {
 	args := &cmd.BuildArgs
 
-	buildDir, combustionDir, err := build.SetupBuildDirectory(args.RootBuildDir)
+	rootBuildDir := args.RootBuildDir
+	if rootBuildDir == "" {
+		const defaultBuildDir = "_build"
+
+		rootBuildDir = filepath.Join(args.ConfigDir, defaultBuildDir)
+		if err := os.MkdirAll(rootBuildDir, os.ModePerm); err != nil {
+			audit.Auditf("The root build directory could not be set up under the configuration directory '%s'.", args.ConfigDir)
+			return err
+		}
+	}
+
+	buildDir, combustionDir, err := build.SetupBuildDirectory(rootBuildDir)
 	if err != nil {
-		audit.Auditf("The build directory could not be setup under the configuration directory '%s'.", args.ConfigDir)
+		audit.Audit("The build directory could not be set up.")
 		return err
 	}
 
@@ -76,7 +87,7 @@ func Run(_ *cli.Context) error {
 
 	appendHelm(ctx)
 
-	if !bootstrapDependencyServices(ctx, args.RootBuildDir) {
+	if !bootstrapDependencyServices(ctx, rootBuildDir) {
 		os.Exit(1)
 	}
 

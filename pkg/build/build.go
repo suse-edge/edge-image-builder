@@ -69,15 +69,7 @@ func (b *Builder) generateBaseImageFilename() string {
 	return filename
 }
 
-func SetupBuildDirectory(rootDir string) (buildDir string, combustionDir string, err error) {
-	if rootDir == "" {
-		tmpDir, tmpErr := os.MkdirTemp("", "eib-")
-		if tmpErr != nil {
-			return "", "", fmt.Errorf("creating a temporary root directory: %w", tmpErr)
-		}
-		rootDir = tmpDir
-	}
-
+func SetupBuildDirectory(rootDir string) (buildDir, combustionDir string, err error) {
 	timestamp := time.Now().Format("Jan02_15-04-05")
 	buildDir = filepath.Join(rootDir, fmt.Sprintf("build-%s", timestamp))
 	if err = os.MkdirAll(buildDir, os.ModePerm); err != nil {
