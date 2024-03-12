@@ -287,6 +287,30 @@ func validateHelmRepoAuth(repo *image.HelmRepository) []FailedValidation {
 		})
 	}
 
+	if repo.SkipTLSVerify && repo.PlainHTTP {
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Helm repository 'plainHTTP' and 'skipTLSVerify' fields for %q cannot both be true.", repo.Name),
+		})
+	}
+
+	if strings.HasPrefix(repo.URL, "http://") && !repo.PlainHTTP {
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q contains 'http://' but 'plainHTTP' field is false.", repo.Name),
+		})
+	}
+
+	if strings.HasPrefix(repo.URL, "https://") && repo.PlainHTTP {
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q contains 'https://' but 'plainHTTP' field is true.", repo.Name),
+		})
+	}
+
+	if strings.HasPrefix(repo.URL, "http://") && repo.SkipTLSVerify {
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q contains 'http://' but 'skipTLSVerify' field is true.", repo.Name),
+		})
+	}
+
 	return failures
 }
 
