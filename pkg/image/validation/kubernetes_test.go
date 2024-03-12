@@ -434,6 +434,10 @@ func TestValidateHelmCharts(t *testing.T) {
 						{
 							Name: "apache-repo",
 							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+							Authentication: image.HelmAuthentication{
+								Username: "user",
+								Password: "pass",
+							},
 						},
 					},
 				},
@@ -690,6 +694,58 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 			ExpectedFailedMessages: []string{
 				"Helm repository 'url' field for \"apache-repo\" must begin with either 'oci://', 'http://', or 'https://'.",
+			},
+		},
+		`helm repository username no password`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "apache",
+							RepositoryName: "apache-repo",
+							Version:        "10.7.0",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "apache-repo",
+							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+							Authentication: image.HelmAuthentication{
+								Username: "user",
+								Password: "",
+							},
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm repository 'password' field not defined for \"apache-repo\".",
+			},
+		},
+		`helm repository password no username`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "apache",
+							RepositoryName: "apache-repo",
+							Version:        "10.7.0",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "apache-repo",
+							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+							Authentication: image.HelmAuthentication{
+								Username: "",
+								Password: "pass",
+							},
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm repository 'username' field not defined for \"apache-repo\".",
 			},
 		},
 	}
