@@ -334,12 +334,7 @@ The following sections further describe optional directories that may be include
 
 ### RPMs
 
-Custom RPMs may be included in the configuration directory. These RPMs will be bundled into the built image
-and installed when the image is booted. The following describes the directory structure needed to configure this:
-
-* `rpms` - All RPMs in this directory will be included in the built image and installed during the
-  combustion phase. These RPMs are installed directly (instead of using zypper), which means that there will be no
-  automatic dependency resolution.
+Custom RPMs may be included in the configuration directory. For more information on how to add custom RPMs, see the [Side-load RPMs](installing-packages.md#side-load-rpms) section of the [Installing pacakges](installing-packages.md) guide.
 
 ### Elemental
 

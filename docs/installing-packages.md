@@ -42,11 +42,13 @@ operatingSystem:
 ```
 
 ### Side-load RPMs
-Sometimes you may want to install RPM files that are not hosted in a repository. For this use-case, you should create a directory called `rpms` under `<eib-config-dir>/rpms` and copy your local RPM files there.
+Sometimes you may want to install RPM files that are not hosted in a repository. For this use-case, you should create the following set of directories under EIB's configuration directory:
 
-> **_NOTE:_** You must provide an `additionalRepos` entry or a `sccRegistrationCode` if your RPMs are dependent on other packages.
+* `rpms` - Place your RPMs here. All RPMs in this directory will be checked for valid GPG signatures, included in the built image and installed during the combustion phase. 
+  > **_NOTE:_** You must provide an `additionalRepos` entry or a `sccRegistrationCode` in your EIB definition file if your RPMs are dependent on other packages.
+* `rpms/gpg-keys` - Place all GPG keys that are used to sign your RPMs here. All GPG keys in this directory will be used when validating the GPG signatures of your RPMs. **Trying to install RPMs that are unsgined or have unrecognized GPG keys will result in a failure of the EIB build process.**
 
-All RPMs that will be side-loaded must have **valid** GPG signatures. The GPG keys used to sign the RPMs must be copied to a directory called `gpg-keys` which must be created under `<eib-config-dir>/rpms`. **Trying to install RPMs that are unsgined or have unrecognized GPG keys will result in a failure of the EIB build process.**
+If you want to install an unsigned RPM, refer to the [Installing unsigned packages](#installing-unsigned-packages) section of this documentation.
 
 #### RPM with dependency resolution from a third-party repository  
 EIB configuration directory tree:
