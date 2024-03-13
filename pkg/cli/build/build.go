@@ -71,12 +71,6 @@ func Run(_ *cli.Context) error {
 		os.Exit(1)
 	}
 
-	if args.Validate {
-		// If we got this far, the image is valid. If we're in this block, the user wants execution to stop.
-		log.AuditInfo("The specified image definition is valid.")
-		return nil
-	}
-
 	if err = appendKubernetesSELinuxRPMs(ctx); err != nil {
 		log.Auditf("Configuring Kubernetes failed. %s", checkLogMessage)
 		zap.S().Fatalf("Failed to configure Kubernetes SELinux policy: %s", err)

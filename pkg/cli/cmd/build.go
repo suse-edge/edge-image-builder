@@ -10,7 +10,6 @@ type BuildFlags struct {
 	DefinitionFile string
 	ConfigDir      string
 	RootBuildDir   string
-	Validate       bool
 }
 
 var (
@@ -42,11 +41,6 @@ func NewBuildCommand(action func(*cli.Context) error) *cli.Command {
 				Name:        "build-dir",
 				Usage:       "Full path to the directory to store build artifacts",
 				Destination: &BuildArgs.RootBuildDir,
-			},
-			&cli.BoolFlag{
-				Name:        "validate",
-				Usage:       "If specified, the image definition will be validated but not built",
-				Destination: &BuildArgs.Validate,
 			},
 		},
 	}
