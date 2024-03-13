@@ -6,8 +6,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"slices"
-	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/cache"
@@ -15,7 +13,6 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
 	"github.com/suse-edge/edge-image-builder/pkg/helm"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
-	"github.com/suse-edge/edge-image-builder/pkg/image/validation"
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/network"
@@ -157,45 +154,6 @@ func buildContext(buildDir, combustionDir, configDir string, imageDefinition *im
 		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
 	}
 	return ctx
-}
-
-// Runs the image definition validation, displaying the appropriate messages to the user in the event
-// of a failure. Returns 'true' if the definition is valid; 'false' otherwise.
-func isImageDefinitionValid(ctx *image.Context) bool {
-	failedValidations := validation.ValidateDefinition(ctx)
-	if len(failedValidations) > 0 {
-		log.Audit("Image definition validation found the following errors:")
-
-		logMessageBuilder := strings.Builder{}
-
-		orderedComponentNames := make([]string, 0, len(failedValidations))
-		for c := range failedValidations {
-			orderedComponentNames = append(orderedComponentNames, c)
-		}
-		slices.Sort(orderedComponentNames)
-
-		for _, componentName := range orderedComponentNames {
-			failures := failedValidations[componentName]
-			log.Audit(fmt.Sprintf("  %s", componentName))
-			for _, cf := range failures {
-				log.Audit(fmt.Sprintf("    %s", cf.UserMessage))
-				logMessageBuilder.WriteString(cf.UserMessage + "\n")
-				if cf.Error != nil {
-					logMessageBuilder.WriteString("\t" + cf.Error.Error() + "\n")
-				}
-			}
-		}
-
-		if s := logMessageBuilder.String(); s != "" {
-			zap.S().Errorf("image definition validation failures:\n%s", s)
-		}
-
-		log.AuditInfo(checkLogMessage)
-
-		return false
-	}
-
-	return true
 }
 
 func appendKubernetesSELinuxRPMs(ctx *image.Context) error {
