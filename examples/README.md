@@ -70,7 +70,6 @@ to the desired definition. For example:
 podman run --rm --privileged -it \
   -v .:/eib eib:dev build \
   --config-dir /eib \
-  --build-dir /eib/_build \
   --definition-file ./definitions/iso/basic.yaml
 ```
 
