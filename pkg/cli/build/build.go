@@ -104,18 +104,20 @@ func Run(_ *cli.Context) error {
 // 'false' otherwise.
 func imageConfigDirExists(configDir string) bool {
 	_, err := os.Stat(configDir)
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			log.AuditInfof("The specified image configuration directory '%s' could not be found.", configDir)
-			return false
-		}
-		log.AuditInfof("Unable to check the filesystem for the image configuration directory '%s'. %s",
-			configDir, checkLogMessage)
-		zap.S().Error(err)
-		return false
+	if err == nil {
+		return true
 	}
 
-	return true
+	if errors.Is(err, fs.ErrNotExist) {
+		log.AuditInfof("The specified image configuration directory '%s' could not be found.", configDir)
+	} else {
+		log.AuditInfof("Unable to check the filesystem for the image configuration directory '%s'. %s",
+			configDir, checkLogMessage)
+
+		zap.S().Errorf("Reading config dir failed: %v", err)
+	}
+
+	return false
 }
 
 // Attempts to parse the specified image definition file, displaying the appropriate messages to the user.
