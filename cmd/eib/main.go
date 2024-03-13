@@ -13,6 +13,7 @@ func main() {
 	app := cmd.NewApp()
 	app.Commands = []*cli.Command{
 		cmd.NewBuildCommand(build.Run),
+		cmd.NewValidateCommand(build.Validate),
 	}
 
 	if err := app.Run(os.Args); err != nil {
