@@ -224,9 +224,9 @@ func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool) []F
 
 	parsedURL, err := url.Parse(repo.URL)
 	if err != nil {
-		zap.S().Errorf("url '%s' could not be parsed: %s", repo.URL, err)
+		zap.S().Errorf("Helm repository URL '%s' could not be parsed: %s", repo.URL, err)
 		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("url '%s' could not be parsed", repo.URL),
+			UserMessage: fmt.Sprintf("Helm repository URL '%s' could not be parsed.", repo.URL),
 		})
 
 		return failures
