@@ -30,6 +30,7 @@
 * [#242](https://github.com/suse-edge/edge-image-builder/issues/242) - Empty rpms directory triggers resolution
 * [#283](https://github.com/suse-edge/edge-image-builder/issues/283) - Definition file argument to EIB is incorrect
 * [#245](https://github.com/suse-edge/edge-image-builder/issues/245) - Pass additional arguments to Helm resolver
+* [#307](https://github.com/suse-edge/edge-image-builder/issues/307) - Helm chart parsing logic breaks if "---" is present in the chart's resources
 
 ---
 
