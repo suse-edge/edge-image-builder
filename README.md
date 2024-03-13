@@ -48,8 +48,7 @@ The following example command attaches the directory and runs EIB:
 ```shell
 podman run --rm -it \
 -v $IMAGE_DIR:/eib eib:dev build \
---definition-file $DEFINITION_FILE.yaml \
---config-dir /eib
+--definition-file $DEFINITION_FILE.yaml
 ```
 
 **NOTE:**
@@ -61,8 +60,8 @@ which require it (e.g. Elemental, Kubernetes SELinux, etc.).
 * `--definition-file` - Specifies which image definition file to build. The path to this file will be relative to
   the image configuration directory. If the definition file is in the root of the configuration directory, simply 
   specify the name of the configuration file.
-* `--config-dir` - Specifies the image configuration directory. Keep in mind that this is relative to the running
-  container, so its value must match the mounted volume.
+* `--config-dir` - (Optional) Specifies the image configuration directory. This path is relative to the running container, so its
+  value must match the mounted volume. It defaults to `/eib` which matches the mounted volume `$IMAGE_DIR:/eib` in the example above.
 * `--build-dir` - (Optional) If unspecified, EIB will create a `_build` directory under the image configuration directory 
   for assembling/generating the components used in the build which will persist after EIB finishes. This may also be
   specified to another location within a mounted volume. The directory will contain subdirectories storing the
