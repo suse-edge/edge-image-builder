@@ -240,6 +240,10 @@ func parseChartContents(chartContents string) ([]map[string]any, error) {
 			continue
 		}
 
+		if !strings.HasPrefix(strings.TrimSpace(resource), "# Source") {
+			continue
+		}
+
 		source, content, found := strings.Cut(resource, "\n")
 		if !found {
 			return nil, fmt.Errorf("invalid resource: %s", resource)
