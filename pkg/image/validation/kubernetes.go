@@ -293,42 +293,6 @@ func validateHelmRepoAuth(repo *image.HelmRepository) []FailedValidation {
 		})
 	}
 
-	if repo.SkipTLSVerify && repo.PlainHTTP {
-		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Helm repository 'plainHTTP' and 'skipTLSVerify' fields for %q cannot both be true.", repo.Name),
-		})
-	}
-
-	if repo.SkipTLSVerify && repo.CAFile != "" {
-		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Helm repository 'caFile' field for %q should not be defined while 'skipTLSVerify' is true.", repo.Name),
-		})
-	}
-
-	if repo.PlainHTTP && repo.CAFile != "" {
-		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Helm repository 'caFile' field for %q should not be defined while 'plainHTTP' is true.", repo.Name),
-		})
-	}
-
-	if strings.HasPrefix(repo.URL, "http://") && !repo.PlainHTTP {
-		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q contains 'http://' but 'plainHTTP' field is false.", repo.Name),
-		})
-	}
-
-	if strings.HasPrefix(repo.URL, "https://") && repo.PlainHTTP {
-		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q contains 'https://' but 'plainHTTP' field is true.", repo.Name),
-		})
-	}
-
-	if strings.HasPrefix(repo.URL, "http://") && repo.SkipTLSVerify {
-		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q contains 'http://' but 'skipTLSVerify' field is true.", repo.Name),
-		})
-	}
-
 	return failures
 }
 
@@ -359,7 +323,19 @@ func validateHelmRepoArgs(parsedURL *url.URL, repo *image.HelmRepository) []Fail
 		})
 	}
 
-	if strings.HasPrefix(repo.URL, "http://") && repo.CAFile != "" {
+	if repo.SkipTLSVerify && repo.CAFile != "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Helm repository 'caFile' field for %q should not be defined while 'skipTLSVerify' is true.", repo.Name),
+		})
+	}
+
+	if repo.PlainHTTP && repo.CAFile != "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Helm repository 'caFile' field for %q should not be defined while 'plainHTTP' is true.", repo.Name),
+		})
+	}
+
+	if parsedURL.Scheme == httpScheme && repo.CAFile != "" {
 		failures = append(failures, FailedValidation{
 			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q contains 'http://' but 'caFile' field is defined.", repo.Name),
 		})
