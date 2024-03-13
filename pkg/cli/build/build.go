@@ -17,19 +17,18 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/image/validation"
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
-	audit "github.com/suse-edge/edge-image-builder/pkg/log"
+	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/network"
 	"github.com/suse-edge/edge-image-builder/pkg/podman"
 	"github.com/suse-edge/edge-image-builder/pkg/rpm"
 	"github.com/suse-edge/edge-image-builder/pkg/rpm/resolver"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 const (
-	logFilename     = "eib-build.log"
-	checkLogMessage = "Please check the eib-build.log file under the build directory for more information."
+	buildLogFilename = "eib-build.log"
+	checkLogMessage  = "Please check the eib-build.log file under the build directory for more information."
 )
 
 func Run(_ *cli.Context) error {
@@ -41,21 +40,21 @@ func Run(_ *cli.Context) error {
 
 		rootBuildDir = filepath.Join(args.ConfigDir, defaultBuildDir)
 		if err := os.MkdirAll(rootBuildDir, os.ModePerm); err != nil {
-			audit.Auditf("The root build directory could not be set up under the configuration directory '%s'.", args.ConfigDir)
+			log.Auditf("The root build directory could not be set up under the configuration directory '%s'.", args.ConfigDir)
 			return err
 		}
 	}
 
 	buildDir, combustionDir, err := build.SetupBuildDirectory(rootBuildDir)
 	if err != nil {
-		audit.Audit("The build directory could not be set up.")
+		log.Audit("The build directory could not be set up.")
 		return err
 	}
 
 	// This needs to occur as early as possible so that the subsequent calls can use the log
-	setupLogging(buildDir)
+	log.ConfigureGlobalLogger(filepath.Join(buildDir, buildLogFilename))
 
-	configDirExists := doesImageConfigDirExist(args.ConfigDir)
+	configDirExists := imageConfigDirExists(args.ConfigDir)
 	if !configDirExists {
 		os.Exit(1)
 	}
@@ -74,12 +73,12 @@ func Run(_ *cli.Context) error {
 
 	if args.Validate {
 		// If we got this far, the image is valid. If we're in this block, the user wants execution to stop.
-		audit.AuditInfo("The specified image definition is valid.")
+		log.AuditInfo("The specified image definition is valid.")
 		return nil
 	}
 
 	if err = appendKubernetesSELinuxRPMs(ctx); err != nil {
-		audit.Auditf("Configuring Kubernetes failed. %s", checkLogMessage)
+		log.Auditf("Configuring Kubernetes failed. %s", checkLogMessage)
 		zap.S().Fatalf("Failed to configure Kubernetes SELinux policy: %s", err)
 	}
 
@@ -93,7 +92,7 @@ func Run(_ *cli.Context) error {
 
 	defer func() {
 		if r := recover(); r != nil {
-			audit.AuditInfo("Build failed unexpectedly, check the logs under the build directory for more information.")
+			log.AuditInfo("Build failed unexpectedly, check the logs under the build directory for more information.")
 			zap.S().Fatalf("Unexpected error occurred: %s", r)
 		}
 	}()
@@ -106,34 +105,17 @@ func Run(_ *cli.Context) error {
 	return nil
 }
 
-// Configures the global logger.
-func setupLogging(buildDir string) {
-	logFilename := filepath.Join(buildDir, logFilename)
-
-	logConfig := zap.NewProductionConfig()
-	logConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
-	logConfig.Encoding = "console"
-	logConfig.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
-	logConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	logConfig.OutputPaths = []string{logFilename}
-
-	logger := zap.Must(logConfig.Build())
-
-	// Set our configured logger to be accessed globally by zap.L()
-	zap.ReplaceGlobals(logger)
-}
-
 // Returns whether the image configuration directory can be read, displaying
 // the appropriate messages to the user. Returns 'true' if the directory exists and execution can proceed,
 // 'false' otherwise.
-func doesImageConfigDirExist(configDir string) bool {
+func imageConfigDirExists(configDir string) bool {
 	_, err := os.Stat(configDir)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			audit.AuditInfof("The specified image configuration directory '%s' could not be found.", configDir)
+			log.AuditInfof("The specified image configuration directory '%s' could not be found.", configDir)
 			return false
 		}
-		audit.AuditInfof("Unable to check the filesystem for the image configuration directory '%s'. %s",
+		log.AuditInfof("Unable to check the filesystem for the image configuration directory '%s'. %s",
 			configDir, checkLogMessage)
 		zap.S().Error(err)
 		return false
@@ -150,9 +132,9 @@ func parseImageDefinition(configDir, definitionFile string) *image.Definition {
 	configData, err := os.ReadFile(definitionFilePath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			audit.AuditInfof("The specified definition file '%s' could not be found.", definitionFilePath)
+			log.AuditInfof("The specified definition file '%s' could not be found.", definitionFilePath)
 		} else {
-			audit.AuditInfof("The specified definition file '%s' could not be read. %s", definitionFilePath, checkLogMessage)
+			log.AuditInfof("The specified definition file '%s' could not be read. %s", definitionFilePath, checkLogMessage)
 			zap.S().Error(err)
 		}
 		return nil
@@ -160,7 +142,7 @@ func parseImageDefinition(configDir, definitionFile string) *image.Definition {
 
 	imageDefinition, err := image.ParseDefinition(configData)
 	if err != nil {
-		audit.AuditInfof("The image definition file '%s' could not be parsed. %s", definitionFilePath, checkLogMessage)
+		log.AuditInfof("The image definition file '%s' could not be parsed. %s", definitionFilePath, checkLogMessage)
 		zap.S().Error(err)
 		return nil
 	}
@@ -186,7 +168,7 @@ func buildContext(buildDir, combustionDir, configDir string, imageDefinition *im
 func isImageDefinitionValid(ctx *image.Context) bool {
 	failedValidations := validation.ValidateDefinition(ctx)
 	if len(failedValidations) > 0 {
-		audit.Audit("Image definition validation found the following errors:")
+		log.Audit("Image definition validation found the following errors:")
 
 		logMessageBuilder := strings.Builder{}
 
@@ -198,9 +180,9 @@ func isImageDefinitionValid(ctx *image.Context) bool {
 
 		for _, componentName := range orderedComponentNames {
 			failures := failedValidations[componentName]
-			audit.Audit(fmt.Sprintf("  %s", componentName))
+			log.Audit(fmt.Sprintf("  %s", componentName))
 			for _, cf := range failures {
-				audit.Audit(fmt.Sprintf("    %s", cf.UserMessage))
+				log.Audit(fmt.Sprintf("    %s", cf.UserMessage))
 				logMessageBuilder.WriteString(cf.UserMessage + "\n")
 				if cf.Error != nil {
 					logMessageBuilder.WriteString("\t" + cf.Error.Error() + "\n")
@@ -212,7 +194,7 @@ func isImageDefinitionValid(ctx *image.Context) bool {
 			zap.S().Errorf("image definition validation failures:\n%s", s)
 		}
 
-		audit.AuditInfo(checkLogMessage)
+		log.AuditInfo(checkLogMessage)
 
 		return false
 	}
@@ -236,7 +218,7 @@ func appendKubernetesSELinuxRPMs(ctx *image.Context) error {
 		return nil
 	}
 
-	audit.AuditInfo("SELinux is enabled in the Kubernetes configuration. " +
+	log.AuditInfo("SELinux is enabled in the Kubernetes configuration. " +
 		"The necessary RPM packages will be downloaded.")
 
 	selinuxPackage, err := kubernetes.SELinuxPackage(ctx.ImageDefinition.Kubernetes.Version)
@@ -273,7 +255,7 @@ func appendElementalRPMs(ctx *image.Context) {
 		return
 	}
 
-	audit.AuditInfo("Elemental registration is configured. The necessary RPM packages will be downloaded.")
+	log.AuditInfo("Elemental registration is configured. The necessary RPM packages will be downloaded.")
 
 	appendRPMs(ctx, image.AddRepo{URL: combustion.ElementalPackageRepository}, combustion.ElementalPackages...)
 }
@@ -303,7 +285,7 @@ func bootstrapDependencyServices(ctx *image.Context, rootDir string) bool {
 	if !combustion.SkipRPMComponent(ctx) {
 		p, err := podman.New(ctx.BuildDir)
 		if err != nil {
-			audit.AuditInfof("The services for RPM dependency resolution failed to start. %s", checkLogMessage)
+			log.AuditInfof("The services for RPM dependency resolution failed to start. %s", checkLogMessage)
 			zap.S().Error(err)
 			return false
 		}
@@ -324,7 +306,7 @@ func bootstrapDependencyServices(ctx *image.Context, rootDir string) bool {
 	if ctx.ImageDefinition.Kubernetes.Version != "" {
 		c, err := cache.New(rootDir)
 		if err != nil {
-			audit.AuditInfof("Failed to initialise file caching. %s", checkLogMessage)
+			log.AuditInfof("Failed to initialise file caching. %s", checkLogMessage)
 			zap.S().Error(err)
 			return false
 		}
