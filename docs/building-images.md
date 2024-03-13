@@ -165,7 +165,7 @@ The Kubernetes configuration section is another entirely optional one.
 It contains all necessary settings to configure and bootstrap a Kubernetes cluster.
 The supported Kubernetes distributions are K3s and RKE2.
 
-> **_NOTE:_** In addition to the below configuration, if you are building a `raw` image, you must manually specify its disk size. This is done through the [`rawConfiguration`](#operating-system) property.
+> **_NOTE:_**  In addition to the configuration below, if you are building a `raw` image, you must manually specify its disk size. The disk size specification is needed in order to ensure that the `raw` image has enough space to host the Kubernetes tarball resources that EIB attempts to copy ontop of it. Increasing the `raw` image disk size is done through the [`rawConfiguration`](#operating-system) property.
 
 ```yaml
 kubernetes:
