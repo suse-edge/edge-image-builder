@@ -460,30 +460,51 @@ func TestTemplateCommand(t *testing.T) {
 }
 
 func TestParseChartContents_InvalidPayload(t *testing.T) {
-	contents := "---abc"
+	contents := `---
+# Source
+invalid-resource
+`
 
 	resources, err := parseChartContents(contents)
 	require.Error(t, err)
 
-	assert.ErrorContains(t, err, "invalid resource")
+	assert.ErrorContains(t, err, "yaml: unmarshal errors:\n  line 2: cannot unmarshal !!str `invalid...` into map[string]interface {}")
 	assert.Nil(t, resources)
 }
 
 func TestParseChartContents(t *testing.T) {
 	contents := `
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: metallb
-  namespace: metallb-system
-spec:
-  repo: https://suse-edge.github.io/charts
-  chart: metallb
----
+# Source: cert-manager/templates/cainjector-serviceaccount.yaml
 apiVersion: v1
-kind: Namespace
+kind: ServiceAccount
+automountServiceAccountToken: true
 metadata:
-  name: metallb-system
+  name: cert-manager-cainjector
+  namespace: default
+  labels:
+    app: cainjector
+    app.kubernetes.io/name: cainjector
+    app.kubernetes.io/instance: cert-manager
+    app.kubernetes.io/component: "cainjector"
+    app.kubernetes.io/version: "v1.14.4"
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: cert-manager-v1.14.4
+---
+# Source: cert-manager/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+automountServiceAccountToken: true
+metadata:
+  name: cert-manager
+  namespace: default
+  labels:
+    app: cert-manager
+    app.kubernetes.io/name: cert-manager
+    app.kubernetes.io/instance: cert-manager
+    app.kubernetes.io/component: "controller"
+    app.kubernetes.io/version: "v1.14.4"
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: cert-manager-v1.14.4
 `
 
 	resources, err := parseChartContents(contents)
@@ -492,23 +513,40 @@ metadata:
 	require.Len(t, resources, 2)
 
 	assert.Equal(t, map[string]any{
-		"apiVersion": "helm.cattle.io/v1",
-		"kind":       "HelmChart",
+		"apiVersion":                   "v1",
+		"kind":                         "ServiceAccount",
+		"automountServiceAccountToken": true,
 		"metadata": map[string]any{
-			"name":      "metallb",
-			"namespace": "metallb-system",
-		},
-		"spec": map[string]any{
-			"repo":  "https://suse-edge.github.io/charts",
-			"chart": "metallb",
+			"name":      "cert-manager-cainjector",
+			"namespace": "default",
+			"labels": map[string]any{
+				"app":                          "cainjector",
+				"app.kubernetes.io/name":       "cainjector",
+				"app.kubernetes.io/instance":   "cert-manager",
+				"app.kubernetes.io/component":  "cainjector",
+				"app.kubernetes.io/version":    "v1.14.4",
+				"app.kubernetes.io/managed-by": "Helm",
+				"helm.sh/chart":                "cert-manager-v1.14.4",
+			},
 		},
 	}, resources[0])
 
 	assert.Equal(t, map[string]any{
-		"apiVersion": "v1",
-		"kind":       "Namespace",
+		"apiVersion":                   "v1",
+		"kind":                         "ServiceAccount",
+		"automountServiceAccountToken": true,
 		"metadata": map[string]any{
-			"name": "metallb-system",
+			"name":      "cert-manager",
+			"namespace": "default",
+			"labels": map[string]any{
+				"app":                          "cert-manager",
+				"app.kubernetes.io/name":       "cert-manager",
+				"app.kubernetes.io/instance":   "cert-manager",
+				"app.kubernetes.io/component":  "controller",
+				"app.kubernetes.io/version":    "v1.14.4",
+				"app.kubernetes.io/managed-by": "Helm",
+				"helm.sh/chart":                "cert-manager-v1.14.4",
+			},
 		},
 	}, resources[1])
 }
