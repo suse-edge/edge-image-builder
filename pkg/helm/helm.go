@@ -75,8 +75,7 @@ func addRepoCommand(repo *image.HelmRepository, output io.Writer) *exec.Cmd {
 
 	if repo.SkipTLSVerify {
 		args = append(args, "--insecure-skip-tls-verify")
-	}
-	if repo.CAFile != "" {
+	} else if repo.CAFile != "" {
 		caFilePath := filepath.Join(combustion.K8sDir, combustion.HelmDir, combustion.CertsDir, repo.CAFile)
 		args = append(args, "--ca-file", caFilePath)
 	}
@@ -125,8 +124,7 @@ func registryLoginCommand(host string, repo *image.HelmRepository, output io.Wri
 
 	if repo.SkipTLSVerify || repo.PlainHTTP {
 		args = append(args, "--insecure")
-	}
-	if repo.CAFile != "" {
+	} else if repo.CAFile != "" {
 		caFilePath := filepath.Join(combustion.K8sDir, combustion.HelmDir, combustion.CertsDir, repo.CAFile)
 		args = append(args, "--ca-file", caFilePath)
 	}
@@ -187,12 +185,12 @@ func pullCommand(chart string, repo *image.HelmRepository, version, destDir stri
 		args = append(args, "--destination", destDir)
 	}
 
-	if repo.SkipTLSVerify {
+	switch {
+	case repo.SkipTLSVerify:
 		args = append(args, "--insecure-skip-tls-verify")
-	} else if repo.PlainHTTP {
+	case repo.PlainHTTP:
 		args = append(args, "--plain-http")
-	}
-	if repo.CAFile != "" {
+	case repo.CAFile != "":
 		caFilePath := filepath.Join(combustion.K8sDir, combustion.HelmDir, combustion.CertsDir, repo.CAFile)
 		args = append(args, "--ca-file", caFilePath)
 	}
