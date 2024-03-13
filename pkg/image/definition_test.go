@@ -201,11 +201,13 @@ func TestParse(t *testing.T) {
 	// Helm Repositories
 	assert.Equal(t, "suse-edge", kubernetes.Helm.Repositories[0].Name)
 	assert.Equal(t, "https://suse-edge.github.io/charts", kubernetes.Helm.Repositories[0].URL)
-	assert.Equal(t, "user", kubernetes.Helm.Repositories[0].Authentication.Username)
-	assert.Equal(t, "pass", kubernetes.Helm.Repositories[0].Authentication.Password)
 
 	assert.Equal(t, "bitnami", kubernetes.Helm.Repositories[1].Name)
 	assert.Equal(t, "oci://registry-1.docker.io/bitnamicharts/apache", kubernetes.Helm.Repositories[1].URL)
+	assert.Equal(t, "user", kubernetes.Helm.Repositories[1].Authentication.Username)
+	assert.Equal(t, "pass", kubernetes.Helm.Repositories[1].Authentication.Password)
+	assert.Equal(t, false, kubernetes.Helm.Repositories[1].PlainHTTP)
+	assert.Equal(t, true, kubernetes.Helm.Repositories[1].SkipTLSVerify)
 }
 
 func TestParseBadConfig_InvalidFormat(t *testing.T) {

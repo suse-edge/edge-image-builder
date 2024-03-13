@@ -48,7 +48,7 @@ func TestAddRepoCommand(t *testing.T) {
 		expectedArgs []string
 	}{
 		{
-			name: "Valid Repository",
+			name: "Valid repository",
 			repo: &image.HelmRepository{
 				Name: "suse-edge",
 				URL:  "https://suse-edge.github.io/charts",
@@ -62,7 +62,7 @@ func TestAddRepoCommand(t *testing.T) {
 			},
 		},
 		{
-			name: "Valid Repository With Auth",
+			name: "Valid repository with auth",
 			repo: &image.HelmRepository{
 				Name: "suse-edge",
 				URL:  "https://suse-edge.github.io/charts",
@@ -77,6 +77,53 @@ func TestAddRepoCommand(t *testing.T) {
 				"add",
 				"suse-edge",
 				"https://suse-edge.github.io/charts",
+				"--username",
+				"user",
+				"--password",
+				"pass",
+			},
+		},
+		{
+			name: "Valid repository with auth and skip TLS verify",
+			repo: &image.HelmRepository{
+				Name: "suse-edge",
+				URL:  "https://suse-edge.github.io/charts",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				SkipTLSVerify: true,
+			},
+			expectedArgs: []string{
+				"helm",
+				"repo",
+				"add",
+				"suse-edge",
+				"https://suse-edge.github.io/charts",
+				"--username",
+				"user",
+				"--password",
+				"pass",
+				"--insecure-skip-tls-verify",
+			},
+		},
+		{
+			name: "Valid repository with auth and plain HTTP",
+			repo: &image.HelmRepository{
+				Name: "suse-edge",
+				URL:  "http://suse-edge.github.io/charts",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				PlainHTTP: true,
+			},
+			expectedArgs: []string{
+				"helm",
+				"repo",
+				"add",
+				"suse-edge",
+				"http://suse-edge.github.io/charts",
 				"--username",
 				"user",
 				"--password",
@@ -125,6 +172,54 @@ func TestRegistryLoginCommand(t *testing.T) {
 				"user",
 				"--password",
 				"pass",
+			},
+		},
+		{
+			name: "Valid registry with auth and skip TLS verify",
+			host: "registry-1.docker.io",
+			repo: &image.HelmRepository{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				SkipTLSVerify: true,
+			},
+			expectedArgs: []string{
+				"helm",
+				"registry",
+				"login",
+				"registry-1.docker.io",
+				"--username",
+				"user",
+				"--password",
+				"pass",
+				"--insecure",
+			},
+		},
+		{
+			name: "Valid registry with auth and plain HTTP",
+			host: "registry-1.docker.io",
+			repo: &image.HelmRepository{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				PlainHTTP: true,
+			},
+			expectedArgs: []string{
+				"helm",
+				"registry",
+				"login",
+				"registry-1.docker.io",
+				"--username",
+				"user",
+				"--password",
+				"pass",
+				"--insecure",
 			},
 		},
 	}
@@ -213,6 +308,80 @@ func TestPullCommand(t *testing.T) {
 				"suse-edge/kubevirt",
 			},
 		},
+		{
+			name: "HTTP repository with auth and skip TLS verify",
+			repo: &image.HelmRepository{
+				Name: "suse-edge",
+				URL:  "https://suse-edge.github.io/charts",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				SkipTLSVerify: true,
+			},
+			chart: "kubevirt",
+			expectedArgs: []string{
+				"helm",
+				"pull",
+				"suse-edge/kubevirt",
+				"--insecure-skip-tls-verify",
+			},
+		},
+		{
+			name: "HTTP repository with auth and plain HTTP",
+			repo: &image.HelmRepository{
+				Name: "suse-edge",
+				URL:  "http://suse-edge.github.io/charts",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				PlainHTTP: true,
+			},
+			chart: "kubevirt",
+			expectedArgs: []string{
+				"helm",
+				"pull",
+				"suse-edge/kubevirt",
+				"--plain-http",
+			},
+		},
+		{
+			name: "OCI repository with auth and skip TLS verify",
+			repo: &image.HelmRepository{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				SkipTLSVerify: true,
+			},
+			expectedArgs: []string{
+				"helm",
+				"pull",
+				"oci://registry-1.docker.io/bitnamicharts/apache",
+				"--insecure-skip-tls-verify",
+			},
+		},
+		{
+			name: "OCI repository with auth and plain HTTP",
+			repo: &image.HelmRepository{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				PlainHTTP: true,
+			},
+			expectedArgs: []string{
+				"helm",
+				"pull",
+				"oci://registry-1.docker.io/bitnamicharts/apache",
+				"--plain-http",
+			},
+		},
 	}
 
 	var buf bytes.Buffer
@@ -291,30 +460,51 @@ func TestTemplateCommand(t *testing.T) {
 }
 
 func TestParseChartContents_InvalidPayload(t *testing.T) {
-	contents := "---abc"
+	contents := `---
+# Source
+invalid-resource
+`
 
 	resources, err := parseChartContents(contents)
 	require.Error(t, err)
 
-	assert.ErrorContains(t, err, "invalid resource")
+	assert.ErrorContains(t, err, "yaml: unmarshal errors:\n  line 2: cannot unmarshal !!str `invalid...` into map[string]interface {}")
 	assert.Nil(t, resources)
 }
 
 func TestParseChartContents(t *testing.T) {
 	contents := `
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: metallb
-  namespace: metallb-system
-spec:
-  repo: https://suse-edge.github.io/charts
-  chart: metallb
----
+# Source: cert-manager/templates/cainjector-serviceaccount.yaml
 apiVersion: v1
-kind: Namespace
+kind: ServiceAccount
+automountServiceAccountToken: true
 metadata:
-  name: metallb-system
+  name: cert-manager-cainjector
+  namespace: default
+  labels:
+    app: cainjector
+    app.kubernetes.io/name: cainjector
+    app.kubernetes.io/instance: cert-manager
+    app.kubernetes.io/component: "cainjector"
+    app.kubernetes.io/version: "v1.14.4"
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: cert-manager-v1.14.4
+---
+# Source: cert-manager/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+automountServiceAccountToken: true
+metadata:
+  name: cert-manager
+  namespace: default
+  labels:
+    app: cert-manager
+    app.kubernetes.io/name: cert-manager
+    app.kubernetes.io/instance: cert-manager
+    app.kubernetes.io/component: "controller"
+    app.kubernetes.io/version: "v1.14.4"
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: cert-manager-v1.14.4
 `
 
 	resources, err := parseChartContents(contents)
@@ -323,23 +513,40 @@ metadata:
 	require.Len(t, resources, 2)
 
 	assert.Equal(t, map[string]any{
-		"apiVersion": "helm.cattle.io/v1",
-		"kind":       "HelmChart",
+		"apiVersion":                   "v1",
+		"kind":                         "ServiceAccount",
+		"automountServiceAccountToken": true,
 		"metadata": map[string]any{
-			"name":      "metallb",
-			"namespace": "metallb-system",
-		},
-		"spec": map[string]any{
-			"repo":  "https://suse-edge.github.io/charts",
-			"chart": "metallb",
+			"name":      "cert-manager-cainjector",
+			"namespace": "default",
+			"labels": map[string]any{
+				"app":                          "cainjector",
+				"app.kubernetes.io/name":       "cainjector",
+				"app.kubernetes.io/instance":   "cert-manager",
+				"app.kubernetes.io/component":  "cainjector",
+				"app.kubernetes.io/version":    "v1.14.4",
+				"app.kubernetes.io/managed-by": "Helm",
+				"helm.sh/chart":                "cert-manager-v1.14.4",
+			},
 		},
 	}, resources[0])
 
 	assert.Equal(t, map[string]any{
-		"apiVersion": "v1",
-		"kind":       "Namespace",
+		"apiVersion":                   "v1",
+		"kind":                         "ServiceAccount",
+		"automountServiceAccountToken": true,
 		"metadata": map[string]any{
-			"name": "metallb-system",
+			"name":      "cert-manager",
+			"namespace": "default",
+			"labels": map[string]any{
+				"app":                          "cert-manager",
+				"app.kubernetes.io/name":       "cert-manager",
+				"app.kubernetes.io/instance":   "cert-manager",
+				"app.kubernetes.io/component":  "controller",
+				"app.kubernetes.io/version":    "v1.14.4",
+				"app.kubernetes.io/managed-by": "Helm",
+				"helm.sh/chart":                "cert-manager-v1.14.4",
+			},
 		},
 	}, resources[1])
 }

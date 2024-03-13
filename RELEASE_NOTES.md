@@ -8,10 +8,13 @@
 * Kubernetes install scripts are now downloaded at runtime instead of during the container image build process
 * Bumped Go Version to 1.22
 * Added support for using Helm charts from authenticated repositories/registries
+* Added support for skipping Helm chart TLS verification and for using Helm charts from plain HTTP repositories/registries
 
 ## API
 
 * The `--config-file` argument to the EIB CLI has been renamed to `--definition-file`.
+* The `--build-dir` argument to the EIB CLI is now optional and defaults to `<config-dir>/_build`, creating it if it does not exist.
+* The `--config-dir` argument to the EIB CLI is now optional and defaults to `/eib` which is the most common mounted container volume.
 
 ### Image Definition Changes
 
@@ -30,6 +33,8 @@
 * [#242](https://github.com/suse-edge/edge-image-builder/issues/242) - Empty rpms directory triggers resolution
 * [#283](https://github.com/suse-edge/edge-image-builder/issues/283) - Definition file argument to EIB is incorrect
 * [#245](https://github.com/suse-edge/edge-image-builder/issues/245) - Pass additional arguments to Helm resolver
+* [#307](https://github.com/suse-edge/edge-image-builder/issues/307) - Helm chart parsing logic breaks if "---" is present in the chart's resources
+* [#272](https://github.com/suse-edge/edge-image-builder/issues/272) - Custom files should keep their permissions
 
 ---
 

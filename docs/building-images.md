@@ -163,6 +163,8 @@ The Kubernetes configuration section is another entirely optional one.
 It contains all necessary settings to configure and bootstrap a Kubernetes cluster.
 The supported Kubernetes distributions are K3s and RKE2.
 
+> **_NOTE:_** In addition to the configuration below, if you are building a `raw` image, you must manually specify its disk size. The disk size specification is needed in order to ensure that the `raw` image has enough space to host the Kubernetes tarball resources that EIB attempts to copy into it. Increasing the `raw` image disk size is done through the [`rawConfiguration`](#operating-system) property.
+
 ```yaml
 kubernetes:
   version: v1.28.0+rke2r1
@@ -204,6 +206,8 @@ kubernetes:
         url: https://suse-edge.github.io/charts
       - name: apache-repo
         url: oci://registry-1.docker.io/bitnamicharts/apache
+        plainHTTP: false
+        skipTLSVerify: true
         authentication:
           username: user
           password: pass
@@ -234,6 +238,8 @@ kubernetes:
     * `name` - Required; Defines the name for this repository. This name doesn't have to match the name of the actual repository, but must correspond with the `repositoryName` of one or more charts.
     * `url` - Required; Defines the URL which contains the Helm repository containing a chart, or the OCI registry URL to a chart.
     * `caFile` - Optional; The name of the CA File (not including the path), placed under `kubernetes/helm/certs`, for the specified repository/registry (e.g. the input for `kubernetes/helm/certs/helm.crt` is  `helm.crt`).
+    * `plainHTTP` - Optional; Must be set to `true` when connecting to repositories and registries over plain HTTP.
+    * `skipTLSVerify` - Optional; Must be set to `true` for repositories and registries with untrusted TLS certificates.
     * `authentication` - Required for authenticated repositories/registries.
       * `username` - Required; Defines the username for accessing the specified repository/registry. 
       * `password` - Required; Defines the password for accessing the specified repository/registry.
@@ -336,12 +342,7 @@ The following sections further describe optional directories that may be include
 
 ### RPMs
 
-Custom RPMs may be included in the configuration directory. These RPMs will be bundled into the built image
-and installed when the image is booted. The following describes the directory structure needed to configure this:
-
-* `rpms` - All RPMs in this directory will be included in the built image and installed during the
-  combustion phase. These RPMs are installed directly (instead of using zypper), which means that there will be no
-  automatic dependency resolution.
+Custom RPMs may be included in the configuration directory. For more information on how to add custom RPMs, see the [Side-load RPMs](installing-packages.md#side-load-rpms) section of the [Installing pacakges](installing-packages.md) guide.
 
 ### Elemental
 

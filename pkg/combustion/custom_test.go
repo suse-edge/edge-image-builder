@@ -1,14 +1,13 @@
 package combustion
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 func TestConfigureCustomFiles(t *testing.T) {
@@ -16,23 +15,45 @@ func TestConfigureCustomFiles(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
-	// - scripts
-	fullScriptsDir := filepath.Join(ctx.ImageConfigDir, customDir, customScriptsDir)
-	err := os.MkdirAll(fullScriptsDir, os.ModePerm)
-	require.NoError(t, err)
+	scriptsDir := filepath.Join(ctx.ImageConfigDir, customDir, customScriptsDir)
+	require.NoError(t, os.MkdirAll(scriptsDir, os.ModePerm))
 
-	_, err = os.Create(filepath.Join(fullScriptsDir, "foo.sh"))
-	require.NoError(t, err)
-	_, err = os.Create(filepath.Join(fullScriptsDir, "bar.sh"))
-	require.NoError(t, err)
+	filesDir := filepath.Join(ctx.ImageConfigDir, customDir, customFilesDir)
+	require.NoError(t, os.MkdirAll(filesDir, os.ModePerm))
 
-	// - files
-	fullFilesDir := filepath.Join(ctx.ImageConfigDir, customDir, customFilesDir)
-	err = os.MkdirAll(fullFilesDir, os.ModePerm)
-	require.NoError(t, err)
+	files := map[string]struct {
+		isScript bool
+		perms    fs.FileMode
+	}{
+		"foo.sh": {
+			isScript: true,
+			perms:    0o744,
+		},
+		"bar.sh": {
+			isScript: true,
+			perms:    0o755,
+		},
+		"baz": {
+			isScript: false,
+			perms:    0o744,
+		},
+		"qux": {
+			isScript: false,
+			perms:    0o644,
+		},
+	}
 
-	_, err = os.Create(filepath.Join(fullFilesDir, "baz"))
-	require.NoError(t, err)
+	for filename, info := range files {
+		var path string
+
+		if info.isScript {
+			path = filepath.Join(scriptsDir, filename)
+		} else {
+			path = filepath.Join(filesDir, filename)
+		}
+
+		require.NoError(t, os.WriteFile(path, nil, info.perms))
+	}
 
 	// Test
 	scripts, err := configureCustomFiles(ctx)
@@ -41,25 +62,24 @@ func TestConfigureCustomFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	// - make sure the files were added to the build directory
-	foundDirListing, err := os.ReadDir(ctx.CombustionDir)
+	dirEntries, err := os.ReadDir(ctx.CombustionDir)
 	require.NoError(t, err)
-	assert.Equal(t, 3, len(foundDirListing))
+	require.Len(t, dirEntries, 4)
 
 	// - make sure the copied files have the right permissions
-	for _, entry := range foundDirListing {
-		fullEntryPath := filepath.Join(ctx.CombustionDir, entry.Name())
-		stats, err := os.Stat(fullEntryPath)
+	for _, entry := range dirEntries {
+		file, ok := files[entry.Name()]
+		require.Truef(t, ok, "Unexpected file: %s", entry.Name())
+
+		entryPath := filepath.Join(ctx.CombustionDir, entry.Name())
+		stats, err := os.Stat(entryPath)
 		require.NoError(t, err)
 
-		if strings.HasSuffix(entry.Name(), ".sh") {
-			assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
-		} else {
-			assert.Equal(t, fileio.NonExecutablePerms, stats.Mode())
-		}
+		assert.Equal(t, file.perms, stats.Mode())
 	}
 
 	// - make sure only script entries were added to the combustion scripts list
-	require.Equal(t, 2, len(scripts))
+	require.Len(t, scripts, 2)
 	assert.Contains(t, scripts, "foo.sh")
 	assert.Contains(t, scripts, "bar.sh")
 }
@@ -83,7 +103,7 @@ func TestCopyCustomFiles_MissingFromDir(t *testing.T) {
 	defer teardown()
 
 	// Test
-	files, err := copyCustomFiles("missing", ctx.CombustionDir, fileio.NonExecutablePerms)
+	files, err := copyCustomFiles("missing", ctx.CombustionDir)
 
 	// Verify
 	assert.Nil(t, files)
@@ -101,7 +121,7 @@ func TestCopyCustomFiles_EmptyFromDir(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test
-	scripts, err := copyCustomFiles(fullScriptsDir, ctx.CombustionDir, fileio.NonExecutablePerms)
+	scripts, err := copyCustomFiles(fullScriptsDir, ctx.CombustionDir)
 
 	// Verify
 	require.Error(t, err)
