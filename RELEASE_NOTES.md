@@ -35,6 +35,7 @@
 * [#245](https://github.com/suse-edge/edge-image-builder/issues/245) - Pass additional arguments to Helm resolver
 * [#307](https://github.com/suse-edge/edge-image-builder/issues/307) - Helm chart parsing logic breaks if "---" is present in the chart's resources
 * [#272](https://github.com/suse-edge/edge-image-builder/issues/272) - Custom files should keep their permissions
+* [#209](https://github.com/suse-edge/edge-image-builder/issues/209) - Embedded artifact registry starting even when manifests don't have any images
 
 ---
 
