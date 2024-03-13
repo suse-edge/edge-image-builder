@@ -66,7 +66,7 @@ which require it (e.g. Elemental, Kubernetes SELinux, etc.).
 * `--build-dir` - (Optional) If unspecified, EIB will create a `_build` directory under the image configuration directory 
   for assembling/generating the components used in the build which will persist after EIB finishes. This may also be
   specified to another location within a mounted volume. The directory will contain subdirectories storing the
-  respective artifacts of the different builds.
+  respective artifacts of the different builds as well as cached copies of certain downloaded files.
 * `--validate` - If specified, the specified image definition and configuration directory will be checked to ensure
   the build can proceed, however the image will not actually be built.
 
