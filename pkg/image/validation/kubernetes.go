@@ -361,7 +361,7 @@ func validateHelmRepoCert(repoName, certFile string, imageConfigDir string) stri
 			return fmt.Sprintf("Helm repo cert file '%s' could not be found at '%s'.", certFile, certFilePath)
 		}
 
-		zap.S().Errorf("cert file '%s' could not be read: %s", certFile, err)
+		zap.S().Errorf("Helm repo cert file '%s' could not be read: %s", certFile, err)
 		return fmt.Sprintf("Helm repo cert file '%s' could not be read.", certFile)
 	}
 
@@ -384,7 +384,7 @@ func validateHelmChartValues(chartName, valuesFile string, imageConfigDir string
 			return fmt.Sprintf("Helm chart values file '%s' could not be found at '%s'.", valuesFile, valuesFilePath)
 		}
 
-		zap.S().Errorf("values file '%s' could not be read: %s", valuesFile, err)
+		zap.S().Errorf("Helm chart values file '%s' could not be read: %s", valuesFile, err)
 		return fmt.Sprintf("Helm chart values file '%s' could not be read.", valuesFile)
 	}
 

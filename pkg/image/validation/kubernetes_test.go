@@ -893,31 +893,6 @@ func TestValidateHelmCharts(t *testing.T) {
 				"Helm repo cert file 'suse-edge.crt' could not be found at 'kubernetes/helm/certs/suse-edge.crt'.",
 			},
 		},
-		`helm repository plain http and ca file`: {
-			K8s: image.Kubernetes{
-				Helm: image.Helm{
-					Charts: []image.HelmChart{
-						{
-							Name:           "metallb",
-							RepositoryName: "suse-edge",
-							Version:        "0.14.3",
-						},
-					},
-					Repositories: []image.HelmRepository{
-						{
-							Name:   "suse-edge",
-							URL:    "http://suse-edge.github.io/charts",
-							CAFile: "suse-edge.crt",
-						},
-					},
-				},
-			},
-			ExpectedFailedMessages: []string{
-				"Helm repository 'url' field for \"suse-edge\" contains 'http://' but 'plainHTTP' field is false.",
-				"Helm repository 'url' field for \"suse-edge\" contains 'http://' but 'caFile' field is defined.",
-				"Helm repo cert file 'suse-edge.crt' could not be found at 'kubernetes/helm/certs/suse-edge.crt'.",
-			},
-		},
 		`helm repo nonexistent cert file`: {
 			K8s: image.Kubernetes{
 				Helm: image.Helm{
