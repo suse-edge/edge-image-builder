@@ -11,7 +11,7 @@ libbtrfs-devel
 
 ## EIB Deliverable Image Container Downloads
 
-These packages will are used by EIB to build the RTD image. Some of these package binaries may be copied to the RTD image.
+These packages are used by EIB to build the RTD image. Some of these package binaries may be copied to the RTD image.
 
 Repository
 ```
