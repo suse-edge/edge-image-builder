@@ -69,7 +69,6 @@ to the desired definition. For example:
 ```bash
 podman run --rm --privileged -it \
   -v .:/eib eib:dev build \
-  --config-dir /eib \
   --definition-file ./definitions/iso/basic.yaml
 ```
 
