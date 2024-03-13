@@ -30,7 +30,7 @@ func NewBuildCommand(action func(*cli.Context) error) *cli.Command {
 			&cli.StringFlag{
 				Name:        "config-dir",
 				Usage:       "Full path to the image configuration directory",
-				Required:    true,
+				Value:       "/eib",
 				Destination: &BuildArgs.ConfigDir,
 			},
 			&cli.StringFlag{

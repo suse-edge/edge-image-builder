@@ -748,6 +748,100 @@ func TestValidateHelmCharts(t *testing.T) {
 				"Helm repository 'username' field not defined for \"apache-repo\".",
 			},
 		},
+		`helm repository both skipTLSVerify and plainHTTP true`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "apache",
+							RepositoryName: "apache-repo",
+							Version:        "10.7.0",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name:          "apache-repo",
+							URL:           "oci://registry-1.docker.io/bitnamicharts/apache",
+							SkipTLSVerify: true,
+							PlainHTTP:     true,
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm repository 'plainHTTP' and 'skipTLSVerify' fields for \"apache-repo\" cannot both be true.",
+			},
+		},
+		`helm repository skipTLSVerify true for http`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "metallb",
+							RepositoryName: "suse-edge",
+							Version:        "0.14.3",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name:          "suse-edge",
+							URL:           "http://suse-edge.github.io/charts",
+							SkipTLSVerify: true,
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm repository 'url' field for \"suse-edge\" contains 'http://' but 'plainHTTP' field is false.",
+				"Helm repository 'url' field for \"suse-edge\" contains 'http://' but 'skipTLSVerify' field is true.",
+			},
+		},
+		`helm repository plainHTTP false for http`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "metallb",
+							RepositoryName: "suse-edge",
+							Version:        "0.14.3",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name:      "suse-edge",
+							URL:       "http://suse-edge.github.io/charts",
+							PlainHTTP: false,
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm repository 'url' field for \"suse-edge\" contains 'http://' but 'plainHTTP' field is false.",
+			},
+		},
+		`helm repository plainHTTP true for https`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "metallb",
+							RepositoryName: "suse-edge",
+							Version:        "0.14.3",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name:      "suse-edge",
+							URL:       "https://suse-edge.github.io/charts",
+							PlainHTTP: true,
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm repository 'url' field for \"suse-edge\" contains 'https://' but 'plainHTTP' field is true.",
+			},
+		},
 	}
 
 	for name, test := range tests {

@@ -183,6 +183,8 @@ type HelmRepository struct {
 	Name           string             `yaml:"name"`
 	URL            string             `yaml:"url"`
 	Authentication HelmAuthentication `yaml:"authentication"`
+	PlainHTTP      bool               `yaml:"plainHTTP"`
+	SkipTLSVerify  bool               `yaml:"skipTLSVerify"`
 }
 
 type HelmAuthentication struct {

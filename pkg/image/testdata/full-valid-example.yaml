@@ -114,8 +114,10 @@ kubernetes:
     repositories:
       - name: suse-edge
         url: https://suse-edge.github.io/charts
+      - name: bitnami
+        url: oci://registry-1.docker.io/bitnamicharts/apache
+        plainHTTP: false
+        skipTLSVerify: true
         authentication:
           username: user
           password: pass
-      - name: bitnami
-        url: oci://registry-1.docker.io/bitnamicharts/apache
