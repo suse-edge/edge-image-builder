@@ -14,6 +14,7 @@
 
 * The `--config-file` argument to the EIB CLI has been renamed to `--definition-file`.
 * The `--build-dir` argument to the EIB CLI is now optional and defaults to `<config-dir>/_build`, creating it if it does not exist.
+* The `--config-dir` argument to the EIB CLI is now optional and defaults to `/eib` which is the most common mounted container volume.
 
 ### Image Definition Changes
 
