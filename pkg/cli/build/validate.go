@@ -16,22 +16,19 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	validateLogFile = "eib-validate.log"
-)
-
 func Validate(_ *cli.Context) error {
 	args := &cmd.BuildArgs
 
-	timestamp := time.Now().Format("Jan02_15-04-05")
-	validationDir := filepath.Join(args.ConfigDir, fmt.Sprintf("validate-%s", timestamp))
+	validationDir := filepath.Join(args.ConfigDir, "_validation")
 	if err := os.MkdirAll(validationDir, os.ModePerm); err != nil {
 		log.Auditf("The validation directory could not be setup under the configuration directory '%s'.", args.ConfigDir)
 		return err
 	}
 
 	// This needs to occur as early as possible so that the subsequent calls can use the log
-	log.ConfigureGlobalLogger(filepath.Join(validationDir, validateLogFile))
+	timestamp := time.Now().Format("Jan02_15-04-05")
+	logFilename := filepath.Join(validationDir, fmt.Sprintf("eib-validate-%s.log", timestamp))
+	log.ConfigureGlobalLogger(logFilename)
 
 	if !imageConfigDirExists(args.ConfigDir) {
 		os.Exit(1)
