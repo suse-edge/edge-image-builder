@@ -30,6 +30,7 @@
 * [#242](https://github.com/suse-edge/edge-image-builder/issues/242) - Empty rpms directory triggers resolution
 * [#283](https://github.com/suse-edge/edge-image-builder/issues/283) - Definition file argument to EIB is incorrect
 * [#245](https://github.com/suse-edge/edge-image-builder/issues/245) - Pass additional arguments to Helm resolver
+* [#272](https://github.com/suse-edge/edge-image-builder/issues/272) - Custom files should keep their permissions
 
 ---
 
