@@ -13,7 +13,10 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image/validation"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/urfave/cli/v2"
-	"go.uber.org/zap"
+)
+
+const (
+	checkValidationLogMessage = "Please check the log file under the validation directory for more information."
 )
 
 func Validate(_ *cli.Context) error {
@@ -30,12 +33,18 @@ func Validate(_ *cli.Context) error {
 	logFilename := filepath.Join(validationDir, fmt.Sprintf("eib-validate-%s.log", timestamp))
 	log.ConfigureGlobalLogger(logFilename)
 
-	if !imageConfigDirExists(args.ConfigDir) {
+	log.AuditInfo("Checking image config dir...")
+
+	if err := imageConfigDirExists(args.ConfigDir); err != nil {
+		cmd.LogError(err, checkValidationLogMessage)
 		os.Exit(1)
 	}
 
-	imageDefinition := parseImageDefinition(args.ConfigDir, args.DefinitionFile)
-	if imageDefinition == nil {
+	log.AuditInfo("Parsing image definition...")
+
+	imageDefinition, err := parseImageDefinition(args.ConfigDir, args.DefinitionFile)
+	if err != nil {
+		cmd.LogError(err, checkValidationLogMessage)
 		os.Exit(1)
 	}
 
@@ -44,7 +53,10 @@ func Validate(_ *cli.Context) error {
 		ImageDefinition: imageDefinition,
 	}
 
-	if !isImageDefinitionValid(ctx) {
+	log.AuditInfo("Validating image definition...")
+
+	if err = validateImageDefinition(ctx); err != nil {
+		cmd.LogError(err, checkValidationLogMessage)
 		os.Exit(1)
 	}
 
@@ -53,17 +65,17 @@ func Validate(_ *cli.Context) error {
 	return nil
 }
 
-// Runs the image definition validation, displaying the appropriate messages to the user in the event
-// of a failure. Returns 'true' if the definition is valid; 'false' otherwise.
-func isImageDefinitionValid(ctx *image.Context) bool {
+func validateImageDefinition(ctx *image.Context) *cmd.Error {
 	failedValidations := validation.ValidateDefinition(ctx)
 	if len(failedValidations) == 0 {
-		return true
+		return nil
 	}
 
-	log.Audit("Image definition validation found the following errors:")
-
 	logMessageBuilder := strings.Builder{}
+	userMessageBuilder := strings.Builder{}
+
+	userMessageBuilder.WriteString("Image definition validation found the following errors:\n")
+	logMessageBuilder.WriteString("Image definition validation failures:\n")
 
 	orderedComponentNames := make([]string, 0, len(failedValidations))
 	for c := range failedValidations {
@@ -72,22 +84,19 @@ func isImageDefinitionValid(ctx *image.Context) bool {
 	slices.Sort(orderedComponentNames)
 
 	for _, componentName := range orderedComponentNames {
-		failures := failedValidations[componentName]
-		log.Audit(fmt.Sprintf("  %s", componentName))
-		for _, cf := range failures {
-			log.Audit(fmt.Sprintf("    %s", cf.UserMessage))
-			logMessageBuilder.WriteString(cf.UserMessage + "\n")
+		userMessageBuilder.WriteString("\t" + componentName + "\n")
+
+		for _, cf := range failedValidations[componentName] {
+			userMessageBuilder.WriteString("\t\t" + cf.UserMessage + "\n")
+			logMessageBuilder.WriteString("\t" + cf.UserMessage + "\n")
 			if cf.Error != nil {
-				logMessageBuilder.WriteString("\t" + cf.Error.Error() + "\n")
+				logMessageBuilder.WriteString("\t\t" + cf.Error.Error() + "\n")
 			}
 		}
 	}
 
-	if s := logMessageBuilder.String(); s != "" {
-		zap.S().Errorf("Image definition validation failures:\n%s", s)
+	return &cmd.Error{
+		UserMessage: userMessageBuilder.String(),
+		LogMessage:  logMessageBuilder.String(),
 	}
-
-	log.AuditInfo(checkLogMessage)
-
-	return false
 }
