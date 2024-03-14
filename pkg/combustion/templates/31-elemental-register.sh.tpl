@@ -26,7 +26,6 @@ RestartSec=10
 EOF
 
 # Enable elemental-system-agent
-# On SLE Micro /var/lib is not persistent, so we copy elemental_connection.json in ExecStartPre
 cat <<- EOF > /etc/systemd/system/elemental-system-agent.service
 [Unit]
 Description=Elemental System Agent
@@ -45,7 +44,6 @@ RestartSec=5s
 StandardOutput=journal
 StandardError=journal
 Environment="CATTLE_AGENT_CONFIG=/etc/rancher/elemental/agent/config.yaml"
-ExecStartPre=/bin/sh -c "mkdir -p /var/lib/elemental/agent && cp /etc/rancher/elemental/agent/elemental_connection.json /var/lib/elemental/agent"
 ExecStart=/usr/sbin/elemental-system-agent sentinel
 EOF
 
