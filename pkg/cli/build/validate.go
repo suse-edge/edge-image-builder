@@ -84,13 +84,13 @@ func validateImageDefinition(ctx *image.Context) *cmd.Error {
 	slices.Sort(orderedComponentNames)
 
 	for _, componentName := range orderedComponentNames {
-		userMessageBuilder.WriteString("\t" + componentName + "\n")
+		userMessageBuilder.WriteString("  " + componentName + "\n")
 
 		for _, cf := range failedValidations[componentName] {
-			userMessageBuilder.WriteString("\t\t" + cf.UserMessage + "\n")
-			logMessageBuilder.WriteString("\t" + cf.UserMessage + "\n")
+			userMessageBuilder.WriteString("    " + cf.UserMessage + "\n")
+			logMessageBuilder.WriteString("  " + cf.UserMessage + "\n")
 			if cf.Error != nil {
-				logMessageBuilder.WriteString("\t\t" + cf.Error.Error() + "\n")
+				logMessageBuilder.WriteString("    " + cf.Error.Error() + "\n")
 			}
 		}
 	}
