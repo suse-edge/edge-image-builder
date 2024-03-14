@@ -23,8 +23,7 @@ const (
 // creates a listening service that answers API calls for Podman (https://docs.podman.io/en/v4.8.3/markdown/podman-system-service.1.html)
 // only way to start the service from within a container - https://github.com/containers/podman/tree/v4.8.3/pkg/bindings#starting-the-service-manually
 func setupAPIListener(out string) error {
-	log.Audit("Setting up Podman API listener...")
-	zap.L().Info("Setting up Podman API listener...")
+	log.AuditInfo("Setting up Podman API listener...")
 
 	logFile, err := os.Create(filepath.Join(out, podmanListenerLogFile))
 	if err != nil {
