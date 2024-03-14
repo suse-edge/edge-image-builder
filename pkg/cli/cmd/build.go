@@ -12,21 +12,7 @@ type BuildFlags struct {
 	RootBuildDir   string
 }
 
-var (
-	BuildArgs BuildFlags
-
-	DefinitionFileFlag = &cli.StringFlag{
-		Name:        "definition-file",
-		Usage:       "Name of the image definition file",
-		Destination: &BuildArgs.DefinitionFile,
-	}
-	ConfigDirFlag = &cli.StringFlag{
-		Name:        "config-dir",
-		Usage:       "Full path to the image configuration directory",
-		Value:       "/eib",
-		Destination: &BuildArgs.ConfigDir,
-	}
-)
+var BuildArgs BuildFlags
 
 func NewBuildCommand(action func(*cli.Context) error) *cli.Command {
 	return &cli.Command{
