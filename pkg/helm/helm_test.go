@@ -2,13 +2,15 @@ package helm
 
 import (
 	"bytes"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/combustion"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+)
+
+const (
+	certsDir = "certs"
 )
 
 func TestHelmRepositoryName(t *testing.T) {
@@ -154,7 +156,7 @@ func TestAddRepoCommand(t *testing.T) {
 				"--password",
 				"pass",
 				"--ca-file",
-				filepath.Join(combustion.K8sDir, combustion.HelmDir, combustion.CertsDir, "suse-edge.crt"),
+				"certs/suse-edge.crt",
 			},
 		},
 	}
@@ -163,7 +165,7 @@ func TestAddRepoCommand(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := addRepoCommand(test.repo, &buf)
+			cmd := addRepoCommand(test.repo, certsDir, &buf)
 
 			assert.Equal(t, test.expectedArgs, cmd.Args)
 			assert.Equal(t, &buf, cmd.Stdout)
@@ -173,6 +175,7 @@ func TestAddRepoCommand(t *testing.T) {
 }
 
 func TestRegistryLoginCommand(t *testing.T) {
+
 	tests := []struct {
 		name         string
 		host         string
@@ -271,7 +274,7 @@ func TestRegistryLoginCommand(t *testing.T) {
 				"--password",
 				"pass",
 				"--ca-file",
-				filepath.Join(combustion.K8sDir, combustion.HelmDir, combustion.CertsDir, "apache.crt"),
+				"certs/apache.crt",
 			},
 		},
 	}
@@ -280,7 +283,7 @@ func TestRegistryLoginCommand(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := registryLoginCommand(test.host, test.repo, &buf)
+			cmd := registryLoginCommand(test.host, test.repo, certsDir, &buf)
 
 			assert.Equal(t, test.expectedArgs, cmd.Args)
 			assert.Equal(t, &buf, cmd.Stdout)
@@ -451,7 +454,7 @@ func TestPullCommand(t *testing.T) {
 				"pull",
 				"suse-edge/kubevirt",
 				"--ca-file",
-				filepath.Join(combustion.K8sDir, combustion.HelmDir, combustion.CertsDir, "suse-edge.crt"),
+				"certs/suse-edge.crt",
 			},
 		},
 		{
@@ -470,7 +473,7 @@ func TestPullCommand(t *testing.T) {
 				"pull",
 				"oci://registry-1.docker.io/bitnamicharts/apache",
 				"--ca-file",
-				filepath.Join(combustion.K8sDir, combustion.HelmDir, combustion.CertsDir, "apache.crt"),
+				"certs/apache.crt",
 			},
 		},
 	}
@@ -479,7 +482,7 @@ func TestPullCommand(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := pullCommand(test.chart, test.repo, test.version, test.destDir, &buf)
+			cmd := pullCommand(test.chart, test.repo, test.version, test.destDir, certsDir, &buf)
 
 			assert.Equal(t, test.expectedArgs, cmd.Args)
 			assert.Equal(t, &buf, cmd.Stdout)
