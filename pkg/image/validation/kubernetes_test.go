@@ -863,7 +863,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm repository 'caFile' field for \"suse-edge\" should not be defined while 'plainHTTP' is true.",
+				"Helm repository 'caFile' field for \"suse-edge\" cannot be defined while 'plainHTTP' is true.",
 				"Helm repository 'url' field for \"suse-edge\" contains 'http://' but 'caFile' field is defined.",
 				"Helm repo cert file 'suse-edge.crt' could not be found at 'kubernetes/helm/certs/suse-edge.crt'.",
 			},
@@ -889,7 +889,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm repository 'caFile' field for \"suse-edge\" should not be defined while 'skipTLSVerify' is true.",
+				"Helm repository 'caFile' field for \"suse-edge\" cannot be defined while 'skipTLSVerify' is true.",
 				"Helm repo cert file 'suse-edge.crt' could not be found at 'kubernetes/helm/certs/suse-edge.crt'.",
 			},
 		},
@@ -936,7 +936,8 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm chart 'caFile' field for \"apache-repo\" must be the name of a valid cert file with the following possible endings: '.pem', '.crt', '.cer', '.der', '.p7b', '.p7c', '.pfx', '.p12'.",
+				"Helm chart 'caFile' field for \"apache-repo\" must be the name of a valid cert file with one of the " +
+					"following extensions: .pem, .crt, .cer, .der, .p7b, .p7c, .pfx, .p12",
 			},
 		},
 	}
