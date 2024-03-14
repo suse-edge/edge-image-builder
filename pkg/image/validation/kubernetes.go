@@ -325,13 +325,13 @@ func validateHelmRepoArgs(parsedURL *url.URL, repo *image.HelmRepository) []Fail
 
 	if repo.SkipTLSVerify && repo.CAFile != "" {
 		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Helm repository 'caFile' field for %q should not be defined while 'skipTLSVerify' is true.", repo.Name),
+			UserMessage: fmt.Sprintf("Helm repository 'caFile' field for %q cannot be defined while 'skipTLSVerify' is true.", repo.Name),
 		})
 	}
 
 	if repo.PlainHTTP && repo.CAFile != "" {
 		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Helm repository 'caFile' field for %q should not be defined while 'plainHTTP' is true.", repo.Name),
+			UserMessage: fmt.Sprintf("Helm repository 'caFile' field for %q cannot be defined while 'plainHTTP' is true.", repo.Name),
 		})
 	}
 
@@ -351,7 +351,8 @@ func validateHelmRepoCert(repoName, certFile string, imageConfigDir string) stri
 
 	validExtensions := []string{".pem", ".crt", ".cer", ".der", ".p7b", ".p7c", ".pfx", ".p12"}
 	if !slices.Contains(validExtensions, filepath.Ext(certFile)) {
-		return fmt.Sprintf("Helm chart 'caFile' field for %q must be the name of a valid cert file with the following possible endings: '.pem', '.crt', '.cer', '.der', '.p7b', '.p7c', '.pfx', '.p12'.", repoName)
+		return fmt.Sprintf("Helm chart 'caFile' field for %q must be the name of a valid cert file with one of the following extensions: %s",
+			repoName, strings.Join(validExtensions, ", "))
 	}
 
 	certFilePath := filepath.Join(imageConfigDir, combustion.K8sDir, combustion.HelmDir, combustion.CertsDir, certFile)
