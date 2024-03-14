@@ -44,7 +44,7 @@ The image configuration directory must be attached to the container at runtime. 
 to introduce image definition files and provide a way to get the built image out of the container and onto
 the host machine.
 
-#### Validating image definition
+#### Validating an image definition
 
 The following example command attaches the image configuration directory and validates a definition:
 ```shell
@@ -60,7 +60,7 @@ validate --definition-file $DEFINITION_FILE.yaml
 * `--config-dir` - (Optional) Specifies the image configuration directory. This path is relative to the running container, so its
   value must match the mounted volume. It defaults to `/eib` which matches the mounted volume `$IMAGE_DIR:/eib` in the example above.
 
-#### Building image
+#### Building an image
 
 The following example command attaches the image configuration directory and builds an image:
 ```shell
