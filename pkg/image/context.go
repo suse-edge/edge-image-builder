@@ -8,7 +8,7 @@ type HelmClient interface {
 	AddRepo(repository *HelmRepository) error
 	RegistryLogin(repository *HelmRepository) error
 	Pull(chart string, repository *HelmRepository, version, destDir string) (string, error)
-	Template(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error)
+	Template(chart, repository, version, targetNamespace, valuesFilePath, kubeVersion string) ([]map[string]any, error)
 }
 
 type networkConfigGenerator interface {

@@ -399,27 +399,31 @@ func TestPullCommand(t *testing.T) {
 
 func TestTemplateCommand(t *testing.T) {
 	tests := []struct {
-		name         string
-		repo         string
-		chart        string
-		version      string
-		kubeVersion  string
-		valuesPath   string
-		expectedArgs []string
+		name            string
+		repo            string
+		chart           string
+		version         string
+		kubeVersion     string
+		targetNamespace string
+		valuesPath      string
+		expectedArgs    []string
 	}{
 		{
-			name:        "Template with all parameters",
-			repo:        "suse-edge/kubevirt",
-			chart:       "kubevirt",
-			version:     "0.2.1",
-			kubeVersion: "v1.29.0+rke2r1",
-			valuesPath:  "/kubevirt/values.yaml",
+			name:            "Template with all parameters",
+			repo:            "suse-edge/kubevirt",
+			chart:           "kubevirt",
+			version:         "0.2.1",
+			kubeVersion:     "v1.29.0+rke2r1",
+			targetNamespace: "kubevirt-ns",
+			valuesPath:      "/kubevirt/values.yaml",
 			expectedArgs: []string{
 				"helm",
 				"template",
 				"--skip-crds",
 				"kubevirt",
 				"suse-edge/kubevirt",
+				"--namespace",
+				"kubevirt-ns",
 				"--version",
 				"0.2.1",
 				"-f",
@@ -450,7 +454,7 @@ func TestTemplateCommand(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := templateCommand(test.chart, test.repo, test.version, test.valuesPath, test.kubeVersion, &stdout, &stderr)
+			cmd := templateCommand(test.chart, test.repo, test.version, test.valuesPath, test.kubeVersion, test.targetNamespace, &stdout, &stderr)
 
 			assert.Equal(t, test.expectedArgs, cmd.Args)
 			assert.Equal(t, &stdout, cmd.Stdout)
