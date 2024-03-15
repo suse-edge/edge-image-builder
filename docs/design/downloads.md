@@ -43,7 +43,7 @@ These artifacts are programmatically downloaded by EIB during build time. Some o
 ### Elemental
 Source
 ```
-https://download.opensuse.org/repositories/isv:/Rancher:/Elemental:/Staging/standard/
+https://download.opensuse.org/repositories/isv:/Rancher:/Elemental:/Maintenance:/5.5/standard/
 ```
 Packages
 ```
