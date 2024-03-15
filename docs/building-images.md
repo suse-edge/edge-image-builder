@@ -333,7 +333,7 @@ The following sections further describe optional directories that may be include
     the container images that they reference will be downloaded and served in an embedded artefact registry.
   * `helm`
     * `values` - Contains [Helm values files](https://helm.sh/docs/chart_template_guide/values_files/). Helm charts that require specified values must have a values file.
-    * `certs` - Contains CA files for TLS verification. Helm repositories and registries with untrusted certificates must either use a CA File or enable `skipTLSVerify` for HTTPS-enabled servers.
+    * `certs` - Contains cert files/bundles for TLS verification. Untrusted HTTPS-enabled Helm repositories and registries need to be provided a cert file/bundle or require `skipTLSVerify` to be true.
 
 > **_NOTE:_** Image builds enabling SELinux mode in the configuration files use EIB's package resolution process
 > to download any necessary RPM packages. To ensure a successful build, this process requires the ```--privileged```
