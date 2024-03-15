@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	podmanSock         = "unix:///run/podman/podman.sock"
+	podmanSocketURI    = "unix://%s"
 	dockerfile         = "Dockerfile"
 	podmanDirName      = "podman"
 	podmanBuildLogFile = "podman-image-build.log"
@@ -41,7 +41,7 @@ func New(out string) (*Podman, error) {
 		return nil, fmt.Errorf("creating new podman instance: %w", err)
 	}
 
-	conn, err := bindings.NewConnection(context.Background(), podmanSock)
+	conn, err := bindings.NewConnection(context.Background(), fmt.Sprintf(podmanSocketURI, podmanSocketPath))
 	if err != nil {
 		return nil, fmt.Errorf("creating new podman connection: %w", err)
 	}
