@@ -54,7 +54,7 @@ func handleChart(chart *image.HelmChart, repo *image.HelmRepository, valuesDir, 
 		return nil, fmt.Errorf("downloading chart: %w", err)
 	}
 
-	images, err := getChartContainerImages(chart, helmClient, chartPath, valuesPath, kubeVersion, chart.TargetNamespace)
+	images, err := getChartContainerImages(chart, helmClient, chartPath, valuesPath, kubeVersion)
 	if err != nil {
 		return nil, fmt.Errorf("getting chart container images: %w", err)
 	}
@@ -98,8 +98,8 @@ func getChartContent(chartPath string) (string, error) {
 	return base64.StdEncoding.EncodeToString(data), nil
 }
 
-func getChartContainerImages(chart *image.HelmChart, helmClient image.HelmClient, chartPath, valuesPath, kubeVersion, targetNamespace string) ([]string, error) {
-	chartResources, err := helmClient.Template(chart.Name, chartPath, chart.Version, valuesPath, targetNamespace, kubeVersion)
+func getChartContainerImages(chart *image.HelmChart, helmClient image.HelmClient, chartPath, valuesPath, kubeVersion string) ([]string, error) {
+	chartResources, err := helmClient.Template(chart.Name, chartPath, chart.Version, valuesPath, kubeVersion, chart.TargetNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("templating chart: %w", err)
 	}
