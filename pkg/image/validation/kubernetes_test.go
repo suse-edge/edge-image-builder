@@ -865,7 +865,7 @@ func TestValidateHelmCharts(t *testing.T) {
 			ExpectedFailedMessages: []string{
 				"Helm repository 'caFile' field for \"suse-edge\" cannot be defined while 'plainHTTP' is true.",
 				"Helm repository 'url' field for \"suse-edge\" contains 'http://' but 'caFile' field is defined.",
-				"Helm repo cert file 'suse-edge.crt' could not be found at 'kubernetes/helm/certs/suse-edge.crt'.",
+				"Helm repo cert file/bundle 'suse-edge.crt' could not be found at 'kubernetes/helm/certs/suse-edge.crt'.",
 			},
 		},
 		`helm repository skipTLSVerify and ca file`: {
@@ -890,7 +890,7 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 			ExpectedFailedMessages: []string{
 				"Helm repository 'caFile' field for \"suse-edge\" cannot be defined while 'skipTLSVerify' is true.",
-				"Helm repo cert file 'suse-edge.crt' could not be found at 'kubernetes/helm/certs/suse-edge.crt'.",
+				"Helm repo cert file/bundle 'suse-edge.crt' could not be found at 'kubernetes/helm/certs/suse-edge.crt'.",
 			},
 		},
 		`helm repo nonexistent cert file`: {
@@ -913,7 +913,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm repo cert file 'nonexistent-apache.crt' could not be found at 'kubernetes/helm/certs/nonexistent-apache.crt'.",
+				"Helm repo cert file/bundle 'nonexistent-apache.crt' could not be found at 'kubernetes/helm/certs/nonexistent-apache.crt'.",
 			},
 		},
 		`helm repo invalid cert file`: {
@@ -936,8 +936,8 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Helm chart 'caFile' field for \"apache-repo\" must be the name of a valid cert file with one of the " +
-					"following extensions: .pem, .crt, .cer, .der, .p7b, .p7c, .pfx, .p12",
+				"Helm chart 'caFile' field for \"apache-repo\" must be the name of a valid cert file/bundle with one of the " +
+					"following extensions: .pem, .crt, .cer",
 			},
 		},
 	}

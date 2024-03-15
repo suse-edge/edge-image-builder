@@ -349,9 +349,9 @@ func validateHelmRepoCert(repoName, certFile string, imageConfigDir string) stri
 		return ""
 	}
 
-	validExtensions := []string{".pem", ".crt", ".cer", ".der", ".p7b", ".p7c", ".pfx", ".p12"}
+	validExtensions := []string{".pem", ".crt", ".cer"}
 	if !slices.Contains(validExtensions, filepath.Ext(certFile)) {
-		return fmt.Sprintf("Helm chart 'caFile' field for %q must be the name of a valid cert file with one of the following extensions: %s",
+		return fmt.Sprintf("Helm chart 'caFile' field for %q must be the name of a valid cert file/bundle with one of the following extensions: %s",
 			repoName, strings.Join(validExtensions, ", "))
 	}
 
@@ -359,11 +359,11 @@ func validateHelmRepoCert(repoName, certFile string, imageConfigDir string) stri
 	_, err := os.Stat(certFilePath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return fmt.Sprintf("Helm repo cert file '%s' could not be found at '%s'.", certFile, certFilePath)
+			return fmt.Sprintf("Helm repo cert file/bundle '%s' could not be found at '%s'.", certFile, certFilePath)
 		}
 
-		zap.S().Errorf("Helm repo cert file '%s' could not be read: %s", certFile, err)
-		return fmt.Sprintf("Helm repo cert file '%s' could not be read.", certFile)
+		zap.S().Errorf("Helm repo cert file/bundle '%s' could not be read: %s", certFile, err)
+		return fmt.Sprintf("Helm repo cert file/bundle '%s' could not be read.", certFile)
 	}
 
 	return ""
