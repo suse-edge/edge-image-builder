@@ -16,7 +16,7 @@ type mockHelmClient struct {
 	addRepoFunc       func(repository *image.HelmRepository) error
 	registryLoginFunc func(repository *image.HelmRepository) error
 	pullFunc          func(chart string, repository *image.HelmRepository, version, destDir string) (string, error)
-	templateFunc      func(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error)
+	templateFunc      func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error)
 }
 
 func (m mockHelmClient) AddRepo(repository *image.HelmRepository) error {
@@ -40,9 +40,9 @@ func (m mockHelmClient) Pull(chart string, repository *image.HelmRepository, ver
 	panic("not implemented")
 }
 
-func (m mockHelmClient) Template(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error) {
+func (m mockHelmClient) Template(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error) {
 	if m.templateFunc != nil {
-		return m.templateFunc(chart, repository, version, valuesFilePath, kubeVersion)
+		return m.templateFunc(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace)
 	}
 	panic("not implemented")
 }
@@ -132,7 +132,7 @@ func TestHandleChart_FailedTemplate(t *testing.T) {
 		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
 			return "", nil
 		},
-		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error) {
+		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error) {
 			return nil, fmt.Errorf("failed templating")
 		},
 	}
@@ -164,7 +164,7 @@ func TestHandleChart_FailedGetChartContent(t *testing.T) {
 		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
 			return "does-not-exist.tgz", nil
 		},
-		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error) {
+		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error) {
 			return nil, nil
 		},
 	}
@@ -302,7 +302,7 @@ func TestHelmCharts(t *testing.T) {
 		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
 			return file, nil
 		},
-		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error) {
+		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error) {
 			chartResource := []map[string]any{
 				{
 					"apiVersion": "v1",

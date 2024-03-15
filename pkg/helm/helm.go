@@ -192,7 +192,7 @@ func pullCommand(chart string, repo *image.HelmRepository, version, destDir stri
 	return cmd
 }
 
-func (h *Helm) Template(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error) {
+func (h *Helm) Template(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error) {
 	logFile := filepath.Join(h.outputDir, templateLogFileName)
 
 	file, err := os.OpenFile(logFile, outputFileFlags, fileio.NonExecutablePerms)
@@ -206,7 +206,7 @@ func (h *Helm) Template(chart, repository, version, valuesFilePath, kubeVersion 
 	}()
 
 	chartContentsBuffer := new(strings.Builder)
-	cmd := templateCommand(chart, repository, version, valuesFilePath, kubeVersion, io.MultiWriter(file, chartContentsBuffer), file)
+	cmd := templateCommand(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace, io.MultiWriter(file, chartContentsBuffer), file)
 
 	if _, err = fmt.Fprintf(file, "command: %s\n", cmd); err != nil {
 		return nil, fmt.Errorf("writing command prefix to log file: %w", err)
@@ -225,9 +225,13 @@ func (h *Helm) Template(chart, repository, version, valuesFilePath, kubeVersion 
 	return resources, nil
 }
 
-func templateCommand(chart, repository, version, valuesFilePath, kubeVersion string, stdout, stderr io.Writer) *exec.Cmd {
+func templateCommand(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string, stdout, stderr io.Writer) *exec.Cmd {
 	var args []string
 	args = append(args, "template", "--skip-crds", chart, repository)
+
+	if targetNamespace != "" {
+		args = append(args, "--namespace", targetNamespace)
+	}
 
 	if version != "" {
 		args = append(args, "--version", version)

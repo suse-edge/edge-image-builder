@@ -37,6 +37,7 @@
 * [#272](https://github.com/suse-edge/edge-image-builder/issues/272) - Custom files should keep their permissions
 * [#209](https://github.com/suse-edge/edge-image-builder/issues/209) - Embedded artifact registry starting even when manifests don't have any images
 * [#315](https://github.com/suse-edge/edge-image-builder/issues/315) - If Elemental fails to register during Combustion we drop to emergency shell
+* [#321](https://github.com/suse-edge/edge-image-builder/issues/321) - Certain Helm charts fail when templated in the `default` namespace
 * [#289](https://github.com/suse-edge/edge-image-builder/issues/289) - The services for RPM dependency resolution failed to start
 
 ---

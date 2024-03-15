@@ -99,7 +99,7 @@ func getChartContent(chartPath string) (string, error) {
 }
 
 func getChartContainerImages(chart *image.HelmChart, helmClient image.HelmClient, chartPath, valuesPath, kubeVersion string) ([]string, error) {
-	chartResources, err := helmClient.Template(chart.Name, chartPath, chart.Version, valuesPath, kubeVersion)
+	chartResources, err := helmClient.Template(chart.Name, chartPath, chart.Version, valuesPath, kubeVersion, chart.TargetNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("templating chart: %w", err)
 	}
