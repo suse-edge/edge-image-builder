@@ -201,6 +201,7 @@ func TestParse(t *testing.T) {
 	// Helm Repositories
 	assert.Equal(t, "suse-edge", kubernetes.Helm.Repositories[0].Name)
 	assert.Equal(t, "https://suse-edge.github.io/charts", kubernetes.Helm.Repositories[0].URL)
+	assert.Equal(t, "suse-edge.crt", kubernetes.Helm.Repositories[0].CAFile)
 
 	assert.Equal(t, "bitnami", kubernetes.Helm.Repositories[1].Name)
 	assert.Equal(t, "oci://registry-1.docker.io/bitnamicharts/apache", kubernetes.Helm.Repositories[1].URL)

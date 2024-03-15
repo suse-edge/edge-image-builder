@@ -9,6 +9,10 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
+const (
+	certsDir = "certs"
+)
+
 func TestHelmRepositoryName(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -130,13 +134,38 @@ func TestAddRepoCommand(t *testing.T) {
 				"pass",
 			},
 		},
+		{
+			name: "Valid repository with auth and a ca file",
+			repo: &image.HelmRepository{
+				Name: "suse-edge",
+				URL:  "https://suse-edge.github.io/charts",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				CAFile: "suse-edge.crt",
+			},
+			expectedArgs: []string{
+				"helm",
+				"repo",
+				"add",
+				"suse-edge",
+				"https://suse-edge.github.io/charts",
+				"--username",
+				"user",
+				"--password",
+				"pass",
+				"--ca-file",
+				"certs/suse-edge.crt",
+			},
+		},
 	}
 
 	var buf bytes.Buffer
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := addRepoCommand(test.repo, &buf)
+			cmd := addRepoCommand(test.repo, certsDir, &buf)
 
 			assert.Equal(t, test.expectedArgs, cmd.Args)
 			assert.Equal(t, &buf, cmd.Stdout)
@@ -146,6 +175,7 @@ func TestAddRepoCommand(t *testing.T) {
 }
 
 func TestRegistryLoginCommand(t *testing.T) {
+
 	tests := []struct {
 		name         string
 		host         string
@@ -222,13 +252,38 @@ func TestRegistryLoginCommand(t *testing.T) {
 				"--insecure",
 			},
 		},
+		{
+			name: "Valid registry with auth and a ca file",
+			host: "registry-1.docker.io",
+			repo: &image.HelmRepository{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				CAFile: "apache.crt",
+			},
+			expectedArgs: []string{
+				"helm",
+				"registry",
+				"login",
+				"registry-1.docker.io",
+				"--username",
+				"user",
+				"--password",
+				"pass",
+				"--ca-file",
+				"certs/apache.crt",
+			},
+		},
 	}
 
 	var buf bytes.Buffer
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := registryLoginCommand(test.host, test.repo, &buf)
+			cmd := registryLoginCommand(test.host, test.repo, certsDir, &buf)
 
 			assert.Equal(t, test.expectedArgs, cmd.Args)
 			assert.Equal(t, &buf, cmd.Stdout)
@@ -382,13 +437,52 @@ func TestPullCommand(t *testing.T) {
 				"--plain-http",
 			},
 		},
+		{
+			name: "HTTP repository with auth and a ca file",
+			repo: &image.HelmRepository{
+				Name: "suse-edge",
+				URL:  "https://suse-edge.github.io/charts",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				CAFile: "suse-edge.crt",
+			},
+			chart: "kubevirt",
+			expectedArgs: []string{
+				"helm",
+				"pull",
+				"suse-edge/kubevirt",
+				"--ca-file",
+				"certs/suse-edge.crt",
+			},
+		},
+		{
+			name: "OCI repository with auth and a ca file",
+			repo: &image.HelmRepository{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				CAFile: "apache.crt",
+			},
+			expectedArgs: []string{
+				"helm",
+				"pull",
+				"oci://registry-1.docker.io/bitnamicharts/apache",
+				"--ca-file",
+				"certs/apache.crt",
+			},
+		},
 	}
 
 	var buf bytes.Buffer
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := pullCommand(test.chart, test.repo, test.version, test.destDir, &buf)
+			cmd := pullCommand(test.chart, test.repo, test.version, test.destDir, certsDir, &buf)
 
 			assert.Equal(t, test.expectedArgs, cmd.Args)
 			assert.Equal(t, &buf, cmd.Stdout)

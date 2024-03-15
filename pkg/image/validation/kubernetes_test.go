@@ -842,6 +842,104 @@ func TestValidateHelmCharts(t *testing.T) {
 				"Helm repository 'url' field for \"suse-edge\" contains 'https://' but 'plainHTTP' field is true.",
 			},
 		},
+		`helm repository plainHTTP and ca file`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "metallb",
+							RepositoryName: "suse-edge",
+							Version:        "0.14.3",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name:      "suse-edge",
+							URL:       "http://suse-edge.github.io/charts",
+							PlainHTTP: true,
+							CAFile:    "suse-edge.crt",
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm repository 'caFile' field for \"suse-edge\" cannot be defined while 'plainHTTP' is true.",
+				"Helm repository 'url' field for \"suse-edge\" contains 'http://' but 'caFile' field is defined.",
+				"Helm repo cert file/bundle 'suse-edge.crt' could not be found at 'kubernetes/helm/certs/suse-edge.crt'.",
+			},
+		},
+		`helm repository skipTLSVerify and ca file`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "metallb",
+							RepositoryName: "suse-edge",
+							Version:        "0.14.3",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name:          "suse-edge",
+							URL:           "https://suse-edge.github.io/charts",
+							SkipTLSVerify: true,
+							CAFile:        "suse-edge.crt",
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm repository 'caFile' field for \"suse-edge\" cannot be defined while 'skipTLSVerify' is true.",
+				"Helm repo cert file/bundle 'suse-edge.crt' could not be found at 'kubernetes/helm/certs/suse-edge.crt'.",
+			},
+		},
+		`helm repo nonexistent cert file`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "apache",
+							RepositoryName: "apache-repo",
+							Version:        "10.7.0",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name:   "apache-repo",
+							URL:    "oci://registry-1.docker.io/bitnamicharts/apache",
+							CAFile: "nonexistent-apache.crt",
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm repo cert file/bundle 'nonexistent-apache.crt' could not be found at 'kubernetes/helm/certs/nonexistent-apache.crt'.",
+			},
+		},
+		`helm repo invalid cert file`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "apache",
+							RepositoryName: "apache-repo",
+							Version:        "10.7.0",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name:   "apache-repo",
+							URL:    "oci://registry-1.docker.io/bitnamicharts/apache",
+							CAFile: "invalid-cert",
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm chart 'caFile' field for \"apache-repo\" must be the name of a valid cert file/bundle with one of the " +
+					"following extensions: .pem, .crt, .cer",
+			},
+		},
 	}
 
 	for name, test := range tests {

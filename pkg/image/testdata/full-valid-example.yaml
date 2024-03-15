@@ -114,6 +114,7 @@ kubernetes:
     repositories:
       - name: suse-edge
         url: https://suse-edge.github.io/charts
+        caFile: suse-edge.crt
       - name: bitnami
         url: oci://registry-1.docker.io/bitnamicharts/apache
         plainHTTP: false
