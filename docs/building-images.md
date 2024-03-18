@@ -342,7 +342,7 @@ The following sections further describe optional directories that may be include
 
 ### RPMs
 
-Custom RPMs may be included in the configuration directory. For more information on how to add custom RPMs, see the [Side-load RPMs](installing-packages.md#side-load-rpms) section of the [Installing pacakges](installing-packages.md) guide.
+Custom RPMs may be included in the configuration directory. For more information on how to add custom RPMs, see the [Side-load RPMs](installing-packages.md#side-load-rpms) section of the [Installing packages](installing-packages.md) guide.
 
 ### Elemental
 
