@@ -42,13 +42,31 @@ For details on how to create the artifacts needed to build an image, see the
 
 The image configuration directory must be attached to the container at runtime. This serves as both the mechanism
 to introduce image definition files and provide a way to get the built image out of the container and onto
-the host machine. 
+the host machine.
 
-The following example command attaches the directory and runs EIB:
+#### Validating an image definition
+
+The following example command attaches the image configuration directory and validates a definition:
 ```shell
-podman run --rm -it \
--v $IMAGE_DIR:/eib eib:dev build \
---definition-file $DEFINITION_FILE.yaml
+podman run --rm -it -v $IMAGE_DIR:/eib \
+eib:dev \
+validate --definition-file $DEFINITION_FILE.yaml
+```
+
+* `-v` - Used to mount a local directory (in this example, the value of $IMAGE_DIR) into the EIB container at `/eib`.
+* `--definition-file` - Specifies which image definition file to build. The path to this file will be relative to
+  the image configuration directory. If the definition file is in the root of the configuration directory, simply
+  specify the name of the configuration file.
+* `--config-dir` - (Optional) Specifies the image configuration directory. This path is relative to the running container, so its
+  value must match the mounted volume. It defaults to `/eib` which matches the mounted volume `$IMAGE_DIR:/eib` in the example above.
+
+#### Building an image
+
+The following example command attaches the image configuration directory and builds an image:
+```shell
+podman run --rm -it -v $IMAGE_DIR:/eib \
+eib:dev \
+build --definition-file $DEFINITION_FILE.yaml
 ```
 
 **NOTE:**
@@ -66,8 +84,6 @@ which require it (e.g. Elemental, Kubernetes SELinux, etc.).
   for assembling/generating the components used in the build which will persist after EIB finishes. This may also be
   specified to another location within a mounted volume. The directory will contain subdirectories storing the
   respective artifacts of the different builds as well as cached copies of certain downloaded files.
-* `--validate` - If specified, the specified image definition and configuration directory will be checked to ensure
-  the build can proceed, however the image will not actually be built.
 
 
 ## Testing Images

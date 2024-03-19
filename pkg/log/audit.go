@@ -37,6 +37,10 @@ func AuditInfof(message string, args ...any) {
 	doAudit(auditMe, zap.S().Info)
 }
 
+func AuditError(message string) {
+	doAudit(message, zap.S().Error)
+}
+
 func AuditComponentSuccessful(component string) {
 	message := formatComponentStatus(component, messageSuccess)
 	Audit(message)

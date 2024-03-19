@@ -10,12 +10,15 @@
 * Added support for using Helm charts from authenticated repositories/registries
 * Added support for skipping Helm chart TLS verification and for using Helm charts from plain HTTP repositories/registries
 * Added support for providing CA files to Helm resolver for TLS verification
+* Added minor formatting improvements to the CLI output
 
 ## API
 
 * The `--config-file` argument to the EIB CLI has been renamed to `--definition-file`.
 * The `--build-dir` argument to the EIB CLI is now optional and defaults to `<config-dir>/_build`, creating it if it does not exist.
 * The `--config-dir` argument to the EIB CLI is now optional and defaults to `/eib` which is the most common mounted container volume.
+* New `validate` subcommand is introduced
+* The `--validate` argument to the `build` subcommand is now removed
 
 ### Image Definition Changes
 
