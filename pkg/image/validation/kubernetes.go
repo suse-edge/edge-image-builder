@@ -177,7 +177,7 @@ func validateHelm(k8s *image.Kubernetes, imageConfigDir string) []FailedValidati
 
 	for _, repo := range k8s.Helm.Repositories {
 		r := repo
-		failures = append(failures, validateRepo(&r, seenHelmRepos)...)
+		failures = append(failures, validateRepo(&r, seenHelmRepos, imageConfigDir)...)
 	}
 
 	return failures
@@ -219,7 +219,7 @@ func validateChart(chart *image.HelmChart, imageConfigDir string) []FailedValida
 	return failures
 }
 
-func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool) []FailedValidation {
+func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool, imageConfigDir string) []FailedValidation {
 	var failures []FailedValidation
 
 	parsedURL, err := url.Parse(repo.URL)
@@ -236,6 +236,12 @@ func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool) []F
 	failures = append(failures, validateHelmRepoURL(parsedURL, repo)...)
 	failures = append(failures, validateHelmRepoAuth(repo)...)
 	failures = append(failures, validateHelmRepoArgs(parsedURL, repo)...)
+
+	if failure := validateHelmRepoCert(repo.Name, repo.CAFile, imageConfigDir); failure != "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: failure,
+		})
+	}
 
 	return failures
 }
@@ -317,7 +323,50 @@ func validateHelmRepoArgs(parsedURL *url.URL, repo *image.HelmRepository) []Fail
 		})
 	}
 
+	if repo.SkipTLSVerify && repo.CAFile != "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Helm repository 'caFile' field for %q cannot be defined while 'skipTLSVerify' is true.", repo.Name),
+		})
+	}
+
+	if repo.PlainHTTP && repo.CAFile != "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Helm repository 'caFile' field for %q cannot be defined while 'plainHTTP' is true.", repo.Name),
+		})
+	}
+
+	if parsedURL.Scheme == httpScheme && repo.CAFile != "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Helm repository 'url' field for %q contains 'http://' but 'caFile' field is defined.", repo.Name),
+		})
+	}
+
 	return failures
+}
+
+func validateHelmRepoCert(repoName, certFile string, imageConfigDir string) string {
+	if certFile == "" {
+		return ""
+	}
+
+	validExtensions := []string{".pem", ".crt", ".cer"}
+	if !slices.Contains(validExtensions, filepath.Ext(certFile)) {
+		return fmt.Sprintf("Helm chart 'caFile' field for %q must be the name of a valid cert file/bundle with one of the following extensions: %s",
+			repoName, strings.Join(validExtensions, ", "))
+	}
+
+	certFilePath := filepath.Join(imageConfigDir, combustion.K8sDir, combustion.HelmDir, combustion.CertsDir, certFile)
+	_, err := os.Stat(certFilePath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return fmt.Sprintf("Helm repo cert file/bundle '%s' could not be found at '%s'.", certFile, certFilePath)
+		}
+
+		zap.S().Errorf("Helm repo cert file/bundle '%s' could not be read: %s", certFile, err)
+		return fmt.Sprintf("Helm repo cert file/bundle '%s' could not be read.", certFile)
+	}
+
+	return ""
 }
 
 func validateHelmChartValues(chartName, valuesFile string, imageConfigDir string) string {
@@ -336,7 +385,7 @@ func validateHelmChartValues(chartName, valuesFile string, imageConfigDir string
 			return fmt.Sprintf("Helm chart values file '%s' could not be found at '%s'.", valuesFile, valuesFilePath)
 		}
 
-		zap.S().Errorf("values file '%s' could not be read: %s", valuesFile, err)
+		zap.S().Errorf("Helm chart values file '%s' could not be read: %s", valuesFile, err)
 		return fmt.Sprintf("Helm chart values file '%s' could not be read.", valuesFile)
 	}
 

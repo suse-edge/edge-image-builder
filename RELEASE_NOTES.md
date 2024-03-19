@@ -9,6 +9,7 @@
 * Bumped Go Version to 1.22
 * Added support for using Helm charts from authenticated repositories/registries
 * Added support for skipping Helm chart TLS verification and for using Helm charts from plain HTTP repositories/registries
+* Added support for providing CA files to Helm resolver for TLS verification
 * Added minor formatting improvements to the CLI output
 
 ## API
@@ -36,7 +37,12 @@
 * [#242](https://github.com/suse-edge/edge-image-builder/issues/242) - Empty rpms directory triggers resolution
 * [#283](https://github.com/suse-edge/edge-image-builder/issues/283) - Definition file argument to EIB is incorrect
 * [#245](https://github.com/suse-edge/edge-image-builder/issues/245) - Pass additional arguments to Helm resolver
+* [#307](https://github.com/suse-edge/edge-image-builder/issues/307) - Helm chart parsing logic breaks if "---" is present in the chart's resources
 * [#272](https://github.com/suse-edge/edge-image-builder/issues/272) - Custom files should keep their permissions
+* [#209](https://github.com/suse-edge/edge-image-builder/issues/209) - Embedded artifact registry starting even when manifests don't have any images
+* [#315](https://github.com/suse-edge/edge-image-builder/issues/315) - If Elemental fails to register during Combustion we drop to emergency shell
+* [#321](https://github.com/suse-edge/edge-image-builder/issues/321) - Certain Helm charts fail when templated in the `default` namespace
+* [#289](https://github.com/suse-edge/edge-image-builder/issues/289) - The services for RPM dependency resolution failed to start
 
 ---
 

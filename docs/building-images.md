@@ -206,6 +206,8 @@ kubernetes:
         url: https://suse-edge.github.io/charts
       - name: apache-repo
         url: oci://registry-1.docker.io/bitnamicharts/apache
+        plainHTTP: false
+        skipTLSVerify: true
         authentication:
           username: user
           password: pass
@@ -235,6 +237,9 @@ kubernetes:
   * `repositories` - Required for charts; Defines a list of Helm repositories/registries required for each chart.
     * `name` - Required; Defines the name for this repository. This name doesn't have to match the name of the actual repository, but must correspond with the `repositoryName` of one or more charts.
     * `url` - Required; Defines the URL which contains the Helm repository containing a chart, or the OCI registry URL to a chart.
+    * `caFile` - Optional; The name of the CA File (not including the path), placed under `kubernetes/helm/certs`, for the specified repository/registry (e.g. the input for `kubernetes/helm/certs/helm.crt` is  `helm.crt`).
+    * `plainHTTP` - Optional; Must be set to `true` when connecting to repositories and registries over plain HTTP.
+    * `skipTLSVerify` - Optional; Must be set to `true` for repositories and registries with untrusted TLS certificates.
     * `authentication` - Required for authenticated repositories/registries.
       * `username` - Required; Defines the username for accessing the specified repository/registry. 
       * `password` - Required; Defines the password for accessing the specified repository/registry.
@@ -327,7 +332,8 @@ The following sections further describe optional directories that may be include
     in combination with the manifests section in the definition file. All files in this directory will be parsed and
     the container images that they reference will be downloaded and served in an embedded artefact registry.
   * `helm`
-    * `values` Contains [Helm values files](https://helm.sh/docs/chart_template_guide/values_files/). Helm charts that require specified values must have a values file.
+    * `values` - Contains [Helm values files](https://helm.sh/docs/chart_template_guide/values_files/). Helm charts that require specified values must have a values file.
+    * `certs` - Contains cert files/bundles for TLS verification. Untrusted HTTPS-enabled Helm repositories and registries need to be provided a cert file/bundle or require `skipTLSVerify` to be true.
 
 > **_NOTE:_** Image builds enabling SELinux mode in the configuration files use EIB's package resolution process
 > to download any necessary RPM packages. To ensure a successful build, this process requires the ```--privileged```
@@ -336,7 +342,7 @@ The following sections further describe optional directories that may be include
 
 ### RPMs
 
-Custom RPMs may be included in the configuration directory. For more information on how to add custom RPMs, see the [Side-load RPMs](installing-packages.md#side-load-rpms) section of the [Installing pacakges](installing-packages.md) guide.
+Custom RPMs may be included in the configuration directory. For more information on how to add custom RPMs, see the [Side-load RPMs](installing-packages.md#side-load-rpms) section of the [Installing packages](installing-packages.md) guide.
 
 ### Elemental
 

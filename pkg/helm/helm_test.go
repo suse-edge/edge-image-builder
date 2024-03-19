@@ -9,6 +9,10 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
+const (
+	certsDir = "certs"
+)
+
 func TestHelmRepositoryName(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -130,13 +134,38 @@ func TestAddRepoCommand(t *testing.T) {
 				"pass",
 			},
 		},
+		{
+			name: "Valid repository with auth and a ca file",
+			repo: &image.HelmRepository{
+				Name: "suse-edge",
+				URL:  "https://suse-edge.github.io/charts",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				CAFile: "suse-edge.crt",
+			},
+			expectedArgs: []string{
+				"helm",
+				"repo",
+				"add",
+				"suse-edge",
+				"https://suse-edge.github.io/charts",
+				"--username",
+				"user",
+				"--password",
+				"pass",
+				"--ca-file",
+				"certs/suse-edge.crt",
+			},
+		},
 	}
 
 	var buf bytes.Buffer
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := addRepoCommand(test.repo, &buf)
+			cmd := addRepoCommand(test.repo, certsDir, &buf)
 
 			assert.Equal(t, test.expectedArgs, cmd.Args)
 			assert.Equal(t, &buf, cmd.Stdout)
@@ -146,6 +175,7 @@ func TestAddRepoCommand(t *testing.T) {
 }
 
 func TestRegistryLoginCommand(t *testing.T) {
+
 	tests := []struct {
 		name         string
 		host         string
@@ -222,13 +252,38 @@ func TestRegistryLoginCommand(t *testing.T) {
 				"--insecure",
 			},
 		},
+		{
+			name: "Valid registry with auth and a ca file",
+			host: "registry-1.docker.io",
+			repo: &image.HelmRepository{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				CAFile: "apache.crt",
+			},
+			expectedArgs: []string{
+				"helm",
+				"registry",
+				"login",
+				"registry-1.docker.io",
+				"--username",
+				"user",
+				"--password",
+				"pass",
+				"--ca-file",
+				"certs/apache.crt",
+			},
+		},
 	}
 
 	var buf bytes.Buffer
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := registryLoginCommand(test.host, test.repo, &buf)
+			cmd := registryLoginCommand(test.host, test.repo, certsDir, &buf)
 
 			assert.Equal(t, test.expectedArgs, cmd.Args)
 			assert.Equal(t, &buf, cmd.Stdout)
@@ -382,13 +437,52 @@ func TestPullCommand(t *testing.T) {
 				"--plain-http",
 			},
 		},
+		{
+			name: "HTTP repository with auth and a ca file",
+			repo: &image.HelmRepository{
+				Name: "suse-edge",
+				URL:  "https://suse-edge.github.io/charts",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				CAFile: "suse-edge.crt",
+			},
+			chart: "kubevirt",
+			expectedArgs: []string{
+				"helm",
+				"pull",
+				"suse-edge/kubevirt",
+				"--ca-file",
+				"certs/suse-edge.crt",
+			},
+		},
+		{
+			name: "OCI repository with auth and a ca file",
+			repo: &image.HelmRepository{
+				Name: "apache-repo",
+				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				Authentication: image.HelmAuthentication{
+					Username: "user",
+					Password: "pass",
+				},
+				CAFile: "apache.crt",
+			},
+			expectedArgs: []string{
+				"helm",
+				"pull",
+				"oci://registry-1.docker.io/bitnamicharts/apache",
+				"--ca-file",
+				"certs/apache.crt",
+			},
+		},
 	}
 
 	var buf bytes.Buffer
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := pullCommand(test.chart, test.repo, test.version, test.destDir, &buf)
+			cmd := pullCommand(test.chart, test.repo, test.version, test.destDir, certsDir, &buf)
 
 			assert.Equal(t, test.expectedArgs, cmd.Args)
 			assert.Equal(t, &buf, cmd.Stdout)
@@ -399,27 +493,31 @@ func TestPullCommand(t *testing.T) {
 
 func TestTemplateCommand(t *testing.T) {
 	tests := []struct {
-		name         string
-		repo         string
-		chart        string
-		version      string
-		kubeVersion  string
-		valuesPath   string
-		expectedArgs []string
+		name            string
+		repo            string
+		chart           string
+		version         string
+		kubeVersion     string
+		targetNamespace string
+		valuesPath      string
+		expectedArgs    []string
 	}{
 		{
-			name:        "Template with all parameters",
-			repo:        "suse-edge/kubevirt",
-			chart:       "kubevirt",
-			version:     "0.2.1",
-			kubeVersion: "v1.29.0+rke2r1",
-			valuesPath:  "/kubevirt/values.yaml",
+			name:            "Template with all parameters",
+			repo:            "suse-edge/kubevirt",
+			chart:           "kubevirt",
+			version:         "0.2.1",
+			kubeVersion:     "v1.29.0+rke2r1",
+			targetNamespace: "kubevirt-ns",
+			valuesPath:      "/kubevirt/values.yaml",
 			expectedArgs: []string{
 				"helm",
 				"template",
 				"--skip-crds",
 				"kubevirt",
 				"suse-edge/kubevirt",
+				"--namespace",
+				"kubevirt-ns",
 				"--version",
 				"0.2.1",
 				"-f",
@@ -450,7 +548,7 @@ func TestTemplateCommand(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := templateCommand(test.chart, test.repo, test.version, test.valuesPath, test.kubeVersion, &stdout, &stderr)
+			cmd := templateCommand(test.chart, test.repo, test.version, test.valuesPath, test.kubeVersion, test.targetNamespace, &stdout, &stderr)
 
 			assert.Equal(t, test.expectedArgs, cmd.Args)
 			assert.Equal(t, &stdout, cmd.Stdout)
@@ -460,30 +558,51 @@ func TestTemplateCommand(t *testing.T) {
 }
 
 func TestParseChartContents_InvalidPayload(t *testing.T) {
-	contents := "---abc"
+	contents := `---
+# Source
+invalid-resource
+`
 
 	resources, err := parseChartContents(contents)
 	require.Error(t, err)
 
-	assert.ErrorContains(t, err, "invalid resource")
+	assert.ErrorContains(t, err, "yaml: unmarshal errors:\n  line 2: cannot unmarshal !!str `invalid...` into map[string]interface {}")
 	assert.Nil(t, resources)
 }
 
 func TestParseChartContents(t *testing.T) {
 	contents := `
-apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-  name: metallb
-  namespace: metallb-system
-spec:
-  repo: https://suse-edge.github.io/charts
-  chart: metallb
----
+# Source: cert-manager/templates/cainjector-serviceaccount.yaml
 apiVersion: v1
-kind: Namespace
+kind: ServiceAccount
+automountServiceAccountToken: true
 metadata:
-  name: metallb-system
+  name: cert-manager-cainjector
+  namespace: default
+  labels:
+    app: cainjector
+    app.kubernetes.io/name: cainjector
+    app.kubernetes.io/instance: cert-manager
+    app.kubernetes.io/component: "cainjector"
+    app.kubernetes.io/version: "v1.14.4"
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: cert-manager-v1.14.4
+---
+# Source: cert-manager/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+automountServiceAccountToken: true
+metadata:
+  name: cert-manager
+  namespace: default
+  labels:
+    app: cert-manager
+    app.kubernetes.io/name: cert-manager
+    app.kubernetes.io/instance: cert-manager
+    app.kubernetes.io/component: "controller"
+    app.kubernetes.io/version: "v1.14.4"
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: cert-manager-v1.14.4
 `
 
 	resources, err := parseChartContents(contents)
@@ -492,23 +611,40 @@ metadata:
 	require.Len(t, resources, 2)
 
 	assert.Equal(t, map[string]any{
-		"apiVersion": "helm.cattle.io/v1",
-		"kind":       "HelmChart",
+		"apiVersion":                   "v1",
+		"kind":                         "ServiceAccount",
+		"automountServiceAccountToken": true,
 		"metadata": map[string]any{
-			"name":      "metallb",
-			"namespace": "metallb-system",
-		},
-		"spec": map[string]any{
-			"repo":  "https://suse-edge.github.io/charts",
-			"chart": "metallb",
+			"name":      "cert-manager-cainjector",
+			"namespace": "default",
+			"labels": map[string]any{
+				"app":                          "cainjector",
+				"app.kubernetes.io/name":       "cainjector",
+				"app.kubernetes.io/instance":   "cert-manager",
+				"app.kubernetes.io/component":  "cainjector",
+				"app.kubernetes.io/version":    "v1.14.4",
+				"app.kubernetes.io/managed-by": "Helm",
+				"helm.sh/chart":                "cert-manager-v1.14.4",
+			},
 		},
 	}, resources[0])
 
 	assert.Equal(t, map[string]any{
-		"apiVersion": "v1",
-		"kind":       "Namespace",
+		"apiVersion":                   "v1",
+		"kind":                         "ServiceAccount",
+		"automountServiceAccountToken": true,
 		"metadata": map[string]any{
-			"name": "metallb-system",
+			"name":      "cert-manager",
+			"namespace": "default",
+			"labels": map[string]any{
+				"app":                          "cert-manager",
+				"app.kubernetes.io/name":       "cert-manager",
+				"app.kubernetes.io/instance":   "cert-manager",
+				"app.kubernetes.io/component":  "controller",
+				"app.kubernetes.io/version":    "v1.14.4",
+				"app.kubernetes.io/managed-by": "Helm",
+				"helm.sh/chart":                "cert-manager-v1.14.4",
+			},
 		},
 	}, resources[1])
 }

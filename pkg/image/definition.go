@@ -185,6 +185,7 @@ type HelmRepository struct {
 	Authentication HelmAuthentication `yaml:"authentication"`
 	PlainHTTP      bool               `yaml:"plainHTTP"`
 	SkipTLSVerify  bool               `yaml:"skipTLSVerify"`
+	CAFile         string             `yaml:"caFile"`
 }
 
 type HelmAuthentication struct {

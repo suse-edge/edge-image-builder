@@ -26,11 +26,13 @@ const (
 
 type Helm struct {
 	outputDir string
+	certsDir  string
 }
 
-func New(outputDir string) *Helm {
+func New(outputDir, certsDir string) *Helm {
 	return &Helm{
 		outputDir: outputDir,
+		certsDir:  certsDir,
 	}
 }
 
@@ -55,7 +57,7 @@ func (h *Helm) AddRepo(repo *image.HelmRepository) error {
 		}
 	}()
 
-	cmd := addRepoCommand(repo, file)
+	cmd := addRepoCommand(repo, h.certsDir, file)
 
 	if _, err = fmt.Fprintf(file, "command: %s\n", cmd); err != nil {
 		return fmt.Errorf("writing command prefix to log file: %w", err)
@@ -64,7 +66,7 @@ func (h *Helm) AddRepo(repo *image.HelmRepository) error {
 	return cmd.Run()
 }
 
-func addRepoCommand(repo *image.HelmRepository, output io.Writer) *exec.Cmd {
+func addRepoCommand(repo *image.HelmRepository, certsDir string, output io.Writer) *exec.Cmd {
 	var args []string
 	args = append(args, "repo", "add", repo.Name, repo.URL)
 
@@ -74,6 +76,9 @@ func addRepoCommand(repo *image.HelmRepository, output io.Writer) *exec.Cmd {
 
 	if repo.SkipTLSVerify {
 		args = append(args, "--insecure-skip-tls-verify")
+	} else if repo.CAFile != "" {
+		caFilePath := filepath.Join(certsDir, repo.CAFile)
+		args = append(args, "--ca-file", caFilePath)
 	}
 
 	cmd := exec.Command("helm", args...)
@@ -101,7 +106,7 @@ func (h *Helm) RegistryLogin(repo *image.HelmRepository) error {
 		return fmt.Errorf("getting host url: %w", err)
 	}
 
-	cmd := registryLoginCommand(host, repo, file)
+	cmd := registryLoginCommand(host, repo, h.certsDir, file)
 
 	if _, err = fmt.Fprintf(file, "command: %s\n", cmd); err != nil {
 		return fmt.Errorf("writing command prefix to log file: %w", err)
@@ -110,7 +115,7 @@ func (h *Helm) RegistryLogin(repo *image.HelmRepository) error {
 	return cmd.Run()
 }
 
-func registryLoginCommand(host string, repo *image.HelmRepository, output io.Writer) *exec.Cmd {
+func registryLoginCommand(host string, repo *image.HelmRepository, certsDir string, output io.Writer) *exec.Cmd {
 	var args []string
 	args = append(args, "registry", "login", host)
 
@@ -120,6 +125,9 @@ func registryLoginCommand(host string, repo *image.HelmRepository, output io.Wri
 
 	if repo.SkipTLSVerify || repo.PlainHTTP {
 		args = append(args, "--insecure")
+	} else if repo.CAFile != "" {
+		caFilePath := filepath.Join(certsDir, repo.CAFile)
+		args = append(args, "--ca-file", caFilePath)
 	}
 
 	cmd := exec.Command("helm", args...)
@@ -142,7 +150,7 @@ func (h *Helm) Pull(chart string, repo *image.HelmRepository, version, destDir s
 		}
 	}()
 
-	cmd := pullCommand(chart, repo, version, destDir, file)
+	cmd := pullCommand(chart, repo, version, destDir, h.certsDir, file)
 
 	if _, err = fmt.Fprintf(file, "command: %s\n", cmd); err != nil {
 		return "", fmt.Errorf("writing command prefix to log file: %w", err)
@@ -165,7 +173,7 @@ func (h *Helm) Pull(chart string, repo *image.HelmRepository, version, destDir s
 	return chartPath, nil
 }
 
-func pullCommand(chart string, repo *image.HelmRepository, version, destDir string, output io.Writer) *exec.Cmd {
+func pullCommand(chart string, repo *image.HelmRepository, version, destDir, certsDir string, output io.Writer) *exec.Cmd {
 	repository := repositoryName(repo.Name, repo.URL, chart)
 
 	var args []string
@@ -178,10 +186,14 @@ func pullCommand(chart string, repo *image.HelmRepository, version, destDir stri
 		args = append(args, "--destination", destDir)
 	}
 
-	if repo.SkipTLSVerify {
+	switch {
+	case repo.SkipTLSVerify:
 		args = append(args, "--insecure-skip-tls-verify")
-	} else if repo.PlainHTTP {
+	case repo.PlainHTTP:
 		args = append(args, "--plain-http")
+	case repo.CAFile != "":
+		caFilePath := filepath.Join(certsDir, repo.CAFile)
+		args = append(args, "--ca-file", caFilePath)
 	}
 
 	cmd := exec.Command("helm", args...)
@@ -192,7 +204,7 @@ func pullCommand(chart string, repo *image.HelmRepository, version, destDir stri
 	return cmd
 }
 
-func (h *Helm) Template(chart, repository, version, valuesFilePath, kubeVersion string) ([]map[string]any, error) {
+func (h *Helm) Template(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error) {
 	logFile := filepath.Join(h.outputDir, templateLogFileName)
 
 	file, err := os.OpenFile(logFile, outputFileFlags, fileio.NonExecutablePerms)
@@ -206,7 +218,7 @@ func (h *Helm) Template(chart, repository, version, valuesFilePath, kubeVersion 
 	}()
 
 	chartContentsBuffer := new(strings.Builder)
-	cmd := templateCommand(chart, repository, version, valuesFilePath, kubeVersion, io.MultiWriter(file, chartContentsBuffer), file)
+	cmd := templateCommand(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace, io.MultiWriter(file, chartContentsBuffer), file)
 
 	if _, err = fmt.Fprintf(file, "command: %s\n", cmd); err != nil {
 		return nil, fmt.Errorf("writing command prefix to log file: %w", err)
@@ -225,9 +237,13 @@ func (h *Helm) Template(chart, repository, version, valuesFilePath, kubeVersion 
 	return resources, nil
 }
 
-func templateCommand(chart, repository, version, valuesFilePath, kubeVersion string, stdout, stderr io.Writer) *exec.Cmd {
+func templateCommand(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string, stdout, stderr io.Writer) *exec.Cmd {
 	var args []string
 	args = append(args, "template", "--skip-crds", chart, repository)
+
+	if targetNamespace != "" {
+		args = append(args, "--namespace", targetNamespace)
+	}
 
 	if version != "" {
 		args = append(args, "--version", version)
@@ -251,6 +267,10 @@ func parseChartContents(chartContents string) ([]map[string]any, error) {
 
 	for _, resource := range strings.Split(chartContents, "---") {
 		if resource == "" {
+			continue
+		}
+
+		if !strings.HasPrefix(strings.TrimSpace(resource), "# Source") {
 			continue
 		}
 

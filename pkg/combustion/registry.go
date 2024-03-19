@@ -32,6 +32,7 @@ const (
 
 	HelmDir   = "helm"
 	ValuesDir = "values"
+	CertsDir  = "certs"
 )
 
 //go:embed templates/hauler-manifest.yaml.tpl
