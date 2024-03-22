@@ -34,6 +34,13 @@ kubernetes:
       targetNamespace: metal3-system
       valuesFile: metal3.yaml
       version: 0.6.3
+    - createNamespace: true
+      installationNamespace: kube-system
+      name: core
+      repositoryName: neuvector
+      targetNamespace: neuvector
+      valuesFile: neuvector.yaml
+      version: 2.7.3
     repositories:
     - name: jetstack
       url: https://charts.jetstack.io
@@ -43,6 +50,8 @@ kubernetes:
       url: https://releases.rancher.com/server-charts/stable
     - name: suse-edge
       url: https://suse-edge.github.io/charts
+    - name: neuvector
+      url: https://neuvector.github.io/neuvector-helm/
   network:
     apiHost: 192.168.122.10.sslip.io
     apiVIP: 192.168.122.10

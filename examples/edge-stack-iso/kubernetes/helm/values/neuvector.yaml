@@ -1,0 +1,19 @@
+# Based on https://gist.github.com/agracey/6966338d34c7277f5b5ec6f4c1431b1b
+crdwebhook:
+  enabled: false
+ranchersso:
+  enabled: false
+k3s:
+  enabled: true
+controller:
+  replicas: 1
+manager: 
+  enabled: true
+  env:
+    ssl: false
+cve:
+  updater:
+    enabled: false
+  scanner:
+    enabled: true
+    replicas: 1
