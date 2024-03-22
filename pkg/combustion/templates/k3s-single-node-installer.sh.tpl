@@ -18,7 +18,7 @@ echo "{{ .apiVIP }} {{ .apiHost }}" >> /etc/hosts
 {{- end }}
 
 mkdir -p /etc/rancher/k3s/
-cp {{ .configFile }} /etc/rancher/k3s/config.yaml
+cp {{ .configFilePath }}/{{ .configFile }} /etc/rancher/k3s/config.yaml
 
 if [ -f {{ .registryMirrors }} ]; then
 cp {{ .registryMirrors }} /etc/rancher/k3s/registries.yaml
@@ -32,4 +32,4 @@ mkdir -p $INSTALL_K3S_BIN_DIR
 chmod +x {{ .binaryPath }}
 cp {{ .binaryPath }} $INSTALL_K3S_BIN_DIR/k3s
 
-./{{ .installScript }}
+sh {{ .installScript }}

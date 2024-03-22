@@ -23,10 +23,10 @@ func TestConfigureManifestsValidDownload(t *testing.T) {
 		"https://k8s.io/examples/application/nginx-app.yaml",
 	}
 
-	k8sCombDir := filepath.Join(ctx.CombustionDir, K8sDir)
+	k8sCombDir := filepath.Join(ctx.ArtefactsDir, K8sDir)
 	require.NoError(t, os.Mkdir(k8sCombDir, os.ModePerm))
 
-	downloadedManifestsPath := filepath.Join(K8sDir, k8sManifestsDir)
+	downloadedManifestsPath := filepath.Join("$ARTEFACTS_DIR", K8sDir, k8sManifestsDir)
 	downloadedManifestsDestDir := filepath.Join(k8sCombDir, k8sManifestsDir)
 	expectedDownloadedFilePath := filepath.Join(downloadedManifestsDestDir, "dl-manifest-1.yaml")
 
@@ -74,7 +74,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 		"https://k8s.io/examples/application/nginx-app.yaml",
 	}
 
-	k8sCombDir := filepath.Join(ctx.CombustionDir, K8sDir)
+	k8sCombDir := filepath.Join(ctx.ArtefactsDir, K8sDir)
 	require.NoError(t, os.Mkdir(k8sCombDir, os.ModePerm))
 
 	localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, K8sDir, k8sManifestsDir)
@@ -100,18 +100,18 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	require.NoError(t, err)
 
 	contents := string(b)
-	assert.Contains(t, contents, "cp kubernetes/images/* /var/lib/rancher/rke2/agent/images/")
-	assert.Contains(t, contents, "cp server.yaml /etc/rancher/rke2/config.yaml")
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/images/* /var/lib/rancher/rke2/agent/images/")
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/server.yaml /etc/rancher/rke2/config.yaml")
 	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
-	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=kubernetes/install")
-	assert.Contains(t, contents, "./install-k8s.sh")
+	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=$ARTEFACTS_DIR/kubernetes/install")
+	assert.Contains(t, contents, "sh $ARTEFACTS_DIR/kubernetes/install-k8s.sh")
 	assert.Contains(t, contents, "systemctl enable rke2-server.service")
 	assert.Contains(t, contents, "mkdir -p /var/lib/rancher/rke2/server/manifests/")
-	assert.Contains(t, contents, "cp kubernetes/manifests/* /var/lib/rancher/rke2/server/manifests/")
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/manifests/* /var/lib/rancher/rke2/server/manifests/")
 	assert.Contains(t, contents, "cp "+registryMirrorsFileName+" /etc/rancher/rke2/registries.yaml")
 
 	// Config file assertions
-	configPath := filepath.Join(ctx.CombustionDir, "server.yaml")
+	configPath := filepath.Join(ctx.ArtefactsDir, "kubernetes/server.yaml")
 
 	info, err = os.Stat(configPath)
 	require.NoError(t, err)

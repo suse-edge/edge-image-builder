@@ -24,10 +24,10 @@ mount /var
 mkdir -p /var/lib/rancher/rke2/agent/images/
 cp {{ .imagesPath }}/* /var/lib/rancher/rke2/agent/images/
 
-CONFIGFILE=$NODETYPE.yaml
+CONFIGFILE={{ .configFilePath }}/$NODETYPE.yaml
 
 if [ "$HOSTNAME" = {{ .initialiser }} ]; then
-    CONFIGFILE={{ .initialiserConfigFile }}
+    CONFIGFILE={{ .configFilePath }}/{{ .initialiserConfigFile }}
 
     {{- if .manifestsPath }}
     mkdir -p /var/lib/rancher/rke2/server/manifests/
@@ -55,6 +55,6 @@ export INSTALL_RKE2_ARTIFACT_PATH={{ .installPath }}
 # rke2-selinux package, but isn't executed during combustion.
 mkdir -p /opt/cni
 
-./{{ .installScript }}
+sh {{ .installScript }}
 
 systemctl enable rke2-$NODETYPE.service

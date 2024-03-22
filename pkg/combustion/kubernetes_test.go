@@ -95,7 +95,7 @@ func TestConfigureKubernetes_ScriptInstallerErrorK3s(t *testing.T) {
 
 	scripts, err := configureKubernetes(ctx)
 	require.Error(t, err)
-	assert.EqualError(t, err, "configuring kubernetes components: downloading k3s install script: some error")
+	assert.EqualError(t, err, "configuring kubernetes components: downloading k3s install script: downloading install script: some error")
 	assert.Nil(t, scripts)
 }
 
@@ -114,7 +114,7 @@ func TestConfigureKubernetes_ScriptInstallerErrorRKE2(t *testing.T) {
 
 	scripts, err := configureKubernetes(ctx)
 	require.Error(t, err)
-	assert.EqualError(t, err, "configuring kubernetes components: downloading RKE2 install script: some error")
+	assert.EqualError(t, err, "configuring kubernetes components: downloading RKE2 install script: downloading install script: some error")
 	assert.Nil(t, scripts)
 }
 
@@ -205,18 +205,18 @@ func TestConfigureKubernetes_SuccessfulSingleNodeK3sCluster(t *testing.T) {
 	require.NoError(t, err)
 
 	contents := string(b)
-	assert.Contains(t, contents, "cp kubernetes/images/* /var/lib/rancher/k3s/agent/images/")
-	assert.Contains(t, contents, "cp server.yaml /etc/rancher/k3s/config.yaml")
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/images/* /var/lib/rancher/k3s/agent/images/")
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/server.yaml /etc/rancher/k3s/config.yaml")
 	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
 	assert.Contains(t, contents, "export INSTALL_K3S_SKIP_DOWNLOAD=true")
 	assert.Contains(t, contents, "export INSTALL_K3S_SKIP_START=true")
 	assert.Contains(t, contents, "export INSTALL_K3S_BIN_DIR=/opt/bin")
-	assert.Contains(t, contents, "chmod +x kubernetes/install/cool-k3s-binary")
-	assert.Contains(t, contents, "cp kubernetes/install/cool-k3s-binary $INSTALL_K3S_BIN_DIR/k3s")
-	assert.Contains(t, contents, "./install-kubernetes.sh")
+	assert.Contains(t, contents, "chmod +x $ARTEFACTS_DIR/kubernetes/install/cool-k3s-binary")
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/install/cool-k3s-binary $INSTALL_K3S_BIN_DIR/k3s")
+	assert.Contains(t, contents, "sh $ARTEFACTS_DIR/kubernetes/install-kubernetes.sh")
 
 	// Config file assertions
-	configPath := filepath.Join(ctx.CombustionDir, "server.yaml")
+	configPath := filepath.Join(ctx.ArtefactsDir, "kubernetes", "server.yaml")
 
 	info, err = os.Stat(configPath)
 	require.NoError(t, err)
@@ -300,7 +300,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sCluster(t *testing.T) {
 	contents := string(b)
 	assert.Contains(t, contents, "hosts[node1.suse.com]=server")
 	assert.Contains(t, contents, "hosts[node2.suse.com]=agent")
-	assert.Contains(t, contents, "cp kubernetes/images/* /var/lib/rancher/k3s/agent/images/")
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/images/* /var/lib/rancher/k3s/agent/images/")
 	assert.Contains(t, contents, "cp $CONFIGFILE /etc/rancher/k3s/config.yaml")
 	assert.Contains(t, contents, "if [ \"$HOSTNAME\" = node1.suse.com ]; then")
 	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
@@ -308,12 +308,12 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sCluster(t *testing.T) {
 	assert.Contains(t, contents, "export INSTALL_K3S_SKIP_DOWNLOAD=true")
 	assert.Contains(t, contents, "export INSTALL_K3S_SKIP_START=true")
 	assert.Contains(t, contents, "export INSTALL_K3S_BIN_DIR=/opt/bin")
-	assert.Contains(t, contents, "chmod +x kubernetes/install/cool-k3s-binary")
-	assert.Contains(t, contents, "cp kubernetes/install/cool-k3s-binary $INSTALL_K3S_BIN_DIR/k3s")
-	assert.Contains(t, contents, "./install-kubernetes.sh")
+	assert.Contains(t, contents, "chmod +x $ARTEFACTS_DIR/kubernetes/install/cool-k3s-binary")
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/install/cool-k3s-binary $INSTALL_K3S_BIN_DIR/k3s")
+	assert.Contains(t, contents, "sh $ARTEFACTS_DIR/kubernetes/install-kubernetes.sh")
 
 	// Server config file assertions
-	configPath := filepath.Join(ctx.CombustionDir, "server.yaml")
+	configPath := filepath.Join(ctx.ArtefactsDir, "kubernetes", "server.yaml")
 
 	info, err = os.Stat(configPath)
 	require.NoError(t, err)
@@ -333,7 +333,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sCluster(t *testing.T) {
 	assert.Nil(t, configContents["cluster-init"])
 
 	// Initialising server config file assertions
-	configPath = filepath.Join(ctx.CombustionDir, "init_server.yaml")
+	configPath = filepath.Join(ctx.ArtefactsDir, "kubernetes", "init_server.yaml")
 
 	b, err = os.ReadFile(configPath)
 	require.NoError(t, err)
@@ -348,7 +348,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sCluster(t *testing.T) {
 	assert.Equal(t, true, configContents["cluster-init"])
 
 	// Agent config file assertions
-	configPath = filepath.Join(ctx.CombustionDir, "agent.yaml")
+	configPath = filepath.Join(ctx.ArtefactsDir, "kubernetes", "agent.yaml")
 
 	b, err = os.ReadFile(configPath)
 	require.NoError(t, err)
@@ -401,15 +401,15 @@ func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
 	require.NoError(t, err)
 
 	contents := string(b)
-	assert.Contains(t, contents, "cp kubernetes/images/* /var/lib/rancher/rke2/agent/images/")
-	assert.Contains(t, contents, "cp server.yaml /etc/rancher/rke2/config.yaml")
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/images/* /var/lib/rancher/rke2/agent/images/")
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/server.yaml /etc/rancher/rke2/config.yaml")
 	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
-	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=kubernetes/install")
-	assert.Contains(t, contents, "./install-kubernetes.sh")
+	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=$ARTEFACTS_DIR/kubernetes/install")
+	assert.Contains(t, contents, "sh $ARTEFACTS_DIR/kubernetes/install-kubernetes.sh")
 	assert.Contains(t, contents, "systemctl enable rke2-server.service")
 
 	// Config file assertions
-	configPath := filepath.Join(ctx.CombustionDir, "server.yaml")
+	configPath := filepath.Join(ctx.ArtefactsDir, "kubernetes", "server.yaml")
 
 	info, err = os.Stat(configPath)
 	require.NoError(t, err)
@@ -493,16 +493,16 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	contents := string(b)
 	assert.Contains(t, contents, "hosts[node1.suse.com]=server")
 	assert.Contains(t, contents, "hosts[node2.suse.com]=agent")
-	assert.Contains(t, contents, "cp kubernetes/images/* /var/lib/rancher/rke2/agent/images/")
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/images/* /var/lib/rancher/rke2/agent/images/")
 	assert.Contains(t, contents, "cp $CONFIGFILE /etc/rancher/rke2/config.yaml")
 	assert.Contains(t, contents, "if [ \"$HOSTNAME\" = node1.suse.com ]; then")
 	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
-	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=kubernetes/install")
-	assert.Contains(t, contents, "./install-kubernetes.sh")
+	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=$ARTEFACTS_DIR/kubernetes/install")
+	assert.Contains(t, contents, "sh $ARTEFACTS_DIR/kubernetes/install-kubernetes.sh")
 	assert.Contains(t, contents, "systemctl enable rke2-$NODETYPE.service")
 
 	// Server config file assertions
-	configPath := filepath.Join(ctx.CombustionDir, "server.yaml")
+	configPath := filepath.Join(ctx.ArtefactsDir, "kubernetes", "server.yaml")
 
 	info, err = os.Stat(configPath)
 	require.NoError(t, err)
@@ -521,7 +521,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	assert.Equal(t, []any{"192-168-122-100.sslip.io", "192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
 
 	// Initialising server config file assertions
-	configPath = filepath.Join(ctx.CombustionDir, "init_server.yaml")
+	configPath = filepath.Join(ctx.ArtefactsDir, "kubernetes", "init_server.yaml")
 
 	b, err = os.ReadFile(configPath)
 	require.NoError(t, err)
@@ -535,7 +535,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	assert.Equal(t, []any{"192-168-122-100.sslip.io", "192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
 
 	// Agent config file assertions
-	configPath = filepath.Join(ctx.CombustionDir, "agent.yaml")
+	configPath = filepath.Join(ctx.ArtefactsDir, "kubernetes", "agent.yaml")
 
 	b, err = os.ReadFile(configPath)
 	require.NoError(t, err)

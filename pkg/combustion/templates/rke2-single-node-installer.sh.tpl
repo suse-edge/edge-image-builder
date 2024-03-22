@@ -18,7 +18,7 @@ echo "{{ .apiVIP }} {{ .apiHost }}" >> /etc/hosts
 {{- end }}
 
 mkdir -p /etc/rancher/rke2/
-cp {{ .configFile }} /etc/rancher/rke2/config.yaml
+cp {{ .configFilePath }}/{{ .configFile }} /etc/rancher/rke2/config.yaml
 
 if [ -f {{ .registryMirrors }} ]; then
 cp {{ .registryMirrors }} /etc/rancher/rke2/registries.yaml
@@ -31,6 +31,6 @@ export INSTALL_RKE2_ARTIFACT_PATH={{ .installPath }}
 # rke2-selinux package, but isn't executed during combustion.
 mkdir -p /opt/cni
 
-./{{ .installScript }}
+sh {{ .installScript }}
 
 systemctl enable rke2-server.service

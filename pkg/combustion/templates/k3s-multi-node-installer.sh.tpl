@@ -24,10 +24,10 @@ mount /var
 mkdir -p /var/lib/rancher/k3s/agent/images/
 cp {{ .imagesPath }}/* /var/lib/rancher/k3s/agent/images/
 
-CONFIGFILE=$NODETYPE.yaml
+CONFIGFILE={{ .configFilePath }}/$NODETYPE.yaml
 
 if [ "$HOSTNAME" = {{ .initialiser }} ]; then
-    CONFIGFILE={{ .initialiserConfigFile }}
+    CONFIGFILE={{ .configFilePath }}/{{ .initialiserConfigFile }}
 
     {{- if .manifestsPath }}
     mkdir -p /var/lib/rancher/k3s/server/manifests/
@@ -57,4 +57,4 @@ mkdir -p $INSTALL_K3S_BIN_DIR
 chmod +x {{ .binaryPath }}
 cp {{ .binaryPath }} $INSTALL_K3S_BIN_DIR/k3s
 
-./{{ .installScript }}
+sh {{ .installScript }}
