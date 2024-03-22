@@ -83,6 +83,7 @@ func (b *Builder) writeModifyScript(imageFilename string, includeCombustion, ren
 	values := struct {
 		ImagePath           string
 		CombustionDir       string
+		ArtefactsDir        string
 		ConfigureGRUB       string
 		ConfigureCombustion bool
 		RenameFilesystem    bool
@@ -90,6 +91,7 @@ func (b *Builder) writeModifyScript(imageFilename string, includeCombustion, ren
 	}{
 		ImagePath:           imageFilename,
 		CombustionDir:       b.context.CombustionDir,
+		ArtefactsDir:        b.context.ArtefactsDir,
 		ConfigureGRUB:       grubConfiguration,
 		ConfigureCombustion: includeCombustion,
 		RenameFilesystem:    renameFilesystem,
