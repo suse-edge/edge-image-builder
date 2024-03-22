@@ -1,0 +1,82 @@
+apiVersion: 1.0
+image:
+  arch: x86_64
+  baseImage: SLE-Micro.x86_64-5.5.0-Default-SelfInstall-Build8.2.8.install.iso
+  imageType: iso
+  outputImageName: 3xhosts-rke2-rancher-metal3.iso
+kubernetes:
+  helm:
+    charts:
+    - createNamespace: true
+      installationNamespace: kube-system
+      name: cert-manager
+      repositoryName: jetstack
+      targetNamespace: cert-manager
+      valuesFile: certmanager.yaml
+      version: 1.14.2
+    - createNamespace: true
+      installationNamespace: kube-system
+      name: longhorn
+      repositoryName: longhorn
+      targetNamespace: longhorn-system
+      version: 1.6.0
+    - createNamespace: true
+      installationNamespace: kube-system
+      name: rancher
+      repositoryName: rancher-stable
+      targetNamespace: cattle-system
+      valuesFile: rancher.yaml
+      version: 2.8.2
+    - createNamespace: true
+      installationNamespace: kube-system
+      name: metal3
+      repositoryName: suse-edge
+      targetNamespace: metal3-system
+      valuesFile: metal3.yaml
+      version: 0.6.3
+    repositories:
+    - name: jetstack
+      url: https://charts.jetstack.io
+    - name: longhorn
+      url: https://charts.longhorn.io
+    - name: rancher-stable
+      url: https://releases.rancher.com/server-charts/stable
+    - name: suse-edge
+      url: https://suse-edge.github.io/charts
+  network:
+    apiHost: 192.168.122.10.sslip.io
+    apiVIP: 192.168.122.10
+  nodes:
+  - hostname: host1rke2
+    initializer: true
+    type: server
+  - hostname: host2rke2
+    type: server
+  - hostname: host3rke2
+    type: server
+  version: v1.27.10+rke2r1
+operatingSystem:
+  isoConfiguration:
+    installDevice: /dev/vda
+    unattended: true
+  packages:
+    additionalRepos:
+    - url: http://download.suse.de/ibs/SUSE:/CA/SLE_15/
+    packageList:
+    - jq
+    - ca-certificates-suse
+    - qemu-guest-agent
+    sccRegistrationCode: FOOBAR
+  systemd:
+    disable:
+    - haveged.service
+    - rebootmgr.service
+    - transactional-update.timer
+    - transactional-update-cleanup.timer
+    enable:
+    - qemu-guest-agent
+  users:
+  - encryptedPassword: $6$pIaPu6MaCmDzvjcR$H36l7tV8tZqBaPpq35CLHCzT9AvJU8TTs/IW9RLsFIVYtVnc6VkwaaQh6wbi4McQyzpjHROrvT4TdRuyKe0xF/
+    sshKeys:
+    - ssh-rsa asdfasdf foo@bar
+    username: root
