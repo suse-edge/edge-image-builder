@@ -1,17 +1,11 @@
 #!/bin/bash
 
-# Copy the basic setup script from combustion to the final location
+# Copy the scripts from combustion to the final location
 mkdir -p /opt/edge/bin/
-cp basic-setup.sh /opt/edge/bin/
-chmod a+x /opt/edge/bin/basic-setup.sh
+for script in basic-setup.sh rancher.sh metal3.sh; do
+	cp ${script} /opt/edge/bin/
+done
 
-# Same for rancher
-cp rancher.sh /opt/edge/bin/
-chmod a+x /opt/edge/bin/rancher.sh
-# Same for metal3
-cp metal3.sh /opt/edge/bin/
-chmod a+x /opt/edge/bin/metal3.sh
-
-# Copy the systemd unit file
+# Copy the systemd unit file and enable it at boot
 cp edge-stack-setup.service /etc/systemd/system/edge-stack-setup.service
 systemctl enable edge-stack-setup.service

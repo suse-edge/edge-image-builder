@@ -22,8 +22,6 @@ while ! ${KUBECTL} wait --for condition=ready -n ${METAL3_CHART_TARGETNAMESPACE}
 # Get the ironic IP
 IRONICIP=$(${KUBECTL} get cm -n ${METAL3_CHART_TARGETNAMESPACE} ironic-bmo -o jsonpath='{.data.IRONIC_IP}')
 
-# This only works for metallb, we need to do the same for nodeport I guess
-
 # Wait for metallb
 while ! ${KUBECTL} wait --for condition=ready -n ${METALLBNAMESPACE} $(${KUBECTL} get pods -n ${METALLBNAMESPACE} -l app.kubernetes.io/component=controller -o name) --timeout=10s; do sleep 2 ; done
 

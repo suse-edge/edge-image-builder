@@ -1,9 +1,9 @@
 apiVersion: 1.0
 image:
   arch: x86_64
-  baseImage: SLE-Micro.x86_64-5.5.0-Default-SelfInstall-Build8.2.8.install.iso
+  baseImage: SLE-Micro.x86_64-5.5.0-Default-SelfInstall.install.iso
   imageType: iso
-  outputImageName: 3xhosts-rke2-rancher-metal3.iso
+  outputImageName: 3xhosts-rke2-rancher-metal3-longhorn-neuvector.iso
 kubernetes:
   helm:
     charts:
@@ -56,12 +56,12 @@ kubernetes:
     apiHost: 192.168.122.10.sslip.io
     apiVIP: 192.168.122.10
   nodes:
-  - hostname: host1rke2
+  - hostname: host1rke2.example.com
     initializer: true
     type: server
-  - hostname: host2rke2
+  - hostname: host2rke2.example.com
     type: server
-  - hostname: host3rke2
+  - hostname: host3rke2.example.com
     type: server
   version: v1.27.10+rke2r1
 operatingSystem:
@@ -69,11 +69,8 @@ operatingSystem:
     installDevice: /dev/vda
     unattended: true
   packages:
-    additionalRepos:
-    - url: http://download.suse.de/ibs/SUSE:/CA/SLE_15/
     packageList:
     - jq
-    - ca-certificates-suse
     - qemu-guest-agent
     sccRegistrationCode: <REGISTRATION CODE>
   systemd:
@@ -85,7 +82,7 @@ operatingSystem:
     enable:
     - qemu-guest-agent
   users:
-  - encryptedPassword: $6$pIaPu6MaCmDzvjcR$H36l7tV8tZqBaPpq35CLHCzT9AvJU8TTs/IW9RLsFIVYtVnc6VkwaaQh6wbi4McQyzpjHROrvT4TdRuyKe0xF/
+  - encryptedPassword: <ENCRYPTED PASSWORD>
     sshKeys:
     - ssh-rsa <PUBLIC KEY>
     username: root
