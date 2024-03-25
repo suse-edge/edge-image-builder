@@ -65,7 +65,7 @@ if ! command -v clusterctl > /dev/null 2>&1; then
     "aarch64")
       export GOARCH="arm64" ;;
     "*")
-      echo "Arch not found, asumming amd64"
+      echo "Arch not found, assuming amd64"
       export GOARCH="amd64" ;;
   esac
 

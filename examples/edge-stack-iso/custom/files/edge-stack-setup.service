@@ -12,11 +12,11 @@ Type=forking
 # Metal3 can take A LOT to download the IPA image
 TimeoutStartSec=1800
 
-ExecStartPre=/bin/sh -c "echo 'Starting to setup Edge components'"
+ExecStartPre=/bin/sh -c "echo 'Setting up Edge components...'"
 # Scripts are executed in StartPre because it can be multiple ones
 ExecStartPre=/opt/edge/bin/rancher.sh
 ExecStartPre=/opt/edge/bin/metal3.sh
-ExecStart=/bin/sh -c "echo 'Finished'"
+ExecStart=/bin/sh -c "echo 'Finished setting up Edge components'"
 RemainAfterExit=yes
 KillMode=process
 # Disable & delete everything

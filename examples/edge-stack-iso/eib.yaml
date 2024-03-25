@@ -75,7 +75,7 @@ operatingSystem:
     - jq
     - ca-certificates-suse
     - qemu-guest-agent
-    sccRegistrationCode: FOOBAR
+    sccRegistrationCode: <REGISTRATION CODE>
   systemd:
     disable:
     - haveged.service
@@ -87,5 +87,5 @@ operatingSystem:
   users:
   - encryptedPassword: $6$pIaPu6MaCmDzvjcR$H36l7tV8tZqBaPpq35CLHCzT9AvJU8TTs/IW9RLsFIVYtVnc6VkwaaQh6wbi4McQyzpjHROrvT4TdRuyKe0xF/
     sshKeys:
-    - ssh-rsa asdfasdf foo@bar
+    - ssh-rsa <PUBLIC KEY>
     username: root
