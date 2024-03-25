@@ -22,6 +22,7 @@ KillMode=process
 # Disable & delete everything
 ExecStartPost=rm -f /opt/edge/bin/rancher.sh
 ExecStartPost=rm -f /opt/edge/bin/metal3.sh
+ExecStartPost=rm -f /opt/edge/bin/basic-setup.sh
 ExecStartPost=/bin/sh -c "systemctl disable edge-stack-setup.service"
 ExecStartPost=rm -f /etc/systemd/system/edge-stack-setup.service
 
