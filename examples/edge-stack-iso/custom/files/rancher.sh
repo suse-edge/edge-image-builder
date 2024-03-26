@@ -29,7 +29,7 @@ RANCHERBOOTSTRAPPASSWORD=$(${KUBECTL} get secret -n ${RANCHER_CHART_TARGETNAMESP
 RANCHERHOSTNAME=$(${KUBECTL} get ingress -n ${RANCHER_CHART_TARGETNAMESPACE} rancher -o jsonpath='{.spec.rules[0].host}')
 
 # Skip the whole process if things have been set already
-if [ $(${KUBECTL} get settings.management.cattle.io first-login -ojsonpath='{.value}') != 'false' ]; then
+if [ -z $(${KUBECTL} get settings.management.cattle.io first-login -ojsonpath='{.value}') ]; then
   # Add the protocol
   RANCHERHOSTNAME="https://${RANCHERHOSTNAME}"
   TOKEN=""
