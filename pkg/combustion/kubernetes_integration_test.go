@@ -74,8 +74,8 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 		"https://k8s.io/examples/application/nginx-app.yaml",
 	}
 
-	k8sCombDir := filepath.Join(ctx.ArtefactsDir, K8sDir)
-	require.NoError(t, os.Mkdir(k8sCombDir, os.ModePerm))
+	artefactsDir := filepath.Join(ctx.ArtefactsDir, K8sDir)
+	require.NoError(t, os.Mkdir(artefactsDir, os.ModePerm))
 
 	localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, K8sDir, k8sManifestsDir)
 	require.NoError(t, os.MkdirAll(localManifestsSrcDir, 0o755))
@@ -108,7 +108,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	assert.Contains(t, contents, "systemctl enable rke2-server.service")
 	assert.Contains(t, contents, "mkdir -p /var/lib/rancher/rke2/server/manifests/")
 	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/manifests/* /var/lib/rancher/rke2/server/manifests/")
-	assert.Contains(t, contents, "cp "+registryMirrorsFileName+" /etc/rancher/rke2/registries.yaml")
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/registries.yaml /etc/rancher/rke2/registries.yaml")
 
 	// Config file assertions
 	configPath := filepath.Join(ctx.ArtefactsDir, "kubernetes/server.yaml")
@@ -130,7 +130,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	assert.Equal(t, []any{"192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
 
 	// Downloaded manifest assertions
-	manifestPath := filepath.Join(k8sCombDir, k8sManifestsDir, "dl-manifest-1.yaml")
+	manifestPath := filepath.Join(artefactsDir, k8sManifestsDir, "dl-manifest-1.yaml")
 	info, err = os.Stat(manifestPath)
 	require.NoError(t, err)
 	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
@@ -145,7 +145,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	assert.Contains(t, contents, "image: nginx:1.14.2")
 
 	// Local manifest assertions
-	manifest := filepath.Join(k8sCombDir, k8sManifestsDir, "sample-crd.yaml")
+	manifest := filepath.Join(artefactsDir, k8sManifestsDir, "sample-crd.yaml")
 	info, err = os.Stat(manifest)
 	require.NoError(t, err)
 	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())

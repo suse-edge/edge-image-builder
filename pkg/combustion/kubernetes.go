@@ -150,7 +150,7 @@ func configureK3S(ctx *image.Context, cluster *kubernetes.Cluster) (string, erro
 		"imagesPath":      imagesPath,
 		"manifestsPath":   manifestsPath,
 		"configFilePath":  prependArtefactPath(K8sDir),
-		"registryMirrors": registryMirrorsFileName,
+		"registryMirrors": prependArtefactPath(filepath.Join(K8sDir, registryMirrorsFileName)),
 	}
 
 	singleNode := len(ctx.ImageDefinition.Kubernetes.Nodes) < 2
@@ -245,7 +245,7 @@ func configureRKE2(ctx *image.Context, cluster *kubernetes.Cluster) (string, err
 		"imagesPath":      imagesPath,
 		"manifestsPath":   manifestsPath,
 		"configFilePath":  prependArtefactPath(K8sDir),
-		"registryMirrors": registryMirrorsFileName,
+		"registryMirrors": prependArtefactPath(filepath.Join(K8sDir, registryMirrorsFileName)),
 	}
 
 	singleNode := len(ctx.ImageDefinition.Kubernetes.Nodes) < 2
