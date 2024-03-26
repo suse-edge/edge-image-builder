@@ -17,14 +17,14 @@ import (
 )
 
 const (
-	userRPMsDir         = "rpms"
-	userGPGsDir         = "gpg-keys"
-	modifyRPMScriptName = "10-rpm-install.sh"
-	rpmComponentName    = "RPM"
+	rpmDir                = "rpms"
+	gpgDir                = "gpg-keys"
+	installRPMsScriptName = "10-rpm-install.sh"
+	rpmComponentName      = "RPM"
 )
 
 //go:embed templates/10-rpm-install.sh.tpl
-var modifyRPMScript string
+var installRPMsScript string
 
 func configureRPMs(ctx *image.Context) ([]string, error) {
 	if SkipRPMComponent(ctx) {
@@ -48,35 +48,35 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 	}
 
 	var localRPMConfig *image.LocalRPMConfig
-	if isComponentConfigured(ctx, userRPMsDir) {
-		rpmDir := RPMsPath(ctx)
+	if isComponentConfigured(ctx, rpmDir) {
 		localRPMConfig = &image.LocalRPMConfig{
-			RPMPath: rpmDir,
+			RPMPath:     RPMsPath(ctx),
+			GPGKeysPath: GPGKeysPath(ctx),
 		}
 
-		gpgPath := GPGKeysPath(ctx)
-		_, err := os.Stat(gpgPath)
-		switch {
-		case err == nil:
-			if !packages.NoGPGCheck {
-				localRPMConfig.GPGKeysPath = gpgPath
-			} else {
-				log.AuditComponentFailed(rpmComponentName)
-				return nil, fmt.Errorf("found existing '%s' directory, but GPG validation is disabled", userGPGsDir)
-			}
-		case errors.Is(err, fs.ErrNotExist):
-			if !packages.NoGPGCheck {
-				log.AuditComponentFailed(rpmComponentName)
-				return nil, fmt.Errorf("GPG validation is enabled, but '%s' directory is missing for side-loaded RPMs", userGPGsDir)
-			}
-		case err != nil:
+		_, err := os.Stat(localRPMConfig.GPGKeysPath)
+		if err != nil {
 			log.AuditComponentFailed(rpmComponentName)
-			return nil, fmt.Errorf("describing GPG directory at '%s': %w", gpgPath, err)
+
+			if errors.Is(err, fs.ErrNotExist) && !packages.NoGPGCheck {
+				return nil, fmt.Errorf("GPG validation is enabled, but '%s' directory is missing for side-loaded RPMs", gpgDir)
+			}
+
+			return nil, fmt.Errorf("describing GPG directory at '%s': %w", localRPMConfig.GPGKeysPath, err)
+		} else if packages.NoGPGCheck {
+			log.AuditComponentFailed(rpmComponentName)
+			return nil, fmt.Errorf("found existing '%s' directory, but GPG validation is disabled", gpgDir)
 		}
 	}
 
+	artefactsPath := filepath.Join(ctx.ArtefactsDir, rpmDir)
+	if err := os.MkdirAll(artefactsPath, os.ModePerm); err != nil {
+		log.AuditComponentFailed(rpmComponentName)
+		return nil, fmt.Errorf("creating rpm artefacts path: %w", err)
+	}
+
 	log.Audit("Resolving package dependencies...")
-	repoPath, pkgsList, err := ctx.RPMResolver.Resolve(packages, localRPMConfig, ctx.CombustionDir)
+	repoPath, pkgsList, err := ctx.RPMResolver.Resolve(packages, localRPMConfig, artefactsPath)
 	if err != nil {
 		log.AuditComponentFailed(rpmComponentName)
 		return nil, fmt.Errorf("resolving rpm/package dependencies: %w", err)
@@ -90,7 +90,7 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 	script, err := writeRPMScript(ctx, repoPath, pkgsList)
 	if err != nil {
 		log.AuditComponentFailed(rpmComponentName)
-		return nil, fmt.Errorf("writing the RPM install script %s: %w", modifyRPMScriptName, err)
+		return nil, fmt.Errorf("writing the RPM install script %s: %w", installRPMsScriptName, err)
 	}
 
 	log.AuditComponentSuccessful(rpmComponentName)
@@ -101,7 +101,7 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 func SkipRPMComponent(ctx *image.Context) bool {
 	pkg := ctx.ImageDefinition.OperatingSystem.Packages
 
-	if isComponentConfigured(ctx, userRPMsDir) {
+	if isComponentConfigured(ctx, rpmDir) {
 		// isComponentConfigured will indicate if the directory exists, but not
 		// if there are RPMs in there. If there aren't any, it is still possible to
 		// continue if there have been packages specified in the definition.
@@ -155,32 +155,34 @@ func writeRPMScript(ctx *image.Context, repoPath string, packages []string) (str
 	}
 
 	values := struct {
+		RepoPath string
 		RepoName string
 		PKGList  string
 	}{
+		RepoPath: prependArtefactPath(rpmDir),
 		RepoName: filepath.Base(repoPath),
 		PKGList:  strings.Join(packages, " "),
 	}
 
-	data, err := template.Parse(modifyRPMScriptName, modifyRPMScript, &values)
+	data, err := template.Parse(installRPMsScriptName, installRPMsScript, &values)
 	if err != nil {
 		return "", fmt.Errorf("parsing RPM script template: %w", err)
 	}
 
-	filename := filepath.Join(ctx.CombustionDir, modifyRPMScriptName)
+	filename := filepath.Join(ctx.CombustionDir, installRPMsScriptName)
 	err = os.WriteFile(filename, []byte(data), fileio.ExecutablePerms)
 	if err != nil {
 		return "", fmt.Errorf("writing RPM script: %w", err)
 	}
 
-	return modifyRPMScriptName, nil
+	return installRPMsScriptName, nil
 }
 
 func RPMsPath(ctx *image.Context) string {
-	return generateComponentPath(ctx, userRPMsDir)
+	return generateComponentPath(ctx, rpmDir)
 }
 
 func GPGKeysPath(ctx *image.Context) string {
 	rpmDir := RPMsPath(ctx)
-	return filepath.Join(rpmDir, userGPGsDir)
+	return filepath.Join(rpmDir, gpgDir)
 }

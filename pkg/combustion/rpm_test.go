@@ -95,7 +95,7 @@ func TestSkipRPMComponentRPMDirNoRPMs(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
-	rpmDir := filepath.Join(ctx.ImageConfigDir, userRPMsDir)
+	rpmDir := filepath.Join(ctx.ImageConfigDir, rpmDir)
 	require.NoError(t, os.Mkdir(rpmDir, 0o755))
 	defer func() {
 		require.NoError(t, os.RemoveAll(rpmDir))
@@ -108,7 +108,7 @@ func TestSkipRPMComponentFullConfig(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
-	rpmDir := filepath.Join(ctx.ImageConfigDir, userRPMsDir)
+	rpmDir := filepath.Join(ctx.ImageConfigDir, rpmDir)
 	require.NoError(t, os.Mkdir(rpmDir, 0o755))
 	defer func() {
 		require.NoError(t, os.RemoveAll(rpmDir))
@@ -226,7 +226,7 @@ func TestConfigureRPMSGPGDirError(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
-	rpmDir := filepath.Join(ctx.ImageConfigDir, userRPMsDir)
+	rpmDir := filepath.Join(ctx.ImageConfigDir, rpmDir)
 	require.NoError(t, os.Mkdir(rpmDir, 0o755))
 	_, err := os.Create(filepath.Join(rpmDir, "test.rpm"))
 	require.NoError(t, err)
@@ -246,7 +246,7 @@ func TestConfigureRPMSGPGDirError(t *testing.T) {
 			pkgs: image.Packages{
 				NoGPGCheck: true,
 			},
-			expectedErr: fmt.Sprintf("found existing '%s' directory, but GPG validation is disabled", userGPGsDir),
+			expectedErr: fmt.Sprintf("found existing '%s' directory, but GPG validation is disabled", gpgDir),
 		},
 		{
 			name:        "Enabled GPG validation, but missing GPG dir",
@@ -259,7 +259,7 @@ func TestConfigureRPMSGPGDirError(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			ctx.ImageDefinition.OperatingSystem.Packages = test.pkgs
 
-			gpgDir := filepath.Join(rpmDir, userGPGsDir)
+			gpgDir := filepath.Join(rpmDir, gpgDir)
 			if test.createGPGDir {
 				require.NoError(t, os.Mkdir(gpgDir, 0o755))
 			}
@@ -290,13 +290,13 @@ func TestConfigureRPMSSuccessfulConfig(t *testing.T) {
 		},
 	}
 
-	rpmDir := filepath.Join(ctx.ImageConfigDir, userRPMsDir)
+	rpmDir := filepath.Join(ctx.ImageConfigDir, rpmDir)
 	require.NoError(t, os.Mkdir(rpmDir, 0o755))
 	defer func() {
 		require.NoError(t, os.RemoveAll(rpmDir))
 	}()
 
-	gpgDir := filepath.Join(rpmDir, userGPGsDir)
+	gpgDir := filepath.Join(rpmDir, gpgDir)
 	require.NoError(t, os.Mkdir(gpgDir, 0o755))
 
 	ctx.RPMRepoCreator = mockRPMRepoCreator{
@@ -325,9 +325,9 @@ func TestConfigureRPMSSuccessfulConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, scripts)
 	require.Len(t, scripts, 1)
-	assert.Equal(t, modifyRPMScriptName, scripts[0])
+	assert.Equal(t, installRPMsScriptName, scripts[0])
 
-	expectedFilename := filepath.Join(ctx.CombustionDir, modifyRPMScriptName)
+	expectedFilename := filepath.Join(ctx.CombustionDir, installRPMsScriptName)
 	foundBytes, err := os.ReadFile(expectedFilename)
 	require.NoError(t, err)
 
@@ -336,8 +336,7 @@ func TestConfigureRPMSSuccessfulConfig(t *testing.T) {
 	assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
 
 	foundContents := string(foundBytes)
-	combustionBasePath := "/dev/shm/combustion/config"
-	zypperAR := fmt.Sprintf("zypper ar file://%s %s", filepath.Join(combustionBasePath, expectedRepoName), expectedRepoName)
+	zypperAR := fmt.Sprintf("zypper ar file://$ARTEFACTS_DIR/rpms/%[1]s %[1]s", expectedRepoName)
 	zypperInstall := fmt.Sprintf("zypper --no-gpg-checks install -r %s -y --force-resolution --auto-agree-with-licenses %s", expectedRepoName, strings.Join(expectedPkg, " "))
 	zypperRR := fmt.Sprintf("zypper rr %s", expectedRepoName)
 	assert.Contains(t, foundContents, zypperAR)
