@@ -8,6 +8,8 @@
 
 ## Bug Fixes
 
+* [#319](https://github.com/suse-edge/edge-image-builder/issues/319) - Combustion fails when combustion directory content is larger than half of the RAM of the system
+
 ---
 
 # v1.0.0-rc2
