@@ -1,6 +1,9 @@
 package combustion
 
-import "github.com/suse-edge/edge-image-builder/pkg/image"
+import (
+	"github.com/suse-edge/edge-image-builder/pkg/env"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
+)
 
 func ComponentHelmCharts(ctx *image.Context) ([]image.HelmChart, []image.HelmRepository) {
 	if ctx.ImageDefinition.Kubernetes.Version == "" {
@@ -9,7 +12,6 @@ func ComponentHelmCharts(ctx *image.Context) ([]image.HelmChart, []image.HelmRep
 
 	const (
 		suseEdgeRepositoryName = "suse-edge"
-		suseEdgeRepositoryURL  = "https://suse-edge.github.io/charts"
 		installationNamespace  = "kube-system"
 	)
 
@@ -39,7 +41,7 @@ func ComponentHelmCharts(ctx *image.Context) ([]image.HelmChart, []image.HelmRep
 
 		suseEdgeRepo := image.HelmRepository{
 			Name: suseEdgeRepositoryName,
-			URL:  suseEdgeRepositoryURL,
+			URL:  env.SUSEEdgeRepository,
 		}
 
 		repos = append(repos, suseEdgeRepo)
