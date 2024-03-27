@@ -54,7 +54,7 @@ export INSTALL_K3S_SKIP_START=true
 export INSTALL_K3S_BIN_DIR=/opt/bin
 
 mkdir -p $INSTALL_K3S_BIN_DIR
-chmod +x {{ .binaryPath }}
 cp {{ .binaryPath }} $INSTALL_K3S_BIN_DIR/k3s
+chmod +x $INSTALL_K3S_BIN_DIR/k3s
 
 sh {{ .installScript }}
