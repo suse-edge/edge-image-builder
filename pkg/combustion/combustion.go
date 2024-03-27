@@ -167,3 +167,7 @@ func logComponentStatus(component string, err error) {
 		zap.S().Infof("Successfully configured %s component", component)
 	}
 }
+
+func prependArtefactPath(path string) string {
+	return filepath.Join("$ARTEFACTS_DIR", path)
+}

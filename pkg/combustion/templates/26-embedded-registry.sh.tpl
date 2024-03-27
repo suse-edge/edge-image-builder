@@ -2,8 +2,8 @@
 set -euo pipefail
 
 mkdir /opt/hauler
-mv hauler /opt/hauler/hauler
-mv {{ .RegistryDir }}/{{ .EmbeddedRegistryTar }} /opt/hauler/
+cp {{ .RegistryDir }}/hauler /opt/hauler/hauler
+cp {{ .RegistryDir }}/{{ .EmbeddedRegistryTar }} /opt/hauler/
 
 cat <<- EOF > /etc/systemd/system/eib-embedded-registry.service
 [Unit]

@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 )
@@ -13,12 +12,14 @@ import (
 var combustionScriptBase string
 
 func assembleScript(scripts []string, networkScript string) (string, error) {
-	b := new(strings.Builder)
+	slices.Sort(scripts)
 
 	values := struct {
 		NetworkScript string
+		Scripts       []string
 	}{
 		NetworkScript: networkScript,
+		Scripts:       scripts,
 	}
 
 	data, err := template.Parse("combustion-base", combustionScriptBase, values)
@@ -26,30 +27,5 @@ func assembleScript(scripts []string, networkScript string) (string, error) {
 		return "", fmt.Errorf("parsing combustion base template: %w", err)
 	}
 
-	_, err = b.WriteString(data)
-	if err != nil {
-		return "", fmt.Errorf("writing script base: %w", err)
-	}
-
-	// Use alphabetical ordering for determinism
-	slices.Sort(scripts)
-
-	// Add a call to each script that was added to the combustion directory
-	for _, filename := range scripts {
-		message := fmt.Sprintf("echo \"Running %s\"\n", filename)
-		_, err = b.WriteString(message)
-		if err != nil {
-			return "", fmt.Errorf("writing script caller message: %w", err)
-		}
-		_, err = b.WriteString(scriptExecutor(filename))
-		if err != nil {
-			return "", fmt.Errorf("appending script %s: %w", filename, err)
-		}
-	}
-
-	return b.String(), nil
-}
-
-func scriptExecutor(name string) string {
-	return fmt.Sprintf("./%s\n", name)
+	return data, nil
 }

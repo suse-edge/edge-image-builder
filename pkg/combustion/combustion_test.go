@@ -20,16 +20,21 @@ func setupContext(t *testing.T) (ctx *image.Context, teardown func()) {
 	combustionDir, err := os.MkdirTemp("", "eib-combustion-")
 	require.NoError(t, err)
 
+	artefactsDir, err := os.MkdirTemp("", "eib-artefacts-")
+	require.NoError(t, err)
+
 	ctx = &image.Context{
 		ImageConfigDir:  configDir,
 		BuildDir:        buildDir,
 		CombustionDir:   combustionDir,
+		ArtefactsDir:    artefactsDir,
 		ImageDefinition: &image.Definition{},
 	}
 
 	return ctx, func() {
 		assert.NoError(t, os.RemoveAll(combustionDir))
 		assert.NoError(t, os.RemoveAll(buildDir))
+		assert.NoError(t, os.RemoveAll(artefactsDir))
 		assert.NoError(t, os.RemoveAll(configDir))
 	}
 }

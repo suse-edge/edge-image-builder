@@ -42,7 +42,7 @@ func Run(_ *cli.Context) error {
 		}
 	}
 
-	buildDir, combustionDir, err := build.SetupBuildDirectory(rootBuildDir)
+	buildDir, err := build.SetupBuildDirectory(rootBuildDir)
 	if err != nil {
 		log.Audit("The build directory could not be set up.")
 		return err
@@ -62,7 +62,13 @@ func Run(_ *cli.Context) error {
 		os.Exit(1)
 	}
 
-	ctx := buildContext(buildDir, combustionDir, args.ConfigDir, imageDefinition)
+	combustionDir, artefactsDir, err := build.SetupCombustionDirectory(buildDir)
+	if err != nil {
+		log.Auditf("Setting up the combustion directory failed. %s", checkBuildLogMessage)
+		zap.S().Fatalf("Failed to create combustion directories: %s", err)
+	}
+
+	ctx := buildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, imageDefinition)
 
 	if cmdErr = validateImageDefinition(ctx); cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
@@ -145,11 +151,12 @@ func parseImageDefinition(configDir, definitionFile string) (*image.Definition, 
 }
 
 // Assembles the image build context with user-provided values and implementation defaults.
-func buildContext(buildDir, combustionDir, configDir string, imageDefinition *image.Definition) *image.Context {
+func buildContext(buildDir, combustionDir, artefactsDir, configDir string, imageDefinition *image.Definition) *image.Context {
 	ctx := &image.Context{
 		ImageConfigDir:               configDir,
 		BuildDir:                     buildDir,
 		CombustionDir:                combustionDir,
+		ArtefactsDir:                 artefactsDir,
 		ImageDefinition:              imageDefinition,
 		NetworkConfigGenerator:       network.ConfigGenerator{},
 		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},

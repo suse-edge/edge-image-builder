@@ -1,14 +1,12 @@
 package combustion
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/registry"
 )
@@ -78,50 +76,16 @@ func TestWriteRegistryScript(t *testing.T) {
 	require.NoError(t, err)
 
 	registryScriptPath := filepath.Join(ctx.CombustionDir, registryScriptName)
-	_, err = os.Stat(registryScriptPath)
-	require.NoError(t, err)
 
 	foundBytes, err := os.ReadFile(registryScriptPath)
 	require.NoError(t, err)
+
 	found := string(foundBytes)
-	assert.Contains(t, found, registryDir)
-	assert.Contains(t, found, registryPort)
-	assert.Contains(t, found, registryTarName)
-	assert.Contains(t, found, "mv hauler /opt/hauler/hauler")
+	assert.Contains(t, found, "cp $ARTEFACTS_DIR/registry/hauler /opt/hauler/hauler")
+	assert.Contains(t, found, "cp $ARTEFACTS_DIR/registry/embedded-registry.tar.zst /opt/hauler/")
 	assert.Contains(t, found, "systemctl enable eib-embedded-registry.service")
-	assert.Contains(t, found, "ExecStartPre=/opt/hauler/hauler store load")
-}
-
-func TestCopyHaulerBinary(t *testing.T) {
-	// Setup
-	ctx, teardown := setupContext(t)
-	defer teardown()
-
-	haulerBinaryPath := filepath.Join(ctx.BuildDir, fmt.Sprintf("hauler-%s", string(ctx.ImageDefinition.Image.Arch)))
-	err := os.WriteFile(haulerBinaryPath, []byte(""), fileio.ExecutablePerms)
-	require.NoError(t, err)
-
-	// Test
-	err = copyHaulerBinary(ctx, haulerBinaryPath)
-
-	// Verify
-	require.NoError(t, err)
-
-	haulerPath := filepath.Join(ctx.CombustionDir, "hauler")
-	_, err = os.Stat(haulerPath)
-	require.NoError(t, err)
-}
-
-func TestCopyHaulerBinaryNoFile(t *testing.T) {
-	// Setup
-	ctx, teardown := setupContext(t)
-	defer teardown()
-
-	// Test
-	err := copyHaulerBinary(ctx, "")
-
-	// Verify
-	require.ErrorContains(t, err, "no such file")
+	assert.Contains(t, found, "ExecStartPre=/opt/hauler/hauler store load embedded-registry.tar.zst")
+	assert.Contains(t, found, "ExecStart=/opt/hauler/hauler store serve registry -p 6545")
 }
 
 func TestIsEmbeddedArtifactRegistryConfigured(t *testing.T) {
@@ -243,12 +207,11 @@ func TestWriteRegistryMirrorsValid(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	manifestFileName := filepath.Join(ctx.CombustionDir, registryMirrorsFileName)
-	_, err = os.Stat(manifestFileName)
-	require.NoError(t, err)
+	manifestFileName := filepath.Join(ctx.ArtefactsDir, K8sDir, registryMirrorsFileName)
 
 	foundBytes, err := os.ReadFile(manifestFileName)
 	require.NoError(t, err)
+
 	found := string(foundBytes)
 	assert.Contains(t, found, "- \"http://localhost:6545\"")
 	assert.Contains(t, found, "docker.io")
@@ -333,7 +296,7 @@ values: content`),
 
 	require.NoError(t, storeHelmCharts(ctx, charts))
 
-	apachePath := filepath.Join(ctx.CombustionDir, K8sDir, k8sManifestsDir, "apache.yaml")
+	apachePath := filepath.Join(ctx.ArtefactsDir, K8sDir, k8sManifestsDir, "apache.yaml")
 	apacheContent := `apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:

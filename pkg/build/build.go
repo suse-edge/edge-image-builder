@@ -69,17 +69,26 @@ func (b *Builder) generateBaseImageFilename() string {
 	return filename
 }
 
-func SetupBuildDirectory(rootDir string) (buildDir, combustionDir string, err error) {
+func SetupBuildDirectory(rootDir string) (string, error) {
 	timestamp := time.Now().Format("Jan02_15-04-05")
-	buildDir = filepath.Join(rootDir, fmt.Sprintf("build-%s", timestamp))
-	if err = os.MkdirAll(buildDir, os.ModePerm); err != nil {
-		return "", "", fmt.Errorf("creating a build directory: %w", err)
+	buildDir := filepath.Join(rootDir, fmt.Sprintf("build-%s", timestamp))
+	if err := os.MkdirAll(buildDir, os.ModePerm); err != nil {
+		return "", fmt.Errorf("creating a build directory: %w", err)
 	}
 
+	return buildDir, nil
+}
+
+func SetupCombustionDirectory(buildDir string) (combustionDir, artefactsDir string, err error) {
 	combustionDir = filepath.Join(buildDir, "combustion")
 	if err = os.MkdirAll(combustionDir, os.ModePerm); err != nil {
 		return "", "", fmt.Errorf("creating a combustion directory: %w", err)
 	}
 
-	return buildDir, combustionDir, nil
+	artefactsDir = filepath.Join(buildDir, "artefacts")
+	if err = os.MkdirAll(artefactsDir, os.ModePerm); err != nil {
+		return "", "", fmt.Errorf("creating an artefacts directory: %w", err)
+	}
+
+	return combustionDir, artefactsDir, nil
 }

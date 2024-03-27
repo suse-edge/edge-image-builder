@@ -35,14 +35,16 @@ const (
 	CertsDir  = "certs"
 )
 
-//go:embed templates/hauler-manifest.yaml.tpl
-var haulerManifest string
+var (
+	//go:embed templates/hauler-manifest.yaml.tpl
+	haulerManifest string
 
-//go:embed templates/26-embedded-registry.sh.tpl
-var registryScript string
+	//go:embed templates/26-embedded-registry.sh.tpl
+	registryScript string
 
-//go:embed templates/registries.yaml.tpl
-var k8sRegistryMirrors string
+	//go:embed templates/registries.yaml.tpl
+	k8sRegistryMirrors string
+)
 
 func configureRegistry(ctx *image.Context) ([]string, error) {
 	if !IsEmbeddedArtifactRegistryConfigured(ctx) {
@@ -62,14 +64,14 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 		return nil, nil
 	}
 
-	registryScriptNameResult, err := writeRegistryScript(ctx)
+	script, err := writeRegistryScript(ctx)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("writing registry script: %w", err)
 	}
 
 	log.AuditComponentSuccessful(registryComponentName)
-	return []string{registryScriptNameResult}, nil
+	return []string{script}, nil
 }
 
 func writeHaulerManifest(ctx *image.Context, images []string) error {
@@ -112,9 +114,8 @@ func syncHaulerManifest(ctx *image.Context) error {
 	return nil
 }
 
-func generateRegistryTar(ctx *image.Context) error {
-	haulerTarDest := filepath.Join(ctx.CombustionDir, registryDir, registryTarName)
-	args := []string{"store", "save", "--filename", haulerTarDest}
+func generateRegistryTar(ctx *image.Context, artefactsDir string) error {
+	args := []string{"store", "save", "--filename", filepath.Join(artefactsDir, registryTarName)}
 
 	cmd, registryLog, err := createRegistryCommand(ctx, hauler, args)
 	if err != nil {
@@ -133,17 +134,6 @@ func generateRegistryTar(ctx *image.Context) error {
 	return nil
 }
 
-func copyHaulerBinary(ctx *image.Context, haulerBinaryPath string) error {
-	destinationDir := filepath.Join(ctx.CombustionDir, "hauler")
-
-	err := fileio.CopyFile(haulerBinaryPath, destinationDir, fileio.ExecutablePerms)
-	if err != nil {
-		return fmt.Errorf("copying hauler binary to combustion dir: %w", err)
-	}
-
-	return nil
-}
-
 func writeRegistryScript(ctx *image.Context) (string, error) {
 	values := struct {
 		RegistryPort        string
@@ -151,7 +141,7 @@ func writeRegistryScript(ctx *image.Context) (string, error) {
 		EmbeddedRegistryTar string
 	}{
 		RegistryPort:        registryPort,
-		RegistryDir:         registryDir,
+		RegistryDir:         prependArtefactPath(registryDir),
 		EmbeddedRegistryTar: registryTarName,
 	}
 
@@ -206,7 +196,12 @@ func getImageHostnames(containerImages []string) []string {
 }
 
 func writeRegistryMirrors(ctx *image.Context, hostnames []string) error {
-	registriesYamlFile := filepath.Join(ctx.CombustionDir, registryMirrorsFileName)
+	artefactsPath := kubernetesArtefactsPath(ctx)
+	if err := os.MkdirAll(artefactsPath, os.ModePerm); err != nil {
+		return fmt.Errorf("creating kubernetes artefacts path: %w", err)
+	}
+
+	registriesYamlFile := filepath.Join(artefactsPath, registryMirrorsFileName)
 	registriesDef := struct {
 		Hostnames []string
 		Port      string
@@ -220,7 +215,7 @@ func writeRegistryMirrors(ctx *image.Context, hostnames []string) error {
 		return fmt.Errorf("applying template to %s: %w", registryMirrorsFileName, err)
 	}
 
-	if err := os.WriteFile(registriesYamlFile, []byte(data), fileio.NonExecutablePerms); err != nil {
+	if err = os.WriteFile(registriesYamlFile, []byte(data), fileio.NonExecutablePerms); err != nil {
 		return fmt.Errorf("writing file %s: %w", registryMirrorsFileName, err)
 	}
 
@@ -256,8 +251,8 @@ func configureEmbeddedArtifactRegistry(ctx *image.Context) (bool, error) {
 		}
 	}
 
-	registriesDir := filepath.Join(ctx.CombustionDir, registryDir)
-	if err = os.Mkdir(registriesDir, os.ModePerm); err != nil {
+	artefactsPath := registryArtefactsPath(ctx)
+	if err = os.Mkdir(artefactsPath, os.ModePerm); err != nil {
 		return false, fmt.Errorf("creating registry dir: %w", err)
 	}
 
@@ -269,12 +264,13 @@ func configureEmbeddedArtifactRegistry(ctx *image.Context) (bool, error) {
 		return false, fmt.Errorf("populating hauler store: %w", err)
 	}
 
-	if err = generateRegistryTar(ctx); err != nil {
+	if err = generateRegistryTar(ctx, artefactsPath); err != nil {
 		return false, fmt.Errorf("generating hauler store tar: %w", err)
 	}
 
-	haulerBinaryPath := "/usr/bin/hauler"
-	if err = copyHaulerBinary(ctx, haulerBinaryPath); err != nil {
+	sourcePath := "/usr/bin/hauler"
+	destinationPath := filepath.Join(registryArtefactsPath(ctx), "hauler")
+	if err = fileio.CopyFile(sourcePath, destinationPath, fileio.ExecutablePerms); err != nil {
 		return false, fmt.Errorf("copying hauler binary: %w", err)
 	}
 
@@ -344,7 +340,7 @@ func storeHelmCharts(ctx *image.Context, helmCharts []*registry.HelmChart) error
 		return nil
 	}
 
-	manifestsDir := filepath.Join(ctx.CombustionDir, K8sDir, k8sManifestsDir)
+	manifestsDir := filepath.Join(kubernetesArtefactsPath(ctx), k8sManifestsDir)
 	if err := os.MkdirAll(manifestsDir, os.ModePerm); err != nil {
 		return fmt.Errorf("creating kubernetes manifests dir: %w", err)
 	}
@@ -362,4 +358,8 @@ func storeHelmCharts(ctx *image.Context, helmCharts []*registry.HelmChart) error
 	}
 
 	return nil
+}
+
+func registryArtefactsPath(ctx *image.Context) string {
+	return filepath.Join(ctx.ArtefactsDir, registryDir)
 }

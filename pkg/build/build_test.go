@@ -11,7 +11,7 @@ import (
 )
 
 func TestSetupBuildDirectory_EmptyRootDir(t *testing.T) {
-	buildDir, combustionDir, err := SetupBuildDirectory("")
+	buildDir, err := SetupBuildDirectory("")
 	require.NoError(t, err)
 
 	defer func() {
@@ -19,10 +19,7 @@ func TestSetupBuildDirectory_EmptyRootDir(t *testing.T) {
 	}()
 
 	require.DirExists(t, buildDir)
-	require.DirExists(t, combustionDir)
-
 	assert.Contains(t, buildDir, "build-")
-	assert.Equal(t, filepath.Join(buildDir, "combustion"), combustionDir)
 }
 
 func TestSetupBuildDir_NonEmptyRootDir(t *testing.T) {
@@ -51,14 +48,11 @@ func TestSetupBuildDir_NonEmptyRootDir(t *testing.T) {
 				assert.NoError(t, os.RemoveAll(test.rootDir))
 			}()
 
-			buildDir, combustionDir, err := SetupBuildDirectory(test.rootDir)
+			buildDir, err := SetupBuildDirectory(test.rootDir)
 			require.NoError(t, err)
 
 			require.DirExists(t, buildDir)
-			require.DirExists(t, combustionDir)
-
 			assert.Contains(t, buildDir, filepath.Join(test.rootDir, "build-"))
-			assert.Equal(t, filepath.Join(buildDir, "combustion"), combustionDir)
 		})
 	}
 }

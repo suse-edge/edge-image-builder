@@ -7,12 +7,14 @@ set -euo pipefail
 #  IsoSource - Full path to the original ISO that was extracted
 #  OutputImageFilename - Full path and name of the ISO to create
 #  CombustionDir - Full path to the combustion directory to include in the new ISO
+#  ArtefactsDir - Full path to the artefacts directory to include in the new ISO
 
 ISO_EXTRACT_DIR={{.IsoExtractDir}}
 RAW_EXTRACT_DIR={{.RawExtractDir}}
 ISO_SOURCE={{.IsoSource}}
 OUTPUT_IMAGE={{.OutputImageFilename}}
 COMBUSTION_DIR={{.CombustionDir}}
+ARTEFACTS_DIR={{.ArtefactsDir}}
 
 cd ${ISO_EXTRACT_DIR}
 
@@ -45,7 +47,8 @@ xorriso -indev ${ISO_SOURCE} \
         -outdev ${OUTPUT_IMAGE} \
         -map ${NEW_SQUASH_FILE} /${SQUASH_BASENAME} \
         -map ${COMBUSTION_DIR} /combustion \
-{{ if .InstallDevice -}}
+        -map ${ARTEFACTS_DIR} /artefacts \
+{{- if .InstallDevice }}
         -map ${ISO_EXTRACT_DIR}/boot/grub2/grub.cfg /boot/grub2/grub.cfg \
-{{ end -}}
+{{- end }}
         -boot_image any replay -changes_pending yes

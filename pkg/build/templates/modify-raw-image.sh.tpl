@@ -4,9 +4,10 @@ set -euo pipefail
 #  Template Fields
 #  ImagePath           - Full path to the image to modify
 #  CombustionDir       - Full path to the combustion directory
+#  ArtefactsDir        - Full path to the artefacts directory
 #  ConfigureGRUB       - Contains the guestfish command lines to run to manipulate GRUB configuration.
 #                        If there is no specific GRUB configuration to do, this will be an empty string.
-#  ConfigureCombustion - If true, the combustion directory will be included in the raw image
+#  ConfigureCombustion - If true, the combustion and artefacts directories will be included in the raw image
 #  RenameFilesystem    - If true, the filesystem of the image will be renamed (see below for information
 #                        on why this is needed)
 #
@@ -33,6 +34,7 @@ guestfish --format=raw --rw -a {{.ImagePath}} -i <<'EOF'
 
   {{ if .ConfigureCombustion }}
   copy-in {{.CombustionDir}} /
+  copy-in {{.ArtefactsDir}} /
   {{ end }}
 
   {{ if .RenameFilesystem }}
