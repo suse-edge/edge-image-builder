@@ -29,7 +29,7 @@ var extractIsoTemplate string
 var rebuildIsoTemplate string
 
 func (b *Builder) buildIsoImage() error {
-	if err := b.deleteExistingOutputIso(); err != nil {
+	if err := b.deleteExistingOutputImage(); err != nil {
 		return fmt.Errorf("deleting existing ISO image: %w", err)
 	}
 
@@ -93,15 +93,6 @@ func (b *Builder) rebuildIso() error {
 		return fmt.Errorf("building the new ISO: %w", err)
 	}
 
-	return nil
-}
-
-func (b *Builder) deleteExistingOutputIso() error {
-	outputFilename := b.generateOutputImageFilename()
-	err := os.Remove(outputFilename)
-	if err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("error deleting file %s: %w", outputFilename, err)
-	}
 	return nil
 }
 
