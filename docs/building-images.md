@@ -24,8 +24,8 @@ image:
 * `apiVersion` - Indicates the version of the definition file schema for EIB to expect
 * `imageType` - Must be either `iso` or `raw`.
 * `arch` - Must be either `x86_64` or `aarch64`.
-* `baseImage` - Indicates the name of the image file used as the base for the built image. This file must be located
-  under the `images` directory of the image configuration directory (see below for more information). This image will
+* `baseImage` - Indicates the name of the image file used as the base for the built image. Base image files must be uncompressed. This file must be located
+  under the `base-images` directory of the image configuration directory (see below for more information). This image will
   **not** directly be modified by EIB; a new image will be created each time EIB is run.
 * `outputImageName` - Indicates the name of the image that EIB will build. This may only be a filename; the image will
   be written to the root of the image configuration directory.
