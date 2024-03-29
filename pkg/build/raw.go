@@ -23,6 +23,10 @@ const (
 var modifyRawImageTemplate string
 
 func (b *Builder) buildRawImage() error {
+	if err := b.deleteExistingOutputImage(); err != nil {
+		return fmt.Errorf("deleting existing RAW image: %w", err)
+	}
+
 	cmd := b.createRawImageCopyCommand()
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("copying the base image %s to the output image location %s: %w",
