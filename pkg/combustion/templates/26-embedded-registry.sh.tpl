@@ -3,7 +3,7 @@ set -euo pipefail
 
 mkdir /opt/hauler
 cp {{ .RegistryDir }}/hauler /opt/hauler/hauler
-cp {{ .RegistryDir }}/{{ .EmbeddedRegistryTar }} /opt/hauler/
+cp {{ .RegistryDir }}/*-{{ .RegistryTarSuffix }} /opt/hauler/
 
 cat <<- EOF > /etc/systemd/system/eib-embedded-registry.service
 [Unit]
@@ -14,7 +14,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/hauler
-ExecStartPre=/opt/hauler/hauler store load {{ .EmbeddedRegistryTar }}
+ExecStartPre=/bin/sh -c '/opt/hauler/hauler store load *-{{ .RegistryTarSuffix }}'
 ExecStart=/opt/hauler/hauler store serve registry -p {{ .RegistryPort }}
 Restart=on-failure
 
