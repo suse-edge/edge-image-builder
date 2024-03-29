@@ -22,7 +22,7 @@ import (
 const (
 	haulerManifestYamlName  = "hauler-manifest.yaml"
 	registryScriptName      = "26-embedded-registry.sh"
-	registryTarName         = "embedded-registry.tar.zst"
+	registryTarSuffix       = "registry.tar.zst"
 	registryComponentName   = "embedded artifact registry"
 	registryLogFileName     = "embedded-registry.log"
 	hauler                  = "hauler"
@@ -93,13 +93,12 @@ func writeHaulerManifest(ctx *image.Context, images []string) error {
 	return nil
 }
 
-func syncHaulerManifest(ctx *image.Context) error {
-	haulerManifestPath := filepath.Join(ctx.BuildDir, haulerManifestYamlName)
-	args := []string{"store", "sync", "--files", haulerManifestPath, "-p", fmt.Sprintf("linux/%s", ctx.ImageDefinition.Image.Arch.Short())}
+func addImageToHauler(ctx *image.Context, containerImage string) error {
+	args := []string{"store", "add", "image", containerImage, "-p", fmt.Sprintf("linux/%s", ctx.ImageDefinition.Image.Arch.Short())}
 
 	cmd, registryLog, err := createRegistryCommand(ctx, hauler, args)
 	if err != nil {
-		return fmt.Errorf("preparing to populate registry store: %w", err)
+		return fmt.Errorf("preparing to add image to hauler store: %w", err)
 	}
 	defer func() {
 		if err = registryLog.Close(); err != nil {
@@ -108,14 +107,14 @@ func syncHaulerManifest(ctx *image.Context) error {
 	}()
 
 	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("populating hauler store: %w: ", err)
+		return fmt.Errorf("running hauler add image command: %w: ", err)
 	}
 
 	return nil
 }
 
-func generateRegistryTar(ctx *image.Context, artefactsDir string) error {
-	args := []string{"store", "save", "--filename", filepath.Join(artefactsDir, registryTarName)}
+func generateRegistryTar(ctx *image.Context, imageTarDest string) error {
+	args := []string{"store", "save", "--filename", imageTarDest}
 
 	cmd, registryLog, err := createRegistryCommand(ctx, hauler, args)
 	if err != nil {
@@ -131,18 +130,22 @@ func generateRegistryTar(ctx *image.Context, artefactsDir string) error {
 		return fmt.Errorf("creating registry tar: %w: ", err)
 	}
 
+	if err = os.RemoveAll("store"); err != nil {
+		return fmt.Errorf("removing registry store: %w", err)
+	}
+
 	return nil
 }
 
 func writeRegistryScript(ctx *image.Context) (string, error) {
 	values := struct {
-		RegistryPort        string
-		RegistryDir         string
-		EmbeddedRegistryTar string
+		RegistryPort      string
+		RegistryDir       string
+		RegistryTarSuffix string
 	}{
-		RegistryPort:        registryPort,
-		RegistryDir:         prependArtefactPath(registryDir),
-		EmbeddedRegistryTar: registryTarName,
+		RegistryPort:      registryPort,
+		RegistryDir:       prependArtefactPath(registryDir),
+		RegistryTarSuffix: registryTarSuffix,
 	}
 
 	data, err := template.Parse(registryScriptName, registryScript, &values)
@@ -256,16 +259,8 @@ func configureEmbeddedArtifactRegistry(ctx *image.Context) (bool, error) {
 		return false, fmt.Errorf("creating registry dir: %w", err)
 	}
 
-	if err = writeHaulerManifest(ctx, images); err != nil {
-		return false, fmt.Errorf("writing hauler manifest: %w", err)
-	}
-
-	if err = syncHaulerManifest(ctx); err != nil {
-		return false, fmt.Errorf("populating hauler store: %w", err)
-	}
-
-	if err = generateRegistryTar(ctx, artefactsPath); err != nil {
-		return false, fmt.Errorf("generating hauler store tar: %w", err)
+	if err = populateRegistry(ctx, images); err != nil {
+		return false, fmt.Errorf("populating registry: %w", err)
 	}
 
 	sourcePath := "/usr/bin/hauler"
@@ -362,4 +357,23 @@ func storeHelmCharts(ctx *image.Context, helmCharts []*registry.HelmChart) error
 
 func registryArtefactsPath(ctx *image.Context) string {
 	return filepath.Join(ctx.ArtefactsDir, registryDir)
+}
+
+func populateRegistry(ctx *image.Context, images []string) error {
+	log.Audit("Populating Embedded Artifact Registry...")
+	for _, i := range images {
+		if err := addImageToHauler(ctx, i); err != nil {
+			return fmt.Errorf("adding image to hauler: %w", err)
+		}
+
+		convertedImage := strings.ReplaceAll(i, "/", "_")
+		convertedImageName := fmt.Sprintf("%s-%s", convertedImage, registryTarSuffix)
+
+		imageTarDest := filepath.Join(registryArtefactsPath(ctx), convertedImageName)
+		if err := generateRegistryTar(ctx, imageTarDest); err != nil {
+			return fmt.Errorf("generating hauler store tar: %w", err)
+		}
+	}
+
+	return nil
 }
