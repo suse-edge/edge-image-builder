@@ -11,6 +11,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/cache"
 	"github.com/suse-edge/edge-image-builder/pkg/cli/cmd"
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
+	"github.com/suse-edge/edge-image-builder/pkg/env"
 	"github.com/suse-edge/edge-image-builder/pkg/helm"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
@@ -219,7 +220,7 @@ func appendElementalRPMs(ctx *image.Context) {
 
 	log.AuditInfo("Elemental registration is configured. The necessary RPM packages will be downloaded.")
 
-	appendRPMs(ctx, image.AddRepo{URL: combustion.ElementalPackageRepository}, combustion.ElementalPackages...)
+	appendRPMs(ctx, image.AddRepo{URL: env.ElementalPackageRepository}, combustion.ElementalPackages...)
 }
 
 func appendRPMs(ctx *image.Context, repository image.AddRepo, packages ...string) {

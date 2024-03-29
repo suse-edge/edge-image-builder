@@ -41,7 +41,7 @@ func ComponentHelmCharts(ctx *image.Context) ([]image.HelmChart, []image.HelmRep
 
 		suseEdgeRepo := image.HelmRepository{
 			Name: suseEdgeRepositoryName,
-			URL:  env.SUSEEdgeRepository,
+			URL:  env.EdgeHelmRepository,
 		}
 
 		repos = append(repos, suseEdgeRepo)

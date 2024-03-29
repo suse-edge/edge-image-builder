@@ -1,5 +1,6 @@
 package env
 
 var (
-	SUSEEdgeRepository = "https://suse-edge.github.io/charts"
+	EdgeHelmRepository         = "https://suse-edge.github.io/charts"
+	ElementalPackageRepository = "https://download.opensuse.org/repositories/isv:/Rancher:/Elemental:/Maintenance:/5.5/standard/"
 )

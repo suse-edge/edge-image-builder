@@ -10,8 +10,10 @@
 
 * [#319](https://github.com/suse-edge/edge-image-builder/issues/319) - Combustion fails when combustion directory content is larger than half of the RAM of the system
 * [#233](https://github.com/suse-edge/edge-image-builder/issues/233) - Use different Helm chart sources for development and production builds
+* [#337](https://github.com/suse-edge/edge-image-builder/issues/337) - Re-running raw builds should remove the previous built image
 * [#95](https://github.com/suse-edge/edge-image-builder/issues/95) - Compressed images are not supported
 * [#343](https://github.com/suse-edge/edge-image-builder/issues/343) - Embedded Artifact Registry is memory bound
+* [#341](https://github.com/suse-edge/edge-image-builder/issues/341) - Make Elemental registry configurable for production builds
 
 ---
 

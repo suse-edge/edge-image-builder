@@ -69,6 +69,15 @@ func (b *Builder) generateBaseImageFilename() string {
 	return filename
 }
 
+func (b *Builder) deleteExistingOutputImage() error {
+	outputFilename := b.generateOutputImageFilename()
+	err := os.Remove(outputFilename)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("error deleting file %s: %w", outputFilename, err)
+	}
+	return nil
+}
+
 func SetupBuildDirectory(rootDir string) (string, error) {
 	timestamp := time.Now().Format("Jan02_15-04-05")
 	buildDir := filepath.Join(rootDir, fmt.Sprintf("build-%s", timestamp))
