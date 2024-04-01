@@ -9,8 +9,11 @@ hosts[{{ .Hostname }}]={{ .Type }}
 
 HOSTNAME=$(cat /etc/hostname)
 if [ ! "$HOSTNAME" ]; then
-    echo "ERROR: Could not identify whether the host is an RKE2 server or agent due to missing hostname"
-    exit 1
+    HOSTNAME=$(cat /proc/sys/kernel/hostname)
+    if [ ! "$HOSTNAME" ]; then
+        echo "ERROR: Could not identify whether the host is an RKE2 server or agent due to missing hostname"
+        exit 1
+    fi
 fi
 
 NODETYPE="${hosts[$HOSTNAME]:-none}"
