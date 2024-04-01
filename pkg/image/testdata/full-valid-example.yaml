@@ -7,7 +7,6 @@ image:
 operatingSystem:
   isoConfiguration:
     installDevice: /dev/sda
-    unattended: true
   rawConfiguration:
     diskSize: 32G
   time:

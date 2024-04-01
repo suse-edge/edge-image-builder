@@ -7,7 +7,6 @@ image:
 operatingSystem:
   isoConfiguration:
     installDevice: /dev/vda
-    unattended: true
   users:
     - username: root
       encryptedPassword: $6$r2bo4ZUwh6Tnhi61$rTJJWWAaDB3Hk/NAkdJgFH26eJSE8NAIL/HjpO7Lunm0hQKNhvnKGEvoWMjduOIZKi4cB5KbOhEQZNjguLcMR/
