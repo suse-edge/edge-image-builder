@@ -10,7 +10,7 @@ hosts[{{ .Hostname }}]={{ .Type }}
 HOSTNAME=$(cat /etc/hostname)
 if [ ! "$HOSTNAME" ]; then
     HOSTNAME=$(cat /proc/sys/kernel/hostname)
-    if [ ! "$HOSTNAME" ]; then
+    if [ ! "$HOSTNAME" ] || [ "$HOSTNAME" = "localhost.localdomain" ]; then
         echo "ERROR: Could not identify whether the host is a k3s server or agent due to missing hostname"
         exit 1
     fi
