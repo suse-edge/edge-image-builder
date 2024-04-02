@@ -47,30 +47,14 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 		zap.S().Warn("Detected packages for installation with no sccRegistrationCode or additionalRepos provided")
 	}
 
-	var localRPMConfig *image.LocalRPMConfig
-	if isComponentConfigured(ctx, rpmDir) {
-		localRPMConfig = &image.LocalRPMConfig{
-			RPMPath:     RPMsPath(ctx),
-			GPGKeysPath: GPGKeysPath(ctx),
-		}
-
-		_, err := os.Stat(localRPMConfig.GPGKeysPath)
-		if err != nil {
-			log.AuditComponentFailed(rpmComponentName)
-
-			if errors.Is(err, fs.ErrNotExist) && !packages.NoGPGCheck {
-				return nil, fmt.Errorf("GPG validation is enabled, but '%s' directory is missing for side-loaded RPMs", gpgDir)
-			}
-
-			return nil, fmt.Errorf("describing GPG directory at '%s': %w", localRPMConfig.GPGKeysPath, err)
-		} else if packages.NoGPGCheck {
-			log.AuditComponentFailed(rpmComponentName)
-			return nil, fmt.Errorf("found existing '%s' directory, but GPG validation is disabled", gpgDir)
-		}
+	localRPMConfig, err := fetchLocalRPMConfig(ctx)
+	if err != nil {
+		log.AuditComponentFailed(rpmComponentName)
+		return nil, fmt.Errorf("fetching local RPM config: %w", err)
 	}
 
 	artefactsPath := filepath.Join(ctx.ArtefactsDir, rpmDir)
-	if err := os.MkdirAll(artefactsPath, os.ModePerm); err != nil {
+	if err = os.MkdirAll(artefactsPath, os.ModePerm); err != nil {
 		log.AuditComponentFailed(rpmComponentName)
 		return nil, fmt.Errorf("creating rpm artefacts path: %w", err)
 	}
@@ -185,4 +169,33 @@ func RPMsPath(ctx *image.Context) string {
 func GPGKeysPath(ctx *image.Context) string {
 	rpmDir := RPMsPath(ctx)
 	return filepath.Join(rpmDir, gpgDir)
+}
+
+func fetchLocalRPMConfig(ctx *image.Context) (*image.LocalRPMConfig, error) {
+	if !isComponentConfigured(ctx, rpmDir) {
+		return nil, nil
+	}
+
+	localRPMConfig := &image.LocalRPMConfig{
+		RPMPath: RPMsPath(ctx),
+	}
+
+	gpgCheckDisabled := ctx.ImageDefinition.OperatingSystem.Packages.NoGPGCheck
+	gpgPath := GPGKeysPath(ctx)
+
+	if _, err := os.Stat(gpgPath); err == nil {
+		if gpgCheckDisabled {
+			return nil, fmt.Errorf("found existing '%s' directory, but GPG validation is disabled", gpgDir)
+		}
+
+		localRPMConfig.GPGKeysPath = gpgPath
+	} else if !gpgCheckDisabled {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, fmt.Errorf("GPG validation is enabled, but '%s' directory is missing for side-loaded RPMs", gpgDir)
+		}
+
+		return nil, fmt.Errorf("describing GPG directory at '%s': %w", gpgPath, err)
+	}
+
+	return localRPMConfig, nil
 }
