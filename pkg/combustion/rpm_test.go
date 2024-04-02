@@ -246,12 +246,12 @@ func TestConfigureRPMSGPGDirError(t *testing.T) {
 			pkgs: image.Packages{
 				NoGPGCheck: true,
 			},
-			expectedErr: fmt.Sprintf("found existing '%s' directory, but GPG validation is disabled", gpgDir),
+			expectedErr: "fetching local RPM config: found existing 'gpg-keys' directory, but GPG validation is disabled",
 		},
 		{
 			name:        "Enabled GPG validation, but missing GPG dir",
 			pkgs:        image.Packages{},
-			expectedErr: "GPG validation is enabled, but 'gpg-keys' directory is missing for side-loaded RPMs",
+			expectedErr: "fetching local RPM config: GPG validation is enabled, but 'gpg-keys' directory is missing for side-loaded RPMs",
 		},
 	}
 
