@@ -108,7 +108,6 @@ func (b *Builder) writeIsoScript(templateContents, outputFilename string) error 
 		CombustionDir       string
 		ArtefactsDir        string
 		InstallDevice       string
-		Unattended          bool
 	}{
 		IsoExtractDir:       isoExtractPath,
 		RawExtractDir:       rawExtractPath,
@@ -117,7 +116,6 @@ func (b *Builder) writeIsoScript(templateContents, outputFilename string) error 
 		CombustionDir:       b.context.CombustionDir,
 		ArtefactsDir:        b.context.ArtefactsDir,
 		InstallDevice:       b.context.ImageDefinition.OperatingSystem.IsoConfiguration.InstallDevice,
-		Unattended:          b.context.ImageDefinition.OperatingSystem.IsoConfiguration.Unattended,
 	}
 
 	contents, err := template.Parse("iso-script", templateContents, arguments)

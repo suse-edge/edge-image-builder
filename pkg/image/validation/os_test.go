@@ -53,7 +53,6 @@ func TestValidateOperatingSystem(t *testing.T) {
 						RegCode: "letMeIn",
 					},
 					IsoConfiguration: image.IsoConfiguration{
-						Unattended:    true,
 						InstallDevice: "/dev/sda",
 					},
 				},
@@ -90,7 +89,6 @@ func TestValidateOperatingSystem(t *testing.T) {
 						PKGList: []string{"zsh", "git"},
 					},
 					IsoConfiguration: image.IsoConfiguration{
-						Unattended:    true,
 						InstallDevice: "/dev/sda",
 					},
 					RawConfiguration: image.RawConfiguration{
@@ -104,7 +102,6 @@ func TestValidateOperatingSystem(t *testing.T) {
 				"Duplicate group name found: dupeGroup",
 				"User 'danny' must have either a password or at least one SSH key.",
 				"The 'host' field is required for the 'suma' section.",
-				fmt.Sprintf("The 'isoConfiguration/unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO),
 				fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
 				fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW),
 				"You cannot simultaneously configure rawConfiguration and isoConfiguration, regardless of image type.",
@@ -585,32 +582,16 @@ func TestValidateUnattended(t *testing.T) {
 		`not included`: {
 			Definition: image.Definition{},
 		},
-		`iso both specified`: {
+		`iso install device specified`: {
 			Definition: image.Definition{
 				Image: image.Image{
 					ImageType: image.TypeISO,
 				},
 				OperatingSystem: image.OperatingSystem{
 					IsoConfiguration: image.IsoConfiguration{
-						Unattended:    true,
 						InstallDevice: "/dev/sda",
 					},
 				},
-			},
-		},
-		`not iso unattended`: {
-			Definition: image.Definition{
-				Image: image.Image{
-					ImageType: image.TypeRAW,
-				},
-				OperatingSystem: image.OperatingSystem{
-					IsoConfiguration: image.IsoConfiguration{
-						Unattended: true,
-					},
-				},
-			},
-			ExpectedFailedMessages: []string{
-				fmt.Sprintf("The 'isoConfiguration/unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO),
 			},
 		},
 		`not iso install device`: {

@@ -224,13 +224,6 @@ func validatePackages(os *image.OperatingSystem) []FailedValidation {
 func validateUnattended(def *image.Definition) []FailedValidation {
 	var failures []FailedValidation
 
-	if def.Image.ImageType != image.TypeISO && def.OperatingSystem.IsoConfiguration.Unattended {
-		msg := fmt.Sprintf("The 'isoConfiguration/unattended' field can only be used when 'imageType' is '%s'.", image.TypeISO)
-		failures = append(failures, FailedValidation{
-			UserMessage: msg,
-		})
-	}
-
 	if def.Image.ImageType != image.TypeISO && def.OperatingSystem.IsoConfiguration.InstallDevice != "" {
 		msg := fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO)
 		failures = append(failures, FailedValidation{

@@ -39,7 +39,6 @@ The following describes the possible options for the operating system section:
 operatingSystem:
   isoConfiguration:
     installDevice: /path/to/disk
-    unattended: false
   time:
     timezone: Europe/London
     ntp:
@@ -101,11 +100,11 @@ operatingSystem:
 * `isoConfiguration` - Optional; configuration in this section only applies to ISO images.
   * `installDevice` - Optional; specifies the disk that should be used as the install
   device. This needs to be block special, and will default to automatically wipe any data found on the disk.
-  If left omitted, the user will still have to select the disk to install to (if >1 found) and confirm wipe.
-  * `unattended` - Optional; forces GRUB override to automatically install the operating
-  system rather than prompting user to begin the installation. In combination with `installDevice` can create
-  a fully unattended and automated install. Beware of creating boot loops and data loss with these options.
-  If left omitted (or set to `false`) the user will still have to choose to install via the GRUB menu.
+  Additionally, forces GRUB override to automatically install the operating
+  system rather than prompting user to begin the installation. Allowing for
+  a fully unattended and automated install. Beware of creating boot loops and data loss with this option.
+  If left omitted, the user will still have to select the disk to install to (if >1 found) and confirm wipe as well as 
+  choose to install via the GRUB menu.
 * `rawConfiguration` - Optional; configuration in this section only applies to RAW images only.
   * `diskSize` - Optional; sets the desired raw disk image size. This is important to ensure that your disk
   image is large enough to accommodate any artifacts that you're embedding. It's advised to set this to slightly

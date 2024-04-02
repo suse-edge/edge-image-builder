@@ -117,9 +117,6 @@ func TestParse(t *testing.T) {
 	installDevice := definition.OperatingSystem.IsoConfiguration.InstallDevice
 	assert.Equal(t, "/dev/sda", installDevice)
 
-	unattended := definition.OperatingSystem.IsoConfiguration.Unattended
-	assert.Equal(t, true, unattended)
-
 	// Operating System -> Time
 	time := definition.OperatingSystem.Time
 	assert.Equal(t, "Europe/London", time.Timezone)

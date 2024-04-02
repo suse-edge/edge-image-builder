@@ -78,7 +78,6 @@ func TestWriteIsoScript_Rebuild(t *testing.T) {
 		OperatingSystem: image.OperatingSystem{
 			IsoConfiguration: image.IsoConfiguration{
 				InstallDevice: "/dev/vda",
-				Unattended:    true,
 			},
 		},
 	}

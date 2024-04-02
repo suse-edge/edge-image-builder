@@ -72,7 +72,6 @@ type OperatingSystem struct {
 
 type IsoConfiguration struct {
 	InstallDevice string `yaml:"installDevice"`
-	Unattended    bool   `yaml:"unattended"`
 }
 
 type RawConfiguration struct {
