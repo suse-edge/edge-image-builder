@@ -14,6 +14,7 @@
 * [#95](https://github.com/suse-edge/edge-image-builder/issues/95) - Compressed images are not supported
 * [#343](https://github.com/suse-edge/edge-image-builder/issues/343) - Embedded Artifact Registry is memory bound
 * [#341](https://github.com/suse-edge/edge-image-builder/issues/341) - Make Elemental registry configurable for production builds
+* [#258](https://github.com/suse-edge/edge-image-builder/issues/258) - Kubernetes installation doesn't work with DHCP given hostname
 
 ---
 
