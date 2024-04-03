@@ -12,6 +12,8 @@
 
 ## Bug Fixes
 
+* [#352](https://github.com/suse-edge/edge-image-builder/issues/352) - Resizing raw images results in dracut-pre-mount failure
+
 ---
 
 # v1.0.0-rc3
