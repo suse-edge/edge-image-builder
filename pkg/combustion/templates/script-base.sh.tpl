@@ -1,9 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-mount -o ro /dev/disk/by-label/INSTALL /mnt
-export ARTEFACTS_DIR=/mnt/artefacts
-
 {{ if .NetworkScript -}}
 # combustion: prepare network
 
@@ -19,6 +16,9 @@ fi
 exec > >(exec tee -a /dev/tty0) 2>&1
 
 cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1
+
+mount -o ro /dev/disk/by-label/INSTALL /mnt
+export ARTEFACTS_DIR=/mnt/artefacts
 
 {{ range .Scripts -}}
 echo "Running {{ . }}"
