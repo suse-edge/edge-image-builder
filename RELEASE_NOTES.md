@@ -4,6 +4,8 @@
 
 ## General
 
+* Added a progress bar showing the progress of pulling images into the embedded artifact registry
+
 ## API
 
 ### Image Definition Changes
