@@ -13,6 +13,7 @@
 ## Bug Fixes
 
 * [#352](https://github.com/suse-edge/edge-image-builder/issues/352) - Resizing raw images results in dracut-pre-mount failure
+* [#355](https://github.com/suse-edge/edge-image-builder/issues/355) - Helm fails getting charts stored in unauthenticated OCI registries
 
 ---
 

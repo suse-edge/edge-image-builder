@@ -197,6 +197,10 @@ func TestDownloadChart_FailedRegistryLogin(t *testing.T) {
 	helmChart := &image.HelmChart{}
 	helmRepo := &image.HelmRepository{
 		URL: "oci://registry-1.docker.io/bitnamicharts/apache",
+		Authentication: image.HelmAuthentication{
+			Username: "wrong",
+			Password: "creds",
+		},
 	}
 
 	helmClient := mockHelmClient{
