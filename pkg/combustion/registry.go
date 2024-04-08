@@ -10,15 +10,13 @@ import (
 	"strings"
 
 	"github.com/schollz/progressbar/v3"
-
-	"gopkg.in/yaml.v3"
-
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/registry"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -378,7 +376,7 @@ func populateRegistry(ctx *image.Context, images []string) error {
 		}
 
 		if err := bar.Add(1); err != nil {
-			zap.S().Errorf("Error incrementing the progress bar: %s", err)
+			zap.S().Debugf("Error incrementing the progress bar: %s", err)
 		}
 	}
 
