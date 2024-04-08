@@ -77,10 +77,12 @@ func downloadChart(chart *image.HelmChart, repo *image.HelmRepository, helmClien
 		if err := helmClient.AddRepo(repo); err != nil {
 			return "", fmt.Errorf("adding repo: %w", err)
 		}
-	} else if err := helmClient.RegistryLogin(repo); err != nil {
-		return "", fmt.Errorf("logging into registry: %w", err)
+	} else if repo.Authentication.Username != "" && repo.Authentication.Password != "" {
+		if err := helmClient.RegistryLogin(repo); err != nil {
+			return "", fmt.Errorf("logging into registry: %w", err)
+		}
 	}
-
+	
 	chartPath, err := helmClient.Pull(chart.Name, repo, chart.Version, destDir)
 	if err != nil {
 		return "", fmt.Errorf("pulling chart: %w", err)
