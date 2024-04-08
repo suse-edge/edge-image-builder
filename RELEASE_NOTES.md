@@ -13,6 +13,7 @@
 ## Bug Fixes
 
 * [#352](https://github.com/suse-edge/edge-image-builder/issues/352) - Resizing raw images results in dracut-pre-mount failure
+* [#359](https://github.com/suse-edge/edge-image-builder/issues/359) - Helm validation does not check if a chart uses an undefined repository
 
 ---
 

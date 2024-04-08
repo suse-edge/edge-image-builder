@@ -97,6 +97,7 @@ func TestValidateKubernetes(t *testing.T) {
 				"Entries in 'urls' must begin with either 'http://' or 'https://'.",
 				"Helm chart 'name' field must be defined.",
 				"Helm repository 'name' field for \"apache-repo\" must match the 'repositoryName' field in at least one defined Helm chart.",
+				"Helm chart 'repositoryName' \"another-apache-repo\" for Helm chart \"\" does not match the name of any defined repository.",
 			},
 		},
 	}
@@ -481,7 +482,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				"Helm chart 'name' field must be defined.",
 			},
 		},
-		`helm chart no repository name`: {
+		`helm chart undefined repository name`: {
 			K8s: image.Kubernetes{
 				Helm: image.Helm{
 					Charts: []image.HelmChart{
@@ -506,6 +507,33 @@ func TestValidateHelmCharts(t *testing.T) {
 			},
 			ExpectedFailedMessages: []string{
 				"Helm chart 'repositoryName' field for \"metallb\" must be defined.",
+			},
+		},
+		`helm chart no matching repository name`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "kubevirt",
+							RepositoryName: "suse-edge",
+							Version:        "0.2.2",
+						},
+						{
+							Name:           "metallb",
+							RepositoryName: "this-is-not-suse-edge",
+							Version:        "0.14.3",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "suse-edge",
+							URL:  "https://suse-edge.github.io/charts",
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm chart 'repositoryName' \"this-is-not-suse-edge\" for Helm chart \"metallb\" does not match the name of any defined repository.",
 			},
 		},
 		`helm chart no version`: {

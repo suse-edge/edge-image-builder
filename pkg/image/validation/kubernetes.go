@@ -161,6 +161,11 @@ func validateHelm(k8s *image.Kubernetes, imageConfigDir string) []FailedValidati
 		return failures
 	}
 
+	var helmRepositoryNames []string
+	for _, repo := range k8s.Helm.Repositories {
+		helmRepositoryNames = append(helmRepositoryNames, repo.Name)
+	}
+
 	if failure := validateHelmChartDuplicates(k8s.Helm.Charts); failure != "" {
 		failures = append(failures, FailedValidation{
 			UserMessage: failure,
@@ -170,7 +175,7 @@ func validateHelm(k8s *image.Kubernetes, imageConfigDir string) []FailedValidati
 	seenHelmRepos := make(map[string]bool)
 	for _, chart := range k8s.Helm.Charts {
 		c := chart
-		failures = append(failures, validateChart(&c, imageConfigDir)...)
+		failures = append(failures, validateChart(&c, helmRepositoryNames, imageConfigDir)...)
 
 		seenHelmRepos[chart.RepositoryName] = true
 	}
@@ -183,7 +188,7 @@ func validateHelm(k8s *image.Kubernetes, imageConfigDir string) []FailedValidati
 	return failures
 }
 
-func validateChart(chart *image.HelmChart, imageConfigDir string) []FailedValidation {
+func validateChart(chart *image.HelmChart, repositoryNames []string, imageConfigDir string) []FailedValidation {
 	var failures []FailedValidation
 
 	if chart.Name == "" {
@@ -195,6 +200,10 @@ func validateChart(chart *image.HelmChart, imageConfigDir string) []FailedValida
 	if chart.RepositoryName == "" {
 		failures = append(failures, FailedValidation{
 			UserMessage: fmt.Sprintf("Helm chart 'repositoryName' field for %q must be defined.", chart.Name),
+		})
+	} else if !slices.Contains(repositoryNames, chart.RepositoryName) {
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Helm chart 'repositoryName' %q for Helm chart %q does not match the name of any defined repository.", chart.RepositoryName, chart.Name),
 		})
 	}
 
