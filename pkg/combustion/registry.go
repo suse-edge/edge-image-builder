@@ -9,14 +9,14 @@ import (
 	"slices"
 	"strings"
 
-	"gopkg.in/yaml.v3"
-
+	"github.com/schollz/progressbar/v3"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/registry"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -360,7 +360,8 @@ func registryArtefactsPath(ctx *image.Context) string {
 }
 
 func populateRegistry(ctx *image.Context, images []string) error {
-	log.Audit("Populating Embedded Artifact Registry...")
+	bar := progressbar.Default(int64(len(images)), "Populating Embedded Artifact Registry...")
+
 	for _, i := range images {
 		if err := addImageToHauler(ctx, i); err != nil {
 			return fmt.Errorf("adding image to hauler: %w", err)
@@ -372,6 +373,10 @@ func populateRegistry(ctx *image.Context, images []string) error {
 		imageTarDest := filepath.Join(registryArtefactsPath(ctx), convertedImageName)
 		if err := generateRegistryTar(ctx, imageTarDest); err != nil {
 			return fmt.Errorf("generating hauler store tar: %w", err)
+		}
+
+		if err := bar.Add(1); err != nil {
+			zap.S().Debugf("Error incrementing the progress bar: %s", err)
 		}
 	}
 
