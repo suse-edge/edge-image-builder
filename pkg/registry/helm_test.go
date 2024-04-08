@@ -193,10 +193,41 @@ func TestDownloadChart_FailedAddingRepo(t *testing.T) {
 	assert.Empty(t, chartPath)
 }
 
+func TestDownloadChart_ValidRegistryLogin(t *testing.T) {
+	helmChart := &image.HelmChart{}
+	helmRepo := &image.HelmRepository{
+		URL: "oci://registry-1.docker.io/bitnamicharts/apache",
+		Authentication: image.HelmAuthentication{
+			Username: "valid",
+			Password: "login",
+		},
+	}
+
+	helmClient := mockHelmClient{
+		addRepoFunc: func(repository *image.HelmRepository) error {
+			return nil
+		},
+		registryLoginFunc: func(repository *image.HelmRepository) error {
+			return nil
+		},
+		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
+			return "apache-chart.tgz", nil
+		},
+	}
+
+	chartPath, err := downloadChart(helmChart, helmRepo, helmClient, "")
+	require.NoError(t, err)
+	assert.Equal(t, "apache-chart.tgz", chartPath)
+}
+
 func TestDownloadChart_FailedRegistryLogin(t *testing.T) {
 	helmChart := &image.HelmChart{}
 	helmRepo := &image.HelmRepository{
 		URL: "oci://registry-1.docker.io/bitnamicharts/apache",
+		Authentication: image.HelmAuthentication{
+			Username: "wrong",
+			Password: "creds",
+		},
 	}
 
 	helmClient := mockHelmClient{
@@ -248,9 +279,6 @@ func TestDownloadChart(t *testing.T) {
 
 	helmClient := mockHelmClient{
 		addRepoFunc: func(repository *image.HelmRepository) error {
-			return nil
-		},
-		registryLoginFunc: func(repository *image.HelmRepository) error {
 			return nil
 		},
 		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
