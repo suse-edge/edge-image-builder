@@ -559,14 +559,15 @@ func TestTemplateCommand(t *testing.T) {
 
 func TestParseChartContents_InvalidPayload(t *testing.T) {
 	contents := `---
-# Source
+# Source: some-invalid.yaml
 invalid-resource
 `
 
 	resources, err := parseChartContents(contents)
 	require.Error(t, err)
 
-	assert.ErrorContains(t, err, "yaml: unmarshal errors:\n  line 2: cannot unmarshal !!str `invalid...` into map[string]interface {}")
+	assert.ErrorContains(t, err, "decoding resource from source '# Source: some-invalid.yaml'")
+	assert.ErrorContains(t, err, "yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `invalid...` into map[string]interface {}")
 	assert.Nil(t, resources)
 }
 

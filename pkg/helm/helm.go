@@ -265,18 +265,20 @@ func templateCommand(chart, repository, version, valuesFilePath, kubeVersion, ta
 func parseChartContents(chartContents string) ([]map[string]any, error) {
 	var resources []map[string]any
 
-	for _, resource := range strings.Split(chartContents, "---") {
+	for _, resource := range strings.Split(chartContents, "---\n") {
 		if resource == "" {
 			continue
 		}
 
-		if !strings.HasPrefix(strings.TrimSpace(resource), "# Source") {
+		resource = strings.TrimSpace(resource)
+		if !strings.HasPrefix(resource, "# Source") {
 			continue
 		}
 
 		source, content, found := strings.Cut(resource, "\n")
 		if !found {
-			return nil, fmt.Errorf("invalid resource: %s", resource)
+			zap.S().Warnf("Invalid Helm resource: %s", resource)
+			continue
 		}
 
 		var r map[string]any
