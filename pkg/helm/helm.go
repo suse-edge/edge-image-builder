@@ -277,7 +277,8 @@ func parseChartContents(chartContents string) ([]map[string]any, error) {
 
 		source, content, found := strings.Cut(resource, "\n")
 		if !found {
-			return nil, fmt.Errorf("invalid resource: %s", resource)
+			zap.S().Warnf("Invalid Helm resource: %s", resource)
+			continue
 		}
 
 		var r map[string]any
