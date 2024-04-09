@@ -150,7 +150,12 @@ func (h *Helm) Pull(chart string, repo *image.HelmRepository, version, destDir s
 		}
 	}()
 
-	cmd := pullCommand(chart, repo, version, destDir, h.certsDir, file)
+	chartDir := filepath.Join(destDir, chart)
+	if err = os.MkdirAll(chartDir, os.ModePerm); err != nil {
+		return "", fmt.Errorf("creating chart dir %q: %w", chartDir, err)
+	}
+
+	cmd := pullCommand(chart, repo, version, chartDir, h.certsDir, file)
 
 	if _, err = fmt.Fprintf(file, "command: %s\n", cmd); err != nil {
 		return "", fmt.Errorf("writing command prefix to log file: %w", err)
@@ -160,7 +165,7 @@ func (h *Helm) Pull(chart string, repo *image.HelmRepository, version, destDir s
 		return "", fmt.Errorf("executing command: %w", err)
 	}
 
-	chartPathPattern := fmt.Sprintf("%s-*.tgz", filepath.Join(destDir, chart))
+	chartPathPattern := fmt.Sprintf("%s/%s-*.tgz", chartDir, chart)
 
 	matches, err := filepath.Glob(chartPathPattern)
 	if err != nil {
