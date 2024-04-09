@@ -265,12 +265,13 @@ func templateCommand(chart, repository, version, valuesFilePath, kubeVersion, ta
 func parseChartContents(chartContents string) ([]map[string]any, error) {
 	var resources []map[string]any
 
-	for _, resource := range strings.Split(chartContents, "---") {
+	for _, resource := range strings.Split(chartContents, "---\n") {
 		if resource == "" {
 			continue
 		}
 
-		if !strings.HasPrefix(strings.TrimSpace(resource), "# Source") {
+		resource = strings.TrimSpace(resource)
+		if !strings.HasPrefix(resource, "# Source") {
 			continue
 		}
 
