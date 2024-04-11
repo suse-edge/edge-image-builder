@@ -176,8 +176,8 @@ func TestNewCluster_MultiNodeRKE2_ExistingConfig(t *testing.T) {
 	assert.Equal(t, "totally-not-generated-one", cluster.AgentConfig["token"])
 	assert.Equal(t, "https://192.168.122.50:9345", cluster.AgentConfig["server"])
 	assert.Equal(t, true, cluster.AgentConfig["debug"])
+	assert.Equal(t, true, cluster.AgentConfig["selinux"])
 	assert.Nil(t, cluster.AgentConfig["tls-san"])
-	assert.Nil(t, cluster.AgentConfig["selinux"])
 }
 
 func TestNewCluster_MultiNode_MissingInitialiser(t *testing.T) {

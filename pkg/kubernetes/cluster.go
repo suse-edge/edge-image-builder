@@ -26,6 +26,7 @@ const (
 	tlsSANKey       = "tls-san"
 	disableKey      = "disable"
 	clusterInitKey  = "cluster-init"
+	selinuxKey      = "selinux"
 )
 
 type Cluster struct {
@@ -66,6 +67,9 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 	agentConfig[serverKey] = serverConfig[serverKey]
 	if strings.Contains(kubernetes.Version, image.KubernetesDistroRKE2) {
 		agentConfig[cniKey] = serverConfig[cniKey]
+	}
+	if selinux, ok := serverConfig[selinuxKey]; ok {
+		agentConfig[selinuxKey] = selinux
 	}
 
 	// Create the initialiser server config
