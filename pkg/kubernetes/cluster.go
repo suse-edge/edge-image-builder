@@ -65,11 +65,9 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 	// Ensure the agent uses the same cluster configuration values as the server
 	agentConfig[tokenKey] = serverConfig[tokenKey]
 	agentConfig[serverKey] = serverConfig[serverKey]
+	agentConfig[selinuxKey] = serverConfig[selinuxKey]
 	if strings.Contains(kubernetes.Version, image.KubernetesDistroRKE2) {
 		agentConfig[cniKey] = serverConfig[cniKey]
-	}
-	if selinux, ok := serverConfig[selinuxKey]; ok {
-		agentConfig[selinuxKey] = selinux
 	}
 
 	// Create the initialiser server config
@@ -168,6 +166,7 @@ func setMultiNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string]
 
 	setClusterToken(config)
 	appendClusterTLSSAN(config, kubernetes.Network.APIVIP)
+	setSELinux(config)
 	if kubernetes.Network.APIHost != "" {
 		appendClusterTLSSAN(config, kubernetes.Network.APIHost)
 	}
@@ -204,6 +203,14 @@ func setClusterAPIAddress(config map[string]any, apiAddress string, port int) {
 	}
 
 	config[serverKey] = fmt.Sprintf("https://%s:%d", apiAddress, port)
+}
+
+func setSELinux(config map[string]any) {
+	if _, ok := config[selinuxKey].(bool); ok {
+		return
+	}
+
+	config[selinuxKey] = false
 }
 
 func appendClusterTLSSAN(config map[string]any, address string) {

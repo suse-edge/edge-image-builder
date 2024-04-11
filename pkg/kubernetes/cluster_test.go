@@ -113,20 +113,21 @@ func TestNewCluster_MultiNodeRKE2_MissingConfig(t *testing.T) {
 	})
 	assert.Equal(t, "cilium", cluster.InitialiserConfig["cni"])
 	assert.Equal(t, []string{"192.168.122.50", "api.suse.edge.com"}, cluster.InitialiserConfig["tls-san"])
+	assert.Equal(t, false, cluster.InitialiserConfig["selinux"])
 	assert.Nil(t, cluster.InitialiserConfig["server"])
-	assert.Nil(t, cluster.InitialiserConfig["selinux"])
 
 	require.NotNil(t, cluster.ServerConfig)
 	assert.Equal(t, "cilium", cluster.ServerConfig["cni"])
 	assert.Equal(t, []string{"192.168.122.50", "api.suse.edge.com"}, cluster.ServerConfig["tls-san"])
 	assert.Equal(t, clusterToken, cluster.ServerConfig["token"])
 	assert.Equal(t, "https://192.168.122.50:9345", cluster.ServerConfig["server"])
-	assert.Nil(t, cluster.ServerConfig["selinux"])
+	assert.Equal(t, false, cluster.ServerConfig["selinux"])
 
 	require.NotNil(t, cluster.AgentConfig)
 	assert.Equal(t, "cilium", cluster.AgentConfig["cni"])
 	assert.Equal(t, clusterToken, cluster.AgentConfig["token"])
 	assert.Equal(t, "https://192.168.122.50:9345", cluster.AgentConfig["server"])
+	assert.Equal(t, false, cluster.AgentConfig["selinux"])
 	assert.Nil(t, cluster.AgentConfig["tls-san"])
 	assert.Nil(t, cluster.AgentConfig["debug"])
 }
