@@ -19,6 +19,7 @@
 * [#359](https://github.com/suse-edge/edge-image-builder/issues/359) - Helm validation does not check if a chart uses an undefined repository
 * [#362](https://github.com/suse-edge/edge-image-builder/issues/362) - Helm templating failure
 * [#365](https://github.com/suse-edge/edge-image-builder/issues/365) - Unable to locate downloaded Helm charts
+* [#374](https://github.com/suse-edge/edge-image-builder/issues/374) - Enable SELinux support for Kubernetes agents if servers enforce it
 
 ---
 
