@@ -257,7 +257,7 @@ func validateRawConfig(def *image.Definition) []FailedValidation {
 	}
 
 	if !isValidSize(def.OperatingSystem.RawConfiguration.DiskSize) {
-		msg := fmt.Sprintf("the 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW)
+		msg := fmt.Sprintf("The 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
