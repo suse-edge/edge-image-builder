@@ -1,0 +1,22 @@
+interfaces:
+- name: libvirt
+  type: ethernet
+  state: up
+  mac-address: FE:FF:FF:00:00:02
+  ipv4:
+    dhcp: true
+    enabled: true
+  ipv6:
+    enabled: false
+- name: external
+  type: ethernet
+  state: up
+  mac-address: FE:FF:FF:00:01:02
+  ipv4:
+    dhcp: true
+    enabled: true
+    auto-dns: false
+    auto-gateway: false
+    auto-routes: false
+  ipv6:
+    enabled: false

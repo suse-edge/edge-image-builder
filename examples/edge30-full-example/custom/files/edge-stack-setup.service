@@ -1,0 +1,30 @@
+[Unit]
+Description=Setup Edge stack components
+Wants=network-online.target
+# It requires rke2 or k3s running, but it won't fail if those services are not present
+After=network.target network-online.target rke2-server.service k3s.service
+# At least, the basic-setup.sh one needs to be present
+ConditionPathExists=/opt/edge/bin/basic-setup.sh
+
+[Service]
+User=root
+Type=forking
+# Metal3 can take A LOT to download the IPA image
+TimeoutStartSec=1800
+
+ExecStartPre=/bin/sh -c "echo 'Setting up Edge components...'"
+# Scripts are executed in StartPre because Start can only run a single on
+ExecStartPre=/opt/edge/bin/rancher.sh
+ExecStartPre=/opt/edge/bin/metal3.sh
+ExecStart=/bin/sh -c "echo 'Finished setting up Edge components'"
+RemainAfterExit=yes
+KillMode=process
+# Disable & delete everything
+ExecStartPost=rm -f /opt/edge/bin/rancher.sh
+ExecStartPost=rm -f /opt/edge/bin/metal3.sh
+ExecStartPost=rm -f /opt/edge/bin/basic-setup.sh
+ExecStartPost=/bin/sh -c "systemctl disable edge-stack-setup.service"
+ExecStartPost=rm -f /etc/systemd/system/edge-stack-setup.service
+
+[Install]
+WantedBy=multi-user.target

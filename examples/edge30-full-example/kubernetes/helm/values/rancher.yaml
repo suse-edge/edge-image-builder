@@ -1,0 +1,4 @@
+hostname: rancher-192.168.122.11.sslip.io
+bootstrapPassword: "foobar"
+replicas: 1
+global.cattle.psp.enabled: "false"
