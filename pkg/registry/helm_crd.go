@@ -4,8 +4,11 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-const helmChartAPIVersion = "helm.cattle.io/v1"
-const helmChartKind = "HelmChart"
+const (
+	helmChartAPIVersion = "helm.cattle.io/v1"
+	helmChartKind       = "HelmChart"
+	helmChartSource     = "edge-image-builder"
+)
 
 type HelmCRD struct {
 	APIVersion string `yaml:"apiVersion"`
@@ -36,7 +39,7 @@ func NewHelmCRD(chart *image.HelmChart, chartContent, valuesContent, repositoryU
 			Name:      chart.Name,
 			Namespace: chart.InstallationNamespace,
 			Annotations: map[string]string{
-				"edge.suse.com/source":         "suse-edge-image-builder",
+				"edge.suse.com/source":         helmChartSource,
 				"edge.suse.com/repository-url": repositoryURL,
 			},
 		},

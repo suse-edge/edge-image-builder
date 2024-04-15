@@ -304,7 +304,7 @@ metadata:
     namespace: kube-system
     annotations:
         edge.suse.com/repository-url: oci://registry-1.docker.io/bitnamicharts/apache
-        edge.suse.com/source: suse-edge-image-builder
+        edge.suse.com/source: edge-image-builder
 spec:
     version: 10.7.0
     valuesContent: |4-
