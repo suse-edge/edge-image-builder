@@ -17,29 +17,17 @@ func validateOperatingSystem(ctx *image.Context) []FailedValidation {
 
 	var failures []FailedValidation
 
-	if !isOperatingSystemDefined(&def.OperatingSystem) {
-		return failures
-	}
-
 	failures = append(failures, validateKernelArgs(&def.OperatingSystem)...)
 	failures = append(failures, validateSystemd(&def.OperatingSystem)...)
 	failures = append(failures, validateGroups(&def.OperatingSystem)...)
 	failures = append(failures, validateUsers(&def.OperatingSystem)...)
 	failures = append(failures, validateSuma(&def.OperatingSystem)...)
 	failures = append(failures, validatePackages(&def.OperatingSystem)...)
-	failures = append(failures, validateTimesync(&def.OperatingSystem)...)
-	failures = append(failures, validateUnattended(def)...)
+	failures = append(failures, validateTimeSync(&def.OperatingSystem)...)
+	failures = append(failures, validateIsoConfig(def)...)
 	failures = append(failures, validateRawConfig(def)...)
 
 	return failures
-}
-
-func isOperatingSystemDefined(os *image.OperatingSystem) bool {
-	return !(len(os.KernelArgs) == 0 &&
-		len(os.Users) == 0 &&
-		len(os.Systemd.Enable) == 0 &&
-		len(os.Systemd.Disable) == 0 &&
-		os.Suma == (image.Suma{}))
 }
 
 func validateKernelArgs(os *image.OperatingSystem) []FailedValidation {
@@ -221,7 +209,7 @@ func validatePackages(os *image.OperatingSystem) []FailedValidation {
 	return failures
 }
 
-func validateUnattended(def *image.Definition) []FailedValidation {
+func validateIsoConfig(def *image.Definition) []FailedValidation {
 	var failures []FailedValidation
 
 	if def.Image.ImageType != image.TypeISO && def.OperatingSystem.IsoConfiguration.InstallDevice != "" {
@@ -266,7 +254,7 @@ func validateRawConfig(def *image.Definition) []FailedValidation {
 	return failures
 }
 
-func validateTimesync(os *image.OperatingSystem) []FailedValidation {
+func validateTimeSync(os *image.OperatingSystem) []FailedValidation {
 	var failures []FailedValidation
 
 	if !os.Time.NtpConfiguration.ForceWait {

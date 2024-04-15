@@ -130,56 +130,6 @@ func TestValidateOperatingSystem(t *testing.T) {
 	}
 }
 
-func TestIsOperatingSystemDefined(t *testing.T) {
-	tests := map[string]struct {
-		OS       image.OperatingSystem
-		Expected bool
-	}{
-		`empty operating system`: {
-			OS:       image.OperatingSystem{},
-			Expected: false,
-		},
-		`with kernel args`: {
-			OS: image.OperatingSystem{
-				KernelArgs: []string{"foo=bar"},
-			},
-			Expected: true,
-		},
-		`with users`: {
-			OS: image.OperatingSystem{
-				Users: []image.OperatingSystemUser{
-					{Username: "jdob"},
-				},
-			},
-			Expected: true,
-		},
-		`with systemd enable list`: {
-			OS: image.OperatingSystem{
-				Systemd: image.Systemd{
-					Enable: []string{"foo"},
-				},
-			},
-			Expected: true,
-		},
-		`with systemd disable list`: {
-			OS: image.OperatingSystem{
-				Systemd: image.Systemd{
-					Disable: []string{"bar"},
-				},
-			},
-			Expected: true,
-		},
-	}
-
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			os := test.OS
-			result := isOperatingSystemDefined(&os)
-			assert.Equal(t, test.Expected, result)
-		})
-	}
-}
-
 func TestValidateKernelArgs(t *testing.T) {
 	tests := map[string]struct {
 		OS                     image.OperatingSystem
@@ -614,7 +564,7 @@ func TestValidateUnattended(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			def := test.Definition
-			failures := validateUnattended(&def)
+			failures := validateIsoConfig(&def)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
 
 			var foundMessages []string
@@ -788,7 +738,7 @@ func TestValidateTimeSync(t *testing.T) {
 			os := image.OperatingSystem{
 				Time: test.Time,
 			}
-			failures := validateTimesync(&os)
+			failures := validateTimeSync(&os)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
 
 			var foundMessages []string
