@@ -5,6 +5,7 @@
 ## General
 
 * Added a progress bar showing the progress of pulling images into the embedded artifact registry
+* Added annotations to Helm CRs
 
 ## API
 
