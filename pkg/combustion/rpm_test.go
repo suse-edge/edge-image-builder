@@ -37,7 +37,7 @@ func (mr mockRPMRepoCreator) Create(path string) error {
 	panic("not implemented")
 }
 
-func TestSkipRPMComponentTrue(t *testing.T) {
+func TestSkipRPMComponent_InvalidDefinition(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -80,7 +80,7 @@ func TestSkipRPMComponentTrue(t *testing.T) {
 
 }
 
-func TestSkipRPMComponentProvidedPKGList(t *testing.T) {
+func TestSkipRPMComponent_PopulatedPackageList(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -91,7 +91,7 @@ func TestSkipRPMComponentProvidedPKGList(t *testing.T) {
 	assert.False(t, SkipRPMComponent(ctx))
 }
 
-func TestSkipRPMComponentRPMDirNoRPMs(t *testing.T) {
+func TestSkipRPMComponent_EmptyRPMDir(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -104,7 +104,7 @@ func TestSkipRPMComponentRPMDirNoRPMs(t *testing.T) {
 	assert.True(t, SkipRPMComponent(ctx))
 }
 
-func TestSkipRPMComponentFullConfig(t *testing.T) {
+func TestSkipRPMComponent_FullConfig(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -127,7 +127,7 @@ func TestSkipRPMComponentFullConfig(t *testing.T) {
 	assert.False(t, SkipRPMComponent(ctx))
 }
 
-func TestConfigureRPMSSkipComponent(t *testing.T) {
+func TestConfigureRPMs_Skipped(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -137,7 +137,7 @@ func TestConfigureRPMSSkipComponent(t *testing.T) {
 	assert.Nil(t, scripts)
 }
 
-func TestConfigureRPMSError(t *testing.T) {
+func TestConfigureRPMs_ResolutionFailures(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -222,17 +222,17 @@ func TestConfigureRPMSError(t *testing.T) {
 	}
 }
 
-func TestConfigureRPMSGPGDirError(t *testing.T) {
+func TestConfigureRPMs_GPGFailures(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
 	rpmDir := filepath.Join(ctx.ImageConfigDir, rpmDir)
 	require.NoError(t, os.Mkdir(rpmDir, 0o755))
-	_, err := os.Create(filepath.Join(rpmDir, "test.rpm"))
-	require.NoError(t, err)
 	defer func() {
 		require.NoError(t, os.RemoveAll(rpmDir))
 	}()
+
+	require.NoError(t, os.WriteFile(filepath.Join(rpmDir, "test.rpm"), nil, 0o600))
 
 	tests := []struct {
 		name         string
@@ -247,6 +247,11 @@ func TestConfigureRPMSGPGDirError(t *testing.T) {
 				NoGPGCheck: true,
 			},
 			expectedErr: "fetching local RPM config: found existing 'gpg-keys' directory, but GPG validation is disabled",
+		},
+		{
+			name:         "Enabled GPG validation, but empty GPG dir",
+			createGPGDir: true,
+			expectedErr:  "fetching local RPM config: 'gpg-keys' directory exists but it is empty",
 		},
 		{
 			name:        "Enabled GPG validation, but missing GPG dir",
@@ -273,7 +278,7 @@ func TestConfigureRPMSGPGDirError(t *testing.T) {
 	}
 }
 
-func TestConfigureRPMSSuccessfulConfig(t *testing.T) {
+func TestConfigureRPMs_SuccessfulConfig(t *testing.T) {
 	expectedRepoName := "bar"
 	expectedDir := "/foo/bar"
 	expectedPkg := []string{"foo", "bar"}
