@@ -28,6 +28,23 @@ func setupCertificatesConfigDir(t *testing.T) (ctx *image.Context, teardown func
 	return
 }
 
+func TestCopyCertificatesEmptyDirectory(t *testing.T) {
+	// Setup
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	testCertsDir := filepath.Join(ctx.ImageConfigDir, certsConfigDir)
+	err := os.Mkdir(testCertsDir, 0o755)
+	require.NoError(t, err)
+	defer os.RemoveAll(testCertsDir)
+
+	// Test
+	err = copyCertificates(ctx)
+
+	// Verify
+	require.Error(t, err)
+}
+
 func TestCopyCertificates(t *testing.T) {
 	// Setup
 	ctx, teardown := setupCertificatesConfigDir(t)
