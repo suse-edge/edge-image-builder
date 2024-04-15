@@ -21,6 +21,7 @@
 * [#365](https://github.com/suse-edge/edge-image-builder/issues/365) - Unable to locate downloaded Helm charts
 * [#374](https://github.com/suse-edge/edge-image-builder/issues/374) - Enable SELinux support for Kubernetes agents if servers enforce it
 * [#381](https://github.com/suse-edge/edge-image-builder/issues/381) - Empty gpg-keys directory passes GPG enablement only to fail during the dependency resolution
+* [#383](https://github.com/suse-edge/edge-image-builder/issues/383) - Criteria for validating the OS definition does not include RPM
 
 ---
 
