@@ -47,6 +47,15 @@ func copyCertificates(ctx *image.Context) error {
 	srcDir := filepath.Join(ctx.ImageConfigDir, certsConfigDir)
 	destDir := filepath.Join(ctx.CombustionDir, certsConfigDir)
 
+	dirEntries, err := os.ReadDir(srcDir)
+	if err != nil {
+		return fmt.Errorf("reading the certificates directory at %s: %w", srcDir, err)
+	}
+
+	if len(dirEntries) == 0 {
+		return fmt.Errorf("no certificates found in directory %s", srcDir)
+	}
+
 	if err := os.MkdirAll(destDir, os.ModePerm); err != nil {
 		return fmt.Errorf("creating certificates directory '%s': %w", destDir, err)
 	}
