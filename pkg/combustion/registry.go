@@ -339,6 +339,7 @@ func registryArtefactsPath(ctx *image.Context) string {
 
 func populateRegistry(ctx *image.Context, images []string) error {
 	bar := progressbar.Default(int64(len(images)), "Populating Embedded Artifact Registry...")
+	zap.S().Infof("Adding the following images to the embedded artifact registry:\n%s", images)
 
 	for _, i := range images {
 		if err := addImageToHauler(ctx, i); err != nil {
