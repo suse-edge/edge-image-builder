@@ -135,6 +135,12 @@ func validateUsers(os *image.OperatingSystem) []FailedValidation {
 			})
 		}
 
+		if !user.CreateHomeDir && len(user.SSHKeys) > 0 {
+			failures = append(failures, FailedValidation{
+				UserMessage: "The 'createHomeDir' attribute must be set to 'true' if at least one SSH key is specified.",
+			})
+		}
+
 		if seenUsernames[user.Username] {
 			msg := fmt.Sprintf("Duplicate username found: %s", user.Username)
 			failures = append(failures, FailedValidation{
