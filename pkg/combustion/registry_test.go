@@ -290,7 +290,7 @@ func TestStoreHelmCharts(t *testing.T) {
 	charts := []*registry.HelmChart{
 		{
 			CRD: registry.NewHelmCRD(helmChart, "some-content", `
-values: content`),
+values: content`, "oci://registry-1.docker.io/bitnamicharts/apache"),
 		},
 	}
 
@@ -302,6 +302,9 @@ kind: HelmChart
 metadata:
     name: apache
     namespace: kube-system
+    annotations:
+        repositoryUrl: oci://registry-1.docker.io/bitnamicharts/apache
+        source: suse-edge-image-builder
 spec:
     version: 10.7.0
     valuesContent: |4-

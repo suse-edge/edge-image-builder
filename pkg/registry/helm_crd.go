@@ -11,8 +11,9 @@ type HelmCRD struct {
 	APIVersion string `yaml:"apiVersion"`
 	Kind       string `yaml:"kind"`
 	Metadata   struct {
-		Name      string `yaml:"name"`
-		Namespace string `yaml:"namespace,omitempty"`
+		Name        string            `yaml:"name"`
+		Namespace   string            `yaml:"namespace,omitempty"`
+		Annotations map[string]string `yaml:"annotations"`
 	} `yaml:"metadata"`
 	Spec struct {
 		Version         string `yaml:"version"`
@@ -23,16 +24,21 @@ type HelmCRD struct {
 	} `yaml:"spec"`
 }
 
-func NewHelmCRD(chart *image.HelmChart, chartContent, valuesContent string) HelmCRD {
+func NewHelmCRD(chart *image.HelmChart, chartContent, valuesContent, repositoryURL string) HelmCRD {
 	return HelmCRD{
 		APIVersion: helmChartAPIVersion,
 		Kind:       helmChartKind,
 		Metadata: struct {
-			Name      string `yaml:"name"`
-			Namespace string `yaml:"namespace,omitempty"`
+			Name        string            `yaml:"name"`
+			Namespace   string            `yaml:"namespace,omitempty"`
+			Annotations map[string]string `yaml:"annotations"`
 		}{
 			Name:      chart.Name,
 			Namespace: chart.InstallationNamespace,
+			Annotations: map[string]string{
+				"source":        "suse-edge-image-builder",
+				"repositoryUrl": repositoryURL,
+			},
 		},
 		Spec: struct {
 			Version         string `yaml:"version"`
