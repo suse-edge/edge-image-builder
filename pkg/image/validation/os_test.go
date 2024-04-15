@@ -35,6 +35,7 @@ func TestValidateOperatingSystem(t *testing.T) {
 					Users: []image.OperatingSystemUser{
 						{
 							Username:          "danny",
+							CreateHomeDir:     true,
 							EncryptedPassword: "InternNoMore",
 							SSHKeys:           []string{"asdf"},
 						},
@@ -323,6 +324,7 @@ func TestValidateUsers(t *testing.T) {
 			Users: []image.OperatingSystemUser{
 				{
 					Username:          "jay",
+					CreateHomeDir:     true,
 					EncryptedPassword: "foo",
 					SSHKeys:           []string{"key"},
 				},
@@ -331,8 +333,9 @@ func TestValidateUsers(t *testing.T) {
 					EncryptedPassword: "pm-4-life",
 				},
 				{
-					Username: "atanas",
-					SSHKeys:  []string{"key2"},
+					Username:      "atanas",
+					CreateHomeDir: true,
+					SSHKeys:       []string{"key2"},
 				},
 			},
 		},
@@ -353,12 +356,24 @@ func TestValidateUsers(t *testing.T) {
 					EncryptedPassword: "password1",
 				},
 				{
-					Username: "ivo",
-					SSHKeys:  []string{"key1"},
+					Username:      "ivo",
+					CreateHomeDir: true,
+					SSHKeys:       []string{"key1"},
 				},
 			},
 			ExpectedFailedMessages: []string{
 				"Duplicate username found: ivo",
+			},
+		},
+		`ssh key and no create home`: {
+			Users: []image.OperatingSystemUser{
+				{
+					Username: "edu",
+					SSHKeys:  []string{"key1"},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"The 'createHomeDir' attribute must be set to 'true' if at least one SSH key is specified.",
 			},
 		},
 	}

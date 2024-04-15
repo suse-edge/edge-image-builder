@@ -22,7 +22,8 @@
 * [#374](https://github.com/suse-edge/edge-image-builder/issues/374) - Enable SELinux support for Kubernetes agents if servers enforce it
 * [#381](https://github.com/suse-edge/edge-image-builder/issues/381) - Empty gpg-keys directory passes GPG enablement only to fail during the dependency resolution
 * [#383](https://github.com/suse-edge/edge-image-builder/issues/383) - Criteria for validating the OS definition does not include RPM
-* [#372](https://github.com/suse-edge/edge-image-builder/issues/372) -  Empty certificates directory does not raise a build error but fails to boot the node
+* [#372](https://github.com/suse-edge/edge-image-builder/issues/372) - Empty certificates directory does not raise a build error but fails to boot the node
+* [#371](https://github.com/suse-edge/edge-image-builder/issues/371) - EIB allows an SSH key to be set for a user when createHome is set to false
 
 ---
 
