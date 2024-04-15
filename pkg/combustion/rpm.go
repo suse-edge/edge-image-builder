@@ -183,9 +183,13 @@ func fetchLocalRPMConfig(ctx *image.Context) (*image.LocalRPMConfig, error) {
 	gpgCheckDisabled := ctx.ImageDefinition.OperatingSystem.Packages.NoGPGCheck
 	gpgPath := GPGKeysPath(ctx)
 
-	if _, err := os.Stat(gpgPath); err == nil {
+	if entries, err := os.ReadDir(gpgPath); err == nil {
 		if gpgCheckDisabled {
 			return nil, fmt.Errorf("found existing '%s' directory, but GPG validation is disabled", gpgDir)
+		}
+
+		if len(entries) == 0 {
+			return nil, fmt.Errorf("'%s' directory exists but it is empty", gpgDir)
 		}
 
 		localRPMConfig.GPGKeysPath = gpgPath
@@ -194,7 +198,7 @@ func fetchLocalRPMConfig(ctx *image.Context) (*image.LocalRPMConfig, error) {
 			return nil, fmt.Errorf("GPG validation is enabled, but '%s' directory is missing for side-loaded RPMs", gpgDir)
 		}
 
-		return nil, fmt.Errorf("describing GPG directory at '%s': %w", gpgPath, err)
+		return nil, fmt.Errorf("reading GPG directory at '%s': %w", gpgPath, err)
 	}
 
 	return localRPMConfig, nil
