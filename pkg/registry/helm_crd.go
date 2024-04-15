@@ -36,8 +36,8 @@ func NewHelmCRD(chart *image.HelmChart, chartContent, valuesContent, repositoryU
 			Name:      chart.Name,
 			Namespace: chart.InstallationNamespace,
 			Annotations: map[string]string{
-				"source":        "suse-edge-image-builder",
-				"repositoryUrl": repositoryURL,
+				"edge.suse.com/source":         "suse-edge-image-builder",
+				"edge.suse.com/repository-url": repositoryURL,
 			},
 		},
 		Spec: struct {
