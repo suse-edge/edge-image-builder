@@ -299,6 +299,8 @@ func TestConfigureRPMSSuccessfulConfig(t *testing.T) {
 	gpgDir := filepath.Join(rpmDir, gpgDir)
 	require.NoError(t, os.Mkdir(gpgDir, 0o755))
 
+	require.NoError(t, os.WriteFile(filepath.Join(gpgDir, "some-key"), nil, 0o600))
+
 	ctx.RPMRepoCreator = mockRPMRepoCreator{
 		createFunc: func(path string) error {
 			return nil
