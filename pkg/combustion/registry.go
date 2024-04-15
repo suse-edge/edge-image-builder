@@ -36,9 +36,6 @@ const (
 )
 
 var (
-	//go:embed templates/hauler-manifest.yaml.tpl
-	haulerManifest string
-
 	//go:embed templates/26-embedded-registry.sh.tpl
 	registryScript string
 
@@ -72,25 +69,6 @@ func configureRegistry(ctx *image.Context) ([]string, error) {
 
 	log.AuditComponentSuccessful(registryComponentName)
 	return []string{script}, nil
-}
-
-func writeHaulerManifest(ctx *image.Context, images []string) error {
-	haulerManifestYamlFile := filepath.Join(ctx.BuildDir, haulerManifestYamlName)
-	haulerDef := struct {
-		ContainerImages []string
-	}{
-		ContainerImages: images,
-	}
-	data, err := template.Parse(haulerManifestYamlName, haulerManifest, haulerDef)
-	if err != nil {
-		return fmt.Errorf("applying template to %s: %w", haulerManifestYamlName, err)
-	}
-
-	if err = os.WriteFile(haulerManifestYamlFile, []byte(data), fileio.NonExecutablePerms); err != nil {
-		return fmt.Errorf("writing file %s: %w", haulerManifestYamlName, err)
-	}
-
-	return nil
 }
 
 func addImageToHauler(ctx *image.Context, containerImage string) error {

@@ -11,33 +11,6 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/registry"
 )
 
-func TestWriteHaulerManifestValidManifest(t *testing.T) {
-	// Setup
-	ctx, teardown := setupContext(t)
-	defer teardown()
-
-	images := []string{
-		"hello-world:latest",
-		"ghcr.io/fluxcd/flux-cli@sha256:02aa820c3a9c57d67208afcfc4bce9661658c17d15940aea369da259d2b976dd",
-	}
-
-	// Test
-	err := writeHaulerManifest(ctx, images)
-
-	// Verify
-	require.NoError(t, err)
-
-	manifestFileName := filepath.Join(ctx.BuildDir, haulerManifestYamlName)
-	_, err = os.Stat(manifestFileName)
-	require.NoError(t, err)
-
-	foundBytes, err := os.ReadFile(manifestFileName)
-	require.NoError(t, err)
-	found := string(foundBytes)
-	assert.Contains(t, found, "- name: hello-world:latest")
-	assert.Contains(t, found, "- name: ghcr.io/fluxcd/flux-cli@sha256:02aa820c3a9c57d67208afcfc4bce9661658c17d15940aea369da259d2b976dd")
-}
-
 func TestCreateRegistryCommand(t *testing.T) {
 	// Setup
 	ctx, teardown := setupContext(t)
