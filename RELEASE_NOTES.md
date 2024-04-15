@@ -20,6 +20,7 @@
 * [#362](https://github.com/suse-edge/edge-image-builder/issues/362) - Helm templating failure
 * [#365](https://github.com/suse-edge/edge-image-builder/issues/365) - Unable to locate downloaded Helm charts
 * [#374](https://github.com/suse-edge/edge-image-builder/issues/374) - Enable SELinux support for Kubernetes agents if servers enforce it
+* [#381](https://github.com/suse-edge/edge-image-builder/issues/381) - Empty gpg-keys directory passes GPG enablement only to fail during the dependency resolution
 
 ---
 
