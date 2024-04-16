@@ -486,18 +486,6 @@ func TestPackages(t *testing.T) {
 				"The 'packageList' field cannot contain empty values.",
 			},
 		},
-		`missing packages`: {
-			Packages: image.Packages{
-				AdditionalRepos: []image.AddRepo{
-					{
-						URL: "foo",
-					},
-				},
-			},
-			ExpectedFailedMessages: []string{
-				"The 'packageList' field is required if any entries are specified under 'additionalRepos'.",
-			},
-		},
 		`duplicate packages`: {
 			Packages: image.Packages{
 				PKGList: []string{"foo", "bar", "foo", "bar", "baz"},
@@ -509,7 +497,6 @@ func TestPackages(t *testing.T) {
 		},
 		`duplicate repos`: {
 			Packages: image.Packages{
-				PKGList: []string{"foo", "bar"},
 				AdditionalRepos: []image.AddRepo{
 					{
 						URL: "foo",
@@ -528,7 +515,6 @@ func TestPackages(t *testing.T) {
 		},
 		`missing repo url`: {
 			Packages: image.Packages{
-				PKGList: []string{"foo", "bar"},
 				AdditionalRepos: []image.AddRepo{
 					{
 						URL: "",

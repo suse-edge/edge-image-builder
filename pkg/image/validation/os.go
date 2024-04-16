@@ -182,16 +182,6 @@ func validateSuma(os *image.OperatingSystem) []FailedValidation {
 func validatePackages(os *image.OperatingSystem) []FailedValidation {
 	var failures []FailedValidation
 
-	if len(os.Packages.PKGList) == 0 {
-		if len(os.Packages.AdditionalRepos) > 0 {
-			failures = append(failures, FailedValidation{
-				UserMessage: "The 'packageList' field is required if any entries are specified under 'additionalRepos'.",
-			})
-		}
-
-		return failures
-	}
-
 	if slices.Contains(os.Packages.PKGList, "") {
 		failures = append(failures, FailedValidation{
 			UserMessage: "The 'packageList' field cannot contain empty values.",
@@ -206,24 +196,29 @@ func validatePackages(os *image.OperatingSystem) []FailedValidation {
 		})
 	}
 
-	var repoURLs []string
+	// It is possible to only provide `additionalRepos` without listing any packages
+	// under `packageList` in the cases where RPMs are side-loaded under the `/rpms` directory.
+	if len(os.Packages.AdditionalRepos) > 0 {
+		var repoURLs []string
 
-	for _, repo := range os.Packages.AdditionalRepos {
-		if repo.URL == "" {
-			failures = append(failures, FailedValidation{
-				UserMessage: "The 'url' field is required for all entries under 'additionalRepos'.",
-			})
+		for _, repo := range os.Packages.AdditionalRepos {
+			if repo.URL == "" {
+				msg := "The 'url' field is required for all entries under 'additionalRepos'."
+				failures = append(failures, FailedValidation{
+					UserMessage: msg,
+				})
+			}
+
+			repoURLs = append(repoURLs, repo.URL)
 		}
 
-		repoURLs = append(repoURLs, repo.URL)
-	}
-
-	if duplicates := findDuplicates(repoURLs); len(duplicates) > 0 {
-		duplicateValues := strings.Join(duplicates, ", ")
-		msg := fmt.Sprintf("The 'additionalRepos' field contains duplicate repos: %s", duplicateValues)
-		failures = append(failures, FailedValidation{
-			UserMessage: msg,
-		})
+		if duplicates := findDuplicates(repoURLs); len(duplicates) > 0 {
+			duplicateValues := strings.Join(duplicates, ", ")
+			msg := fmt.Sprintf("The 'additionalRepos' field contains duplicate repos: %s", duplicateValues)
+			failures = append(failures, FailedValidation{
+				UserMessage: msg,
+			})
+		}
 	}
 
 	return failures
