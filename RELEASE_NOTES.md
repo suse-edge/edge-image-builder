@@ -26,6 +26,7 @@
 * [#372](https://github.com/suse-edge/edge-image-builder/issues/372) - Empty certificates directory does not raise a build error but fails to boot the node
 * [#371](https://github.com/suse-edge/edge-image-builder/issues/371) - EIB allows an SSH key to be set for a user when createHome is set to false
 * [#384](https://github.com/suse-edge/edge-image-builder/issues/384) - Improve RPM validation
+* [#392](https://github.com/suse-edge/edge-image-builder/issues/392) - Users script does not unmount /home
 
 ---
 
