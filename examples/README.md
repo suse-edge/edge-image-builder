@@ -52,7 +52,7 @@ and the results of performing multiple builds:
 .
 ├── base-images
 │   ├── SLE-Micro.x86_64-5.5.0-Default-GM.raw
-│   ├── SLE-Micro.x86_64-5.5.0-Default-SelfInstall-GM.install.iso
+│   ├── SLE-Micro.x86_64-5.5.0-Default-SelfInstall-GM2.install.iso
 ├── definitions
 │   ├── iso
 │   │   └── basic.yaml
