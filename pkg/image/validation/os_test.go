@@ -478,6 +478,14 @@ func TestPackages(t *testing.T) {
 				RegCode: "regcode",
 			},
 		},
+		`empty package`: {
+			Packages: image.Packages{
+				PKGList: []string{"foo", "bar", ""},
+			},
+			ExpectedFailedMessages: []string{
+				"The 'packageList' field cannot contain empty values.",
+			},
+		},
 		`duplicate packages`: {
 			Packages: image.Packages{
 				PKGList: []string{"foo", "bar", "foo", "bar", "baz"},
@@ -511,10 +519,13 @@ func TestPackages(t *testing.T) {
 					{
 						URL: "",
 					},
+					{
+						URL: "foo",
+					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Additional repository list contains an entry with empty 'url' field.",
+				"The 'url' field is required for all entries under 'additionalRepos'.",
 			},
 		},
 	}
