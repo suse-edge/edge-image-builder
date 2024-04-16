@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -181,6 +182,22 @@ func validateSuma(os *image.OperatingSystem) []FailedValidation {
 func validatePackages(os *image.OperatingSystem) []FailedValidation {
 	var failures []FailedValidation
 
+	if len(os.Packages.PKGList) == 0 {
+		if len(os.Packages.AdditionalRepos) > 0 {
+			failures = append(failures, FailedValidation{
+				UserMessage: "The 'packageList' field is required if any entries are specified under 'additionalRepos'.",
+			})
+		}
+
+		return failures
+	}
+
+	if slices.Contains(os.Packages.PKGList, "") {
+		failures = append(failures, FailedValidation{
+			UserMessage: "The 'packageList' field cannot contain empty values.",
+		})
+	}
+
 	if duplicates := findDuplicates(os.Packages.PKGList); len(duplicates) > 0 {
 		duplicateValues := strings.Join(duplicates, ", ")
 		msg := fmt.Sprintf("The 'packageList' field contains duplicate packages: %s", duplicateValues)
@@ -189,27 +206,24 @@ func validatePackages(os *image.OperatingSystem) []FailedValidation {
 		})
 	}
 
-	if len(os.Packages.AdditionalRepos) > 0 {
-		urlSlice := []string{}
+	var repoURLs []string
 
-		for _, repo := range os.Packages.AdditionalRepos {
-			if repo.URL == "" {
-				msg := "Additional repository list contains an entry with empty 'url' field."
-				failures = append(failures, FailedValidation{
-					UserMessage: msg,
-				})
-			}
-
-			urlSlice = append(urlSlice, repo.URL)
-		}
-
-		if duplicates := findDuplicates(urlSlice); len(duplicates) > 0 {
-			duplicateValues := strings.Join(duplicates, ", ")
-			msg := fmt.Sprintf("The 'additionalRepos' field contains duplicate repos: %s", duplicateValues)
+	for _, repo := range os.Packages.AdditionalRepos {
+		if repo.URL == "" {
 			failures = append(failures, FailedValidation{
-				UserMessage: msg,
+				UserMessage: "The 'url' field is required for all entries under 'additionalRepos'.",
 			})
 		}
+
+		repoURLs = append(repoURLs, repo.URL)
+	}
+
+	if duplicates := findDuplicates(repoURLs); len(duplicates) > 0 {
+		duplicateValues := strings.Join(duplicates, ", ")
+		msg := fmt.Sprintf("The 'additionalRepos' field contains duplicate repos: %s", duplicateValues)
+		failures = append(failures, FailedValidation{
+			UserMessage: msg,
+		})
 	}
 
 	return failures
