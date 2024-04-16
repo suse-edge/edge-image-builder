@@ -51,3 +51,5 @@ echo '{{.}}' >> /{{$user.Username}}/.ssh/authorized_keys
 {{- end }}
 
 {{- end }}
+
+umount /home
