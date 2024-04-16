@@ -65,7 +65,7 @@ func handleChart(chart *image.HelmChart, repo *image.HelmRepository, valuesDir, 
 	}
 
 	helmChart := HelmChart{
-		CRD:             NewHelmCRD(chart, chartContent, string(valuesContent)),
+		CRD:             NewHelmCRD(chart, chartContent, string(valuesContent), repo.URL),
 		ContainerImages: images,
 	}
 
