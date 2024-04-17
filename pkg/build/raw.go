@@ -99,7 +99,7 @@ func (b *Builder) writeModifyScript(imageFilename string, includeCombustion, ren
 		ConfigureGRUB:       grubConfiguration,
 		ConfigureCombustion: includeCombustion,
 		RenameFilesystem:    renameFilesystem,
-		DiskSize:            b.context.ImageDefinition.OperatingSystem.RawConfiguration.DiskSize,
+		DiskSize:            string(b.context.ImageDefinition.OperatingSystem.RawConfiguration.DiskSize),
 	}
 
 	data, err := template.Parse(modifyScriptName, modifyRawImageTemplate, &values)

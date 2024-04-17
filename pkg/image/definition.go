@@ -3,6 +3,7 @@ package image
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -25,6 +26,10 @@ const (
 	CNITypeCilium = "cilium"
 	CNITypeCanal  = "canal"
 	CNITypeCalico = "calico"
+)
+
+var (
+	diskSizeRegexp = regexp.MustCompile(`^([1-9]\d+|[1-9])+[MGT]`)
 )
 
 type Definition struct {
@@ -74,8 +79,14 @@ type IsoConfiguration struct {
 	InstallDevice string `yaml:"installDevice"`
 }
 
+type DiskSize string
+
+func (d DiskSize) IsValid() bool {
+	return diskSizeRegexp.MatchString(string(d))
+}
+
 type RawConfiguration struct {
-	DiskSize string `yaml:"diskSize"`
+	DiskSize DiskSize `yaml:"diskSize"`
 }
 
 type Packages struct {
