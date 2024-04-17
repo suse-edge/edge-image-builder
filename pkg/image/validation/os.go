@@ -2,7 +2,6 @@ package validation
 
 import (
 	"fmt"
-	"regexp"
 	"slices"
 	"strings"
 
@@ -239,7 +238,6 @@ func validateIsoConfig(def *image.Definition) []FailedValidation {
 
 func validateRawConfig(def *image.Definition) []FailedValidation {
 	var failures []FailedValidation
-	isValidSize := regexp.MustCompile(`^([1-9]\d+|[1-9])+[MGT]`).MatchString
 
 	if def.OperatingSystem.RawConfiguration.DiskSize == "" {
 		return nil
@@ -259,8 +257,8 @@ func validateRawConfig(def *image.Definition) []FailedValidation {
 		})
 	}
 
-	if !isValidSize(def.OperatingSystem.RawConfiguration.DiskSize) {
-		msg := fmt.Sprintf("The 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T' when 'imageType' is '%s'.", image.TypeRAW)
+	if !def.OperatingSystem.RawConfiguration.DiskSize.IsValid() {
+		msg := "The 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'."
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})

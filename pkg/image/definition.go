@@ -3,6 +3,8 @@ package image
 import (
 	"bytes"
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -25,6 +27,10 @@ const (
 	CNITypeCilium = "cilium"
 	CNITypeCanal  = "canal"
 	CNITypeCalico = "calico"
+)
+
+var (
+	diskSizeRegexp = regexp.MustCompile(`^([1-9]\d+|[1-9])+([MGT])`)
 )
 
 type Definition struct {
@@ -74,8 +80,43 @@ type IsoConfiguration struct {
 	InstallDevice string `yaml:"installDevice"`
 }
 
+type DiskSize string
+
+func (d DiskSize) IsValid() bool {
+	return diskSizeRegexp.MatchString(string(d))
+}
+
+func (d DiskSize) ToMB() int64 {
+	if d == "" {
+		return 0
+	}
+
+	s := diskSizeRegexp.FindStringSubmatch(string(d))
+	if len(s) != 3 {
+		panic("unknown disk size format")
+	}
+
+	quantity, err := strconv.Atoi(s[1])
+	if err != nil {
+		panic(fmt.Sprintf("invalid disk size: %s", string(d)))
+	}
+
+	sizeType := s[2]
+
+	switch sizeType {
+	case "M":
+		return int64(quantity)
+	case "G":
+		return int64(quantity) * 1024
+	case "T":
+		return int64(quantity) * 1024 * 1024
+	default:
+		panic("unknown disk size type")
+	}
+}
+
 type RawConfiguration struct {
-	DiskSize string `yaml:"diskSize"`
+	DiskSize DiskSize `yaml:"diskSize"`
 }
 
 type Packages struct {

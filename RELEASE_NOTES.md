@@ -28,6 +28,7 @@
 * [#384](https://github.com/suse-edge/edge-image-builder/issues/384) - Improve RPM validation
 * [#392](https://github.com/suse-edge/edge-image-builder/issues/392) - Users script does not unmount /home
 * [#364](https://github.com/suse-edge/edge-image-builder/issues/364) - Kubernetes component output is jumbled when downloading the installer
+* [#361](https://github.com/suse-edge/edge-image-builder/issues/361) - Raw image build can fail silently due to lack of space
 
 ---
 
