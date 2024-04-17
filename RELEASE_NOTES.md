@@ -4,14 +4,22 @@
 
 ## General
 
-* Added a progress bar showing the progress of pulling images into the embedded artifact registry
-* Added annotations to Helm CRs
-
 ## API
 
 ### Image Definition Changes
 
 ### Image Configuration Directory Changes
+
+## Bug Fixes
+
+---
+
+# v1.0.0
+
+## General
+
+* Added a progress bar showing the progress of pulling images into the embedded artifact registry
+* Added annotations to Helm CRs
 
 ## Bug Fixes
 
