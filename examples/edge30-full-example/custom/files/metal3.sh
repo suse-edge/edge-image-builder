@@ -7,6 +7,15 @@ source ${BASEDIR}/basic-setup.sh
 METAL3LOCKNAMESPACE="default"
 METAL3LOCKCMNAME="metal3-lock"
 
+trap 'catch $? $LINENO' EXIT
+
+catch() {
+  if [ "$1" != "0" ]; then
+    echo "Error $1 occurred on $2"
+    ${KUBECTL} delete configmap ${METAL3LOCKCMNAME} -n ${METAL3LOCKNAMESPACE}
+  fi
+}
+
 # Get or create the lock to run all those steps just in a single node
 # As the first node is created WAY before the others, this should be enough
 # TODO: Investigate if leases is better
@@ -22,37 +31,40 @@ while ! ${KUBECTL} wait --for condition=ready -n ${METAL3_CHART_TARGETNAMESPACE}
 # Get the ironic IP
 IRONICIP=$(${KUBECTL} get cm -n ${METAL3_CHART_TARGETNAMESPACE} ironic-bmo -o jsonpath='{.data.IRONIC_IP}')
 
-# Wait for metallb
-while ! ${KUBECTL} wait --for condition=ready -n ${METALLBNAMESPACE} $(${KUBECTL} get pods -n ${METALLBNAMESPACE} -l app.kubernetes.io/component=controller -o name) --timeout=10s; do sleep 2 ; done
+# If LoadBalancer, use metallb, else it is NodePort
+if [ $(${KUBECTL} get svc -n ${METAL3_CHART_TARGETNAMESPACE} metal3-metal3-ironic -o jsonpath='{.spec.type}') == "LoadBalancer" ]; then
+  # Wait for metallb
+  while ! ${KUBECTL} wait --for condition=ready -n ${METALLBNAMESPACE} $(${KUBECTL} get pods -n ${METALLBNAMESPACE} -l app.kubernetes.io/component=controller -o name) --timeout=10s; do sleep 2 ; done
 
-# Don't create the ippool if already created
-${KUBECTL} get ipaddresspool -n ${METALLBNAMESPACE} ironic-ip-pool -o name || cat <<-EOF | ${KUBECTL} apply -f -
-apiVersion: metallb.io/v1beta1
-kind: IPAddressPool
-metadata:
-  name: ironic-ip-pool
-  namespace: ${METALLBNAMESPACE}
-spec:
-  addresses:
-  - ${IRONICIP}/32
-  serviceAllocation:
-    priority: 100
-    serviceSelectors:
-    - matchExpressions:
-      - {key: app.kubernetes.io/name, operator: In, values: [metal3-ironic]}
-EOF
+  # Don't create the ippool if already created
+  ${KUBECTL} get ipaddresspool -n ${METALLBNAMESPACE} ironic-ip-pool -o name || cat <<-EOF | ${KUBECTL} apply -f -
+  apiVersion: metallb.io/v1beta1
+  kind: IPAddressPool
+  metadata:
+    name: ironic-ip-pool
+    namespace: ${METALLBNAMESPACE}
+  spec:
+    addresses:
+    - ${IRONICIP}/32
+    serviceAllocation:
+      priority: 100
+      serviceSelectors:
+      - matchExpressions:
+        - {key: app.kubernetes.io/name, operator: In, values: [metal3-ironic]}
+	EOF
 
-# Same for L2 Advs
-${KUBECTL} get L2Advertisement -n ${METALLBNAMESPACE} ironic-ip-pool-l2-adv -o name || cat <<-EOF | ${KUBECTL} apply -f -
-apiVersion: metallb.io/v1beta1
-kind: L2Advertisement
-metadata:
-  name: ironic-ip-pool-l2-adv
-  namespace: ${METALLBNAMESPACE}
-spec:
-  ipAddressPools:
-  - ironic-ip-pool
-EOF
+  # Same for L2 Advs
+  ${KUBECTL} get L2Advertisement -n ${METALLBNAMESPACE} ironic-ip-pool-l2-adv -o name || cat <<-EOF | ${KUBECTL} apply -f -
+  apiVersion: metallb.io/v1beta1
+  kind: L2Advertisement
+  metadata:
+    name: ironic-ip-pool-l2-adv
+    namespace: ${METALLBNAMESPACE}
+  spec:
+    ipAddressPools:
+    - ironic-ip-pool
+	EOF
+fi
 
 # If clusterctl is not installed, install it
 if ! command -v clusterctl > /dev/null 2>&1; then
@@ -63,7 +75,7 @@ if ! command -v clusterctl > /dev/null 2>&1; then
     "aarch64")
       export GOARCH="arm64" ;;
     "*")
-      echo "Arch not found, assuming amd64"
+      echo "Arch not found, asumming amd64"
       export GOARCH="amd64" ;;
   esac
 
@@ -98,7 +110,7 @@ if [ $(${KUBECTL} get pods -n ${METAL3_CAPISYSTEMNAMESPACE} -o name | wc -l) -lt
   cat <<-EOF > ~/.cluster-api/clusterctl.yaml
 	images:
 	  all:
-	    repository: registry.opensuse.org/isv/suse/edge/clusterapi/containerfile/suse
+	    repository: ${METAL3_CAPI_IMAGES}
 	EOF
 
   clusterctl init \

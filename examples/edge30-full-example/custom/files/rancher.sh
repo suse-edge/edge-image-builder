@@ -12,6 +12,15 @@ if [ -z "${RANCHER_FINALPASSWORD}" ]; then
   exit 0
 fi
 
+trap 'catch $? $LINENO' EXIT
+
+catch() {
+  if [ "$1" != "0" ]; then
+    echo "Error $1 occurred on $2"
+    ${KUBECTL} delete configmap ${METAL3LOCKCMNAME} -n ${METAL3LOCKNAMESPACE}
+  fi
+}
+
 # Get or create the lock to run all those steps just in a single node
 # As the first node is created WAY before the others, this should be enough
 # TODO: Investigate if leases is better
