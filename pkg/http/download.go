@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/schollz/progressbar/v3"
+	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"go.uber.org/zap"
 )
 
@@ -42,16 +43,25 @@ func DownloadFile(ctx context.Context, url, path string, cache io.Writer) error 
 	}
 	defer file.Close()
 
-	bar := progressbar.DefaultBytes(resp.ContentLength, fmt.Sprintf("Downloading file: %s", filename))
+	var writers []io.Writer
+	writers = append(writers, file)
 
-	var w io.Writer
-	if cache == nil {
-		w = io.MultiWriter(file, bar)
-	} else {
-		w = io.MultiWriter(file, cache, bar)
+	if cache != nil {
+		writers = append(writers, cache)
 	}
 
-	if _, err = io.Copy(w, resp.Body); err != nil {
+	message := fmt.Sprintf("Downloading file: %s", filename)
+
+	if resp.ContentLength == -1 {
+		// Only audit the message since progress bars of unknown length
+		// (i.e. spinners) are not properly rendered.
+		log.Audit(message)
+	} else {
+		bar := progressbar.DefaultBytes(resp.ContentLength, message)
+		writers = append(writers, bar)
+	}
+
+	if _, err = io.Copy(io.MultiWriter(writers...), resp.Body); err != nil {
 		return fmt.Errorf("storing response: %w", err)
 	}
 
