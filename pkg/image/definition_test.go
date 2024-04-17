@@ -247,3 +247,13 @@ func TestArch_Short(t *testing.T) {
 		arch.Short()
 	})
 }
+
+func TestDiskSize_ToMB(t *testing.T) {
+	assert.EqualValues(t, 50, DiskSize("50M").ToMB())
+	assert.EqualValues(t, 4096, DiskSize("4G").ToMB())
+	assert.EqualValues(t, 1024*1024, DiskSize("1T").ToMB())
+
+	assert.PanicsWithValue(t, "unknown disk size format", func() {
+		DiskSize("10K").ToMB()
+	})
+}
