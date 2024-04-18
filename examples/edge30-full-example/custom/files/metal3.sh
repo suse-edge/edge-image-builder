@@ -113,11 +113,18 @@ if [ $(${KUBECTL} get pods -n ${METAL3_CAPISYSTEMNAMESPACE} -o name | wc -l) -lt
 	    repository: ${METAL3_CAPI_IMAGES}
 	EOF
 
-  clusterctl init \
+  # Try this command 3 times just in case, stolen from https://stackoverflow.com/a/33354419
+  if ! (r=3; while ! clusterctl init \
     --core "cluster-api:v${METAL3_CAPICOREVERSION}"\
     --infrastructure "metal3:v${METAL3_CAPIMETAL3VERSION}"\
     --bootstrap "${METAL3_CAPIPROVIDER}:v${METAL3_CAPIRKE2VERSION}"\
-    --control-plane "${METAL3_CAPIPROVIDER}:v${METAL3_CAPIRKE2VERSION}"
+    --control-plane "${METAL3_CAPIPROVIDER}:v${METAL3_CAPIRKE2VERSION}" ; do
+            ((--r))||exit
+            echo "Something went wrong, let's wait 10 seconds and retry"
+            sleep 10;done) ; then
+      echo "clsuterctl failed"
+      exit 1
+  fi
 
   # Wait for capi-controller-manager
   while ! ${KUBECTL} wait --for condition=ready -n ${METAL3_CAPISYSTEMNAMESPACE} $(${KUBECTL} get pods -n ${METAL3_CAPISYSTEMNAMESPACE} -l cluster.x-k8s.io/provider=cluster-api -o name) --timeout=10s; do sleep 2 ; done
