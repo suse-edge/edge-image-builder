@@ -1,0 +1,15 @@
+---
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    labels:
+      - "kind/dependabot"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "gomod"
+    directory: "/"
+    labels:
+      - "kind/dependabot"
+    schedule:
+      interval: "weekly"
