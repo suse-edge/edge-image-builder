@@ -13,7 +13,7 @@ const (
 	certsDir = "certs"
 )
 
-func TestHelmRepositoryName(t *testing.T) {
+func TestHelmChartPath(t *testing.T) {
 	tests := []struct {
 		name           string
 		repoName       string
@@ -39,8 +39,8 @@ func TestHelmRepositoryName(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			repoName := repositoryName(test.repoName, test.repoURL, test.chart)
-			assert.Equal(t, test.expectedOutput, repoName)
+			path := chartPath(test.repoName, test.repoURL, test.chart)
+			assert.Equal(t, test.expectedOutput, path)
 		})
 	}
 }
