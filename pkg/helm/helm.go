@@ -41,7 +41,7 @@ func repositoryName(repoName, repoURL, chart string) string {
 		return fmt.Sprintf("%s/%s", repoName, chart)
 	}
 
-	return repoURL
+	return fmt.Sprintf("%s/%s", repoURL, chart)
 }
 
 func (h *Helm) AddRepo(repo *image.HelmRepository) error {

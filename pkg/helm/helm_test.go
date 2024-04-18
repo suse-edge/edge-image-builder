@@ -24,7 +24,7 @@ func TestHelmRepositoryName(t *testing.T) {
 		{
 			name:           "OCI",
 			repoName:       "apache-repo",
-			repoURL:        "oci://registry-1.docker.io/bitnamicharts/apache",
+			repoURL:        "oci://registry-1.docker.io/bitnamicharts",
 			chart:          "apache",
 			expectedOutput: "oci://registry-1.docker.io/bitnamicharts/apache",
 		},
@@ -187,7 +187,7 @@ func TestRegistryLoginCommand(t *testing.T) {
 			host: "registry-1.docker.io",
 			repo: &image.HelmRepository{
 				Name: "apache-repo",
-				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				URL:  "oci://registry-1.docker.io/bitnamicharts",
 				Authentication: image.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
@@ -209,7 +209,7 @@ func TestRegistryLoginCommand(t *testing.T) {
 			host: "registry-1.docker.io",
 			repo: &image.HelmRepository{
 				Name: "apache-repo",
-				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				URL:  "oci://registry-1.docker.io/bitnamicharts",
 				Authentication: image.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
@@ -233,7 +233,7 @@ func TestRegistryLoginCommand(t *testing.T) {
 			host: "registry-1.docker.io",
 			repo: &image.HelmRepository{
 				Name: "apache-repo",
-				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				URL:  "oci://registry-1.docker.io/bitnamicharts",
 				Authentication: image.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
@@ -257,7 +257,7 @@ func TestRegistryLoginCommand(t *testing.T) {
 			host: "registry-1.docker.io",
 			repo: &image.HelmRepository{
 				Name: "apache-repo",
-				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				URL:  "oci://registry-1.docker.io/bitnamicharts",
 				Authentication: image.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
@@ -302,10 +302,11 @@ func TestPullCommand(t *testing.T) {
 		expectedArgs []string
 	}{
 		{
-			name: "OCI repository",
+			name:  "OCI repository",
+			chart: "apache",
 			repo: &image.HelmRepository{
 				Name: "apache-repo",
-				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				URL:  "oci://registry-1.docker.io/bitnamicharts",
 			},
 			version: "10.5.2",
 			destDir: "charts",
@@ -339,10 +340,11 @@ func TestPullCommand(t *testing.T) {
 			},
 		},
 		{
-			name: "OCI repository without optional args",
+			name:  "OCI repository without optional args",
+			chart: "apache",
 			repo: &image.HelmRepository{
 				Name: "apache-repo",
-				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				URL:  "oci://registry-1.docker.io/bitnamicharts",
 			},
 			expectedArgs: []string{
 				"helm",
@@ -402,10 +404,11 @@ func TestPullCommand(t *testing.T) {
 			},
 		},
 		{
-			name: "OCI repository with auth and skip TLS verify",
+			name:  "OCI repository with auth and skip TLS verify",
+			chart: "apache",
 			repo: &image.HelmRepository{
 				Name: "apache-repo",
-				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				URL:  "oci://registry-1.docker.io/bitnamicharts",
 				Authentication: image.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
@@ -420,10 +423,11 @@ func TestPullCommand(t *testing.T) {
 			},
 		},
 		{
-			name: "OCI repository with auth and plain HTTP",
+			name:  "OCI repository with auth and plain HTTP",
+			chart: "apache",
 			repo: &image.HelmRepository{
 				Name: "apache-repo",
-				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				URL:  "oci://registry-1.docker.io/bitnamicharts",
 				Authentication: image.HelmAuthentication{
 					Username: "user",
 					Password: "pass",
@@ -458,10 +462,11 @@ func TestPullCommand(t *testing.T) {
 			},
 		},
 		{
-			name: "OCI repository with auth and a ca file",
+			name:  "OCI repository with auth and a ca file",
+			chart: "apache",
 			repo: &image.HelmRepository{
 				Name: "apache-repo",
-				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				URL:  "oci://registry-1.docker.io/bitnamicharts",
 				Authentication: image.HelmAuthentication{
 					Username: "user",
 					Password: "pass",

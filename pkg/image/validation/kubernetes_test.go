@@ -51,7 +51,7 @@ func TestValidateKubernetes(t *testing.T) {
 					Repositories: []image.HelmRepository{
 						{
 							Name: "apache-repo",
-							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+							URL:  "oci://registry-1.docker.io/bitnamicharts",
 						},
 					},
 				},
@@ -87,7 +87,7 @@ func TestValidateKubernetes(t *testing.T) {
 					Repositories: []image.HelmRepository{
 						{
 							Name: "apache-repo",
-							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+							URL:  "oci://registry-1.docker.io/bitnamicharts",
 						},
 					},
 				},
@@ -434,7 +434,7 @@ func TestValidateHelmCharts(t *testing.T) {
 					Repositories: []image.HelmRepository{
 						{
 							Name: "apache-repo",
-							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+							URL:  "oci://registry-1.docker.io/bitnamicharts",
 							Authentication: image.HelmAuthentication{
 								Username: "user",
 								Password: "pass",
@@ -473,7 +473,7 @@ func TestValidateHelmCharts(t *testing.T) {
 					Repositories: []image.HelmRepository{
 						{
 							Name: "apache-repo",
-							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+							URL:  "oci://registry-1.docker.io/bitnamicharts",
 						},
 					},
 				},
@@ -549,7 +549,7 @@ func TestValidateHelmCharts(t *testing.T) {
 					Repositories: []image.HelmRepository{
 						{
 							Name: "apache-repo",
-							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+							URL:  "oci://registry-1.docker.io/bitnamicharts",
 						},
 					},
 				},
@@ -572,7 +572,7 @@ func TestValidateHelmCharts(t *testing.T) {
 					Repositories: []image.HelmRepository{
 						{
 							Name: "apache-repo",
-							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+							URL:  "oci://registry-1.docker.io/bitnamicharts",
 						},
 					},
 				},
@@ -599,7 +599,7 @@ func TestValidateHelmCharts(t *testing.T) {
 					Repositories: []image.HelmRepository{
 						{
 							Name: "apache-repo",
-							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+							URL:  "oci://registry-1.docker.io/bitnamicharts",
 						},
 					},
 				},
@@ -622,7 +622,7 @@ func TestValidateHelmCharts(t *testing.T) {
 					Repositories: []image.HelmRepository{
 						{
 							Name: "apache-repo",
-							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+							URL:  "oci://registry-1.docker.io/bitnamicharts",
 						},
 					},
 				},
@@ -645,7 +645,7 @@ func TestValidateHelmCharts(t *testing.T) {
 					Repositories: []image.HelmRepository{
 						{
 							Name: "apache-repo",
-							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+							URL:  "oci://registry-1.docker.io/bitnamicharts",
 						},
 					},
 				},
@@ -671,7 +671,7 @@ func TestValidateHelmCharts(t *testing.T) {
 						},
 						{
 							Name: "apache-repo",
-							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+							URL:  "oci://registry-1.docker.io/bitnamicharts",
 						},
 					},
 				},
@@ -715,7 +715,7 @@ func TestValidateHelmCharts(t *testing.T) {
 					Repositories: []image.HelmRepository{
 						{
 							Name: "apache-repo",
-							URL:  "invalid.repo.io/bitnami/apache",
+							URL:  "invalid.repo.io/bitnami",
 						},
 					},
 				},
@@ -737,7 +737,7 @@ func TestValidateHelmCharts(t *testing.T) {
 					Repositories: []image.HelmRepository{
 						{
 							Name: "apache-repo",
-							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+							URL:  "oci://registry-1.docker.io/bitnamicharts",
 							Authentication: image.HelmAuthentication{
 								Username: "user",
 								Password: "",
@@ -763,7 +763,7 @@ func TestValidateHelmCharts(t *testing.T) {
 					Repositories: []image.HelmRepository{
 						{
 							Name: "apache-repo",
-							URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+							URL:  "oci://registry-1.docker.io/bitnamicharts",
 							Authentication: image.HelmAuthentication{
 								Username: "",
 								Password: "pass",
@@ -789,7 +789,7 @@ func TestValidateHelmCharts(t *testing.T) {
 					Repositories: []image.HelmRepository{
 						{
 							Name:          "apache-repo",
-							URL:           "oci://registry-1.docker.io/bitnamicharts/apache",
+							URL:           "oci://registry-1.docker.io/bitnamicharts",
 							SkipTLSVerify: true,
 							PlainHTTP:     true,
 						},
@@ -934,7 +934,7 @@ func TestValidateHelmCharts(t *testing.T) {
 					Repositories: []image.HelmRepository{
 						{
 							Name:   "apache-repo",
-							URL:    "oci://registry-1.docker.io/bitnamicharts/apache",
+							URL:    "oci://registry-1.docker.io/bitnamicharts",
 							CAFile: "nonexistent-apache.crt",
 						},
 					},
@@ -957,7 +957,7 @@ func TestValidateHelmCharts(t *testing.T) {
 					Repositories: []image.HelmRepository{
 						{
 							Name:   "apache-repo",
-							URL:    "oci://registry-1.docker.io/bitnamicharts/apache",
+							URL:    "oci://registry-1.docker.io/bitnamicharts",
 							CAFile: "invalid-cert",
 						},
 					},
