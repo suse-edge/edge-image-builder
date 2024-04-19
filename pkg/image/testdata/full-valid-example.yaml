@@ -115,7 +115,7 @@ kubernetes:
         url: https://suse-edge.github.io/charts
         caFile: suse-edge.crt
       - name: bitnami
-        url: oci://registry-1.docker.io/bitnamicharts/apache
+        url: oci://registry-1.docker.io/bitnamicharts
         plainHTTP: false
         skipTLSVerify: true
         authentication:

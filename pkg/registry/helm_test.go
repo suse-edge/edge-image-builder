@@ -60,7 +60,7 @@ func TestHelmCharts_ValuesFileNotFoundError(t *testing.T) {
 		Repositories: []image.HelmRepository{
 			{
 				Name: "apache-repo",
-				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				URL:  "oci://registry-1.docker.io/bitnamicharts",
 			},
 		},
 	}
@@ -80,7 +80,7 @@ func TestHandleChart_MissingValuesDir(t *testing.T) {
 	}
 	helmRepo := &image.HelmRepository{
 		Name: "apache-repo",
-		URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+		URL:  "oci://registry-1.docker.io/bitnamicharts",
 	}
 
 	chart, err := handleChart(helmChart, helmRepo, "oops!", "", "", nil)
@@ -119,7 +119,7 @@ func TestHandleChart_FailedTemplate(t *testing.T) {
 	}
 	helmRepo := &image.HelmRepository{
 		Name: "apache-repo",
-		URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+		URL:  "oci://registry-1.docker.io/bitnamicharts",
 	}
 
 	helmClient := mockHelmClient{
@@ -151,7 +151,7 @@ func TestHandleChart_FailedGetChartContent(t *testing.T) {
 	}
 	helmRepo := &image.HelmRepository{
 		Name: "apache-repo",
-		URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+		URL:  "oci://registry-1.docker.io/bitnamicharts",
 	}
 
 	helmClient := mockHelmClient{
@@ -196,7 +196,7 @@ func TestDownloadChart_FailedAddingRepo(t *testing.T) {
 func TestDownloadChart_ValidRegistryLogin(t *testing.T) {
 	helmChart := &image.HelmChart{}
 	helmRepo := &image.HelmRepository{
-		URL: "oci://registry-1.docker.io/bitnamicharts/apache",
+		URL: "oci://registry-1.docker.io/bitnamicharts",
 		Authentication: image.HelmAuthentication{
 			Username: "valid",
 			Password: "login",
@@ -223,7 +223,7 @@ func TestDownloadChart_ValidRegistryLogin(t *testing.T) {
 func TestDownloadChart_FailedRegistryLogin(t *testing.T) {
 	helmChart := &image.HelmChart{}
 	helmRepo := &image.HelmRepository{
-		URL: "oci://registry-1.docker.io/bitnamicharts/apache",
+		URL: "oci://registry-1.docker.io/bitnamicharts",
 		Authentication: image.HelmAuthentication{
 			Username: "wrong",
 			Password: "creds",
@@ -274,7 +274,7 @@ func TestDownloadChart(t *testing.T) {
 	}
 	helmRepo := &image.HelmRepository{
 		Name: "apache-repo",
-		URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+		URL:  "oci://registry-1.docker.io/bitnamicharts",
 	}
 
 	helmClient := mockHelmClient{
@@ -306,7 +306,7 @@ func TestHelmCharts(t *testing.T) {
 		Repositories: []image.HelmRepository{
 			{
 				Name: "apache-repo",
-				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				URL:  "oci://registry-1.docker.io/bitnamicharts",
 			},
 		},
 	}
@@ -386,7 +386,7 @@ func TestMapChartRepos(t *testing.T) {
 		Repositories: []image.HelmRepository{
 			{
 				Name: "apache-repo",
-				URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+				URL:  "oci://registry-1.docker.io/bitnamicharts",
 			},
 			{
 				Name: "suse-edge",
@@ -398,7 +398,7 @@ func TestMapChartRepos(t *testing.T) {
 	expectedMap := map[string]*image.HelmRepository{
 		"apache-repo": {
 			Name: "apache-repo",
-			URL:  "oci://registry-1.docker.io/bitnamicharts/apache",
+			URL:  "oci://registry-1.docker.io/bitnamicharts",
 		},
 		"suse-edge": {
 			Name: "suse-edge",

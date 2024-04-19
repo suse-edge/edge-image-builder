@@ -36,12 +36,13 @@ func New(outputDir, certsDir string) *Helm {
 	}
 }
 
-func repositoryName(repoName, repoURL, chart string) string {
+func chartPath(repoName, repoURL, chart string) string {
 	if strings.HasPrefix(repoURL, "http") {
 		return fmt.Sprintf("%s/%s", repoName, chart)
 	}
 
-	return repoURL
+	path, _ := url.JoinPath(repoURL, chart)
+	return path
 }
 
 func (h *Helm) AddRepo(repo *image.HelmRepository) error {
@@ -179,10 +180,10 @@ func (h *Helm) Pull(chart string, repo *image.HelmRepository, version, destDir s
 }
 
 func pullCommand(chart string, repo *image.HelmRepository, version, destDir, certsDir string, output io.Writer) *exec.Cmd {
-	repository := repositoryName(repo.Name, repo.URL, chart)
+	path := chartPath(repo.Name, repo.URL, chart)
 
 	var args []string
-	args = append(args, "pull", repository)
+	args = append(args, "pull", path)
 
 	if version != "" {
 		args = append(args, "--version", version)

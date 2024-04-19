@@ -204,7 +204,7 @@ kubernetes:
       - name: suse-edge
         url: https://suse-edge.github.io/charts
       - name: apache-repo
-        url: oci://registry-1.docker.io/bitnamicharts/apache
+        url: oci://registry-1.docker.io/bitnamicharts
         plainHTTP: false
         skipTLSVerify: true
         authentication:

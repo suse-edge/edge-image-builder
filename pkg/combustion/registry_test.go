@@ -263,7 +263,7 @@ func TestStoreHelmCharts(t *testing.T) {
 	charts := []*registry.HelmChart{
 		{
 			CRD: registry.NewHelmCRD(helmChart, "some-content", `
-values: content`, "oci://registry-1.docker.io/bitnamicharts/apache"),
+values: content`, "oci://registry-1.docker.io/bitnamicharts"),
 		},
 	}
 
@@ -276,7 +276,7 @@ metadata:
     name: apache
     namespace: kube-system
     annotations:
-        edge.suse.com/repository-url: oci://registry-1.docker.io/bitnamicharts/apache
+        edge.suse.com/repository-url: oci://registry-1.docker.io/bitnamicharts
         edge.suse.com/source: edge-image-builder
 spec:
     version: 10.7.0
