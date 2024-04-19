@@ -201,7 +201,7 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "suse-edge.crt", kubernetes.Helm.Repositories[0].CAFile)
 
 	assert.Equal(t, "bitnami", kubernetes.Helm.Repositories[1].Name)
-	assert.Equal(t, "oci://registry-1.docker.io/bitnamicharts/apache", kubernetes.Helm.Repositories[1].URL)
+	assert.Equal(t, "oci://registry-1.docker.io/bitnamicharts", kubernetes.Helm.Repositories[1].URL)
 	assert.Equal(t, "user", kubernetes.Helm.Repositories[1].Authentication.Username)
 	assert.Equal(t, "pass", kubernetes.Helm.Repositories[1].Authentication.Password)
 	assert.Equal(t, false, kubernetes.Helm.Repositories[1].PlainHTTP)
