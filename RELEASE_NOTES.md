@@ -12,6 +12,12 @@
 
 ## Bug Fixes
 
+---
+
+# v1.0.1
+
+## Bug Fixes
+
 * [#405](https://github.com/suse-edge/edge-image-builder/issues/405) - OCI registries are assumed to include the chart name
 
 ---
