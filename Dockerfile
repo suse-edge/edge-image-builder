@@ -30,7 +30,7 @@ RUN zypper addrepo https://download.opensuse.org/repositories/isv:SUSE:Edge:Edge
     zypper --gpg-auto-import-keys refresh && \
     zypper install -y \
     xorriso squashfs  \
-    libguestfs kernel-default e2fsprogs parted gptfdisk btrfsprogs guestfs-tools lvm2 \
+    libguestfs kernel-default e2fsprogs parted gptfdisk btrfsprogs guestfs-tools lvm2 qemu-ipxe \
     podman \
     createrepo_c \
     helm hauler \
