@@ -11,7 +11,13 @@ The Image Definition File is a YAML document describing a single image to build.
 the `--definition-file` argument. Only a single image may be built at a time, however the same image configuration
 directory may be used to build multiple images by creating multiple definition files.
 
-The following can be used as the minimum configuration required to create an image:
+Unless otherwise specified, all sections and fields are optional.
+
+### Required Fields
+
+The following can be used as the minimum configuration required to create an image. Each field in this section is
+required for each image definition.
+
 ```yaml
 apiVersion: 1.0
 image:
@@ -21,24 +27,25 @@ image:
   outputImageName: eib-image.iso
 ```
 
-* `apiVersion` - Indicates the version of the definition file schema for EIB to expect
-* `imageType` - Must be either `iso` or `raw`.
-* `arch` - Must be either `x86_64` or `aarch64`.
-* `baseImage` - Indicates the name of the image file used as the base for the built image. Base image files must be uncompressed. This file must be located
-  under the `base-images` directory of the image configuration directory (see below for more information). This image will
-  **not** directly be modified by EIB; a new image will be created each time EIB is run.
+* `apiVersion` - Indicates the version of the definition file schema for EIB to expect.
+* `imageType` - Must be either `iso` or `raw` depending on the type of image being customized.
+* `arch` - Must be `x86_64`; future versions of EIB will support multiple architectures.
+* `baseImage` - Indicates the name of the image file used as the base for the built image. Base image files must be
+  uncompressed before they can be modified by EIB. This file must be located
+  under the `base-images` directory of the image configuration directory (see below for more information).
+  The image will **not** directly be modified by EIB; a new image will be created each time EIB is run.
 * `outputImageName` - Indicates the name of the image that EIB will build. This may only be a filename; the image will
   be written to the root of the image configuration directory.
 
 ### Operating System
 
-The operating system configuration section is entirely optional.
+The operating system configuration section is entirely optional and should not be included unless one or more
+customizations are being applied.
 
 The following describes the possible options for the operating system section:
 ```yaml
 operatingSystem:
-  isoConfiguration:
-    installDevice: /path/to/disk
+  <TYPE SPECIFIC CONFIGURATION (see below)>
   time:
     timezone: Europe/London
     ntp:
@@ -91,70 +98,92 @@ operatingSystem:
       - pkg1
       - pkg2
     additionalRepos:
-      - url: https://foo.bar
-      - url: https://foo.baz
+      - url: https://example1.com
+      - url: https://example2.com
         unsigned: true
     sccRegistrationCode: scc-reg-code
 ```
 
+#### Type-specific Configuration
+
+Depending on the type of image being customized, one of the following optional sections may be included.
+
 * `isoConfiguration` - Optional; configuration in this section only applies to ISO images.
   * `installDevice` - Optional; specifies the disk that should be used as the install
   device. This needs to be block special, and will default to automatically wipe any data found on the disk.
-  Additionally, forces GRUB override to automatically install the operating
-  system rather than prompting user to begin the installation. Allowing for
-  a fully unattended and automated install. Beware of creating boot loops and data loss with this option.
-  If left omitted, the user will still have to select the disk to install to (if >1 found) and confirm wipe as well as 
-  choose to install via the GRUB menu.
-* `rawConfiguration` - Optional; configuration in this section only applies to RAW images only.
-  * `diskSize` - Optional; sets the desired raw disk image size. This is important to ensure that your disk
-  image is large enough to accommodate any artifacts that you're embedding. It's advised to set this to slightly
-  smaller than your SDcard size (or block device if writing directly to a disk) and the system will automatically
-  expand at boot time to fill the size of the block device. This is optional, but highly recommended. Specify in
-  integer format with either "M" (Megabyte), "G" (Gigabyte), or "T" (Terabyte) as a suffix, e.g. "32G".
-* `time` - Optional; section where the user can provide timezone information and Chronyd configuration.
-  * `timezone` - Optional; the timezone in the format of "Region/Locality", e.g. "Europe/London". Full list via `timedatectl list-timezones`.
-  * `ntp` - Optional; contains attributes related to configuring NTP
-    * `forceWait` - Optional; requests that Chrony attempts to synchronize timesources before starting other services (with a 180s timeout).
-    * `pools` - Optional; a list of pools that Chrony can use as data sources.
-    * `servers` - Optional; a list of servers that Chrony can use as data sources.
-* `proxy` - Optional; section where the user can provide system-wide proxy information
-  * `httpProxy` - Optional; set the system-wide http proxy settings
-  * `httpsProxy` - Optional; set the system-wide https proxy settings
-  * `noProxy` - Optional; override the default `NO_PROXY` list. By default, this is "localhost, 127.0.0.1" if this
-  parameter is omitted. If this option is set, these may need to be manually added if they are still in use.
-* `kernelArgs` - Optional; Provides a list of flags that should be passed to the kernel on boot.
-* `groups` - Optional; Defines a list of operating system groups to be created. This will not fail if the
-  group already exists. Each entry is made up of the following fields:
+  Additionally, specifying this attribute triggers a GRUB override to automatically install the operating
+  system rather than prompting user to begin the installation, allowing for a fully unattended and automated
+  installation. If omitted, the user will be prompted to select the "Install" option from the GRUB menu, 
+  as well as having to select the installation disk and confirm that the device
+  will be wiped in the process.
+* `rawConfiguration` - Optional; configuration in this section only applies to RAW images.
+  * `diskSize` - Optional; sets the desired raw disk image size that EIB will resize the resulting image to.
+  This is important to ensure that your disk image is large enough to accommodate any artifacts being embedded
+  in the image. It is advised to set this to slightly smaller than your SD card size (or block device if writing
+  directly to a disk) as the system will automatically expand at boot time to fill the size of the block device.
+  This is optional, but highly recommended. Specify as an integer with either "M" (Megabyte), "G" (Gigabyte),
+  or "T" (Terabyte) as a suffix (e.g. "32G").
+
+#### General
+
+The remainder of the operating system customizations may be applied regardless of image type. 
+
+* `time` - Defines timezone information and NTP configuration.
+  * `timezone` - Specifies the timezone in the format of "Region/Locality" (e.g. "Europe/London").
+  The full list may be found by running `timedatectl list-timezones` on a Linux system.
+  * `ntp` - Defines attributes related to configuring NTP.
+    * `forceWait` - Requests that NTP attempts to synchronize timesources before starting other services,
+    with a 180s timeout.
+    * `pools` - Specifies a list of pools that NTP will use as data sources.
+    * `servers` - Specifies a list of servers that NTP will use as data sources.
+* `proxy` - Defines system-wide proxy information.
+  * `httpProxy` - Sets the system-wide http proxy settings.
+  * `httpsProxy` - Sets the system-wide https proxy settings.
+  * `noProxy` - Overrides the default `NO_PROXY` list. By default, this is `localhost, 127.0.0.1` if this
+  parameter is omitted. If this option is set, the default entries will need to be manually added if they are
+  still in use.
+* `kernelArgs` - Provides a list of flags that should be passed to the kernel on boot.
+* `groups` - Defines a list of operating system groups to create. This will not fail if the 
+group already exists. Each entry is made up of the following fields:
   * `name` - Required; Name of the group to create.
   * `gid` - Optional; If specified, the group will be created with the given ID. If omitted, the GID will be generated
     by the operating system.
-* `users` - Optional; Defines a list of operating system users to be created. Each entry is made up of
+* `users` - Defines a list of operating system users to create. Each entry is made up of
   the following fields (one or both of the password and SSH key must be provided per user):
   * `username` - Required; Username of the user to create. To set the password or SSH key for the root user,
     use the value `root` for this field.
   * `uid` - Optional; If specified, the user will be created with the given ID. If omitted, the UID will be generated
     by the operating system.
   * `createHomeDir` - Optional; If set to `true`, a home directory will be created for the user. Defaults to `false`
-    if unspecified.
-  * `encryptedPassword` - Optional; Encrypted password to set for the use (for example, using `openssl passwd -6 $PASSWORD`
-    to generate the value for this field).
+  if unspecified. If one or more SSH keys is specified, this must be set to `true` to properly configure the
+  user.
+  * `encryptedPassword` - Optional; Encrypted password to set for the use (for example,
+  using `openssl passwd -6 $PASSWORD` to generate the value for this field).
   * `sshKeys` - Optional; List of public SSH keys to configure for the user.
-  * `primaryGroup` - Optional; If specified, the user will be configured with this as the primary group. The group
-    must already exist, either as a default group or one defined in the `groups` field. If this is omitted, the
-    result will be the default for the operating system (on SLE Micro, this is `users`).
+  * `primaryGroup` - Optional; If specified, the user will be configured with this value as the primary group. The group
+  must already exist, either as a default group or one defined in the `groups` field. If this is omitted, the
+  result will be the default for the operating system (on SLE Micro, this is `users`).
   * `secondaryGroups` - Optional; If specified, the user will be configured as part of each listed group. The
-    groups must already exist, either as default groups or as ones defined in the `groups` field.
-* `systemd` - Optional; Defines lists of systemd units to enable/disable. Either or both of `enable` and `disable` may
-  be included; if neither are provided, this section is ignored.
-  * `enable` - Optional; List of systemd services to enable.
-  * `disable` - Optional; List of systemd services to disable.
-* `keymap` - Optional; sets the virtual console (VC) keymap, full list via `localectl list-keymaps`. If unset, we default to
-  `us`.
-* `packages` - Optional; Defines packages that should have their dependencies determined and pre-loaded into the built image. For detailed information on how to use this configuration, see the [Installing pacakges](installing-packages.md) guide.
-  * `noGPGCheck` - Optional; Defines whether GPG validation should be disabled for all additional repositories and side-loaded RPMs. **Disabling GPG validation is intended for development purposes only!**
-  * `packageList` - Optional; List of packages that are to be installed from SUSE's internal RPM repositories or from additionally provided third-party repositories.
-  * `additionalRepos` - Optional; List of third-party RPM repositories that will be added to the package manager of the OS.
-  * `sccRegistrationCode` - Optional; SUSE Customer Center registration code, used to connect to SUSE's internal RPM repositories.
+  groups must already exist, either as default groups or as ones defined in the `groups` field.
+* `systemd` - Defines lists of systemd units to enable/disable. Either or both of `enable` and `disable` may
+be included; if neither are provided, this section is ignored.
+  * `enable` - Defines a list of systemd services to enable.
+  * `disable` - Defines a list of systemd services to disable.
+* `keymap` - Sets the virtual console (VC) keymap. The full list of options may be found by running
+`localectl list-keymaps` on a Linux system. If unset, EIB will default this value to `us`.
+* `packages` - Defines packages that will be installed when the node is booted. EIB will determine the necessary
+dependencies and download them into the built image. For detailed information on how to use this configuration,
+see the [Installing pacakges](./design/installing-packages.md) guide.
+  * `noGPGCheck` - Defines if GPG validation should be disabled for all additional repositories and side-loaded
+  RPMs. **Disabling GPG validation is intended for development purposes only.**
+  * `packageList` - Defines a list of packages to install from SUSE's internal RPM repositories or
+  from additionally provided third-party repositories.
+  * `additionalRepos` - Defines a list of third-party RPM repositories that will be added to the package manager of
+  the node. Each entry is made up of the following:
+    * `url` - Required; Specifies the URL of the repository.
+    * `unsigned` - Optional; JAY TO FINISH
+  * `sccRegistrationCode` - Specifies the SUSE Customer Center registration code in plain text, which is used to
+  connect to SUSE's internal RPM repositories.
 
 ### Kubernetes
 
