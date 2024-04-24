@@ -7,6 +7,13 @@ Edge Image Builder (EIB) can apply to an image. This guide describes the necessa
 sections and image configuration directory structure for each configurable component and should serve
 as a starting guide to new EIB users.
 
+## Installing Packages in an Image
+
+EIB provides the ability to define RPM repositories and indicate a list of packages to install on the built
+image. The RPMs and their dependencies will be embedded in the resulting image and, on first boot, will
+be installed on the running system. The [Installing Packages Guide](./installing-packages.md) contains
+detailed information on how to configure an image definition to support this functionality.
+
 ## Testing Images
 
 The [Testing Guide](./testing-guide.md) provides information on how to run the customized, ready to boot (CRB)
