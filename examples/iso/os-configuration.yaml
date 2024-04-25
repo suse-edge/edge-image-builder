@@ -1,0 +1,53 @@
+apiVersion: 1.0
+image:
+  arch: x86_64
+  imageType: iso
+  baseImage: SLE-Micro.x86_64-5.5.0-Default-SelfInstall-GM2.install.iso
+  outputImageName: iso-image.iso
+operatingSystem:
+  isoConfiguration:
+    installDevice: /dev/vda
+  time:
+    timezone: US/Eastern
+    ntp:
+      forceWait: true
+      pools:
+        - north-america.pool.ntp.org
+      servers:
+        - 0.north-america.pool.ntp.org
+  keymap: us
+  users:
+    - username: root
+      encryptedPassword: $6$jHugJNNd3HElGsUZ$eodjVe4te5ps44SVcWshdfWizrP.xAyd71CVEXazBJ/.v799/WRCBXxfYmunlBO2yp1hm/zb4r8EmnrrNCF.P/
+    - username: alpha
+      uid: 2000
+      encryptedPassword: $6$bZfTI3Wj05fdxQcB$W1HJQTKw/MaGTCwK75ic9putEquJvYO7vMnDBVAfuAMFW58/79abky4mx9.8znK0UZwSKng9dVosnYQR1toH71
+      sshKeys:
+        - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDnb80jkq8jYqC7EeXdtmdMLoQ/qeCzFPRrNyA5H5iB3k21Oc8ccBR2nIbteam39E0p4mwR2MVNACOR0cixgWskIb5bR8KqiqLMdj4PKMLX5r1jbtcB3/6beBKPqOpk0N2NwTy5BUH8NMwRpdzcq0QeY60f1z+PLJ4vTb0mcdyRkO4m0mqGa/LrBn9H5V3AAW6TdLO9LKjvUqHX+6vWKiWu2wJffTQQAxY9rsT+JoBVk8zes06zh+CVd7bGozJXp1t6SHQjJ7V9pLNfdMO4TJFpi3mVh3RLsg24RGoMVRNCjfYaBQkUJununzpPB9O9esOhfffM2puumAkspPALMiODcYK5bzF26YvDM124e5VQJo50GqbTNJEXB7PsZF4TezivS5xCuGoO6sSrk+heWKzgnLK7/qHI55XuExBbzfTawwWpGrSOw4YYCkrCa0bPYsY8Ef5iIQMwFseWz0i57eZp2pJfn65p4osM+r08R+X8BwEvK+BsyW/wtCI06xwFtdM= root@localhost.localdomain
+        - ssh-rsa BBBBB3NzaC1yc2EAAAADAQABAAABgQDnb80jkq8jYqC7EeXdtmdMLoQ/qeCzFPRrNyA5H5iB3k21Oc8ccBR2nIbteam39E0p4mwR2MVNACOR0cixgWskIb5bR8KqiqLMdj4PKMLX5r1jbtcB3/6beBKPqOpk0N2NwTy5BUH8NMwRpdzcq0QeY60f1z+PLJ4vTb0mcdyRkO4m0mqGa/LrBn9H5V3AAW6TdLO9LKjvUqHX+6vWKiWu2wJffTQQAxY9rsT+JoBVk8zes06zh+CVd7bGozJXp1t6SHQjJ7V9pLNfdMO4TJFpi3mVh3RLsg24RGoMVRNCjfYaBQkUJununzpPB9O9esOhfffM2puumAkspPALMiODcYK5bzF26YvDM124e5VQJo50GqbTNJEXB7PsZF4TezivS5xCuGoO6sSrk+heWKzgnLK7/qHI55XuExBbzfTawwWpGrSOw4YYCkrCa0bPYsY8Ef5iIQMwFseWz0i57eZp2pJfn65p4osM+r08R+X8BwEvK+BsyW/wtCI06xwFtdM= root@localhost.localdomain
+      createHomeDir: true
+      primaryGroup: group1
+      secondaryGroups:
+        - group2
+    - username: beta
+      encryptedPassword: $6$GHjiVHm2AT.Qxznz$1CwDuEBM1546E/sVE1Gn1y4JoGzW58wrckyx3jj2QnphFmceS6b/qFtkjw1cp7LSJNW1OcLe/EeIxDDHqZU6o1
+      createHomeDir: false
+    - username: gamma
+      createHomeDir: true
+      sshKeys:
+        - ssh-rsa BBBBB3NzaC1yc2EAAAADAQABAAABgQDnb80jkq8jYqC7EeXdtmdMLoQ/qeCzFPRrNyA5H5iB3k21Oc8ccBR2nIbteam39E0p4mwR2MVNACOR0cixgWskIb5bR8KqiqLMdj4PKMLX5r1jbtcB3/6beBKPqOpk0N2NwTy5BUH8NMwRpdzcq0QeY60f1z+PLJ4vTb0mcdyRkO4m0mqGa/LrBn9H5V3AAW6TdLO9LKjvUqHX+6vWKiWu2wJffTQQAxY9rsT+JoBVk8zes06zh+CVd7bGozJXp1t6SHQjJ7V9pLNfdMO4TJFpi3mVh3RLsg24RGoMVRNCjfYaBQkUJununzpPB9O9esOhfffM2puumAkspPALMiODcYK5bzF26YvDM124e5VQJo50GqbTNJEXB7PsZF4TezivS5xCuGoO6sSrk+heWKzgnLK7/qHI55XuExBbzfTawwWpGrSOw4YYCkrCa0bPYsY8Ef5iIQMwFseWz0i57eZp2pJfn65p4osM+r08R+X8BwEvK+BsyW/wtCI06xwFtdM= root@localhost.localdomain
+  groups:
+    - name: group0
+    - name: group1
+      gid: 1234
+    - name: group2
+  kernelArgs:
+    - fips=1
+    - alpha=foo
+    - beta=bar
+    - baz
+  systemd:
+    disable:
+      - rebootmgr
+    enable:
+      - rsyncd

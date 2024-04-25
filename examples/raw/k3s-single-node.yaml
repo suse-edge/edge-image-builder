@@ -1,0 +1,22 @@
+apiVersion: 1.0
+image:
+  arch: x86_64
+  imageType: raw
+  baseImage: SLE-Micro.x86_64-5.5.0-Default-GM.raw
+  outputImageName: single-node-k3s-no-selinux.raw
+kubernetes:
+  version: v1.28.8+k3s1
+  network:
+    apiVIP: 192.168.100.19
+  manifests:
+    urls:
+      - https://k8s.io/examples/application/nginx-app.yaml
+operatingSystem:
+  rawConfiguration:
+    diskSize: 30G
+  users:
+    - username: root
+      createHomeDir: true
+      encryptedPassword: $6$jHugJNNd3HElGsUZ$eodjVe4te5ps44SVcWshdfWizrP.xAyd71CVEXazBJ/.v799/WRCBXxfYmunlBO2yp1hm/zb4r8EmnrrNCF.P/
+      sshKeys:
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAkfuT5nRHeb6EbbA+fdkt/d4ITDSWrVJiLtZnJdNw+x eib-testing
