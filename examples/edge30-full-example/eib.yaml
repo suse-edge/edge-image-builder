@@ -38,15 +38,15 @@ kubernetes:
       targetNamespace: kubevirt-system
       createNamespace: true
       installationNamespace: kube-system
-    - name: elemental-crd
-      repositoryName: rancher-charts
-      version: 103.1.0+up1.4.2
+    - name: elemental-operator-crds-chart
+      repositoryName: rancher-oci-repo
+      version: 1.4.3
       targetNamespace: cattle-elemental-system
       createNamespace: true
       installationNamespace: kube-system
-    - name: elemental
-      repositoryName: rancher-charts
-      version: 103.1.0+up1.4.2
+    - name: elemental-operator-chart
+      repositoryName: rancher-oci-repo
+      version: 1.4.3
       targetNamespace: cattle-elemental-system
       createNamespace: true
       installationNamespace: kube-system
@@ -113,6 +113,8 @@ kubernetes:
       url: https://charts.rancher.com/server-charts/prime
     - name: rancher-ui-plugins
       url: https://github.com/rancher/ui-plugin-charts/raw/main/
+    - name: rancher-oci-repo
+      url: oci://registry.suse.com/rancher/
   network:
     apiHost: 192.168.122.10.sslip.io
     apiVIP: 192.168.122.10
