@@ -1,112 +1,117 @@
 apiVersion: 1.0
 image:
   arch: x86_64
-  baseImage: SLE-Micro.x86_64-5.5.0-Default-SelfInstall.install.iso
+  baseImage: SLE-Micro.x86_64-5.5.0-Default-SelfInstall-GM2.install.iso
   imageType: iso
   outputImageName: edge30-full-example.iso
 kubernetes:
   helm:
     charts:
-    - createNamespace: true
-      installationNamespace: kube-system
-      name: cert-manager
+    - name: cert-manager
       repositoryName: jetstack
+      version: 1.14.2
       targetNamespace: cert-manager
       valuesFile: certmanager.yaml
-      version: 1.14.2
-    - createNamespace: true
+      createNamespace: true
       installationNamespace: kube-system
-      name: ui-plugin-operator
+    - name: ui-plugin-operator-crd
       repositoryName: rancher-charts
-      targetNamespace: cattle-ui-plugin-system
       version: 103.0.2+up0.2.1
-    - createNamespace: true
+      targetNamespace: cattle-ui-plugin-system
+      createNamespace: true
       installationNamespace: kube-system
-      name: ui-plugin-operator-crd
+    - name: ui-plugin-operator
       repositoryName: rancher-charts
-      targetNamespace: cattle-ui-plugin-system
       version: 103.0.2+up0.2.1
-    - createNamespace: true
+      targetNamespace: cattle-ui-plugin-system
+      createNamespace: true
       installationNamespace: kube-system
-      name: cdi
+    - name: cdi-chart
       repositoryName: suse-edge-charts
-      targetNamespace: kubevirt-system
-      version: 0.2.2
-    - createNamespace: true
-      installationNamespace: kube-system
-      name: kubevirt
-      repositoryName: suse-edge-charts
-      targetNamespace: kubevirt-system
       version: 0.2.3
-    - createNamespace: true
+      targetNamespace: kubevirt-system
+      createNamespace: true
       installationNamespace: kube-system
-      name: elemental-operator-crds-chart
-      repositoryName: elemental-operator-crd
+    - name: kubevirt-chart
+      repositoryName: suse-edge-charts
+      version: 0.2.4
+      targetNamespace: kubevirt-system
+      createNamespace: true
+      installationNamespace: kube-system
+    - name: elemental-crd
+      repositoryName: rancher-charts
+      version: 103.1.0+up1.4.2
       targetNamespace: cattle-elemental-system
-      version: 1.4.2
-    - createNamespace: true
+      createNamespace: true
       installationNamespace: kube-system
-      name: elemental-operator-chart
-      repositoryName: elemental-operator
+    - name: elemental
+      repositoryName: rancher-charts
+      version: 103.1.0+up1.4.2
       targetNamespace: cattle-elemental-system
-      version: 1.4.2
-    - createNamespace: true
+      createNamespace: true
       installationNamespace: kube-system
-      name: longhorn
-      repositoryName: longhorn
+    - name: longhorn-crd
+      version: 103.3.0+up1.6.1
+      repositoryName: rancher-charts
       targetNamespace: longhorn-system
-      version: 1.6.0
-    - createNamespace: true
+      createNamespace: true
       installationNamespace: kube-system
-      name: metal3
+    - name: longhorn
+      version: 103.3.0+up1.6.1
+      repositoryName: rancher-charts
+      targetNamespace: longhorn-system
+      createNamespace: true
+      installationNamespace: kube-system
+    - name: metal3-chart
+      version: 0.6.5
       repositoryName: suse-edge-charts
       targetNamespace: metal3-system
+      createNamespace: true
+      installationNamespace: kube-system
       valuesFile: metal3.yaml
-      version: 0.6.3
-    - createNamespace: true
-      installationNamespace: kube-system
-      name: core
-      repositoryName: neuvector
+    - name: neuvector-crd
+      version: 103.0.3+up2.7.6
+      repositoryName: rancher-charts
       targetNamespace: neuvector
-      valuesFile: neuvector.yaml
-      version: 2.7.6
-    - createNamespace: true
+      createNamespace: true
       installationNamespace: kube-system
-      name: rancher
+      valuesFile: neuvector.yaml
+    - name: neuvector
+      version: 103.0.3+up2.7.6
+      repositoryName: rancher-charts
+      targetNamespace: neuvector
+      createNamespace: true
+      installationNamespace: kube-system
+      valuesFile: neuvector.yaml
+    - name: rancher
+      version: 2.8.3
       repositoryName: rancher-prime
       targetNamespace: cattle-system
-      valuesFile: rancher.yaml
-      version: 2.8.3
-    - createNamespace: true
+      createNamespace: true
       installationNamespace: kube-system
-      name: kubevirt-dashboard-extension
+      valuesFile: rancher.yaml
+    - name: kubevirt-dashboard-extension-chart
+      version: 1.0.0
       repositoryName: suse-edge-charts
       targetNamespace: cattle-ui-plugin-system
-      version: 1.0.0
-    - createNamespace: true
+      createNamespace: true
       installationNamespace: kube-system
-      name: elemental
-      repositoryName: elementalui
-      targetNamespace: cattle-ui-plugin-system
+    - name: elemental # Elemental Dashboard
       version: 1.3.0
+      repositoryName: rancher-ui-plugins
+      targetNamespace: cattle-ui-plugin-system
+      createNamespace: true
+      installationNamespace: kube-system
     repositories:
     - name: jetstack
       url: https://charts.jetstack.io
     - name: rancher-charts
       url: https://charts.rancher.io/
     - name: suse-edge-charts
-      url: https://suse-edge.github.io/charts
-    - name: elemental-operator-crd
-      url: oci://registry.suse.com/rancher/elemental-operator-crds-chart
-    - name: elemental-operator
-      url: oci://registry.suse.com/rancher/elemental-operator-chart
-    - name: longhorn
-      url: https://charts.longhorn.io
-    - name: neuvector
-      url: https://neuvector.github.io/neuvector-helm
+      url: oci://registry.suse.com/edge
     - name: rancher-prime
       url: https://charts.rancher.com/server-charts/prime
-    - name: elementalui
+    - name: rancher-ui-plugins
       url: https://github.com/rancher/ui-plugin-charts/raw/main/
   network:
     apiHost: 192.168.122.10.sslip.io
@@ -122,7 +127,7 @@ kubernetes:
   version: v1.28.8+rke2r1
 operatingSystem:
   isoConfiguration:
-    installDevice: /dev/sda
+    installDevice: /dev/vda
   packages:
     packageList:
     - jq
@@ -137,7 +142,8 @@ operatingSystem:
     enable:
     - qemu-guest-agent
   users:
-  - encryptedPassword: <ENCRYPTED PASSWORD>
+  - username: root
+    encryptedPassword: <ENCRYPTED PASSWORD>
+    createHomeDir: true
     sshKeys:
     - ssh-rsa <PUBLIC KEY>
-    username: root
