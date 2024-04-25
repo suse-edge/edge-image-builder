@@ -190,7 +190,7 @@ see the [Installing pacakges](.installing-packages.md) guide.
 The Kubernetes configuration section is entirely optional and should not be included unless one or more
 customizations are being applied.
 
-This section contains all necessary settings to configure and bootstrap a Kubernetes cluster using either K3s and RKE2.
+This section contains all necessary settings to configure and bootstrap a Kubernetes cluster using either K3s or RKE2.
 
 > **_NOTE:_** In addition to the configuration below, if you are building a `raw` image, you must manually specify its
 > disk size. The disk size specification is needed in order to ensure that the raw image has enough space to host
@@ -199,7 +199,7 @@ This section contains all necessary settings to configure and bootstrap a Kubern
 
 ```yaml
 kubernetes:
-  version: v1.28.0+rke2r1
+  version: v1.28.8+rke2r1
   network:
     apiVIP: 192.168.122.100
     apiHost: api.cluster01.hosted.on.edge.suse.com
@@ -245,7 +245,7 @@ kubernetes:
           password: pass
 ```
 
-* `version` - Required; Specifies the version of a particular K3s or RKE2 release (e.g.`v1.28.0+k3s1` or `v1.28.0+rke2r1`)
+* `version` - Required; Specifies the version of a particular K3s or RKE2 release (e.g.`v1.28.8+k3s1` or `v1.28.8+rke2r1`)
 * `network` - Required for multi-node clusters, optional for single-node clusters; Defines the network configuration 
 for bootstrapping a cluster.
   * `apiVIP` - Required for multi-node clusters, optional for single-node clusters; Specifies the IP address which
@@ -267,7 +267,7 @@ for bootstrapping a cluster.
 at build time and included in the built image.
   * `charts` - Required; Defines a list of Helm charts and configuration for each Helm chart.
     * `name` - Required; This must match the name of the actual Helm chart.
-    * `repositoryName` - Required; Specifies which repository within the `repositories` section that contains this
+    * `repositoryName` - Required; Specifies which repository within the `repositories` section contains this
     Helm chart. This must match the `name` attribute on one of the repositories defined in the next section.
     * `version` - Required; The version of the Helm chart to be deployed.
     * `installationNamespace` - Optional; The namespace where the Helm installation is executed. If omitted,
@@ -301,6 +301,9 @@ customizations are being applied.
 The image may be configured to automatically register with SUSE Manager at boot time. If this is enabled, 
 the system will need a valid network configuration, either via DHCP or configured statically. For air-gapped images,
 the registration server must be available within the air-gapped network for this to work.
+
+> :**_NOTE_**: If the activation key is not in the root organization, the organization ID must be included
+> as a prefix to the key itself (e.g `11-slemicro55` instead of simply `slemicro55`)
 
 The following describes the possible options for the SUMA section:
 
