@@ -8,12 +8,9 @@ kubernetes:
   version: v1.28.8+k3s1
   network:
     apiVIP: 192.168.100.19
-  nodes:
-    - hostname: node1.suse.com
-      type: server
   manifests:
     urls:
-      - https://raw.githubusercontent.com/dbw7/misc/main/k8s-examples/apache-example.yaml
+      - https://k8s.io/examples/application/nginx-app.yaml
 operatingSystem:
   rawConfiguration:
     diskSize: 30G
