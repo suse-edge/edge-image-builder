@@ -1,4 +1,4 @@
-# Installing packages
+# Installing Packages
 This documentation dives deeper into how a user can configure packages for installation inside the EIB image. Furthermore, it explains the **RPM resolution** process that EIB goes through so it can ensure that configured packages will be successfully installed even in an **air-gapped** environment.
 
 ## Supported systems
@@ -46,7 +46,7 @@ Sometimes you may want to install RPM files that are not hosted in a repository.
 
 * `rpms` - Place your RPMs here. All RPMs in this directory will be checked for valid GPG signatures, included in the built image and installed during the combustion phase. 
   > **_NOTE:_** You must provide an `additionalRepos` entry or a `sccRegistrationCode` in your EIB definition file if your RPMs are dependent on other packages.
-* `rpms/gpg-keys` - Place all GPG keys that are used to sign your RPMs here. All GPG keys in this directory will be used when validating the GPG signatures of your RPMs. **Trying to install RPMs that are unsgined or have unrecognized GPG keys will result in a failure of the EIB build process.**
+* `rpms/gpg-keys` - Place all GPG keys that are used to sign your RPMs here. All GPG keys in this directory will be used when validating the GPG signatures of your RPMs. **Trying to install RPMs that are unsigned or have unrecognized GPG keys will result in a failure of the EIB build process.**
 
 If you want to install an unsigned RPM, refer to the [Installing unsigned packages](#installing-unsigned-packages) section of this documentation.
 
