@@ -11,7 +11,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/schollz/progressbar/v3 v3.14.2
 	github.com/stretchr/testify v1.9.0
-	github.com/urfave/cli/v2 v2.27.1
+	github.com/urfave/cli/v2 v2.27.2
 	go.uber.org/zap v1.27.0
 	golang.org/x/sync v0.7.0
 	golang.org/x/text v0.14.0
@@ -40,7 +40,7 @@ require (
 	github.com/containers/psgo v1.8.0 // indirect
 	github.com/containers/storage v1.51.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.1-0.20231103132048-7d375ecc2b09 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/cyberphone/json-canonicalization v0.0.0-20231011164504-785e29786b46 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -123,7 +123,7 @@ require (
 	github.com/ulikunitz/xz v0.5.11 // indirect
 	github.com/vbatts/tar-split v0.11.5 // indirect
 	github.com/vbauerster/mpb/v8 v8.6.2 // indirect
-	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
+	github.com/xrash/smetrics v0.0.0-20240312152122-5f08fbb34913 // indirect
 	go.mongodb.org/mongo-driver v1.11.3 // indirect
 	go.mozilla.org/pkcs7 v0.0.0-20210826202110-33d05740a352 // indirect
 	go.opencensus.io v0.24.0 // indirect
