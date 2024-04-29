@@ -43,6 +43,12 @@ can be modified.
 Log for the process EIB uses to build a modified self-installing ISO. This log will include the results of resquashing
 the raw image embedded in the ISO and setting the unattended and install device configurations.
 
+## Networking
+
+### `network-config.log`
+
+Log file containing the results of generating NetworkManager connection files and hosts mapping by the [nm-configurator](https://github.com/suse-edge/nm-configurator/).
+
 ## RPM Dependency Resolution
 
 The [design document](./design/pkg-resolution.md) describes in detail the process used to calculate and download all
