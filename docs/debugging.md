@@ -47,7 +47,7 @@ the raw image embedded in the ISO and setting the unattended and install device 
 
 ### `network-config.log`
 
-Log file containing the results of generating NetworkManager connection files and hosts mapping by the [nm-configurator](https://github.com/suse-edge/nm-configurator/).
+Log file containing the results of generating network configurations by the [nm-configurator](https://github.com/suse-edge/nm-configurator/).
 
 ## RPM Dependency Resolution
 
