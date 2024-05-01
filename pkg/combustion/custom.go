@@ -48,7 +48,16 @@ func handleCustomFiles(ctx *image.Context) error {
 func handleCustomScripts(ctx *image.Context) ([]string, error) {
 	fullScriptsDir := generateComponentPath(ctx, filepath.Join(customDir, customScriptsDir))
 	scripts, err := copyCustomFiles(fullScriptsDir, ctx.CombustionDir)
-	return scripts, err
+	if err != nil {
+		return scripts, err
+	}
+	for _, script := range scripts {
+		path := filepath.Join(fullScriptsDir, script)
+		if err := os.Chmod(path, 0755); err != nil {
+			return scripts, err
+		}
+	}
+	return scripts, nil
 }
 
 func copyCustomFiles(fromDir, toDir string) ([]string, error) {
