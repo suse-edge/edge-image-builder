@@ -12,6 +12,8 @@
 
 ## Bug Fixes
 
+* [#429](https://github.com/suse-edge/edge-image-builder/issues/429) - Automatically set execute bit on scripts
+
 ---
 
 # v1.0.1

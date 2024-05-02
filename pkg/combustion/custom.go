@@ -41,17 +41,18 @@ func configureCustomFiles(ctx *image.Context) ([]string, error) {
 
 func handleCustomFiles(ctx *image.Context) error {
 	fullFilesDir := generateComponentPath(ctx, filepath.Join(customDir, customFilesDir))
-	_, err := copyCustomFiles(fullFilesDir, ctx.CombustionDir)
+	_, err := copyCustomFiles(fullFilesDir, ctx.CombustionDir, nil)
 	return err
 }
 
 func handleCustomScripts(ctx *image.Context) ([]string, error) {
 	fullScriptsDir := generateComponentPath(ctx, filepath.Join(customDir, customScriptsDir))
-	scripts, err := copyCustomFiles(fullScriptsDir, ctx.CombustionDir)
+	executablePerms := fileio.ExecutablePerms
+	scripts, err := copyCustomFiles(fullScriptsDir, ctx.CombustionDir, &executablePerms)
 	return scripts, err
 }
 
-func copyCustomFiles(fromDir, toDir string) ([]string, error) {
+func copyCustomFiles(fromDir, toDir string, filePermissions *os.FileMode) ([]string, error) {
 	if _, err := os.Stat(fromDir); os.IsNotExist(err) {
 		return nil, nil
 	}
@@ -72,12 +73,18 @@ func copyCustomFiles(fromDir, toDir string) ([]string, error) {
 		copyMe := filepath.Join(fromDir, entry.Name())
 		copyTo := filepath.Join(toDir, entry.Name())
 
-		info, err := entry.Info()
-		if err != nil {
-			return nil, fmt.Errorf("reading file info: %w", err)
+		var mode os.FileMode
+		if filePermissions == nil {
+			info, infoErr := entry.Info()
+			if infoErr != nil {
+				return nil, fmt.Errorf("reading file info: %w", err)
+			}
+			mode = info.Mode()
+		} else {
+			mode = *filePermissions
 		}
 
-		if err = fileio.CopyFile(copyMe, copyTo, info.Mode()); err != nil {
+		if err = fileio.CopyFile(copyMe, copyTo, mode); err != nil {
 			return nil, fmt.Errorf("copying file to %s: %w", copyTo, err)
 		}
 
