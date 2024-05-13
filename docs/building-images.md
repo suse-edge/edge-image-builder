@@ -302,7 +302,7 @@ The image may be configured to automatically register with SUSE Manager at boot 
 the system will need a valid network configuration, either via DHCP or configured statically. For air-gapped images,
 the registration server must be available within the air-gapped network for this to work.
 
-> :**_NOTE_**: If the activation key is not in the root organization, the organization ID must be included as a prefix, for example "2-yourkey".
+> **_NOTE_**: If the activation key is not in the root organization, the organization ID must be included as a prefix, for example "2-yourkey".
 > as a prefix to the key itself (e.g `11-slemicro55` instead of simply `slemicro55`)
 
 The following describes the possible options for the SUMA section:
