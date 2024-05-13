@@ -122,7 +122,7 @@ if [ $(${KUBECTL} get pods -n ${METAL3_CAPISYSTEMNAMESPACE} -o name | wc -l) -lt
             ((--r))||exit
             echo "Something went wrong, let's wait 10 seconds and retry"
             sleep 10;done) ; then
-      echo "clsuterctl failed"
+      echo "clusterctl failed"
       exit 1
   fi
 
