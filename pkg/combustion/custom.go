@@ -77,7 +77,7 @@ func copyCustomFiles(fromDir, toDir string, filePermissions *os.FileMode) ([]str
 		if filePermissions == nil {
 			info, infoErr := entry.Info()
 			if infoErr != nil {
-				return nil, fmt.Errorf("reading file info: %w", err)
+				return nil, fmt.Errorf("reading file info: %w", infoErr)
 			}
 			mode = info.Mode()
 		} else {
