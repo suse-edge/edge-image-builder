@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 )
 
 func TestConfigureCustomFiles(t *testing.T) {
@@ -75,7 +76,11 @@ func TestConfigureCustomFiles(t *testing.T) {
 		stats, err := os.Stat(entryPath)
 		require.NoError(t, err)
 
-		assert.Equal(t, file.perms, stats.Mode())
+		if files[entry.Name()].isScript {
+			assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
+		} else {
+			assert.Equal(t, file.perms, stats.Mode())
+		}
 	}
 
 	// - make sure only script entries were added to the combustion scripts list
@@ -103,7 +108,7 @@ func TestCopyCustomFiles_MissingFromDir(t *testing.T) {
 	defer teardown()
 
 	// Test
-	files, err := copyCustomFiles("missing", ctx.CombustionDir)
+	files, err := copyCustomFiles("missing", ctx.CombustionDir, nil)
 
 	// Verify
 	assert.Nil(t, files)
@@ -121,7 +126,7 @@ func TestCopyCustomFiles_EmptyFromDir(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test
-	scripts, err := copyCustomFiles(fullScriptsDir, ctx.CombustionDir)
+	scripts, err := copyCustomFiles(fullScriptsDir, ctx.CombustionDir, nil)
 
 	// Verify
 	require.Error(t, err)
