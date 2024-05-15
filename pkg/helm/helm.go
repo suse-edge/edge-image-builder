@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
@@ -271,15 +270,6 @@ func templateCommand(chart, repository, version, valuesFilePath, kubeVersion, ta
 
 func parseChartContents(chartContents string) ([]map[string]any, error) {
 	var resources []map[string]any
-	var k8sKinds = []string{
-		"Pod",
-		"Deployment",
-		"StatefulSet",
-		"DaemonSet",
-		"ReplicaSet",
-		"Job",
-		"CronJob",
-	}
 
 	for _, resource := range strings.Split(chartContents, "---\n") {
 		if resource == "" {
@@ -302,10 +292,7 @@ func parseChartContents(chartContents string) ([]map[string]any, error) {
 			return nil, fmt.Errorf("decoding resource from source '%s': %w", source, err)
 		}
 
-		kind, _ := r["kind"].(string)
-		if slices.Contains(k8sKinds, kind) {
-			resources = append(resources, r)
-		}
+		resources = append(resources, r)
 	}
 
 	return resources, nil

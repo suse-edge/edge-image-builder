@@ -1,5 +1,5 @@
 apiVersion: "custom.example.com/v1"
-kind: ComplexApplication
+kind: Deployment
 metadata:
   name: my-complex-app
   labels:
