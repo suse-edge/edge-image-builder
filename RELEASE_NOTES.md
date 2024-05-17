@@ -4,6 +4,8 @@
 
 ## General
 
+* Added the ability to consume both 512/4096 byte sector size disk input base-images
+
 ## API
 
 ### Image Definition Changes
@@ -13,6 +15,7 @@
 ## Bug Fixes
 
 * [#429](https://github.com/suse-edge/edge-image-builder/issues/429) - Automatically set execute bit on scripts
+* [#447](https://github.com/suse-edge/edge-image-builder/issues/447) - Support >512 byte sector size base images
 
 ---
 

@@ -33,7 +33,23 @@ if [ `wc -w <<< $RAW_FILE` -ne 1 ]; then
 	exit 1
 fi
 
-virt-tar-out -a $RAW_FILE / - | pigz --best > $WORK_DIR/{{.ArchiveName}}
+# Test the block size of the base image and adapt to suit either 512/4096 byte images
+BLOCKSIZE=512
+if ! guestfish -i --blocksize=$BLOCKSIZE -a $RAW_FILE echo "[INFO] 512 byte sector check successful."; then
+        echo "[WARN] Failed to access image with 512 byte sector size, trying 4096 bytes."
+        BLOCKSIZE=4096
+fi
+
+virt-tar-out --blocksize=$BLOCKSIZE -a $RAW_FILE / - | pigz --best > $WORK_DIR/{{.ArchiveName}}
 {{ else }}
-virt-tar-out -a $IMG_PATH / - | pigz --best > $WORK_DIR/{{.ArchiveName}}
+
+# Test the block size of the base image and adapt to suit either 512/4096 byte images
+BLOCKSIZE=512
+if ! guestfish -i --blocksize=$BLOCKSIZE -a $RAW_FILE echo "[INFO] 512 byte sector check successful."; then
+        echo "[WARN] Failed to access image with 512 byte sector size, trying 4096 bytes."
+        BLOCKSIZE=4096
+fi
+
+virt-tar-out --blocksize=$BLOCKSIZE -a $IMG_PATH / - | pigz --best > $WORK_DIR/{{.ArchiveName}}
+
 {{ end }}
