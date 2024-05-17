@@ -45,7 +45,7 @@ virt-tar-out --blocksize=$BLOCKSIZE -a $RAW_FILE / - | pigz --best > $WORK_DIR/{
 
 # Test the block size of the base image and adapt to suit either 512/4096 byte images
 BLOCKSIZE=512
-if ! guestfish -i --blocksize=$BLOCKSIZE -a $RAW_FILE echo "[INFO] 512 byte sector check successful."; then
+if ! guestfish -i --blocksize=$BLOCKSIZE -a $IMG_PATH echo "[INFO] 512 byte sector check successful."; then
         echo "[WARN] Failed to access image with 512 byte sector size, trying 4096 bytes."
         BLOCKSIZE=4096
 fi
