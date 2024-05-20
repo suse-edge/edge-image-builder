@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/http"
@@ -85,6 +86,21 @@ func readManifest(manifestPath string) ([]map[string]any, error) {
 }
 
 func storeManifestImages(resource map[string]any, images map[string]bool) {
+	var k8sKinds = []string{
+		"Pod",
+		"Deployment",
+		"StatefulSet",
+		"DaemonSet",
+		"ReplicaSet",
+		"Job",
+		"CronJob",
+	}
+
+	kind, _ := resource["kind"].(string)
+	if !slices.Contains(k8sKinds, kind) {
+		return
+	}
+
 	var findImages func(data any)
 
 	findImages = func(data any) {
