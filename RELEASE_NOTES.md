@@ -12,6 +12,8 @@
 
 ## Bug Fixes
 
+* [#442](https://github.com/suse-edge/edge-image-builder/issues/442) - Only get images from specific Kubernetes objects
+
 ---
 
 # v1.0.1
