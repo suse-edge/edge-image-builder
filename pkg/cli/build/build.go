@@ -85,7 +85,12 @@ func Run(_ *cli.Context) error {
 
 	appendHelm(ctx)
 
-	if cmdErr = bootstrapDependencyServices(ctx, rootBuildDir); cmdErr != nil {
+	combustionClient := &combustion.Combustion{
+		NetworkConfigGenerator:       network.ConfigGenerator{},
+		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
+	}
+
+	if cmdErr = bootstrapDependencyServices(ctx, rootBuildDir, combustionClient); cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
 		os.Exit(1)
 	}
@@ -97,7 +102,7 @@ func Run(_ *cli.Context) error {
 		}
 	}()
 
-	builder := build.NewBuilder(ctx)
+	builder := build.NewBuilder(ctx, combustionClient)
 	if err = builder.Build(); err != nil {
 		zap.S().Fatalf("An error occurred building the image: %s", err)
 	}
@@ -154,13 +159,11 @@ func parseImageDefinition(configDir, definitionFile string) (*image.Definition, 
 // Assembles the image build context with user-provided values and implementation defaults.
 func buildContext(buildDir, combustionDir, artefactsDir, configDir string, imageDefinition *image.Definition) *image.Context {
 	ctx := &image.Context{
-		ImageConfigDir:               configDir,
-		BuildDir:                     buildDir,
-		CombustionDir:                combustionDir,
-		ArtefactsDir:                 artefactsDir,
-		ImageDefinition:              imageDefinition,
-		NetworkConfigGenerator:       network.ConfigGenerator{},
-		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
+		ImageConfigDir:  configDir,
+		BuildDir:        buildDir,
+		CombustionDir:   combustionDir,
+		ArtefactsDir:    artefactsDir,
+		ImageDefinition: imageDefinition,
 	}
 	return ctx
 }
@@ -242,7 +245,7 @@ func appendHelm(ctx *image.Context) {
 }
 
 // If the image definition requires it, starts the necessary services, returning an error in the event of failure.
-func bootstrapDependencyServices(ctx *image.Context, rootDir string) *cmd.Error {
+func bootstrapDependencyServices(ctx *image.Context, rootDir string, combustionClient *combustion.Combustion) *cmd.Error {
 	if !combustion.SkipRPMComponent(ctx) {
 		p, err := podman.New(ctx.BuildDir)
 		if err != nil {
@@ -256,14 +259,13 @@ func bootstrapDependencyServices(ctx *image.Context, rootDir string) *cmd.Error 
 		imgType := ctx.ImageDefinition.Image.ImageType
 		baseBuilder := resolver.NewTarballBuilder(ctx.BuildDir, imgPath, imgType, p)
 
-		rpmResolver := resolver.New(ctx.BuildDir, p, baseBuilder, "")
-		ctx.RPMResolver = rpmResolver
-		ctx.RPMRepoCreator = rpm.NewRepoCreator(ctx.BuildDir)
+		combustionClient.RPMResolver = resolver.New(ctx.BuildDir, p, baseBuilder, "")
+		combustionClient.RPMRepoCreator = rpm.NewRepoCreator(ctx.BuildDir)
 	}
 
 	if combustion.IsEmbeddedArtifactRegistryConfigured(ctx) {
 		certsDir := filepath.Join(ctx.ImageConfigDir, combustion.K8sDir, combustion.HelmDir, combustion.CertsDir)
-		ctx.HelmClient = helm.New(ctx.BuildDir, certsDir)
+		combustionClient.HelmClient = helm.New(ctx.BuildDir, certsDir)
 	}
 
 	if ctx.ImageDefinition.Kubernetes.Version != "" {
@@ -275,8 +277,8 @@ func bootstrapDependencyServices(ctx *image.Context, rootDir string) *cmd.Error 
 			}
 		}
 
-		ctx.KubernetesScriptDownloader = kubernetes.ScriptDownloader{}
-		ctx.KubernetesArtefactDownloader = kubernetes.ArtefactDownloader{
+		combustionClient.KubernetesScriptDownloader = kubernetes.ScriptDownloader{}
+		combustionClient.KubernetesArtefactDownloader = kubernetes.ArtefactDownloader{
 			Cache: c,
 		}
 	}

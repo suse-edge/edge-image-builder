@@ -20,7 +20,6 @@ import (
 )
 
 const (
-	haulerManifestYamlName  = "hauler-manifest.yaml"
 	registryScriptName      = "26-embedded-registry.sh"
 	registryTarSuffix       = "registry.tar.zst"
 	registryComponentName   = "embedded artifact registry"
@@ -43,13 +42,13 @@ var (
 	k8sRegistryMirrors string
 )
 
-func configureRegistry(ctx *image.Context) ([]string, error) {
+func (c *Combustion) configureRegistry(ctx *image.Context) ([]string, error) {
 	if !IsEmbeddedArtifactRegistryConfigured(ctx) {
 		log.AuditComponentSkipped(registryComponentName)
 		return nil, nil
 	}
 
-	configured, err := configureEmbeddedArtifactRegistry(ctx)
+	configured, err := c.configureEmbeddedArtifactRegistry(ctx)
 	if err != nil {
 		log.AuditComponentFailed(registryComponentName)
 		return nil, fmt.Errorf("configuring embedded artifact registry: %w", err)
@@ -203,8 +202,8 @@ func writeRegistryMirrors(ctx *image.Context, hostnames []string) error {
 	return nil
 }
 
-func configureEmbeddedArtifactRegistry(ctx *image.Context) (bool, error) {
-	helmCharts, err := parseHelmCharts(ctx)
+func (c *Combustion) configureEmbeddedArtifactRegistry(ctx *image.Context) (bool, error) {
+	helmCharts, err := c.parseHelmCharts(ctx)
 	if err != nil {
 		return false, fmt.Errorf("parsing helm charts: %w", err)
 	}
@@ -289,7 +288,7 @@ func parseManifests(ctx *image.Context) ([]string, error) {
 	return registry.ManifestImages(ctx.ImageDefinition.Kubernetes.Manifests.URLs, manifestSrcDir)
 }
 
-func parseHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error) {
+func (c *Combustion) parseHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error) {
 	if len(ctx.ImageDefinition.Kubernetes.Helm.Charts) == 0 {
 		return nil, nil
 	}
@@ -305,7 +304,7 @@ func parseHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error) {
 
 	helmValuesDir := filepath.Join(ctx.ImageConfigDir, K8sDir, HelmDir, ValuesDir)
 
-	return registry.HelmCharts(&ctx.ImageDefinition.Kubernetes.Helm, helmValuesDir, buildDir, ctx.ImageDefinition.Kubernetes.Version, ctx.HelmClient)
+	return registry.HelmCharts(&ctx.ImageDefinition.Kubernetes.Helm, helmValuesDir, buildDir, ctx.ImageDefinition.Kubernetes.Version, c.HelmClient)
 }
 
 func storeHelmCharts(ctx *image.Context, helmCharts []*registry.HelmChart) error {

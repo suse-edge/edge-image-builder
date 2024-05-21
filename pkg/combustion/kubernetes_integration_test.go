@@ -59,14 +59,17 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 		},
 	}
-	ctx.KubernetesScriptDownloader = mockKubernetesScriptDownloader{
-		downloadScript: func(distribution, destPath string) (string, error) {
-			return "install-k8s.sh", nil
+
+	c := Combustion{
+		KubernetesScriptDownloader: mockKubernetesScriptDownloader{
+			downloadScript: func(distribution, destPath string) (string, error) {
+				return "install-k8s.sh", nil
+			},
 		},
-	}
-	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
-		downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
-			return nil
+		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
+			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+				return nil
+			},
 		},
 	}
 
@@ -84,7 +87,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	err := fileio.CopyFile(localSampleManifestPath, filepath.Join(localManifestsSrcDir, "sample-crd.yaml"), fileio.NonExecutablePerms)
 	require.NoError(t, err)
 
-	scripts, err := configureKubernetes(ctx)
+	scripts, err := c.configureKubernetes(ctx)
 	require.NoError(t, err)
 	require.Len(t, scripts, 1)
 

@@ -3,6 +3,7 @@ package combustion
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -21,9 +22,44 @@ import (
 // Result can also be an empty slice or nil if this is not necessary.
 type configureComponent func(context *image.Context) ([]string, error)
 
+type networkConfigGenerator interface {
+	GenerateNetworkConfig(configDir, outputDir string, outputWriter io.Writer) error
+}
+
+type networkConfiguratorInstaller interface {
+	InstallConfigurator(sourcePath, installPath string) error
+}
+
+type kubernetesScriptDownloader interface {
+	DownloadInstallScript(distribution, destinationPath string) (string, error)
+}
+
+type kubernetesArtefactDownloader interface {
+	DownloadRKE2Artefacts(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error
+	DownloadK3sArtefacts(arch image.Arch, version, installPath, imagesPath string) error
+}
+
+type rpmResolver interface {
+	Resolve(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDirPath string, pkgList []string, err error)
+}
+
+type rpmRepoCreator interface {
+	Create(path string) error
+}
+
+type Combustion struct {
+	NetworkConfigGenerator       networkConfigGenerator
+	NetworkConfiguratorInstaller networkConfiguratorInstaller
+	KubernetesScriptDownloader   kubernetesScriptDownloader
+	KubernetesArtefactDownloader kubernetesArtefactDownloader
+	RPMResolver                  rpmResolver
+	RPMRepoCreator               rpmRepoCreator
+	HelmClient                   image.HelmClient
+}
+
 // Configure iterates over all separate Combustion components and configures them independently.
 // If all of those are successful, the Combustion script is assembled and written to the file system.
-func Configure(ctx *image.Context) error {
+func (c *Combustion) Configure(ctx *image.Context) error {
 	var combustionScripts []string
 
 	// EIB Combustion script prefix ranges:
@@ -59,7 +95,7 @@ func Configure(ctx *image.Context) error {
 		},
 		{
 			name:     networkComponentName,
-			runnable: configureNetwork,
+			runnable: c.configureNetwork,
 		},
 		{
 			name:     groupsComponentName,
@@ -75,7 +111,7 @@ func Configure(ctx *image.Context) error {
 		},
 		{
 			name:     rpmComponentName,
-			runnable: configureRPMs,
+			runnable: c.configureRPMs,
 		},
 		{
 			name:     systemdComponentName,
@@ -91,7 +127,7 @@ func Configure(ctx *image.Context) error {
 		},
 		{
 			name:     registryComponentName,
-			runnable: configureRegistry,
+			runnable: c.configureRegistry,
 		},
 		{
 			name:     keymapComponentName,
@@ -99,7 +135,7 @@ func Configure(ctx *image.Context) error {
 		},
 		{
 			name:     k8sComponentName,
-			runnable: configureKubernetes,
+			runnable: c.configureKubernetes,
 		},
 		{
 			name:     certsComponentName,

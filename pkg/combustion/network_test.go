@@ -51,7 +51,9 @@ func TestConfigureNetwork_NotConfigured(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
-	scripts, err := configureNetwork(ctx)
+	var c Combustion
+
+	scripts, err := c.configureNetwork(ctx)
 	require.NoError(t, err)
 	assert.Nil(t, scripts)
 }
@@ -63,7 +65,9 @@ func TestConfigureNetwork_EmptyDirectory(t *testing.T) {
 	networkDir := filepath.Join(ctx.ImageConfigDir, networkConfigDir)
 	require.NoError(t, os.Mkdir(networkDir, 0o700))
 
-	scripts, err := configureNetwork(ctx)
+	var c Combustion
+
+	scripts, err := c.configureNetwork(ctx)
 	require.Error(t, err)
 	assert.EqualError(t, err, "network directory is present but empty")
 	assert.Nil(t, scripts)
@@ -125,10 +129,12 @@ func TestConfigureNetwork(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ctx.NetworkConfigGenerator = test.configGenerator
-			ctx.NetworkConfiguratorInstaller = test.configuratorInstaller
+			c := Combustion{
+				NetworkConfigGenerator:       test.configGenerator,
+				NetworkConfiguratorInstaller: test.configuratorInstaller,
+			}
 
-			scripts, err := configureNetwork(ctx)
+			scripts, err := c.configureNetwork(ctx)
 
 			if test.expectedErr != "" {
 				require.Error(t, err)
@@ -148,9 +154,11 @@ func TestConfigureNetwork_CustomScript(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
-	ctx.NetworkConfiguratorInstaller = mockNetworkConfiguratorInstaller{
-		installConfiguratorFunc: func(sourcePath, installPath string) error {
-			return nil
+	c := Combustion{
+		NetworkConfiguratorInstaller: mockNetworkConfiguratorInstaller{
+			installConfiguratorFunc: func(sourcePath, installPath string) error {
+				return nil
+			},
 		},
 	}
 
@@ -162,7 +170,7 @@ func TestConfigureNetwork_CustomScript(t *testing.T) {
 
 	require.NoError(t, os.WriteFile(customScriptPath, customScriptContents, 0o600))
 
-	scripts, err := configureNetwork(ctx)
+	scripts, err := c.configureNetwork(ctx)
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{networkConfigScriptName}, scripts)

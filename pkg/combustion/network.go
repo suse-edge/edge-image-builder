@@ -49,7 +49,7 @@ var configureNetworkScript string
 //	│   └── host_config.yaml
 //	├── nmc
 //	└── 05-configure-network.sh
-func configureNetwork(ctx *image.Context) (scripts []string, err error) {
+func (c *Combustion) configureNetwork(ctx *image.Context) (scripts []string, err error) {
 	zap.S().Info("Configuring network component...")
 
 	if !isComponentConfigured(ctx, networkConfigDir) {
@@ -71,7 +71,7 @@ func configureNetwork(ctx *image.Context) (scripts []string, err error) {
 		return nil, fmt.Errorf("network directory is present but empty")
 	}
 
-	if err = installNetworkConfigurator(ctx); err != nil {
+	if err = c.installNetworkConfigurator(ctx); err != nil {
 		return nil, fmt.Errorf("installing configurator: %w", err)
 	}
 
@@ -88,7 +88,7 @@ func configureNetwork(ctx *image.Context) (scripts []string, err error) {
 		return nil, fmt.Errorf("copying custom network script: %w", err)
 	}
 
-	if err = generateNetworkConfig(ctx); err != nil {
+	if err = c.generateNetworkConfig(ctx); err != nil {
 		return nil, fmt.Errorf("generating network config: %w", err)
 	}
 
@@ -99,7 +99,7 @@ func configureNetwork(ctx *image.Context) (scripts []string, err error) {
 	return scripts, nil
 }
 
-func generateNetworkConfig(ctx *image.Context) error {
+func (c *Combustion) generateNetworkConfig(ctx *image.Context) error {
 	const networkConfigLogFile = "network-config.log"
 
 	logFilename := filepath.Join(ctx.BuildDir, networkConfigLogFile)
@@ -117,14 +117,14 @@ func generateNetworkConfig(ctx *image.Context) error {
 	configDir := generateComponentPath(ctx, networkConfigDir)
 	outputDir := filepath.Join(ctx.CombustionDir, networkConfigDir)
 
-	return ctx.NetworkConfigGenerator.GenerateNetworkConfig(configDir, outputDir, logFile)
+	return c.NetworkConfigGenerator.GenerateNetworkConfig(configDir, outputDir, logFile)
 }
 
-func installNetworkConfigurator(ctx *image.Context) error {
+func (c *Combustion) installNetworkConfigurator(ctx *image.Context) error {
 	sourcePath := "/usr/bin/nmc"
 	installPath := filepath.Join(ctx.CombustionDir, nmcExecutable)
 
-	return ctx.NetworkConfiguratorInstaller.InstallConfigurator(sourcePath, installPath)
+	return c.NetworkConfiguratorInstaller.InstallConfigurator(sourcePath, installPath)
 }
 
 func writeNetworkConfigurationScript(scriptPath string) error {

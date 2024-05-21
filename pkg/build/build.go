@@ -6,31 +6,32 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/suse-edge/edge-image-builder/pkg/combustion"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 )
 
-type configureCombustion func(ctx *image.Context) error
-
-type Builder struct {
-	context             *image.Context
-	configureCombustion configureCombustion
+type imageConfigurator interface {
+	Configure(ctx *image.Context) error
 }
 
-func NewBuilder(ctx *image.Context) *Builder {
+type Builder struct {
+	context           *image.Context
+	imageConfigurator imageConfigurator
+}
+
+func NewBuilder(ctx *image.Context, imageConfigurator imageConfigurator) *Builder {
 	return &Builder{
-		context:             ctx,
-		configureCombustion: combustion.Configure,
+		context:           ctx,
+		imageConfigurator: imageConfigurator,
 	}
 }
 
 func (b *Builder) Build() error {
 	log.Audit("Generating image customization components...")
 
-	if err := b.configureCombustion(b.context); err != nil {
+	if err := b.imageConfigurator.Configure(b.context); err != nil {
 		log.Audit("Error configuring customization components, check the logs under the build directory for more information.")
-		return fmt.Errorf("configuring combustion: %w", err)
+		return fmt.Errorf("configuring image: %w", err)
 	}
 
 	switch b.context.ImageDefinition.Image.ImageType {
