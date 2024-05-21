@@ -72,7 +72,7 @@ systemctl enable elemental-register-systemd.service || true
 systemctl enable elemental-system-agent.service || true
 
 mkdir -p /opt/edge/
-cat <<- EOF > /opt/edge/node_cleanup.sh
+cat <<- \EOF > /opt/edge/node_cleanup.sh
 #!/usr/bin/env bash
 # SUSE Edge Elemental Node Reset Script
 # Copyright 2024 SUSE Software Solutions
@@ -95,42 +95,24 @@ cat <<- EOF > /opt/edge/node_cleanup.sh
 #          persistent data. There is also an unattended switch for automated
 #          reset. You have been warned!
 
-usage(){
-	cat <<-EOF
-================================================================
-SUSE Edge Node Cleanup Script (for Elemental registered systems)
-================================================================
-	Usage: ${0} [-u]
-
-	Options:
-	 -u		Runs in unattended mode and doesn't request confirmation. Data loss warning!
-	EOF
-}
-
 UNATTENDED=false
 
-while getopts 'h:u' OPTION; do
-	case "${OPTION}" in
-		u)
-			UNATTENDED=true
-			;;
-		h)
-			usage && exit 0
-			;;
-		?)
-			usage && exit 2
-			;;
-	esac
+while getopts 'u' OPTION; do
+    case "${OPTION}" in
+        u)
+            UNATTENDED=true
+            ;;
+    esac
 done
 
 if [ $UNATTENDED = "false" ] ;
 then
-	echo "============================================"
-	echo "SUSE Edge Node Cleanup for Elemental Systems"
-	echo -e "============================================\n"
-	echo -n "WARNING: This script will remove all Kubernetes files and will"
-	echo -e " cause data loss!\n"
-	while true; do
+    echo "============================================"
+    echo "SUSE Edge Node Cleanup for Elemental Systems"
+    echo -e "============================================\n"
+    echo -n "WARNING: This script will remove all Kubernetes files and will"
+    echo -e " cause data loss!\n"
+    while true; do
             read -p "Are you sure you wish to proceed [y/N]? " yn
             case $yn in
                 [Yy] ) break;;
@@ -149,8 +131,8 @@ systemctl kill --signal=SIGKILL rancher-system-agent
 # Kill and uninstall all rke2 services
 if [ -x /opt/rke2/bin/rke2-uninstall.sh ];
 then
-	/opt/rke2/bin/rke2-killall.sh
-	/opt/rke2/bin/rke2-uninstall.sh
+    /opt/rke2/bin/rke2-killall.sh
+    /opt/rke2/bin/rke2-uninstall.sh
 fi
 
 # Kill and uninstall all k3s services
@@ -160,8 +142,8 @@ if command -v k3s-uninstall.sh &> /dev/null; then k3s-uninstall.sh; fi
 # Remove the rancher-system-agent as this gets reinstalled via Elemental
 if [ -x /opt/rancher-system-agent/bin/rancher-system-agent-uninstall.sh ];
 then
-	sh /opt/rancher-system-agent/bin/rancher-system-agent-uninstall.sh
-	rm -rf /opt/rancher-system-agent
+    sh /opt/rancher-system-agent/bin/rancher-system-agent-uninstall.sh
+    rm -rf /opt/rancher-system-agent
 fi
 
 # Clean up all old configuration directories and Elemental state
