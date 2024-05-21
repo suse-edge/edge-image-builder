@@ -4,6 +4,7 @@
 
 ## General
 
+* Added the ability to consume both 512/4096 byte sector size disk input base-images
 * Added version command and version marker on CRB images
 
 ## API
@@ -16,6 +17,7 @@
 
 * [#442](https://github.com/suse-edge/edge-image-builder/issues/442) - Only get images from specific Kubernetes objects
 * [#429](https://github.com/suse-edge/edge-image-builder/issues/429) - Automatically set execute bit on scripts
+* [#447](https://github.com/suse-edge/edge-image-builder/issues/447) - Support >512 byte sector size base images
 
 ---
 

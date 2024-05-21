@@ -72,7 +72,7 @@ func TestWriteModifyScript(t *testing.T) {
 			includeCombustion: true,
 			renameFilesystem:  true,
 			expectedContains: []string{
-				fmt.Sprintf("guestfish --format=raw --rw -a %s", outputImageFilename),
+				fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s", outputImageFilename),
 				fmt.Sprintf("copy-in %s", builder.context.CombustionDir),
 				"download /boot/grub2/grub.cfg /tmp/grub.cfg",
 				"btrfs filesystem label / INSTALL",
@@ -87,7 +87,7 @@ func TestWriteModifyScript(t *testing.T) {
 			includeCombustion: false,
 			renameFilesystem:  false,
 			expectedContains: []string{
-				fmt.Sprintf("guestfish --format=raw --rw -a %s", outputImageFilename),
+				fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s", outputImageFilename),
 				"download /boot/grub2/grub.cfg /tmp/grub.cfg",
 				"sed -i '/ignition.platform/ s/$/ alpha beta /' /tmp/grub.cfg",
 			},
