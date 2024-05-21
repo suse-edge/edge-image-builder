@@ -66,5 +66,5 @@ func TestWriteElementalCombustionScript(t *testing.T) {
 	assert.Contains(t, found, "/etc/systemd/system/elemental-reset.path")
 	assert.Contains(t, found, "/etc/systemd/system/elemental-reset.service")
 	assert.Contains(t, found, "mkdir -p /opt/edge/")
-	assert.Contains(t, found, "cat <<- EOF > /opt/edge/node_cleanup.sh")
+	assert.Contains(t, found, "cat <<- \\EOF > /opt/edge/node_cleanup.sh")
 }
