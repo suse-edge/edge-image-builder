@@ -5,6 +5,7 @@
 ## General
 
 * Added the ability to consume both 512/4096 byte sector size disk input base-images
+* Added the ability to leverage Elemental node reset for unmanaged operating systems
 
 ## API
 

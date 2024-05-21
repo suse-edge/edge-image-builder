@@ -63,4 +63,8 @@ func TestWriteElementalCombustionScript(t *testing.T) {
 	require.NoError(t, err)
 	found := string(foundBytes)
 	assert.Contains(t, found, "/usr/sbin/elemental-register --debug --config-path /etc/elemental/config.yaml --state-path /etc/elemental/state.yaml --install --no-toolkit")
+	assert.Contains(t, found, "/etc/systemd/system/elemental-reset.path")
+	assert.Contains(t, found, "/etc/systemd/system/elemental-reset.service")
+	assert.Contains(t, found, "mkdir -p /opt/edge/")
+	assert.Contains(t, found, "cat <<- \\EOF > /opt/edge/elemental_node_cleanup.sh")
 }
