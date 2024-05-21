@@ -16,6 +16,7 @@
 
 * [#429](https://github.com/suse-edge/edge-image-builder/issues/429) - Automatically set execute bit on scripts
 * [#447](https://github.com/suse-edge/edge-image-builder/issues/447) - Support >512 byte sector size base images
+* [#442](https://github.com/suse-edge/edge-image-builder/issues/442) - Only get images from specific Kubernetes objects
 
 ---
 
