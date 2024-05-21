@@ -155,3 +155,5 @@ rm -f /etc/elemental/state.yaml
 # by restarting the Elemental registration service via systemd
 systemctl restart elemental-register-systemd.service
 EOF
+
+chmod a+x /opt/edge/node_cleanup.sh
