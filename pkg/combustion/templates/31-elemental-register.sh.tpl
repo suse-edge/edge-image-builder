@@ -63,7 +63,7 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/opt/edge/node_cleanup.sh -u
+ExecStart=/opt/edge/elemental_node_cleanup.sh -u
 ExecStartPost=/usr/bin/rm -f /var/lib/elemental/.unmanaged_reset
 EOF
 
@@ -72,7 +72,7 @@ systemctl enable elemental-register-systemd.service || true
 systemctl enable elemental-system-agent.service || true
 
 mkdir -p /opt/edge/
-cat <<- \EOF > /opt/edge/node_cleanup.sh
+cat <<- \EOF > /opt/edge/elemental_node_cleanup.sh
 #!/usr/bin/env bash
 # SUSE Edge Elemental Node Reset Script
 # Copyright 2024 SUSE Software Solutions
@@ -156,4 +156,4 @@ rm -f /etc/elemental/state.yaml
 systemctl restart elemental-register-systemd.service
 EOF
 
-chmod a+x /opt/edge/node_cleanup.sh
+chmod a+x /opt/edge/elemental_node_cleanup.sh
