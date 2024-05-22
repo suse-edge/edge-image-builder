@@ -85,12 +85,8 @@ func Run(_ *cli.Context) error {
 
 	appendHelm(ctx)
 
-	combustionClient := &combustion.Combustion{
-		NetworkConfigGenerator:       network.ConfigGenerator{},
-		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
-	}
-
-	if cmdErr = bootstrapDependencyServices(ctx, rootBuildDir, combustionClient); cmdErr != nil {
+	combustionConfigurator, cmdErr := buildCombustionConfigurator(ctx, rootBuildDir)
+	if cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
 		os.Exit(1)
 	}
@@ -102,7 +98,7 @@ func Run(_ *cli.Context) error {
 		}
 	}()
 
-	builder := build.NewBuilder(ctx, combustionClient)
+	builder := build.NewBuilder(ctx, combustionConfigurator)
 	if err = builder.Build(); err != nil {
 		zap.S().Fatalf("An error occurred building the image: %s", err)
 	}
@@ -244,12 +240,16 @@ func appendHelm(ctx *image.Context) {
 	ctx.ImageDefinition.Kubernetes.Helm.Repositories = append(ctx.ImageDefinition.Kubernetes.Helm.Repositories, componentRepos...)
 }
 
-// If the image definition requires it, starts the necessary services, returning an error in the event of failure.
-func bootstrapDependencyServices(ctx *image.Context, rootDir string, combustionClient *combustion.Combustion) *cmd.Error {
+func buildCombustionConfigurator(ctx *image.Context, rootDir string) (*combustion.Combustion, *cmd.Error) {
+	combustionConfigurator := &combustion.Combustion{
+		NetworkConfigGenerator:       network.ConfigGenerator{},
+		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
+	}
+
 	if !combustion.SkipRPMComponent(ctx) {
 		p, err := podman.New(ctx.BuildDir)
 		if err != nil {
-			return &cmd.Error{
+			return nil, &cmd.Error{
 				UserMessage: "The services for RPM dependency resolution failed to start.",
 				LogMessage:  fmt.Sprintf("Setting up Podman instance failed: %v", err),
 			}
@@ -259,29 +259,29 @@ func bootstrapDependencyServices(ctx *image.Context, rootDir string, combustionC
 		imgType := ctx.ImageDefinition.Image.ImageType
 		baseBuilder := resolver.NewTarballBuilder(ctx.BuildDir, imgPath, imgType, p)
 
-		combustionClient.RPMResolver = resolver.New(ctx.BuildDir, p, baseBuilder, "")
-		combustionClient.RPMRepoCreator = rpm.NewRepoCreator(ctx.BuildDir)
+		combustionConfigurator.RPMResolver = resolver.New(ctx.BuildDir, p, baseBuilder, "")
+		combustionConfigurator.RPMRepoCreator = rpm.NewRepoCreator(ctx.BuildDir)
 	}
 
 	if combustion.IsEmbeddedArtifactRegistryConfigured(ctx) {
 		certsDir := filepath.Join(ctx.ImageConfigDir, combustion.K8sDir, combustion.HelmDir, combustion.CertsDir)
-		combustionClient.HelmClient = helm.New(ctx.BuildDir, certsDir)
+		combustionConfigurator.HelmClient = helm.New(ctx.BuildDir, certsDir)
 	}
 
 	if ctx.ImageDefinition.Kubernetes.Version != "" {
 		c, err := cache.New(rootDir)
 		if err != nil {
-			return &cmd.Error{
+			return nil, &cmd.Error{
 				UserMessage: "Setting up file caching failed.",
 				LogMessage:  fmt.Sprintf("Initialising cache instance failed: %v", err),
 			}
 		}
 
-		combustionClient.KubernetesScriptDownloader = kubernetes.ScriptDownloader{}
-		combustionClient.KubernetesArtefactDownloader = kubernetes.ArtefactDownloader{
+		combustionConfigurator.KubernetesScriptDownloader = kubernetes.ScriptDownloader{}
+		combustionConfigurator.KubernetesArtefactDownloader = kubernetes.ArtefactDownloader{
 			Cache: c,
 		}
 	}
 
-	return nil
+	return combustionConfigurator, nil
 }
