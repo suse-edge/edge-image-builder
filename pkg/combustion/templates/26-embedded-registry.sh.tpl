@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-mkdir /opt/hauler
+mkdir -p /opt/hauler
 cp {{ .RegistryDir }}/hauler /opt/hauler/hauler
 cp {{ .RegistryDir }}/*-{{ .RegistryTarSuffix }} /opt/hauler/
 
