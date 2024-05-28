@@ -25,6 +25,7 @@ import (
 
 func Run(ctx *image.Context, rootBuildDir string) error {
 	if err := appendKubernetesSELinuxRPMs(ctx); err != nil {
+		log.Auditf("Bootstrapping dependency services failed.")
 		return fmt.Errorf("configuring kubernetes selinux policy: %w", err)
 	}
 
@@ -33,6 +34,7 @@ func Run(ctx *image.Context, rootBuildDir string) error {
 
 	c, err := buildCombustion(ctx, rootBuildDir)
 	if err != nil {
+		log.Audit("Bootstrapping dependency services failed.")
 		return fmt.Errorf("building combustion: %w", err)
 	}
 

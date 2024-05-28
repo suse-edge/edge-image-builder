@@ -29,7 +29,7 @@ func (b *Builder) Build() error {
 	log.Audit("Generating image customization components...")
 
 	if err := b.imageConfigurator.Configure(b.context); err != nil {
-		log.Audit("Error configuring customization components, check the logs under the build directory for more information.")
+		log.Audit("Error configuring customization components.")
 		return fmt.Errorf("configuring image: %w", err)
 	}
 
@@ -37,13 +37,13 @@ func (b *Builder) Build() error {
 	case image.TypeISO:
 		log.Audit("Building ISO image...")
 		if err := b.buildIsoImage(); err != nil {
-			log.Audit("Error building ISO image, check the logs under the build directory for more information.")
+			log.Audit("Error building ISO image.")
 			return err
 		}
 	case image.TypeRAW:
 		log.Audit("Building RAW image...")
 		if err := b.buildRawImage(); err != nil {
-			log.Audit("Error building RAW image, check the logs under the build directory for more information.")
+			log.Audit("Error building RAW image.")
 			return err
 		}
 	default:

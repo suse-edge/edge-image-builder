@@ -69,12 +69,13 @@ func Run(_ *cli.Context) error {
 
 	defer func() {
 		if r := recover(); r != nil {
-			log.AuditInfo("Build failed unexpectedly, check the logs under the build directory for more information.")
+			log.Auditf("Build failed unexpectedly. %s", checkBuildLogMessage)
 			zap.S().Fatalf("Unexpected error occurred: %s", r)
 		}
 	}()
 
 	if err = eib.Run(ctx, rootBuildDir); err != nil {
+		log.Audit(checkBuildLogMessage)
 		zap.S().Fatalf("An error occurred building the image: %s", err)
 	}
 
