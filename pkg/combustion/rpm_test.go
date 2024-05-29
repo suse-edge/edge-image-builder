@@ -131,7 +131,9 @@ func TestConfigureRPMs_Skipped(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
-	scripts, err := configureRPMs(ctx)
+	var c Combustion
+
+	scripts, err := c.configureRPMs(ctx)
 
 	require.NoError(t, err)
 	assert.Nil(t, scripts)
@@ -212,10 +214,12 @@ func TestConfigureRPMs_ResolutionFailures(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ctx.RPMResolver = test.rpmResolver
-			ctx.RPMRepoCreator = test.rpmRepoCreator
+			c := Combustion{
+				RPMResolver:    test.rpmResolver,
+				RPMRepoCreator: test.rpmRepoCreator,
+			}
 
-			_, err := configureRPMs(ctx)
+			_, err := c.configureRPMs(ctx)
 			require.Error(t, err)
 			assert.EqualError(t, err, test.expectedErr)
 		})
@@ -269,7 +273,9 @@ func TestConfigureRPMs_GPGFailures(t *testing.T) {
 				require.NoError(t, os.Mkdir(gpgDir, 0o755))
 			}
 
-			_, err := configureRPMs(ctx)
+			var c Combustion
+
+			_, err := c.configureRPMs(ctx)
 			require.Error(t, err)
 			assert.EqualError(t, err, test.expectedErr)
 
@@ -306,29 +312,30 @@ func TestConfigureRPMs_SuccessfulConfig(t *testing.T) {
 
 	require.NoError(t, os.WriteFile(filepath.Join(gpgDir, "some-key"), nil, 0o600))
 
-	ctx.RPMRepoCreator = mockRPMRepoCreator{
-		createFunc: func(path string) error {
-			return nil
+	c := Combustion{
+		RPMRepoCreator: mockRPMRepoCreator{
+			createFunc: func(path string) error {
+				return nil
+			},
+		},
+		RPMResolver: mockRPMResolver{
+			resolveFunc: func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (string, []string, error) {
+				if localRPMConfig == nil {
+					return "", nil, fmt.Errorf("local rpm config is nil")
+				}
+				if rpmDir != localRPMConfig.RPMPath {
+					return "", nil, fmt.Errorf("rpm path mismatch. Expected %s, got %s", rpmDir, localRPMConfig.RPMPath)
+				}
+				if gpgDir != localRPMConfig.GPGKeysPath {
+					return "", nil, fmt.Errorf("gpg path mismatch. Expected %s, got %s", gpgDir, localRPMConfig.GPGKeysPath)
+				}
+
+				return expectedDir, expectedPkg, nil
+			},
 		},
 	}
 
-	ctx.RPMResolver = mockRPMResolver{
-		resolveFunc: func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (string, []string, error) {
-			if localRPMConfig == nil {
-				return "", nil, fmt.Errorf("local rpm config is nil")
-			}
-			if rpmDir != localRPMConfig.RPMPath {
-				return "", nil, fmt.Errorf("rpm path mismatch. Expected %s, got %s", rpmDir, localRPMConfig.RPMPath)
-			}
-			if gpgDir != localRPMConfig.GPGKeysPath {
-				return "", nil, fmt.Errorf("gpg path mismatch. Expected %s, got %s", gpgDir, localRPMConfig.GPGKeysPath)
-			}
-
-			return expectedDir, expectedPkg, nil
-		},
-	}
-
-	scripts, err := configureRPMs(ctx)
+	scripts, err := c.configureRPMs(ctx)
 	require.NoError(t, err)
 	require.NotNil(t, scripts)
 	require.Len(t, scripts, 1)

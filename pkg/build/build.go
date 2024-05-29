@@ -4,46 +4,46 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
-	"github.com/suse-edge/edge-image-builder/pkg/combustion"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 )
 
-type configureCombustion func(ctx *image.Context) error
-
-type Builder struct {
-	context             *image.Context
-	configureCombustion configureCombustion
+type imageConfigurator interface {
+	Configure(ctx *image.Context) error
 }
 
-func NewBuilder(ctx *image.Context) *Builder {
+type Builder struct {
+	context           *image.Context
+	imageConfigurator imageConfigurator
+}
+
+func NewBuilder(ctx *image.Context, imageConfigurator imageConfigurator) *Builder {
 	return &Builder{
-		context:             ctx,
-		configureCombustion: combustion.Configure,
+		context:           ctx,
+		imageConfigurator: imageConfigurator,
 	}
 }
 
 func (b *Builder) Build() error {
 	log.Audit("Generating image customization components...")
 
-	if err := b.configureCombustion(b.context); err != nil {
-		log.Audit("Error configuring customization components, check the logs under the build directory for more information.")
-		return fmt.Errorf("configuring combustion: %w", err)
+	if err := b.imageConfigurator.Configure(b.context); err != nil {
+		log.Audit("Error configuring customization components.")
+		return fmt.Errorf("configuring image: %w", err)
 	}
 
 	switch b.context.ImageDefinition.Image.ImageType {
 	case image.TypeISO:
 		log.Audit("Building ISO image...")
 		if err := b.buildIsoImage(); err != nil {
-			log.Audit("Error building ISO image, check the logs under the build directory for more information.")
+			log.Audit("Error building ISO image.")
 			return err
 		}
 	case image.TypeRAW:
 		log.Audit("Building RAW image...")
 		if err := b.buildRawImage(); err != nil {
-			log.Audit("Error building RAW image, check the logs under the build directory for more information.")
+			log.Audit("Error building RAW image.")
 			return err
 		}
 	default:
@@ -76,28 +76,4 @@ func (b *Builder) deleteExistingOutputImage() error {
 		return fmt.Errorf("error deleting file %s: %w", outputFilename, err)
 	}
 	return nil
-}
-
-func SetupBuildDirectory(rootDir string) (string, error) {
-	timestamp := time.Now().Format("Jan02_15-04-05")
-	buildDir := filepath.Join(rootDir, fmt.Sprintf("build-%s", timestamp))
-	if err := os.MkdirAll(buildDir, os.ModePerm); err != nil {
-		return "", fmt.Errorf("creating a build directory: %w", err)
-	}
-
-	return buildDir, nil
-}
-
-func SetupCombustionDirectory(buildDir string) (combustionDir, artefactsDir string, err error) {
-	combustionDir = filepath.Join(buildDir, "combustion")
-	if err = os.MkdirAll(combustionDir, os.ModePerm); err != nil {
-		return "", "", fmt.Errorf("creating a combustion directory: %w", err)
-	}
-
-	artefactsDir = filepath.Join(buildDir, "artefacts")
-	if err = os.MkdirAll(artefactsDir, os.ModePerm); err != nil {
-		return "", "", fmt.Errorf("creating an artefacts directory: %w", err)
-	}
-
-	return combustionDir, artefactsDir, nil
 }

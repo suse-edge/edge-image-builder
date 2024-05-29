@@ -60,7 +60,9 @@ func TestConfigureKubernetes_Skipped(t *testing.T) {
 		ImageDefinition: &image.Definition{},
 	}
 
-	scripts, err := configureKubernetes(ctx)
+	var c Combustion
+
+	scripts, err := c.configureKubernetes(ctx)
 	require.NoError(t, err)
 	assert.Nil(t, scripts)
 }
@@ -74,7 +76,9 @@ func TestConfigureKubernetes_UnsupportedVersion(t *testing.T) {
 		},
 	}
 
-	scripts, err := configureKubernetes(ctx)
+	var c Combustion
+
+	scripts, err := c.configureKubernetes(ctx)
 	require.Error(t, err)
 	assert.EqualError(t, err, "cannot configure kubernetes version: v1.29.0")
 	assert.Nil(t, scripts)
@@ -87,13 +91,16 @@ func TestConfigureKubernetes_ScriptInstallerErrorK3s(t *testing.T) {
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
 		Version: "v1.29.0+k3s1",
 	}
-	ctx.KubernetesScriptDownloader = mockKubernetesScriptDownloader{
-		downloadScript: func(distribution, destPath string) (string, error) {
-			return "", fmt.Errorf("some error")
+
+	c := Combustion{
+		KubernetesScriptDownloader: mockKubernetesScriptDownloader{
+			downloadScript: func(distribution, destPath string) (string, error) {
+				return "", fmt.Errorf("some error")
+			},
 		},
 	}
 
-	scripts, err := configureKubernetes(ctx)
+	scripts, err := c.configureKubernetes(ctx)
 	require.Error(t, err)
 	assert.EqualError(t, err, "configuring kubernetes components: downloading k3s install script: downloading install script: some error")
 	assert.Nil(t, scripts)
@@ -106,13 +113,16 @@ func TestConfigureKubernetes_ScriptInstallerErrorRKE2(t *testing.T) {
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
 		Version: "v1.29.0+rke2r1",
 	}
-	ctx.KubernetesScriptDownloader = mockKubernetesScriptDownloader{
-		downloadScript: func(distribution, destPath string) (string, error) {
-			return "", fmt.Errorf("some error")
+
+	c := Combustion{
+		KubernetesScriptDownloader: mockKubernetesScriptDownloader{
+			downloadScript: func(distribution, destPath string) (string, error) {
+				return "", fmt.Errorf("some error")
+			},
 		},
 	}
 
-	scripts, err := configureKubernetes(ctx)
+	scripts, err := c.configureKubernetes(ctx)
 	require.Error(t, err)
 	assert.EqualError(t, err, "configuring kubernetes components: downloading RKE2 install script: downloading install script: some error")
 	assert.Nil(t, scripts)
@@ -125,18 +135,21 @@ func TestConfigureKubernetes_ArtefactDownloaderErrorK3s(t *testing.T) {
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
 		Version: "v1.29.0+k3s1",
 	}
-	ctx.KubernetesScriptDownloader = mockKubernetesScriptDownloader{
-		downloadScript: func(distribution, destPath string) (string, error) {
-			return kubernetesScriptInstaller, nil
+
+	c := Combustion{
+		KubernetesScriptDownloader: mockKubernetesScriptDownloader{
+			downloadScript: func(distribution, destPath string) (string, error) {
+				return kubernetesScriptInstaller, nil
+			},
 		},
-	}
-	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
-		downloadK3sArtefacts: func(arch image.Arch, version string, installPath, imagesPath string) error {
-			return fmt.Errorf("some error")
+		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
+			downloadK3sArtefacts: func(arch image.Arch, version string, installPath, imagesPath string) error {
+				return fmt.Errorf("some error")
+			},
 		},
 	}
 
-	scripts, err := configureKubernetes(ctx)
+	scripts, err := c.configureKubernetes(ctx)
 	require.Error(t, err)
 	assert.EqualError(t, err, "configuring kubernetes components: downloading k3s artefacts: downloading artefacts: some error")
 	assert.Nil(t, scripts)
@@ -149,18 +162,21 @@ func TestConfigureKubernetes_ArtefactDownloaderErrorRKE2(t *testing.T) {
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
 		Version: "v1.29.0+rke2r1",
 	}
-	ctx.KubernetesScriptDownloader = mockKubernetesScriptDownloader{
-		downloadScript: func(distribution, destPath string) (string, error) {
-			return kubernetesScriptInstaller, nil
+
+	c := Combustion{
+		KubernetesScriptDownloader: mockKubernetesScriptDownloader{
+			downloadScript: func(distribution, destPath string) (string, error) {
+				return kubernetesScriptInstaller, nil
+			},
 		},
-	}
-	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
-		downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
-			return fmt.Errorf("some error")
+		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
+			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+				return fmt.Errorf("some error")
+			},
 		},
 	}
 
-	scripts, err := configureKubernetes(ctx)
+	scripts, err := c.configureKubernetes(ctx)
 	require.Error(t, err)
 	assert.EqualError(t, err, "configuring kubernetes components: downloading RKE2 artefacts: downloading artefacts: some error")
 	assert.Nil(t, scripts)
@@ -177,19 +193,22 @@ func TestConfigureKubernetes_SuccessfulSingleNodeK3sCluster(t *testing.T) {
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 		},
 	}
-	ctx.KubernetesScriptDownloader = mockKubernetesScriptDownloader{
-		downloadScript: func(distribution, destPath string) (string, error) {
-			return kubernetesScriptInstaller, nil
+
+	c := Combustion{
+		KubernetesScriptDownloader: mockKubernetesScriptDownloader{
+			downloadScript: func(distribution, destPath string) (string, error) {
+				return kubernetesScriptInstaller, nil
+			},
 		},
-	}
-	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
-		downloadK3sArtefacts: func(arch image.Arch, version string, installPath, imagesPath string) error {
-			binary := filepath.Join(installPath, "cool-k3s-binary")
-			return os.WriteFile(binary, nil, os.ModePerm)
+		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
+			downloadK3sArtefacts: func(arch image.Arch, version string, installPath, imagesPath string) error {
+				binary := filepath.Join(installPath, "cool-k3s-binary")
+				return os.WriteFile(binary, nil, os.ModePerm)
+			},
 		},
 	}
 
-	scripts, err := configureKubernetes(ctx)
+	scripts, err := c.configureKubernetes(ctx)
 	require.NoError(t, err)
 	require.Len(t, scripts, 1)
 
@@ -256,15 +275,18 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sCluster(t *testing.T) {
 			},
 		},
 	}
-	ctx.KubernetesScriptDownloader = mockKubernetesScriptDownloader{
-		downloadScript: func(distribution, destPath string) (string, error) {
-			return kubernetesScriptInstaller, nil
+
+	c := Combustion{
+		KubernetesScriptDownloader: mockKubernetesScriptDownloader{
+			downloadScript: func(distribution, destPath string) (string, error) {
+				return kubernetesScriptInstaller, nil
+			},
 		},
-	}
-	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
-		downloadK3sArtefacts: func(arch image.Arch, version, installPath, imagesPath string) error {
-			binary := filepath.Join(installPath, "cool-k3s-binary")
-			return os.WriteFile(binary, nil, os.ModePerm)
+		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
+			downloadK3sArtefacts: func(arch image.Arch, version, installPath, imagesPath string) error {
+				binary := filepath.Join(installPath, "cool-k3s-binary")
+				return os.WriteFile(binary, nil, os.ModePerm)
+			},
 		},
 	}
 
@@ -282,7 +304,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sCluster(t *testing.T) {
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
-	scripts, err := configureKubernetes(ctx)
+	scripts, err := c.configureKubernetes(ctx)
 	require.NoError(t, err)
 	require.Len(t, scripts, 1)
 
@@ -374,18 +396,21 @@ func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 		},
 	}
-	ctx.KubernetesScriptDownloader = mockKubernetesScriptDownloader{
-		downloadScript: func(distribution, destPath string) (string, error) {
-			return kubernetesScriptInstaller, nil
+
+	c := Combustion{
+		KubernetesScriptDownloader: mockKubernetesScriptDownloader{
+			downloadScript: func(distribution, destPath string) (string, error) {
+				return kubernetesScriptInstaller, nil
+			},
 		},
-	}
-	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
-		downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
-			return nil
+		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
+			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+				return nil
+			},
 		},
 	}
 
-	scripts, err := configureKubernetes(ctx)
+	scripts, err := c.configureKubernetes(ctx)
 	require.NoError(t, err)
 	require.Len(t, scripts, 1)
 
@@ -449,14 +474,17 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 			},
 		},
 	}
-	ctx.KubernetesScriptDownloader = mockKubernetesScriptDownloader{
-		downloadScript: func(distribution, destPath string) (string, error) {
-			return kubernetesScriptInstaller, nil
+
+	c := Combustion{
+		KubernetesScriptDownloader: mockKubernetesScriptDownloader{
+			downloadScript: func(distribution, destPath string) (string, error) {
+				return kubernetesScriptInstaller, nil
+			},
 		},
-	}
-	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
-		downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
-			return nil
+		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
+			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+				return nil
+			},
 		},
 	}
 
@@ -475,7 +503,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
-	scripts, err := configureKubernetes(ctx)
+	scripts, err := c.configureKubernetes(ctx)
 	require.NoError(t, err)
 	require.Len(t, scripts, 1)
 
@@ -556,23 +584,27 @@ func TestConfigureKubernetes_InvalidManifestURL(t *testing.T) {
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
 		Version: "v1.29.0+rke2r1",
 	}
-	ctx.KubernetesScriptDownloader = mockKubernetesScriptDownloader{
-		downloadScript: func(distribution, destPath string) (string, error) {
-			return kubernetesScriptInstaller, nil
-		},
-	}
-	ctx.KubernetesArtefactDownloader = mockKubernetesArtefactDownloader{
-		downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installpath, imagesPath string) error {
-			return nil
-		},
-	}
 	ctx.ImageDefinition.Kubernetes.Manifests.URLs = []string{
 		"k8s.io/examples/application/nginx-app.yaml",
 	}
+
+	c := Combustion{
+		KubernetesScriptDownloader: mockKubernetesScriptDownloader{
+			downloadScript: func(distribution, destPath string) (string, error) {
+				return kubernetesScriptInstaller, nil
+			},
+		},
+		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
+			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installpath, imagesPath string) error {
+				return nil
+			},
+		},
+	}
+
 	k8sCombDir := filepath.Join(ctx.CombustionDir, K8sDir)
 	require.NoError(t, os.Mkdir(k8sCombDir, os.ModePerm))
 
-	_, err := configureKubernetes(ctx)
+	_, err := c.configureKubernetes(ctx)
 
 	require.ErrorContains(t, err, "configuring kubernetes manifests: downloading manifests to combustion dir: downloading manifest 'k8s.io/examples/application/nginx-app.yaml': executing request: Get \"k8s.io/examples/application/nginx-app.yaml\": unsupported protocol scheme \"\"")
 }

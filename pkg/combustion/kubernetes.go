@@ -50,7 +50,7 @@ var (
 	k8sVIPManifest string
 )
 
-func configureKubernetes(ctx *image.Context) ([]string, error) {
+func (c *Combustion) configureKubernetes(ctx *image.Context) ([]string, error) {
 	version := ctx.ImageDefinition.Kubernetes.Version
 
 	if version == "" {
@@ -58,7 +58,7 @@ func configureKubernetes(ctx *image.Context) ([]string, error) {
 		return nil, nil
 	}
 
-	configureFunc := kubernetesConfigurator(version)
+	configureFunc := c.kubernetesConfigurator(version)
 	if configureFunc == nil {
 		log.AuditComponentFailed(k8sComponentName)
 		return nil, fmt.Errorf("cannot configure kubernetes version: %s", version)
@@ -102,21 +102,21 @@ func configureKubernetes(ctx *image.Context) ([]string, error) {
 	return []string{script}, nil
 }
 
-func kubernetesConfigurator(version string) func(*image.Context, *kubernetes.Cluster) (string, error) {
+func (c *Combustion) kubernetesConfigurator(version string) func(*image.Context, *kubernetes.Cluster) (string, error) {
 	switch {
 	case strings.Contains(version, image.KubernetesDistroRKE2):
-		return configureRKE2
+		return c.configureRKE2
 	case strings.Contains(version, image.KubernetesDistroK3S):
-		return configureK3S
+		return c.configureK3S
 	default:
 		return nil
 	}
 }
 
-func downloadKubernetesInstallScript(ctx *image.Context, distribution string) (string, error) {
+func (c *Combustion) downloadKubernetesInstallScript(ctx *image.Context, distribution string) (string, error) {
 	path := kubernetesArtefactsPath(ctx)
 
-	installScript, err := ctx.KubernetesScriptDownloader.DownloadInstallScript(distribution, path)
+	installScript, err := c.KubernetesScriptDownloader.DownloadInstallScript(distribution, path)
 	if err != nil {
 		return "", fmt.Errorf("downloading install script: %w", err)
 	}
@@ -124,15 +124,15 @@ func downloadKubernetesInstallScript(ctx *image.Context, distribution string) (s
 	return prependArtefactPath(filepath.Join(K8sDir, installScript)), nil
 }
 
-func configureK3S(ctx *image.Context, cluster *kubernetes.Cluster) (string, error) {
+func (c *Combustion) configureK3S(ctx *image.Context, cluster *kubernetes.Cluster) (string, error) {
 	zap.S().Info("Configuring K3s cluster")
 
-	installScript, err := downloadKubernetesInstallScript(ctx, image.KubernetesDistroK3S)
+	installScript, err := c.downloadKubernetesInstallScript(ctx, image.KubernetesDistroK3S)
 	if err != nil {
 		return "", fmt.Errorf("downloading k3s install script: %w", err)
 	}
 
-	binaryPath, imagesPath, err := downloadK3sArtefacts(ctx)
+	binaryPath, imagesPath, err := c.downloadK3sArtefacts(ctx)
 	if err != nil {
 		return "", fmt.Errorf("downloading k3s artefacts: %w", err)
 	}
@@ -178,7 +178,7 @@ func configureK3S(ctx *image.Context, cluster *kubernetes.Cluster) (string, erro
 	return storeKubernetesInstaller(ctx, "multi-node-k3s", k3sMultiNodeInstaller, templateValues)
 }
 
-func downloadK3sArtefacts(ctx *image.Context) (binaryPath, imagesPath string, err error) {
+func (c *Combustion) downloadK3sArtefacts(ctx *image.Context) (binaryPath, imagesPath string, err error) {
 	imagesPath = filepath.Join(K8sDir, k8sImagesDir)
 	imagesDestination := filepath.Join(ctx.ArtefactsDir, imagesPath)
 	if err = os.MkdirAll(imagesDestination, os.ModePerm); err != nil {
@@ -191,7 +191,7 @@ func downloadK3sArtefacts(ctx *image.Context) (binaryPath, imagesPath string, er
 		return "", "", fmt.Errorf("creating kubernetes install dir: %w", err)
 	}
 
-	if err = ctx.KubernetesArtefactDownloader.DownloadK3sArtefacts(
+	if err = c.KubernetesArtefactDownloader.DownloadK3sArtefacts(
 		ctx.ImageDefinition.Image.Arch,
 		ctx.ImageDefinition.Kubernetes.Version,
 		installDestination,
@@ -219,15 +219,15 @@ func downloadK3sArtefacts(ctx *image.Context) (binaryPath, imagesPath string, er
 	return prependArtefactPath(binaryPath), prependArtefactPath(imagesPath), nil
 }
 
-func configureRKE2(ctx *image.Context, cluster *kubernetes.Cluster) (string, error) {
+func (c *Combustion) configureRKE2(ctx *image.Context, cluster *kubernetes.Cluster) (string, error) {
 	zap.S().Info("Configuring RKE2 cluster")
 
-	installScript, err := downloadKubernetesInstallScript(ctx, image.KubernetesDistroRKE2)
+	installScript, err := c.downloadKubernetesInstallScript(ctx, image.KubernetesDistroRKE2)
 	if err != nil {
 		return "", fmt.Errorf("downloading RKE2 install script: %w", err)
 	}
 
-	installPath, imagesPath, err := downloadRKE2Artefacts(ctx, cluster)
+	installPath, imagesPath, err := c.downloadRKE2Artefacts(ctx, cluster)
 	if err != nil {
 		return "", fmt.Errorf("downloading RKE2 artefacts: %w", err)
 	}
@@ -280,7 +280,7 @@ func storeKubernetesInstaller(ctx *image.Context, templateName, templateContents
 	return k8sInstallScript, nil
 }
 
-func downloadRKE2Artefacts(ctx *image.Context, cluster *kubernetes.Cluster) (installPath, imagesPath string, err error) {
+func (c *Combustion) downloadRKE2Artefacts(ctx *image.Context, cluster *kubernetes.Cluster) (installPath, imagesPath string, err error) {
 	cni, multusEnabled, err := cluster.ExtractCNI()
 	if err != nil {
 		return "", "", fmt.Errorf("extracting CNI from cluster config: %w", err)
@@ -298,7 +298,7 @@ func downloadRKE2Artefacts(ctx *image.Context, cluster *kubernetes.Cluster) (ins
 		return "", "", fmt.Errorf("creating kubernetes install dir: %w", err)
 	}
 
-	if err = ctx.KubernetesArtefactDownloader.DownloadRKE2Artefacts(
+	if err = c.KubernetesArtefactDownloader.DownloadRKE2Artefacts(
 		ctx.ImageDefinition.Image.Arch,
 		ctx.ImageDefinition.Kubernetes.Version,
 		cni,

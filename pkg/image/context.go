@@ -1,9 +1,5 @@
 package image
 
-import (
-	"io"
-)
-
 type HelmClient interface {
 	AddRepo(repository *HelmRepository) error
 	RegistryLogin(repository *HelmRepository) error
@@ -11,36 +7,11 @@ type HelmClient interface {
 	Template(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error)
 }
 
-type networkConfigGenerator interface {
-	GenerateNetworkConfig(configDir, outputDir string, outputWriter io.Writer) error
-}
-
-type networkConfiguratorInstaller interface {
-	InstallConfigurator(sourcePath, installPath string) error
-}
-
-type kubernetesScriptDownloader interface {
-	DownloadInstallScript(distribution, destinationPath string) (string, error)
-}
-
-type kubernetesArtefactDownloader interface {
-	DownloadRKE2Artefacts(arch Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error
-	DownloadK3sArtefacts(arch Arch, version, installPath, imagesPath string) error
-}
-
 type LocalRPMConfig struct {
 	// RPMPath is the path to the directory holding RPMs that will be side-loaded
 	RPMPath string
 	// GPGKeysPath specifies the path to the directory that holds the GPG keys that the side-loaded RPMs have been signed with
 	GPGKeysPath string
-}
-
-type rpmResolver interface {
-	Resolve(packages *Packages, localRPMConfig *LocalRPMConfig, outputDir string) (rpmDirPath string, pkgList []string, err error)
-}
-
-type rpmRepoCreator interface {
-	Create(path string) error
 }
 
 type Context struct {
@@ -53,13 +24,5 @@ type Context struct {
 	// ArtefactsDir is a subdirectory under BuildDir containing the larger Combustion related files.
 	ArtefactsDir string
 	// ImageDefinition contains the image definition properties.
-	ImageDefinition              *Definition
-	NetworkConfigGenerator       networkConfigGenerator
-	NetworkConfiguratorInstaller networkConfiguratorInstaller
-	KubernetesScriptDownloader   kubernetesScriptDownloader
-	KubernetesArtefactDownloader kubernetesArtefactDownloader
-	// RPMResolver responsible for resolving rpm/package dependencies
-	RPMResolver    rpmResolver
-	RPMRepoCreator rpmRepoCreator
-	HelmClient     HelmClient
+	ImageDefinition *Definition
 }

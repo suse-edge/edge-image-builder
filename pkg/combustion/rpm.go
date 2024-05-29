@@ -26,7 +26,7 @@ const (
 //go:embed templates/10-rpm-install.sh.tpl
 var installRPMsScript string
 
-func configureRPMs(ctx *image.Context) ([]string, error) {
+func (c *Combustion) configureRPMs(ctx *image.Context) ([]string, error) {
 	if SkipRPMComponent(ctx) {
 		log.AuditComponentSkipped(rpmComponentName)
 		zap.L().Info("Skipping RPM component. Configuration is not provided")
@@ -60,13 +60,13 @@ func configureRPMs(ctx *image.Context) ([]string, error) {
 	}
 
 	log.Audit("Resolving package dependencies...")
-	repoPath, pkgsList, err := ctx.RPMResolver.Resolve(packages, localRPMConfig, artefactsPath)
+	repoPath, pkgsList, err := c.RPMResolver.Resolve(packages, localRPMConfig, artefactsPath)
 	if err != nil {
 		log.AuditComponentFailed(rpmComponentName)
 		return nil, fmt.Errorf("resolving rpm/package dependencies: %w", err)
 	}
 
-	if err = ctx.RPMRepoCreator.Create(repoPath); err != nil {
+	if err = c.RPMRepoCreator.Create(repoPath); err != nil {
 		log.AuditComponentFailed(rpmComponentName)
 		return nil, fmt.Errorf("creating resolved rpm repository: %w", err)
 	}
