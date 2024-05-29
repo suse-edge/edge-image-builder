@@ -65,7 +65,9 @@ func TestHelmCharts_ValuesFileNotFoundError(t *testing.T) {
 		},
 	}
 
-	charts, err := HelmCharts(helm, "", "", "", nil)
+	var registry Registry
+
+	charts, err := registry.HelmCharts(helm, "", "", "")
 	require.Error(t, err)
 	assert.EqualError(t, err, "handling chart resource: reading values content: open apache-values.yaml: no such file or directory")
 	assert.Nil(t, charts)
@@ -83,7 +85,9 @@ func TestHandleChart_MissingValuesDir(t *testing.T) {
 		URL:  "oci://registry-1.docker.io/bitnamicharts",
 	}
 
-	chart, err := handleChart(helmChart, helmRepo, "oops!", "", "", nil)
+	var registry Registry
+
+	chart, err := registry.handleChart(helmChart, helmRepo, "oops!", "", "")
 	assert.EqualError(t, err, "reading values content: open oops!/apache-values.yaml: no such file or directory")
 	assert.Nil(t, chart)
 }
@@ -99,13 +103,15 @@ func TestHandleChart_FailedDownload(t *testing.T) {
 		URL:  "https://suse-edge.github.io/charts",
 	}
 
-	helmClient := mockHelmClient{
-		addRepoFunc: func(repository *image.HelmRepository) error {
-			return fmt.Errorf("failed downloading")
+	registry := Registry{
+		HelmClient: mockHelmClient{
+			addRepoFunc: func(repository *image.HelmRepository) error {
+				return fmt.Errorf("failed downloading")
+			},
 		},
 	}
 
-	charts, err := handleChart(helmChart, helmRepo, "", "", "", helmClient)
+	charts, err := registry.handleChart(helmChart, helmRepo, "", "", "")
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "downloading chart: adding repo: failed downloading")
 	assert.Nil(t, charts)
@@ -122,22 +128,24 @@ func TestHandleChart_FailedTemplate(t *testing.T) {
 		URL:  "oci://registry-1.docker.io/bitnamicharts",
 	}
 
-	helmClient := mockHelmClient{
-		addRepoFunc: func(repository *image.HelmRepository) error {
-			return nil
-		},
-		registryLoginFunc: func(repository *image.HelmRepository) error {
-			return nil
-		},
-		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
-			return "", nil
-		},
-		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error) {
-			return nil, fmt.Errorf("failed templating")
+	registry := Registry{
+		HelmClient: mockHelmClient{
+			addRepoFunc: func(repository *image.HelmRepository) error {
+				return nil
+			},
+			registryLoginFunc: func(repository *image.HelmRepository) error {
+				return nil
+			},
+			pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
+				return "", nil
+			},
+			templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error) {
+				return nil, fmt.Errorf("failed templating")
+			},
 		},
 	}
 
-	charts, err := handleChart(helmChart, helmRepo, "", "", "", helmClient)
+	charts, err := registry.handleChart(helmChart, helmRepo, "", "", "")
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "templating chart: failed templating")
 	assert.Nil(t, charts)
@@ -154,22 +162,24 @@ func TestHandleChart_FailedGetChartContent(t *testing.T) {
 		URL:  "oci://registry-1.docker.io/bitnamicharts",
 	}
 
-	helmClient := mockHelmClient{
-		addRepoFunc: func(repository *image.HelmRepository) error {
-			return nil
-		},
-		registryLoginFunc: func(repository *image.HelmRepository) error {
-			return nil
-		},
-		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
-			return "does-not-exist.tgz", nil
-		},
-		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error) {
-			return nil, nil
+	registry := Registry{
+		HelmClient: mockHelmClient{
+			addRepoFunc: func(repository *image.HelmRepository) error {
+				return nil
+			},
+			registryLoginFunc: func(repository *image.HelmRepository) error {
+				return nil
+			},
+			pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
+				return "does-not-exist.tgz", nil
+			},
+			templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error) {
+				return nil, nil
+			},
 		},
 	}
 
-	charts, err := handleChart(helmChart, helmRepo, "", "", "", helmClient)
+	charts, err := registry.handleChart(helmChart, helmRepo, "", "", "")
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "getting chart content: reading chart: open does-not-exist.tgz: no such file or directory")
 	assert.Nil(t, charts)
@@ -181,13 +191,15 @@ func TestDownloadChart_FailedAddingRepo(t *testing.T) {
 		URL: "https://suse-edge.github.io/charts",
 	}
 
-	helmClient := mockHelmClient{
-		addRepoFunc: func(repository *image.HelmRepository) error {
-			return fmt.Errorf("failed to add repo")
+	registry := Registry{
+		HelmClient: mockHelmClient{
+			addRepoFunc: func(repository *image.HelmRepository) error {
+				return fmt.Errorf("failed to add repo")
+			},
 		},
 	}
 
-	chartPath, err := downloadChart(helmChart, helmRepo, helmClient, "")
+	chartPath, err := registry.downloadChart(helmChart, helmRepo, "")
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "adding repo: failed to add repo")
 	assert.Empty(t, chartPath)
@@ -203,19 +215,21 @@ func TestDownloadChart_ValidRegistryLogin(t *testing.T) {
 		},
 	}
 
-	helmClient := mockHelmClient{
-		addRepoFunc: func(repository *image.HelmRepository) error {
-			return nil
-		},
-		registryLoginFunc: func(repository *image.HelmRepository) error {
-			return nil
-		},
-		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
-			return "apache-chart.tgz", nil
+	registry := Registry{
+		HelmClient: mockHelmClient{
+			addRepoFunc: func(repository *image.HelmRepository) error {
+				return nil
+			},
+			registryLoginFunc: func(repository *image.HelmRepository) error {
+				return nil
+			},
+			pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
+				return "apache-chart.tgz", nil
+			},
 		},
 	}
 
-	chartPath, err := downloadChart(helmChart, helmRepo, helmClient, "")
+	chartPath, err := registry.downloadChart(helmChart, helmRepo, "")
 	require.NoError(t, err)
 	assert.Equal(t, "apache-chart.tgz", chartPath)
 }
@@ -230,16 +244,18 @@ func TestDownloadChart_FailedRegistryLogin(t *testing.T) {
 		},
 	}
 
-	helmClient := mockHelmClient{
-		addRepoFunc: func(repository *image.HelmRepository) error {
-			return nil
-		},
-		registryLoginFunc: func(repository *image.HelmRepository) error {
-			return fmt.Errorf("wrong credentials")
+	registry := Registry{
+		HelmClient: mockHelmClient{
+			addRepoFunc: func(repository *image.HelmRepository) error {
+				return nil
+			},
+			registryLoginFunc: func(repository *image.HelmRepository) error {
+				return fmt.Errorf("wrong credentials")
+			},
 		},
 	}
 
-	chartPath, err := downloadChart(helmChart, helmRepo, helmClient, "")
+	chartPath, err := registry.downloadChart(helmChart, helmRepo, "")
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "logging into registry: wrong credentials")
 	assert.Empty(t, chartPath)
@@ -251,16 +267,18 @@ func TestDownloadChart_FailedPulling(t *testing.T) {
 		URL: "https://suse-edge.github.io/charts",
 	}
 
-	helmClient := mockHelmClient{
-		addRepoFunc: func(repository *image.HelmRepository) error {
-			return nil
-		},
-		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
-			return "", fmt.Errorf("failed pulling chart")
+	registry := Registry{
+		HelmClient: mockHelmClient{
+			addRepoFunc: func(repository *image.HelmRepository) error {
+				return nil
+			},
+			pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
+				return "", fmt.Errorf("failed pulling chart")
+			},
 		},
 	}
 
-	chartPath, err := downloadChart(helmChart, helmRepo, helmClient, "")
+	chartPath, err := registry.downloadChart(helmChart, helmRepo, "")
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "pulling chart: failed pulling chart")
 	assert.Empty(t, chartPath)
@@ -277,16 +295,18 @@ func TestDownloadChart(t *testing.T) {
 		URL:  "oci://registry-1.docker.io/bitnamicharts",
 	}
 
-	helmClient := mockHelmClient{
-		addRepoFunc: func(repository *image.HelmRepository) error {
-			return nil
-		},
-		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
-			return "apache-chart.tgz", nil
+	registry := Registry{
+		HelmClient: mockHelmClient{
+			addRepoFunc: func(repository *image.HelmRepository) error {
+				return nil
+			},
+			pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
+				return "apache-chart.tgz", nil
+			},
 		},
 	}
 
-	chartPath, err := downloadChart(helmChart, helmRepo, helmClient, "")
+	chartPath, err := registry.downloadChart(helmChart, helmRepo, "")
 	require.NoError(t, err)
 	assert.Equal(t, "apache-chart.tgz", chartPath)
 }
@@ -320,39 +340,41 @@ func TestHelmCharts(t *testing.T) {
 	file := filepath.Join(dir, "apache-chart.tgz")
 	require.NoError(t, os.WriteFile(file, []byte("abc"), 0o600))
 
-	helmClient := mockHelmClient{
-		addRepoFunc: func(repository *image.HelmRepository) error {
-			return nil
-		},
-		registryLoginFunc: func(repository *image.HelmRepository) error {
-			return nil
-		},
-		pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
-			return file, nil
-		},
-		templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error) {
-			chartResource := []map[string]any{
-				{
-					"apiVersion": "v1",
-					"kind":       "CronJob",
-					"spec": map[string]any{
-						"image": "cronjob-image:0.5.6",
+	registry := Registry{
+		HelmClient: mockHelmClient{
+			addRepoFunc: func(repository *image.HelmRepository) error {
+				return nil
+			},
+			registryLoginFunc: func(repository *image.HelmRepository) error {
+				return nil
+			},
+			pullFunc: func(chart string, repository *image.HelmRepository, version, destDir string) (string, error) {
+				return file, nil
+			},
+			templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error) {
+				chartResource := []map[string]any{
+					{
+						"apiVersion": "v1",
+						"kind":       "CronJob",
+						"spec": map[string]any{
+							"image": "cronjob-image:0.5.6",
+						},
 					},
-				},
-				{
-					"apiVersion": "v1",
-					"kind":       "Job",
-					"spec": map[string]any{
-						"image": "job-image:6.1.0",
+					{
+						"apiVersion": "v1",
+						"kind":       "Job",
+						"spec": map[string]any{
+							"image": "job-image:6.1.0",
+						},
 					},
-				},
-			}
+				}
 
-			return chartResource, nil
+				return chartResource, nil
+			},
 		},
 	}
 
-	charts, err := HelmCharts(helm, "", "", "", helmClient)
+	charts, err := registry.HelmCharts(helm, "", "", "")
 	require.NoError(t, err)
 
 	assert.ElementsMatch(t, charts[0].ContainerImages, []string{"cronjob-image:0.5.6", "job-image:6.1.0"})

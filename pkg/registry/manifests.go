@@ -15,7 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func ManifestImages(manifestURLs []string, manifestsDir string) ([]string, error) {
+func (r *Registry) ManifestImages(manifestURLs []string, manifestsDir string) ([]string, error) {
 	var manifestPaths []string
 
 	if len(manifestURLs) != 0 {

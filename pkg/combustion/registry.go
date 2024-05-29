@@ -212,7 +212,7 @@ func (c *Combustion) configureEmbeddedArtifactRegistry(ctx *image.Context) (bool
 		return false, fmt.Errorf("storing helm charts: %w", err)
 	}
 
-	manifestImages, err := parseManifests(ctx)
+	manifestImages, err := c.parseManifests(ctx)
 	if err != nil {
 		return false, fmt.Errorf("parsing manifests: %w", err)
 	}
@@ -225,8 +225,7 @@ func (c *Combustion) configureEmbeddedArtifactRegistry(ctx *image.Context) (bool
 	if ctx.ImageDefinition.Kubernetes.Version != "" {
 		hostnames := getImageHostnames(images)
 
-		err = writeRegistryMirrors(ctx, hostnames)
-		if err != nil {
+		if err = writeRegistryMirrors(ctx, hostnames); err != nil {
 			return false, fmt.Errorf("writing registry mirrors: %w", err)
 		}
 	}
@@ -275,7 +274,7 @@ func containerImages(embeddedImages []image.ContainerImage, manifestImages []str
 	return images
 }
 
-func parseManifests(ctx *image.Context) ([]string, error) {
+func (c *Combustion) parseManifests(ctx *image.Context) ([]string, error) {
 	var manifestSrcDir string
 	if componentDir := filepath.Join(K8sDir, k8sManifestsDir); isComponentConfigured(ctx, componentDir) {
 		manifestSrcDir = filepath.Join(ctx.ImageConfigDir, componentDir)
@@ -285,7 +284,7 @@ func parseManifests(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("kubernetes manifests are provided but kubernetes version is not configured")
 	}
 
-	return registry.ManifestImages(ctx.ImageDefinition.Kubernetes.Manifests.URLs, manifestSrcDir)
+	return c.Registry.ManifestImages(ctx.ImageDefinition.Kubernetes.Manifests.URLs, manifestSrcDir)
 }
 
 func (c *Combustion) parseHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error) {
@@ -304,7 +303,7 @@ func (c *Combustion) parseHelmCharts(ctx *image.Context) ([]*registry.HelmChart,
 
 	helmValuesDir := filepath.Join(ctx.ImageConfigDir, K8sDir, HelmDir, ValuesDir)
 
-	return registry.HelmCharts(&ctx.ImageDefinition.Kubernetes.Helm, helmValuesDir, buildDir, ctx.ImageDefinition.Kubernetes.Version, c.HelmClient)
+	return c.Registry.HelmCharts(&ctx.ImageDefinition.Kubernetes.Helm, helmValuesDir, buildDir, ctx.ImageDefinition.Kubernetes.Version)
 }
 
 func storeHelmCharts(ctx *image.Context, helmCharts []*registry.HelmChart) error {

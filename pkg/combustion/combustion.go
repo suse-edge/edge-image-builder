@@ -11,6 +11,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
+	"github.com/suse-edge/edge-image-builder/pkg/registry"
 	"go.uber.org/zap"
 )
 
@@ -47,6 +48,11 @@ type rpmRepoCreator interface {
 	Create(path string) error
 }
 
+type embeddedRegistry interface {
+	HelmCharts(helm *image.Helm, valuesDir, buildDir, kubeVersion string) ([]*registry.HelmChart, error)
+	ManifestImages(manifestURLs []string, manifestsDir string) ([]string, error)
+}
+
 type Combustion struct {
 	NetworkConfigGenerator       networkConfigGenerator
 	NetworkConfiguratorInstaller networkConfiguratorInstaller
@@ -54,7 +60,7 @@ type Combustion struct {
 	KubernetesArtefactDownloader kubernetesArtefactDownloader
 	RPMResolver                  rpmResolver
 	RPMRepoCreator               rpmRepoCreator
-	HelmClient                   image.HelmClient
+	Registry                     embeddedRegistry
 }
 
 // Configure iterates over all separate Combustion components and configures them independently.

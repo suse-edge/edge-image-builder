@@ -188,16 +188,20 @@ func TestManifestImages_InvalidURL(t *testing.T) {
 		"k8s.io/examples/application/nginx-app.yaml",
 	}
 
+	var registry Registry
+
 	// Test
-	_, err := ManifestImages(manifestURLs, "")
+	_, err := registry.ManifestImages(manifestURLs, "")
 
 	// Verify
 	require.ErrorContains(t, err, "downloading manifests: downloading manifest 'k8s.io/examples/application/nginx-app.yaml': executing request: Get \"k8s.io/examples/application/nginx-app.yaml\": unsupported protocol scheme \"\"")
 }
 
 func TestManifestImages_LocalManifestDirNotDefined(t *testing.T) {
+	var registry Registry
+
 	// Test
-	containerImages, err := ManifestImages(nil, "")
+	containerImages, err := registry.ManifestImages(nil, "")
 
 	// Verify
 	require.NoError(t, err)
@@ -206,10 +210,11 @@ func TestManifestImages_LocalManifestDirNotDefined(t *testing.T) {
 
 func TestManifestImages_InvalidLocalManifestsDir(t *testing.T) {
 	// Setup
+	var registry Registry
 	localManifestsDir := "does-not-exist"
 
 	// Test
-	_, err := ManifestImages(nil, localManifestsDir)
+	_, err := registry.ManifestImages(nil, localManifestsDir)
 
 	// Verify
 	require.ErrorContains(t, err, "getting local manifest paths: reading manifest source dir 'does-not-exist': open does-not-exist: no such file or directory")
@@ -251,8 +256,10 @@ func TestManifestImages_InvalidLocalManifest(t *testing.T) {
 	err := fileio.CopyFile(localSampleManifestPath, filepath.Join(localManifestsSrcDir, "invalid-crd.yml"), fileio.NonExecutablePerms)
 	require.NoError(t, err)
 
+	var registry Registry
+
 	// Test
-	_, err = ManifestImages(nil, localManifestsSrcDir)
+	_, err = registry.ManifestImages(nil, localManifestsSrcDir)
 
 	// Verify
 	require.ErrorContains(t, err, "reading manifest: error unmarshalling manifest yaml")

@@ -65,8 +65,10 @@ func TestManifestImages(t *testing.T) {
 
 	manifestURLs := []string{"https://k8s.io/examples/application/nginx-app.yaml"}
 
+	var registry Registry
+
 	// Test
-	containerImages, err := ManifestImages(manifestURLs, manifestSrcDir)
+	containerImages, err := registry.ManifestImages(manifestURLs, manifestSrcDir)
 
 	// Verify
 	require.NoError(t, err)

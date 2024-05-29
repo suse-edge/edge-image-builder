@@ -15,29 +15,29 @@ type HelmChart struct {
 	ContainerImages []string
 }
 
-func HelmCharts(helm *image.Helm, valuesDir, buildDir, kubeVersion string, helmClient image.HelmClient) ([]*HelmChart, error) {
+func (r *Registry) HelmCharts(helm *image.Helm, valuesDir, buildDir, kubeVersion string) ([]*HelmChart, error) {
 	var charts []*HelmChart
 	chartRepoMap := mapChartRepos(helm)
 
 	for _, helmChart := range helm.Charts {
-		c := helmChart
-		r, ok := chartRepoMap[c.RepositoryName]
+		chart := helmChart
+		repository, ok := chartRepoMap[chart.RepositoryName]
 		if !ok {
-			return nil, fmt.Errorf("repository not found for chart %s", c.Name)
+			return nil, fmt.Errorf("repository not found for chart %s", chart.Name)
 		}
 
-		chart, err := handleChart(&c, r, valuesDir, buildDir, kubeVersion, helmClient)
+		c, err := r.handleChart(&chart, repository, valuesDir, buildDir, kubeVersion)
 		if err != nil {
 			return nil, fmt.Errorf("handling chart resource: %w", err)
 		}
 
-		charts = append(charts, chart)
+		charts = append(charts, c)
 	}
 
 	return charts, nil
 }
 
-func handleChart(chart *image.HelmChart, repo *image.HelmRepository, valuesDir, buildDir, kubeVersion string, helmClient image.HelmClient) (*HelmChart, error) {
+func (r *Registry) handleChart(chart *image.HelmChart, repo *image.HelmRepository, valuesDir, buildDir, kubeVersion string) (*HelmChart, error) {
 	var valuesPath string
 	var valuesContent []byte
 	if chart.ValuesFile != "" {
@@ -49,12 +49,12 @@ func handleChart(chart *image.HelmChart, repo *image.HelmRepository, valuesDir, 
 		}
 	}
 
-	chartPath, err := downloadChart(chart, repo, helmClient, buildDir)
+	chartPath, err := r.downloadChart(chart, repo, buildDir)
 	if err != nil {
 		return nil, fmt.Errorf("downloading chart: %w", err)
 	}
 
-	images, err := getChartContainerImages(chart, helmClient, chartPath, valuesPath, kubeVersion)
+	images, err := r.getChartContainerImages(chart, chartPath, valuesPath, kubeVersion)
 	if err != nil {
 		return nil, fmt.Errorf("getting chart container images: %w", err)
 	}
@@ -72,18 +72,18 @@ func handleChart(chart *image.HelmChart, repo *image.HelmRepository, valuesDir, 
 	return &helmChart, nil
 }
 
-func downloadChart(chart *image.HelmChart, repo *image.HelmRepository, helmClient image.HelmClient, destDir string) (string, error) {
+func (r *Registry) downloadChart(chart *image.HelmChart, repo *image.HelmRepository, destDir string) (string, error) {
 	if strings.HasPrefix(repo.URL, "http") {
-		if err := helmClient.AddRepo(repo); err != nil {
+		if err := r.HelmClient.AddRepo(repo); err != nil {
 			return "", fmt.Errorf("adding repo: %w", err)
 		}
 	} else if repo.Authentication.Username != "" && repo.Authentication.Password != "" {
-		if err := helmClient.RegistryLogin(repo); err != nil {
+		if err := r.HelmClient.RegistryLogin(repo); err != nil {
 			return "", fmt.Errorf("logging into registry: %w", err)
 		}
 	}
 
-	chartPath, err := helmClient.Pull(chart.Name, repo, chart.Version, destDir)
+	chartPath, err := r.HelmClient.Pull(chart.Name, repo, chart.Version, destDir)
 	if err != nil {
 		return "", fmt.Errorf("pulling chart: %w", err)
 	}
@@ -100,8 +100,8 @@ func getChartContent(chartPath string) (string, error) {
 	return base64.StdEncoding.EncodeToString(data), nil
 }
 
-func getChartContainerImages(chart *image.HelmChart, helmClient image.HelmClient, chartPath, valuesPath, kubeVersion string) ([]string, error) {
-	chartResources, err := helmClient.Template(chart.Name, chartPath, chart.Version, valuesPath, kubeVersion, chart.TargetNamespace)
+func (r *Registry) getChartContainerImages(chart *image.HelmChart, chartPath, valuesPath, kubeVersion string) ([]string, error) {
+	chartResources, err := r.HelmClient.Template(chart.Name, chartPath, chart.Version, valuesPath, kubeVersion, chart.TargetNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("templating chart: %w", err)
 	}
