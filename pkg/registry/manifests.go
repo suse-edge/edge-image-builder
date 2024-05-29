@@ -8,37 +8,22 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/http"
-	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
 
-func (r *Registry) ManifestImages(manifestURLs []string, manifestsDir string) ([]string, error) {
-	var manifestPaths []string
-
-	if len(manifestURLs) != 0 {
-		paths, err := DownloadManifests(manifestURLs, os.TempDir())
-		if err != nil {
-			return nil, fmt.Errorf("downloading manifests: %w", err)
-		}
-
-		manifestPaths = append(manifestPaths, paths...)
-	}
-
-	if manifestsDir != "" {
-		paths, err := getManifestPaths(manifestsDir)
-		if err != nil {
-			return nil, fmt.Errorf("getting local manifest paths: %w", err)
-		}
-
-		manifestPaths = append(manifestPaths, paths...)
-	}
-
+func (r *Registry) ManifestImages() ([]string, error) {
 	var imageSet = make(map[string]bool)
 
-	for _, path := range manifestPaths {
+	entries, err := os.ReadDir(r.manifestsDir)
+	if err != nil {
+		return nil, fmt.Errorf("reading manifest dir: %w", err)
+	}
+
+	for _, entry := range entries {
+		path := filepath.Join(r.manifestsDir, entry.Name())
+
 		manifests, err := readManifest(path)
 		if err != nil {
 			return nil, fmt.Errorf("reading manifest: %w", err)
@@ -124,33 +109,7 @@ func storeManifestImages(resource map[string]any, images map[string]bool) {
 	findImages(resource)
 }
 
-func getManifestPaths(src string) ([]string, error) {
-	if src == "" {
-		return nil, fmt.Errorf("manifest source directory not defined")
-	}
-
-	var manifestPaths []string
-
-	manifests, err := os.ReadDir(src)
-	if err != nil {
-		return nil, fmt.Errorf("reading manifest source dir '%s': %w", src, err)
-	}
-
-	for _, manifest := range manifests {
-		manifestName := strings.ToLower(manifest.Name())
-		if filepath.Ext(manifestName) != ".yaml" && filepath.Ext(manifestName) != ".yml" {
-			zap.S().Warnf("Skipping %s as it is not a yaml file", manifest.Name())
-			continue
-		}
-
-		sourcePath := filepath.Join(src, manifest.Name())
-		manifestPaths = append(manifestPaths, sourcePath)
-	}
-
-	return manifestPaths, nil
-}
-
-func DownloadManifests(manifestURLs []string, destPath string) ([]string, error) {
+func downloadManifests(manifestURLs []string, destPath string) ([]string, error) {
 	var manifestPaths []string
 
 	for index, manifestURL := range manifestURLs {

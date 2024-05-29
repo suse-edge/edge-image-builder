@@ -157,7 +157,7 @@ func IsEmbeddedArtifactRegistryConfigured(ctx *image.Context) bool {
 	return len(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages) != 0 ||
 		len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0 ||
 		len(ctx.ImageDefinition.Kubernetes.Helm.Charts) != 0 ||
-		isComponentConfigured(ctx, filepath.Join(K8sDir, k8sManifestsDir))
+		isComponentConfigured(ctx, filepath.Join(K8sDir, K8sManifestsDir))
 }
 
 func getImageHostnames(containerImages []string) []string {
@@ -212,7 +212,7 @@ func (c *Combustion) configureEmbeddedArtifactRegistry(ctx *image.Context) (bool
 		return false, fmt.Errorf("storing helm charts: %w", err)
 	}
 
-	manifestImages, err := c.parseManifests(ctx)
+	manifestImages, err := c.Registry.ManifestImages()
 	if err != nil {
 		return false, fmt.Errorf("parsing manifests: %w", err)
 	}
@@ -274,19 +274,6 @@ func containerImages(embeddedImages []image.ContainerImage, manifestImages []str
 	return images
 }
 
-func (c *Combustion) parseManifests(ctx *image.Context) ([]string, error) {
-	var manifestSrcDir string
-	if componentDir := filepath.Join(K8sDir, k8sManifestsDir); isComponentConfigured(ctx, componentDir) {
-		manifestSrcDir = filepath.Join(ctx.ImageConfigDir, componentDir)
-	}
-
-	if manifestSrcDir != "" && ctx.ImageDefinition.Kubernetes.Version == "" {
-		return nil, fmt.Errorf("kubernetes manifests are provided but kubernetes version is not configured")
-	}
-
-	return c.Registry.ManifestImages(ctx.ImageDefinition.Kubernetes.Manifests.URLs, manifestSrcDir)
-}
-
 func (c *Combustion) parseHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error) {
 	if len(ctx.ImageDefinition.Kubernetes.Helm.Charts) == 0 {
 		return nil, nil
@@ -311,7 +298,7 @@ func storeHelmCharts(ctx *image.Context, helmCharts []*registry.HelmChart) error
 		return nil
 	}
 
-	manifestsDir := filepath.Join(kubernetesArtefactsPath(ctx), k8sManifestsDir)
+	manifestsDir := filepath.Join(kubernetesArtefactsPath(ctx), K8sManifestsDir)
 	if err := os.MkdirAll(manifestsDir, os.ModePerm); err != nil {
 		return fmt.Errorf("creating kubernetes manifests dir: %w", err)
 	}

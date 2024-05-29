@@ -104,7 +104,7 @@ func TestHandleChart_FailedDownload(t *testing.T) {
 	}
 
 	registry := Registry{
-		HelmClient: mockHelmClient{
+		helmClient: mockHelmClient{
 			addRepoFunc: func(repository *image.HelmRepository) error {
 				return fmt.Errorf("failed downloading")
 			},
@@ -129,7 +129,7 @@ func TestHandleChart_FailedTemplate(t *testing.T) {
 	}
 
 	registry := Registry{
-		HelmClient: mockHelmClient{
+		helmClient: mockHelmClient{
 			addRepoFunc: func(repository *image.HelmRepository) error {
 				return nil
 			},
@@ -163,7 +163,7 @@ func TestHandleChart_FailedGetChartContent(t *testing.T) {
 	}
 
 	registry := Registry{
-		HelmClient: mockHelmClient{
+		helmClient: mockHelmClient{
 			addRepoFunc: func(repository *image.HelmRepository) error {
 				return nil
 			},
@@ -192,7 +192,7 @@ func TestDownloadChart_FailedAddingRepo(t *testing.T) {
 	}
 
 	registry := Registry{
-		HelmClient: mockHelmClient{
+		helmClient: mockHelmClient{
 			addRepoFunc: func(repository *image.HelmRepository) error {
 				return fmt.Errorf("failed to add repo")
 			},
@@ -216,7 +216,7 @@ func TestDownloadChart_ValidRegistryLogin(t *testing.T) {
 	}
 
 	registry := Registry{
-		HelmClient: mockHelmClient{
+		helmClient: mockHelmClient{
 			addRepoFunc: func(repository *image.HelmRepository) error {
 				return nil
 			},
@@ -245,7 +245,7 @@ func TestDownloadChart_FailedRegistryLogin(t *testing.T) {
 	}
 
 	registry := Registry{
-		HelmClient: mockHelmClient{
+		helmClient: mockHelmClient{
 			addRepoFunc: func(repository *image.HelmRepository) error {
 				return nil
 			},
@@ -268,7 +268,7 @@ func TestDownloadChart_FailedPulling(t *testing.T) {
 	}
 
 	registry := Registry{
-		HelmClient: mockHelmClient{
+		helmClient: mockHelmClient{
 			addRepoFunc: func(repository *image.HelmRepository) error {
 				return nil
 			},
@@ -296,7 +296,7 @@ func TestDownloadChart(t *testing.T) {
 	}
 
 	registry := Registry{
-		HelmClient: mockHelmClient{
+		helmClient: mockHelmClient{
 			addRepoFunc: func(repository *image.HelmRepository) error {
 				return nil
 			},
@@ -341,7 +341,7 @@ func TestHelmCharts(t *testing.T) {
 	require.NoError(t, os.WriteFile(file, []byte("abc"), 0o600))
 
 	registry := Registry{
-		HelmClient: mockHelmClient{
+		helmClient: mockHelmClient{
 			addRepoFunc: func(repository *image.HelmRepository) error {
 				return nil
 			},

@@ -269,7 +269,7 @@ values: content`, "oci://registry-1.docker.io/bitnamicharts"),
 
 	require.NoError(t, storeHelmCharts(ctx, charts))
 
-	apachePath := filepath.Join(ctx.ArtefactsDir, K8sDir, k8sManifestsDir, "apache.yaml")
+	apachePath := filepath.Join(ctx.ArtefactsDir, K8sDir, K8sManifestsDir, "apache.yaml")
 	apacheContent := `apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:

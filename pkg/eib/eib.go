@@ -141,9 +141,16 @@ func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion
 
 	if combustion.IsEmbeddedArtifactRegistryConfigured(ctx) {
 		certsDir := filepath.Join(ctx.ImageConfigDir, combustion.K8sDir, combustion.HelmDir, combustion.CertsDir)
-		combustionHandler.Registry = &registry.Registry{
-			HelmClient: helm.New(ctx.BuildDir, certsDir),
+		helmClient := helm.New(ctx.BuildDir, certsDir)
+
+		localManifestsDir := filepath.Join(ctx.ImageConfigDir, combustion.K8sDir, combustion.K8sManifestsDir)
+
+		r, err := registry.New(ctx, helmClient, localManifestsDir)
+		if err != nil {
+			return nil, fmt.Errorf("initialising embedded artifact registry: %w", err)
 		}
+
+		combustionHandler.Registry = r
 	}
 
 	if ctx.ImageDefinition.Kubernetes.Version != "" {

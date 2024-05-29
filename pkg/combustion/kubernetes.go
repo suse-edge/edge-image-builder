@@ -11,7 +11,6 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
-	"github.com/suse-edge/edge-image-builder/pkg/registry"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
@@ -24,7 +23,7 @@ const (
 	k8sConfigDir    = "config"
 	k8sInstallDir   = "install"
 	k8sImagesDir    = "images"
-	k8sManifestsDir = "manifests"
+	K8sManifestsDir = "manifests"
 
 	k8sInitServerConfigFile = "init_server.yaml"
 	k8sServerConfigFile     = "server.yaml"
@@ -137,7 +136,7 @@ func (c *Combustion) configureK3S(ctx *image.Context, cluster *kubernetes.Cluste
 		return "", fmt.Errorf("downloading k3s artefacts: %w", err)
 	}
 
-	manifestsPath, err := configureManifests(ctx)
+	manifestsPath, err := c.configureManifests(ctx)
 	if err != nil {
 		return "", fmt.Errorf("configuring kubernetes manifests: %w", err)
 	}
@@ -232,7 +231,7 @@ func (c *Combustion) configureRKE2(ctx *image.Context, cluster *kubernetes.Clust
 		return "", fmt.Errorf("downloading RKE2 artefacts: %w", err)
 	}
 
-	manifestsPath, err := configureManifests(ctx)
+	manifestsPath, err := c.configureManifests(ctx)
 	if err != nil {
 		return "", fmt.Errorf("configuring kubernetes manifests: %w", err)
 	}
@@ -358,11 +357,10 @@ func storeKubernetesConfig(config map[string]any, configPath string) error {
 	return os.WriteFile(configPath, data, fileio.NonExecutablePerms)
 }
 
-func configureManifests(ctx *image.Context) (string, error) {
-	manifestURLs := ctx.ImageDefinition.Kubernetes.Manifests.URLs
-	localManifestsConfigured := isComponentConfigured(ctx, filepath.Join(K8sDir, k8sManifestsDir))
+func (c *Combustion) configureManifests(ctx *image.Context) (string, error) {
+	var manifestsPathPopulated bool
 
-	manifestsPath := filepath.Join(K8sDir, k8sManifestsDir)
+	manifestsPath := filepath.Join(K8sDir, K8sManifestsDir)
 	manifestDestDir := filepath.Join(ctx.ArtefactsDir, manifestsPath)
 
 	if ctx.ImageDefinition.Kubernetes.Network.APIVIP != "" {
@@ -379,40 +377,20 @@ func configureManifests(ctx *image.Context) (string, error) {
 		if err = os.WriteFile(manifestPath, []byte(manifest), fileio.NonExecutablePerms); err != nil {
 			return "", fmt.Errorf("storing VIP manifest: %w", err)
 		}
+
+		manifestsPathPopulated = true
 	}
 
-	if !localManifestsConfigured && len(manifestURLs) == 0 {
-		// The registry component would have already created and populated the manifests path if helm resources are configured
-		// or required. This is a hack until the dependencies between the different combustion components are resolved.
-		if _, err := os.Stat(manifestDestDir); err == nil {
-			return prependArtefactPath(manifestsPath), nil
+	if c.Registry != nil && c.Registry.ManifestsPath() != "" {
+		if err := fileio.CopyFiles(c.Registry.ManifestsPath(), manifestDestDir, "", false); err != nil {
+			return "", fmt.Errorf("copying manifests to combustion dir: %w", err)
 		}
 
+		manifestsPathPopulated = true
+	}
+
+	if !manifestsPathPopulated {
 		return "", nil
-	}
-
-	err := os.MkdirAll(manifestDestDir, os.ModePerm)
-	if err != nil {
-		return "", fmt.Errorf("creating manifests destination dir: %w", err)
-	}
-
-	if localManifestsConfigured {
-		localManifestsSrcDir := filepath.Join(ctx.ImageConfigDir, K8sDir, k8sManifestsDir)
-		err = fileio.CopyFiles(localManifestsSrcDir, manifestDestDir, ".yaml", false)
-		if err != nil {
-			return "", fmt.Errorf("copying local manifests to combustion dir: %w", err)
-		}
-		err = fileio.CopyFiles(localManifestsSrcDir, manifestDestDir, ".yml", false)
-		if err != nil {
-			return "", fmt.Errorf("copying local manifests to combustion dir: %w", err)
-		}
-	}
-
-	if len(manifestURLs) != 0 {
-		_, err = registry.DownloadManifests(manifestURLs, manifestDestDir)
-		if err != nil {
-			return "", fmt.Errorf("downloading manifests to combustion dir: %w", err)
-		}
 	}
 
 	return prependArtefactPath(manifestsPath), nil

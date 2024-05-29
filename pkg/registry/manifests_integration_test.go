@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestDownloadManifests(t *testing.T) {
@@ -27,7 +28,7 @@ func TestDownloadManifests(t *testing.T) {
 	}
 
 	// Test
-	manifestPaths, err := DownloadManifests(manifestURLs, manifestDownloadDest)
+	manifestPaths, err := downloadManifests(manifestURLs, manifestDownloadDest)
 
 	// Verify
 	require.NoError(t, err)
@@ -53,22 +54,40 @@ func TestManifestImages(t *testing.T) {
 		"nginx:1.14.2",
 	}
 
-	manifestSrcDir := "local-manifests"
-	require.NoError(t, os.Mkdir(manifestSrcDir, 0o755))
+	localManifestsDir := "local-manifests"
+
+	require.NoError(t, os.Mkdir(localManifestsDir, 0o755))
 	defer func() {
-		assert.NoError(t, os.RemoveAll(manifestSrcDir))
+		assert.NoError(t, os.RemoveAll(localManifestsDir))
 	}()
 
-	localSampleManifestPath := filepath.Join("testdata", "sample-crd.yaml")
-	err := fileio.CopyFile(localSampleManifestPath, filepath.Join(manifestSrcDir, "sample-crd.yaml"), fileio.NonExecutablePerms)
+	sourceManifest := filepath.Join("testdata", "sample-crd.yaml")
+	destinationManifest := filepath.Join(localManifestsDir, "sample-crd.yaml")
+
+	require.NoError(t, fileio.CopyFile(sourceManifest, destinationManifest, fileio.NonExecutablePerms))
+
+	buildDir := filepath.Join(os.TempDir(), "_manifests-integration")
+	require.NoError(t, os.MkdirAll(buildDir, os.ModePerm))
+	defer func() {
+		assert.NoError(t, os.RemoveAll(buildDir))
+	}()
+
+	ctx := &image.Context{
+		BuildDir: buildDir,
+		ImageDefinition: &image.Definition{
+			Kubernetes: image.Kubernetes{
+				Manifests: image.Manifests{
+					URLs: []string{"https://k8s.io/examples/application/nginx-app.yaml"},
+				},
+			},
+		},
+	}
+
+	registry, err := New(ctx, nil, localManifestsDir)
 	require.NoError(t, err)
 
-	manifestURLs := []string{"https://k8s.io/examples/application/nginx-app.yaml"}
-
-	var registry Registry
-
 	// Test
-	containerImages, err := registry.ManifestImages(manifestURLs, manifestSrcDir)
+	containerImages, err := registry.ManifestImages()
 
 	// Verify
 	require.NoError(t, err)

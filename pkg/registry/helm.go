@@ -74,16 +74,16 @@ func (r *Registry) handleChart(chart *image.HelmChart, repo *image.HelmRepositor
 
 func (r *Registry) downloadChart(chart *image.HelmChart, repo *image.HelmRepository, destDir string) (string, error) {
 	if strings.HasPrefix(repo.URL, "http") {
-		if err := r.HelmClient.AddRepo(repo); err != nil {
+		if err := r.helmClient.AddRepo(repo); err != nil {
 			return "", fmt.Errorf("adding repo: %w", err)
 		}
 	} else if repo.Authentication.Username != "" && repo.Authentication.Password != "" {
-		if err := r.HelmClient.RegistryLogin(repo); err != nil {
+		if err := r.helmClient.RegistryLogin(repo); err != nil {
 			return "", fmt.Errorf("logging into registry: %w", err)
 		}
 	}
 
-	chartPath, err := r.HelmClient.Pull(chart.Name, repo, chart.Version, destDir)
+	chartPath, err := r.helmClient.Pull(chart.Name, repo, chart.Version, destDir)
 	if err != nil {
 		return "", fmt.Errorf("pulling chart: %w", err)
 	}
@@ -101,7 +101,7 @@ func getChartContent(chartPath string) (string, error) {
 }
 
 func (r *Registry) getChartContainerImages(chart *image.HelmChart, chartPath, valuesPath, kubeVersion string) ([]string, error) {
-	chartResources, err := r.HelmClient.Template(chart.Name, chartPath, chart.Version, valuesPath, kubeVersion, chart.TargetNamespace)
+	chartResources, err := r.helmClient.Template(chart.Name, chartPath, chart.Version, valuesPath, kubeVersion, chart.TargetNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("templating chart: %w", err)
 	}
