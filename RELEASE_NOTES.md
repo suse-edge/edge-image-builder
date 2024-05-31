@@ -6,6 +6,7 @@
 
 * Added the ability to consume both 512/4096 byte sector size disk input base-images
 * Added the ability to leverage Elemental node reset for unmanaged operating systems
+* Added version command and version marker on CRB images
 
 ## API
 
@@ -26,7 +27,7 @@
 ## Bug Fixes
 
 * [#405](https://github.com/suse-edge/edge-image-builder/issues/405) - OCI registries are assumed to include the chart name
-* [#354](https://github.com/suse-edge/edge-image-builder/issues/354) - Added version command and version marker on CRB images
+
 ---
 
 # v1.0.0

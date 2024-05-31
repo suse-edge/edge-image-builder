@@ -6,11 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/suse-edge/edge-image-builder/pkg/template"
-
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
+	"github.com/suse-edge/edge-image-builder/pkg/template"
+	"github.com/suse-edge/edge-image-builder/pkg/version"
 )
 
 const (
@@ -18,14 +18,14 @@ const (
 	messageComponentName = "identifier"
 )
 
-//go:embed templates/48-message.sh
+//go:embed templates/48-message.sh.tpl
 var messageScript string
 
 func configureMessage(ctx *image.Context) ([]string, error) {
 	values := struct {
 		Version string
 	}{
-		Version: template.GetVersion(),
+		Version: version.GetVersion(),
 	}
 
 	data, err := template.Parse(messageScriptName, messageScript, &values)
