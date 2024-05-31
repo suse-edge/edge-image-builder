@@ -3,9 +3,12 @@ package template
 import (
 	"bytes"
 	"fmt"
+	"runtime/debug"
 	"strings"
 	"text/template"
 )
+
+var version string
 
 func Parse(name string, contents string, templateData any) (string, error) {
 	if templateData == nil {
@@ -25,4 +28,21 @@ func Parse(name string, contents string, templateData any) (string, error) {
 	}
 
 	return buff.String(), nil
+}
+
+func GetVersion() string {
+	if version != "" {
+		return version
+	}
+
+	if info, ok := debug.ReadBuildInfo(); ok {
+		fmt.Println(info)
+		for _, setting := range info.Settings {
+			if setting.Key == "vcs.revision" {
+				return fmt.Sprintf("git-%s", setting.Value)
+			}
+		}
+	}
+
+	return ""
 }
