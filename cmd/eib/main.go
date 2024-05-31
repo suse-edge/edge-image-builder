@@ -14,6 +14,7 @@ func main() {
 	app.Commands = []*cli.Command{
 		cmd.NewBuildCommand(build.Run),
 		cmd.NewValidateCommand(build.Validate),
+		cmd.NewVersionCommand(build.Version),
 	}
 
 	if err := app.Run(os.Args); err != nil {

@@ -4,6 +4,8 @@
 
 ## General
 
+* Added version command and version marker on CRB images
+
 ## API
 
 ### Image Definition Changes
