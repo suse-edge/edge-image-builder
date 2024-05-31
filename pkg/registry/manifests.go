@@ -1,23 +1,25 @@
 package registry
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"slices"
 
-	"github.com/suse-edge/edge-image-builder/pkg/http"
 	"gopkg.in/yaml.v3"
 )
 
-func (r *Registry) ManifestImages() ([]string, error) {
+func (r *Registry) manifestImages() ([]string, error) {
 	var imageSet = make(map[string]bool)
 
 	entries, err := os.ReadDir(r.manifestsDir)
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("reading manifest dir: %w", err)
 	}
 
@@ -107,19 +109,4 @@ func storeManifestImages(resource map[string]any, images map[string]bool) {
 	}
 
 	findImages(resource)
-}
-
-func downloadManifests(manifestURLs []string, destPath string) ([]string, error) {
-	var manifestPaths []string
-
-	for index, manifestURL := range manifestURLs {
-		filePath := filepath.Join(destPath, fmt.Sprintf("dl-manifest-%d.yaml", index+1))
-		manifestPaths = append(manifestPaths, filePath)
-
-		if err := http.DownloadFile(context.Background(), manifestURL, filePath, nil); err != nil {
-			return nil, fmt.Errorf("downloading manifest '%s': %w", manifestURL, err)
-		}
-	}
-
-	return manifestPaths, nil
 }

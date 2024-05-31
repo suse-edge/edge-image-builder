@@ -57,22 +57,22 @@ func (m mockKubernetesArtefactDownloader) DownloadK3sArtefacts(arch image.Arch, 
 }
 
 type mockEmbeddedRegistry struct {
-	helmChartsFunc     func(helm *image.Helm, valuesDir, buildDir, kubeVersion string) ([]*registry.HelmChart, error)
-	manifestImagesFunc func() ([]string, error)
-	manifestsPathFunc  func() string
+	helmChartsFunc      func() ([]*registry.HelmCRD, error)
+	containerImagesFunc func() ([]string, error)
+	manifestsPathFunc   func() string
 }
 
-func (m mockEmbeddedRegistry) HelmCharts(helm *image.Helm, valuesDir, buildDir, kubeVersion string) ([]*registry.HelmChart, error) {
+func (m mockEmbeddedRegistry) HelmCharts() ([]*registry.HelmCRD, error) {
 	if m.helmChartsFunc != nil {
-		return m.helmChartsFunc(helm, valuesDir, buildDir, kubeVersion)
+		return m.helmChartsFunc()
 	}
 
 	panic("not implemented")
 }
 
-func (m mockEmbeddedRegistry) ManifestImages() ([]string, error) {
-	if m.manifestImagesFunc != nil {
-		return m.manifestImagesFunc()
+func (m mockEmbeddedRegistry) ContainerImages() ([]string, error) {
+	if m.containerImagesFunc != nil {
+		return m.containerImagesFunc()
 	}
 
 	panic("not implemented")
@@ -623,8 +623,24 @@ func TestConfigureManifests_NoSetup(t *testing.T) {
 	assert.Equal(t, "", manifestsPath)
 }
 
-func TestConfigureManifests(t *testing.T) {
-	// Setup
+func TestConfigureManifests_InvalidManifestDir(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	c := Combustion{
+		Registry: &mockEmbeddedRegistry{
+			manifestsPathFunc: func() string {
+				return "non-existing"
+			},
+		},
+	}
+
+	_, err := c.configureManifests(ctx)
+	require.Error(t, err)
+	assert.EqualError(t, err, "copying manifests to combustion dir: reading source dir: open non-existing: no such file or directory")
+}
+
+func TestConfigureManifests_HelmChartsError(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -633,6 +649,44 @@ func TestConfigureManifests(t *testing.T) {
 			manifestsPathFunc: func() string {
 				// Use local test files
 				return filepath.Join("..", "registry", "testdata")
+			},
+			helmChartsFunc: func() ([]*registry.HelmCRD, error) {
+				return nil, fmt.Errorf("some error")
+			},
+		},
+	}
+
+	_, err := c.configureManifests(ctx)
+	require.Error(t, err)
+	assert.EqualError(t, err, "getting helm charts: some error")
+}
+
+func TestConfigureManifests(t *testing.T) {
+	// Setup
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	helmChart := &image.HelmChart{
+		Name:                  "apache",
+		RepositoryName:        "apache-repo",
+		TargetNamespace:       "web",
+		CreateNamespace:       true,
+		InstallationNamespace: "kube-system",
+		Version:               "10.7.0",
+		ValuesFile:            "",
+	}
+
+	c := Combustion{
+		Registry: &mockEmbeddedRegistry{
+			manifestsPathFunc: func() string {
+				// Use local test files
+				return filepath.Join("..", "registry", "testdata")
+			},
+			helmChartsFunc: func() ([]*registry.HelmCRD, error) {
+				return []*registry.HelmCRD{
+					registry.NewHelmCRD(helmChart, "some-content", `
+values: content`, "oci://registry-1.docker.io/bitnamicharts"),
+				}, nil
 			},
 		},
 	}
@@ -655,6 +709,28 @@ func TestConfigureManifests(t *testing.T) {
 	assert.Contains(t, contents, "kind: Deployment")
 	assert.Contains(t, contents, "name: my-nginx")
 	assert.Contains(t, contents, "image: nginx:1.14.2")
+
+	chartPath := filepath.Join(ctx.ArtefactsDir, K8sDir, K8sManifestsDir, "apache.yaml")
+	chartContent := `apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+    name: apache
+    namespace: kube-system
+    annotations:
+        edge.suse.com/repository-url: oci://registry-1.docker.io/bitnamicharts
+        edge.suse.com/source: edge-image-builder
+spec:
+    version: 10.7.0
+    valuesContent: |4-
+        values: content
+    chartContent: some-content
+    targetNamespace: web
+    createNamespace: true
+`
+	b, err = os.ReadFile(chartPath)
+	require.NoError(t, err)
+
+	assert.Equal(t, chartContent, string(b))
 }
 
 func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
@@ -684,6 +760,9 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 			manifestsPathFunc: func() string {
 				// Use local test files
 				return filepath.Join("..", "registry", "testdata")
+			},
+			helmChartsFunc: func() ([]*registry.HelmCRD, error) {
+				return nil, nil
 			},
 		},
 	}

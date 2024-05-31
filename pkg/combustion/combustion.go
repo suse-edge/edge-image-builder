@@ -49,9 +49,9 @@ type rpmRepoCreator interface {
 }
 
 type embeddedRegistry interface {
-	HelmCharts(helm *image.Helm, valuesDir, buildDir, kubeVersion string) ([]*registry.HelmChart, error)
-	ManifestImages() ([]string, error)
 	ManifestsPath() string
+	ContainerImages() ([]string, error)
+	HelmCharts() ([]*registry.HelmCRD, error)
 }
 
 type Combustion struct {

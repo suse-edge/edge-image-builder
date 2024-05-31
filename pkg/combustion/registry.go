@@ -13,10 +13,8 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
-	"github.com/suse-edge/edge-image-builder/pkg/registry"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
-	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -203,21 +201,11 @@ func writeRegistryMirrors(ctx *image.Context, hostnames []string) error {
 }
 
 func (c *Combustion) configureEmbeddedArtifactRegistry(ctx *image.Context) (bool, error) {
-	helmCharts, err := c.parseHelmCharts(ctx)
+	images, err := c.Registry.ContainerImages()
 	if err != nil {
-		return false, fmt.Errorf("parsing helm charts: %w", err)
+		return false, fmt.Errorf("extracting container images: %w", err)
 	}
 
-	if err = storeHelmCharts(ctx, helmCharts); err != nil {
-		return false, fmt.Errorf("storing helm charts: %w", err)
-	}
-
-	manifestImages, err := c.Registry.ManifestImages()
-	if err != nil {
-		return false, fmt.Errorf("parsing manifests: %w", err)
-	}
-
-	images := containerImages(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages, manifestImages, helmCharts)
 	if len(images) == 0 {
 		return false, nil
 	}
@@ -246,76 +234,6 @@ func (c *Combustion) configureEmbeddedArtifactRegistry(ctx *image.Context) (bool
 	}
 
 	return true, nil
-}
-
-func containerImages(embeddedImages []image.ContainerImage, manifestImages []string, helmCharts []*registry.HelmChart) []string {
-	imageSet := map[string]bool{}
-
-	for _, img := range embeddedImages {
-		imageSet[img.Name] = true
-	}
-
-	for _, img := range manifestImages {
-		imageSet[img] = true
-	}
-
-	for _, chart := range helmCharts {
-		for _, img := range chart.ContainerImages {
-			imageSet[img] = true
-		}
-	}
-
-	var images []string
-
-	for img := range imageSet {
-		images = append(images, img)
-	}
-
-	return images
-}
-
-func (c *Combustion) parseHelmCharts(ctx *image.Context) ([]*registry.HelmChart, error) {
-	if len(ctx.ImageDefinition.Kubernetes.Helm.Charts) == 0 {
-		return nil, nil
-	}
-
-	if ctx.ImageDefinition.Kubernetes.Version == "" {
-		return nil, fmt.Errorf("helm charts are provided but kubernetes version is not configured")
-	}
-
-	buildDir := filepath.Join(ctx.BuildDir, HelmDir)
-	if err := os.MkdirAll(buildDir, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("creating helm dir: %w", err)
-	}
-
-	helmValuesDir := filepath.Join(ctx.ImageConfigDir, K8sDir, HelmDir, ValuesDir)
-
-	return c.Registry.HelmCharts(&ctx.ImageDefinition.Kubernetes.Helm, helmValuesDir, buildDir, ctx.ImageDefinition.Kubernetes.Version)
-}
-
-func storeHelmCharts(ctx *image.Context, helmCharts []*registry.HelmChart) error {
-	if len(helmCharts) == 0 {
-		return nil
-	}
-
-	manifestsDir := filepath.Join(kubernetesArtefactsPath(ctx), K8sManifestsDir)
-	if err := os.MkdirAll(manifestsDir, os.ModePerm); err != nil {
-		return fmt.Errorf("creating kubernetes manifests dir: %w", err)
-	}
-
-	for _, chart := range helmCharts {
-		data, err := yaml.Marshal(chart.CRD)
-		if err != nil {
-			return fmt.Errorf("marshaling resource: %w", err)
-		}
-
-		chartFileName := fmt.Sprintf("%s.yaml", chart.CRD.Metadata.Name)
-		if err = os.WriteFile(filepath.Join(manifestsDir, chartFileName), data, fileio.NonExecutablePerms); err != nil {
-			return fmt.Errorf("storing manifest '%s: %w", chartFileName, err)
-		}
-	}
-
-	return nil
 }
 
 func registryArtefactsPath(ctx *image.Context) string {

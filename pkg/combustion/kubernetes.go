@@ -381,12 +381,39 @@ func (c *Combustion) configureManifests(ctx *image.Context) (string, error) {
 		manifestsPathPopulated = true
 	}
 
-	if c.Registry != nil && c.Registry.ManifestsPath() != "" {
-		if err := fileio.CopyFiles(c.Registry.ManifestsPath(), manifestDestDir, "", false); err != nil {
-			return "", fmt.Errorf("copying manifests to combustion dir: %w", err)
+	if c.Registry != nil {
+		if c.Registry.ManifestsPath() != "" {
+			if err := fileio.CopyFiles(c.Registry.ManifestsPath(), manifestDestDir, "", false); err != nil {
+				return "", fmt.Errorf("copying manifests to combustion dir: %w", err)
+			}
+
+			manifestsPathPopulated = true
 		}
 
-		manifestsPathPopulated = true
+		charts, err := c.Registry.HelmCharts()
+		if err != nil {
+			return "", fmt.Errorf("getting helm charts: %w", err)
+		}
+
+		if len(charts) != 0 {
+			if err = os.MkdirAll(manifestDestDir, os.ModePerm); err != nil {
+				return "", fmt.Errorf("creating manifests destination dir: %w", err)
+			}
+
+			for _, chart := range charts {
+				data, err := yaml.Marshal(chart)
+				if err != nil {
+					return "", fmt.Errorf("marshaling helm chart: %w", err)
+				}
+
+				chartFileName := fmt.Sprintf("%s.yaml", chart.Metadata.Name)
+				if err = os.WriteFile(filepath.Join(manifestDestDir, chartFileName), data, fileio.NonExecutablePerms); err != nil {
+					return "", fmt.Errorf("storing helm chart: %w", err)
+				}
+			}
+
+			manifestsPathPopulated = true
+		}
 	}
 
 	if !manifestsPathPopulated {

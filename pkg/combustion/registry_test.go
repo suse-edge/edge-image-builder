@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
-	"github.com/suse-edge/edge-image-builder/pkg/registry"
 )
 
 func TestCreateRegistryCommand(t *testing.T) {
@@ -206,88 +205,4 @@ func TestGetImageHostnames(t *testing.T) {
 
 	// Verify
 	assert.Equal(t, expectedHostnames, hostnames)
-}
-
-func TestContainerImages(t *testing.T) {
-	embeddedImages := []image.ContainerImage{
-		{
-			Name: "hello-world:latest",
-		},
-		{
-			Name: "embedded-image:1.0.0",
-		},
-	}
-
-	manifestImages := []string{
-		"hello-world:latest",
-		"manifest-image:1.0.0",
-	}
-
-	helmCharts := []*registry.HelmChart{
-		{
-			ContainerImages: []string{
-				"hello-world:latest",
-				"helm-image:1.0.0",
-			},
-		},
-		{
-			ContainerImages: []string{
-				"helm-image:2.0.0",
-			},
-		},
-	}
-
-	assert.ElementsMatch(t, []string{
-		"hello-world:latest",
-		"embedded-image:1.0.0",
-		"manifest-image:1.0.0",
-		"helm-image:1.0.0",
-		"helm-image:2.0.0",
-	}, containerImages(embeddedImages, manifestImages, helmCharts))
-}
-
-func TestStoreHelmCharts(t *testing.T) {
-	ctx, teardown := setupContext(t)
-	defer teardown()
-
-	helmChart := &image.HelmChart{
-		Name:                  "apache",
-		RepositoryName:        "apache-repo",
-		TargetNamespace:       "web",
-		CreateNamespace:       true,
-		InstallationNamespace: "kube-system",
-		Version:               "10.7.0",
-		ValuesFile:            "",
-	}
-
-	charts := []*registry.HelmChart{
-		{
-			CRD: registry.NewHelmCRD(helmChart, "some-content", `
-values: content`, "oci://registry-1.docker.io/bitnamicharts"),
-		},
-	}
-
-	require.NoError(t, storeHelmCharts(ctx, charts))
-
-	apachePath := filepath.Join(ctx.ArtefactsDir, K8sDir, K8sManifestsDir, "apache.yaml")
-	apacheContent := `apiVersion: helm.cattle.io/v1
-kind: HelmChart
-metadata:
-    name: apache
-    namespace: kube-system
-    annotations:
-        edge.suse.com/repository-url: oci://registry-1.docker.io/bitnamicharts
-        edge.suse.com/source: edge-image-builder
-spec:
-    version: 10.7.0
-    valuesContent: |4-
-        values: content
-    chartContent: some-content
-    targetNamespace: web
-    createNamespace: true
-`
-	contents, err := os.ReadFile(apachePath)
-	require.NoError(t, err)
-
-	assert.Equal(t, apacheContent, string(contents))
 }

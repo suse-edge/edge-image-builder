@@ -5,90 +5,34 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-type HelmChart struct {
-	CRD             HelmCRD
-	ContainerImages []string
-}
+func (r *Registry) HelmCharts() ([]*HelmCRD, error) {
+	var crds []*HelmCRD
 
-func (r *Registry) HelmCharts(helm *image.Helm, valuesDir, buildDir, kubeVersion string) ([]*HelmChart, error) {
-	var charts []*HelmChart
-	chartRepoMap := mapChartRepos(helm)
-
-	for _, helmChart := range helm.Charts {
-		chart := helmChart
-		repository, ok := chartRepoMap[chart.RepositoryName]
-		if !ok {
-			return nil, fmt.Errorf("repository not found for chart %s", chart.Name)
-		}
-
-		c, err := r.handleChart(&chart, repository, valuesDir, buildDir, kubeVersion)
+	for _, chart := range r.helmCharts {
+		chartContent, err := getChartContent(chart.chartPath)
 		if err != nil {
-			return nil, fmt.Errorf("handling chart resource: %w", err)
+			return nil, fmt.Errorf("getting chart content: %w", err)
 		}
 
-		charts = append(charts, c)
-	}
-
-	return charts, nil
-}
-
-func (r *Registry) handleChart(chart *image.HelmChart, repo *image.HelmRepository, valuesDir, buildDir, kubeVersion string) (*HelmChart, error) {
-	var valuesPath string
-	var valuesContent []byte
-	if chart.ValuesFile != "" {
-		var err error
-		valuesPath = filepath.Join(valuesDir, chart.ValuesFile)
-		valuesContent, err = os.ReadFile(valuesPath)
-		if err != nil {
-			return nil, fmt.Errorf("reading values content: %w", err)
+		var valuesPath string
+		var valuesContent []byte
+		if chart.ValuesFile != "" {
+			valuesPath = filepath.Join(r.helmValuesDir, chart.ValuesFile)
+			valuesContent, err = os.ReadFile(valuesPath)
+			if err != nil {
+				return nil, fmt.Errorf("reading values content: %w", err)
+			}
 		}
+
+		crd := NewHelmCRD(&chart.HelmChart, chartContent, string(valuesContent), chart.repositoryURL)
+		crds = append(crds, crd)
 	}
 
-	chartPath, err := r.downloadChart(chart, repo, buildDir)
-	if err != nil {
-		return nil, fmt.Errorf("downloading chart: %w", err)
-	}
-
-	images, err := r.getChartContainerImages(chart, chartPath, valuesPath, kubeVersion)
-	if err != nil {
-		return nil, fmt.Errorf("getting chart container images: %w", err)
-	}
-
-	chartContent, err := getChartContent(chartPath)
-	if err != nil {
-		return nil, fmt.Errorf("getting chart content: %w", err)
-	}
-
-	helmChart := HelmChart{
-		CRD:             NewHelmCRD(chart, chartContent, string(valuesContent), repo.URL),
-		ContainerImages: images,
-	}
-
-	return &helmChart, nil
-}
-
-func (r *Registry) downloadChart(chart *image.HelmChart, repo *image.HelmRepository, destDir string) (string, error) {
-	if strings.HasPrefix(repo.URL, "http") {
-		if err := r.helmClient.AddRepo(repo); err != nil {
-			return "", fmt.Errorf("adding repo: %w", err)
-		}
-	} else if repo.Authentication.Username != "" && repo.Authentication.Password != "" {
-		if err := r.helmClient.RegistryLogin(repo); err != nil {
-			return "", fmt.Errorf("logging into registry: %w", err)
-		}
-	}
-
-	chartPath, err := r.helmClient.Pull(chart.Name, repo, chart.Version, destDir)
-	if err != nil {
-		return "", fmt.Errorf("pulling chart: %w", err)
-	}
-
-	return chartPath, nil
+	return crds, nil
 }
 
 func getChartContent(chartPath string) (string, error) {
@@ -98,6 +42,22 @@ func getChartContent(chartPath string) (string, error) {
 	}
 
 	return base64.StdEncoding.EncodeToString(data), nil
+}
+
+func (r *Registry) helmChartImages() ([]string, error) {
+	var containerImages []string
+
+	for _, chart := range r.helmCharts {
+		valuesPath := filepath.Join(r.helmValuesDir, chart.ValuesFile)
+		images, err := r.getChartContainerImages(&chart.HelmChart, chart.chartPath, valuesPath, r.kubeVersion)
+		if err != nil {
+			return nil, err
+		}
+
+		containerImages = append(containerImages, images...)
+	}
+
+	return containerImages, nil
 }
 
 func (r *Registry) getChartContainerImages(chart *image.HelmChart, chartPath, valuesPath, kubeVersion string) ([]string, error) {
@@ -117,19 +77,4 @@ func (r *Registry) getChartContainerImages(chart *image.HelmChart, chartPath, va
 	}
 
 	return images, nil
-}
-
-func mapChartRepos(helm *image.Helm) map[string]*image.HelmRepository {
-	chartRepoMap := make(map[string]*image.HelmRepository)
-
-	for _, chart := range helm.Charts {
-		for _, repo := range helm.Repositories {
-			if chart.RepositoryName == repo.Name {
-				r := repo
-				chartRepoMap[chart.RepositoryName] = &r
-			}
-		}
-	}
-
-	return chartRepoMap
 }

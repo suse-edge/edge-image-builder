@@ -83,11 +83,11 @@ func TestManifestImages(t *testing.T) {
 		},
 	}
 
-	registry, err := New(ctx, nil, localManifestsDir)
+	registry, err := New(ctx, localManifestsDir, nil, "")
 	require.NoError(t, err)
 
 	// Test
-	containerImages, err := registry.ManifestImages()
+	containerImages, err := registry.manifestImages()
 
 	// Verify
 	require.NoError(t, err)

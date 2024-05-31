@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestReadManifest(t *testing.T) {
@@ -124,85 +123,9 @@ func TestStoreManifestImages_EmptyManifest(t *testing.T) {
 	assert.Equal(t, map[string]bool{}, extractedImagesSet)
 }
 
-func TestNew_InvalidManifestURL(t *testing.T) {
-	// Setup
-	buildDir := filepath.Join(os.TempDir(), "_manifests")
-	require.NoError(t, os.MkdirAll(buildDir, os.ModePerm))
-	defer func() {
-		assert.NoError(t, os.RemoveAll(buildDir))
-	}()
-
-	ctx := &image.Context{
-		BuildDir: buildDir,
-		ImageDefinition: &image.Definition{
-			Kubernetes: image.Kubernetes{
-				Manifests: image.Manifests{
-					URLs: []string{"k8s.io/examples/application/nginx-app.yaml"}},
-			},
-		},
-	}
-
-	// Test
-	_, err := New(ctx, nil, "")
-
-	// Verify
-	require.Error(t, err)
-	assert.ErrorContains(t, err, "downloading manifests: downloading manifest 'k8s.io/examples/application/nginx-app.yaml': executing request: Get \"k8s.io/examples/application/nginx-app.yaml\": unsupported protocol scheme \"\"")
-}
-
-func TestManifestImages_LocalManifestDirNotDefined(t *testing.T) {
-	var registry Registry
-
-	// Test
-	containerImages, err := registry.ManifestImages()
-
-	// Verify
-	require.Error(t, err)
-	assert.EqualError(t, err, "reading manifest dir: open : no such file or directory")
-	assert.Empty(t, containerImages)
-}
-
-func TestManifestImages_InvalidLocalManifestsDir(t *testing.T) {
-	// Setup
-	registry := Registry{
-		manifestsDir: "does-not-exist",
-	}
-
-	// Test
-	_, err := registry.ManifestImages()
-
-	// Verify
-	require.ErrorContains(t, err, "reading manifest dir: open does-not-exist: no such file or directory")
-}
-
-func TestDownloadManifests_NoManifest(t *testing.T) {
-	// Setup
-	manifestDownloadDest := ""
-
-	// Test
-	manifestPaths, err := downloadManifests(nil, manifestDownloadDest)
-
-	// Verify
-	require.NoError(t, err)
-	assert.Equal(t, 0, len(manifestPaths))
-}
-
-func TestDownloadManifests_InvalidURL(t *testing.T) {
-	// Setup
-	manifestURLs := []string{"k8s.io/examples/application/nginx-app.yaml"}
-	manifestDownloadDest := ""
-
-	// Test
-	manifestPaths, err := downloadManifests(manifestURLs, manifestDownloadDest)
-
-	// Verify
-	require.ErrorContains(t, err, "downloading manifest 'k8s.io/examples/application/nginx-app.yaml': executing request: Get \"k8s.io/examples/application/nginx-app.yaml\": unsupported protocol scheme \"")
-	assert.Equal(t, 0, len(manifestPaths))
-}
-
 func TestManifestImages_InvalidLocalManifest(t *testing.T) {
 	// Setup
-	const localManifestsSrcDir = "local-manifests"
+	localManifestsSrcDir := "local-manifests"
 
 	require.NoError(t, os.Mkdir(localManifestsSrcDir, 0o755))
 	defer func() {
@@ -218,7 +141,7 @@ func TestManifestImages_InvalidLocalManifest(t *testing.T) {
 	}
 
 	// Test
-	_, err := registry.ManifestImages()
+	_, err := registry.manifestImages()
 
 	// Verify
 	require.ErrorContains(t, err, "reading manifest: error unmarshalling manifest yaml")
