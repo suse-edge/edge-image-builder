@@ -4,15 +4,23 @@
 
 ## General
 
-* Added the ability to consume both 512/4096 byte sector size disk input base-images
-* Added the ability to leverage Elemental node reset for unmanaged operating systems
-* Added version command and version marker on CRB images
-
 ## API
 
 ### Image Definition Changes
 
 ### Image Configuration Directory Changes
+
+## Bug Fixes
+
+---
+
+# v1.0.2
+
+## General
+
+* Added the ability to consume both 512/4096 byte sector size disk input base-images
+* Added the ability to leverage Elemental node reset for unmanaged operating systems
+* Added version command and version marker on CRB images
 
 ## Bug Fixes
 
