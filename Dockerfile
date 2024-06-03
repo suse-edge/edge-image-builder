@@ -11,6 +11,7 @@ WORKDIR /src
 COPY go.mod go.sum ./
 COPY ./cmd ./cmd
 COPY ./pkg ./pkg
+COPY .git .git
 
 RUN --mount=type=cache,id=gomod,target=/go/pkg/mod \
     --mount=type=cache,id=gobuild,target=/root/.cache/go-build \
