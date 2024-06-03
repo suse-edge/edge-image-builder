@@ -92,6 +92,29 @@ func TestStoreManifestImages(t *testing.T) {
 	assert.ElementsMatch(t, expectedImages, allImages)
 }
 
+func TestStoreManifestImages_InvalidKinds(t *testing.T) {
+	// Setup
+	var extractedImagesSet = make(map[string]bool)
+	manifestData := map[string]any{
+		"apiVersion": "apps/v1",
+		"kind":       "InvalidKind",
+		"spec": map[string]any{
+			"containers": []any{
+				map[string]any{
+					"name":  "nginx",
+					"image": "nginx:1.14.2",
+				},
+			},
+		},
+	}
+
+	// Test
+	storeManifestImages(manifestData, extractedImagesSet)
+
+	// Verify
+	assert.Equal(t, map[string]bool{}, extractedImagesSet)
+}
+
 func TestStoreManifestImages_EmptyManifest(t *testing.T) {
 	// Setup
 	var extractedImagesSet = make(map[string]bool)
