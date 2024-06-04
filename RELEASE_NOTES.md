@@ -4,10 +4,6 @@
 
 ## General
 
-* Added the ability to consume both 512/4096 byte sector size disk input base-images
-* Added the ability to leverage Elemental node reset for unmanaged operating systems
-* Added version command and version marker on CRB images
-
 ## API
 
 ### Image Definition Changes
@@ -16,9 +12,21 @@
 
 ## Bug Fixes
 
-* [#442](https://github.com/suse-edge/edge-image-builder/issues/442) - Only get images from specific Kubernetes objects
+---
+
+# v1.0.2
+
+## General
+
+* Added the ability to consume both 512/4096 byte sector size disk input base-images
+* Added the ability to leverage Elemental node reset for unmanaged operating systems
+* Added version command and version marker on CRB images
+
+## Bug Fixes
+
 * [#429](https://github.com/suse-edge/edge-image-builder/issues/429) - Automatically set execute bit on scripts
 * [#447](https://github.com/suse-edge/edge-image-builder/issues/447) - Support >512 byte sector size base images
+* [#442](https://github.com/suse-edge/edge-image-builder/issues/442) - Only get images from specific Kubernetes objects
 
 ---
 
