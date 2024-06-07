@@ -24,7 +24,7 @@ type helmClient interface {
 
 type helmChart struct {
 	image.HelmChart
-	chartPath     string
+	localPath     string
 	repositoryURL string
 }
 
@@ -71,9 +71,12 @@ func storeManifests(ctx *image.Context, localManifestsDir string) (string, error
 			return "", fmt.Errorf("creating manifests dir: %w", err)
 		}
 
-		_, err := downloadManifests(manifestURLs, manifestsDestDir)
-		if err != nil {
-			return "", fmt.Errorf("downloading manifests: %w", err)
+		for index, manifestURL := range manifestURLs {
+			filePath := filepath.Join(manifestsDestDir, fmt.Sprintf("dl-manifest-%d.yaml", index+1))
+
+			if err := http.DownloadFile(context.Background(), manifestURL, filePath, nil); err != nil {
+				return "", fmt.Errorf("downloading manifest '%s': %w", manifestURL, err)
+			}
 		}
 	}
 
@@ -82,21 +85,6 @@ func storeManifests(ctx *image.Context, localManifestsDir string) (string, error
 	}
 
 	return manifestsDestDir, nil
-}
-
-func downloadManifests(manifestURLs []string, destPath string) ([]string, error) {
-	var manifestPaths []string
-
-	for index, manifestURL := range manifestURLs {
-		filePath := filepath.Join(destPath, fmt.Sprintf("dl-manifest-%d.yaml", index+1))
-		manifestPaths = append(manifestPaths, filePath)
-
-		if err := http.DownloadFile(context.Background(), manifestURL, filePath, nil); err != nil {
-			return nil, fmt.Errorf("downloading manifest '%s': %w", manifestURL, err)
-		}
-	}
-
-	return manifestPaths, nil
 }
 
 func copyLocalManifests(localManifestsDir, manifestsBuildDir string) error {
@@ -141,14 +129,14 @@ func storeHelmCharts(ctx *image.Context, helmClient helmClient) ([]*helmChart, e
 			return nil, fmt.Errorf("repository not found for chart %s", c.Name)
 		}
 
-		chartPath, err := downloadChart(helmClient, &c, repository, helmDir)
+		localPath, err := downloadChart(helmClient, &c, repository, helmDir)
 		if err != nil {
 			return nil, fmt.Errorf("downloading chart: %w", err)
 		}
 
 		charts = append(charts, &helmChart{
 			HelmChart:     c,
-			chartPath:     chartPath,
+			localPath:     localPath,
 			repositoryURL: repository.URL,
 		})
 	}

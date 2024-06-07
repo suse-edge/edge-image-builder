@@ -47,7 +47,7 @@ func (m mockHelmClient) Template(chart, repository, version, valuesFilePath, kub
 	panic("not implemented")
 }
 
-func TestHelmChartImages_Empty(t *testing.T) {
+func TestRegistry_HelmChartImages_Empty(t *testing.T) {
 	var registry Registry
 
 	images, err := registry.helmChartImages()
@@ -55,7 +55,7 @@ func TestHelmChartImages_Empty(t *testing.T) {
 	assert.Empty(t, images)
 }
 
-func TestHelmChartImages_TemplateError(t *testing.T) {
+func TestRegistry_HelmChartImages_TemplateError(t *testing.T) {
 	registry := Registry{
 		helmCharts: []*helmChart{
 			{
@@ -80,7 +80,7 @@ func TestHelmChartImages_TemplateError(t *testing.T) {
 	assert.Nil(t, images)
 }
 
-func TestHelmChartImages(t *testing.T) {
+func TestRegistry_HelmChartImages(t *testing.T) {
 	registry := Registry{
 		helmCharts: []*helmChart{
 			{
@@ -117,58 +117,6 @@ func TestHelmChartImages(t *testing.T) {
 	images, err := registry.helmChartImages()
 	require.NoError(t, err)
 	assert.ElementsMatch(t, images, []string{"apache-image:1.1.1", "apache-image:1.2.3"})
-}
-
-func TestHelmCharts_NonExistingChart(t *testing.T) {
-	registry := Registry{
-		helmCharts: []*helmChart{
-			{
-				HelmChart: image.HelmChart{
-					Name:           "apache",
-					RepositoryName: "apache-repo",
-					Version:        "10.7.0",
-				},
-				chartPath:     "does-not-exist.tgz",
-				repositoryURL: "oci://registry-1.docker.io/bitnamicharts",
-			},
-		},
-	}
-
-	charts, err := registry.HelmCharts()
-	require.Error(t, err)
-	assert.EqualError(t, err, "getting chart content: reading chart: open does-not-exist.tgz: no such file or directory")
-	assert.Nil(t, charts)
-}
-
-func TestHelmCharts_NonExistingValues(t *testing.T) {
-	helmDir, err := os.MkdirTemp("", "helm-charts-")
-	require.NoError(t, err)
-	defer func() {
-		assert.NoError(t, os.RemoveAll(helmDir))
-	}()
-
-	chartFile := filepath.Join(helmDir, "apache-chart.tgz")
-	require.NoError(t, os.WriteFile(chartFile, []byte("abc"), 0o600))
-
-	registry := Registry{
-		helmCharts: []*helmChart{
-			{
-				HelmChart: image.HelmChart{
-					Name:           "apache",
-					RepositoryName: "apache-repo",
-					Version:        "10.7.0",
-					ValuesFile:     "does-not-exist.yaml",
-				},
-				chartPath: chartFile,
-			},
-		},
-		helmValuesDir: "values",
-	}
-
-	charts, err := registry.HelmCharts()
-	require.Error(t, err)
-	assert.EqualError(t, err, "reading values content: open values/does-not-exist.yaml: no such file or directory")
-	assert.Nil(t, charts)
 }
 
 func TestDownloadChart_FailedAddingRepo(t *testing.T) {
@@ -306,7 +254,7 @@ func TestRegistry_HelmCharts(t *testing.T) {
 					TargetNamespace:       "web",
 					ValuesFile:            "apache-values.yaml",
 				},
-				chartPath:     chartFile,
+				localPath:     chartFile,
 				repositoryURL: "oci://registry-1.docker.io/bitnamicharts",
 			},
 		},
@@ -330,6 +278,58 @@ func TestRegistry_HelmCharts(t *testing.T) {
 	assert.Equal(t, "web", charts[0].Spec.TargetNamespace)
 	assert.Equal(t, true, charts[0].Spec.CreateNamespace)
 	assert.Equal(t, "abcd", charts[0].Spec.ValuesContent)
+}
+
+func TestRegistry_HelmCharts_NonExistingChart(t *testing.T) {
+	registry := Registry{
+		helmCharts: []*helmChart{
+			{
+				HelmChart: image.HelmChart{
+					Name:           "apache",
+					RepositoryName: "apache-repo",
+					Version:        "10.7.0",
+				},
+				localPath:     "does-not-exist.tgz",
+				repositoryURL: "oci://registry-1.docker.io/bitnamicharts",
+			},
+		},
+	}
+
+	charts, err := registry.HelmCharts()
+	require.Error(t, err)
+	assert.EqualError(t, err, "reading chart: open does-not-exist.tgz: no such file or directory")
+	assert.Nil(t, charts)
+}
+
+func TestRegistry_HelmCharts_NonExistingValues(t *testing.T) {
+	helmDir, err := os.MkdirTemp("", "helm-charts-")
+	require.NoError(t, err)
+	defer func() {
+		assert.NoError(t, os.RemoveAll(helmDir))
+	}()
+
+	chartFile := filepath.Join(helmDir, "apache-chart.tgz")
+	require.NoError(t, os.WriteFile(chartFile, []byte("abc"), 0o600))
+
+	registry := Registry{
+		helmCharts: []*helmChart{
+			{
+				HelmChart: image.HelmChart{
+					Name:           "apache",
+					RepositoryName: "apache-repo",
+					Version:        "10.7.0",
+					ValuesFile:     "does-not-exist.yaml",
+				},
+				localPath: chartFile,
+			},
+		},
+		helmValuesDir: "values",
+	}
+
+	charts, err := registry.HelmCharts()
+	require.Error(t, err)
+	assert.EqualError(t, err, "reading values content: open values/does-not-exist.yaml: no such file or directory")
+	assert.Nil(t, charts)
 }
 
 func TestMapChartRepos(t *testing.T) {

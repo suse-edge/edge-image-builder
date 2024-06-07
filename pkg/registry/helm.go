@@ -13,15 +13,16 @@ func (r *Registry) HelmCharts() ([]*HelmCRD, error) {
 	var crds []*HelmCRD
 
 	for _, chart := range r.helmCharts {
-		chartContent, err := getChartContent(chart.chartPath)
+		data, err := os.ReadFile(chart.localPath)
 		if err != nil {
-			return nil, fmt.Errorf("getting chart content: %w", err)
+			return nil, fmt.Errorf("reading chart: %w", err)
 		}
 
-		var valuesPath string
+		chartContent := base64.StdEncoding.EncodeToString(data)
+
 		var valuesContent []byte
 		if chart.ValuesFile != "" {
-			valuesPath = filepath.Join(r.helmValuesDir, chart.ValuesFile)
+			valuesPath := filepath.Join(r.helmValuesDir, chart.ValuesFile)
 			valuesContent, err = os.ReadFile(valuesPath)
 			if err != nil {
 				return nil, fmt.Errorf("reading values content: %w", err)
@@ -35,21 +36,12 @@ func (r *Registry) HelmCharts() ([]*HelmCRD, error) {
 	return crds, nil
 }
 
-func getChartContent(chartPath string) (string, error) {
-	data, err := os.ReadFile(chartPath)
-	if err != nil {
-		return "", fmt.Errorf("reading chart: %w", err)
-	}
-
-	return base64.StdEncoding.EncodeToString(data), nil
-}
-
 func (r *Registry) helmChartImages() ([]string, error) {
 	var containerImages []string
 
 	for _, chart := range r.helmCharts {
 		valuesPath := filepath.Join(r.helmValuesDir, chart.ValuesFile)
-		images, err := r.getChartContainerImages(&chart.HelmChart, chart.chartPath, valuesPath, r.kubeVersion)
+		images, err := r.getChartContainerImages(&chart.HelmChart, chart.localPath, valuesPath, r.kubeVersion)
 		if err != nil {
 			return nil, err
 		}

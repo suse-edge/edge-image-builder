@@ -13,7 +13,7 @@ import (
 )
 
 func (r *Registry) manifestImages() ([]string, error) {
-	var imageSet = make(map[string]bool)
+	containerImages := make(map[string]bool)
 
 	entries, err := os.ReadDir(r.manifestsDir)
 	if err != nil {
@@ -26,19 +26,19 @@ func (r *Registry) manifestImages() ([]string, error) {
 	for _, entry := range entries {
 		path := filepath.Join(r.manifestsDir, entry.Name())
 
-		manifests, err := readManifest(path)
+		resources, err := readManifest(path)
 		if err != nil {
-			return nil, fmt.Errorf("reading manifest: %w", err)
+			return nil, fmt.Errorf("reading manifest '%s': %w", path, err)
 		}
 
-		for _, manifestData := range manifests {
-			storeManifestImages(manifestData, imageSet)
+		for _, resource := range resources {
+			storeManifestImages(resource, containerImages)
 		}
 	}
 
 	var images []string
 
-	for imageName := range imageSet {
+	for imageName := range containerImages {
 		images = append(images, imageName)
 	}
 
@@ -48,28 +48,31 @@ func (r *Registry) manifestImages() ([]string, error) {
 func readManifest(manifestPath string) ([]map[string]any, error) {
 	manifestFile, err := os.Open(manifestPath)
 	if err != nil {
-		return nil, fmt.Errorf("error opening manifest: %w", err)
+		return nil, fmt.Errorf("opening manifest: %w", err)
 	}
+	defer manifestFile.Close()
 
-	var manifests []map[string]any
+	var resources []map[string]any
+
 	decoder := yaml.NewDecoder(manifestFile)
 	for {
-		var manifest map[string]any
-		err = decoder.Decode(&manifest)
-		if errors.Is(err, io.EOF) {
-			break
+		var r map[string]any
+
+		if err = decoder.Decode(&r); err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return nil, fmt.Errorf("unmarshalling manifest: %w", err)
 		}
-		if err != nil {
-			return nil, fmt.Errorf("error unmarshalling manifest yaml '%s': %w", manifestPath, err)
-		}
-		manifests = append(manifests, manifest)
+
+		resources = append(resources, r)
 	}
 
-	if len(manifests) == 0 {
+	if len(resources) == 0 {
 		return nil, fmt.Errorf("invalid manifest")
 	}
 
-	return manifests, nil
+	return resources, nil
 }
 
 func storeManifestImages(resource map[string]any, images map[string]bool) {

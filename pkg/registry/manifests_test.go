@@ -15,32 +15,27 @@ func TestReadManifest(t *testing.T) {
 	manifestPath := filepath.Join("testdata", "sample-crd.yaml")
 
 	// Test
-	manifests, err := readManifest(manifestPath)
+	resources, err := readManifest(manifestPath)
 
 	// Verify
 	require.NoError(t, err)
+	require.Len(t, resources, 2)
 
-	// First manifest in sample-crd.yaml
-	data := manifests[0]
-	apiVersion, ok := data["apiVersion"].(string)
+	// First resource in sample-crd.yaml
+	r := resources[0]
+	apiVersion, ok := r["apiVersion"].(string)
 	require.True(t, ok)
 	assert.Equal(t, "custom.example.com/v1", apiVersion)
 
-	// Second manifest in sample-crd.yaml
-	data = manifests[1]
-	apiVersion, ok = data["apiVersion"].(string)
+	// Second resource in sample-crd.yaml
+	r = resources[1]
+	apiVersion, ok = r["apiVersion"].(string)
 	require.True(t, ok)
 	assert.Equal(t, "apps/v1", apiVersion)
 }
 
 func TestReadManifest_NoManifest(t *testing.T) {
-	// Setup
-	manifestPath := filepath.Join()
-
-	// Test
-	_, err := readManifest(manifestPath)
-
-	// Verify
+	_, err := readManifest("")
 	require.ErrorContains(t, err, "no such file or directory")
 }
 
@@ -52,7 +47,7 @@ func TestReadManifest_InvalidManifest(t *testing.T) {
 	_, err := readManifest(manifestPath)
 
 	// Verify
-	require.ErrorContains(t, err, "error unmarshalling manifest yaml")
+	require.ErrorContains(t, err, "unmarshalling manifest")
 }
 
 func TestReadManifest_EmptyManifest(t *testing.T) {
@@ -73,8 +68,6 @@ func TestStoreManifestImages(t *testing.T) {
 	manifestData, err := readManifest(manifestPath)
 	require.NoError(t, err)
 
-	expectedImages := []string{"nginx:latest", "node:14", "custom-api:1.2.3", "mysql:5.7", "redis:6.0", "nginx:1.14.2"}
-
 	// Test
 	for _, manifest := range manifestData {
 		storeManifestImages(manifest, extractedImagesSet)
@@ -85,6 +78,7 @@ func TestStoreManifestImages(t *testing.T) {
 	}
 
 	// Verify
+	expectedImages := []string{"nginx:latest", "node:14", "custom-api:1.2.3", "mysql:5.7", "redis:6.0", "nginx:1.14.2"}
 	assert.ElementsMatch(t, expectedImages, allImages)
 }
 
@@ -144,5 +138,5 @@ func TestManifestImages_InvalidLocalManifest(t *testing.T) {
 	_, err := registry.manifestImages()
 
 	// Verify
-	require.ErrorContains(t, err, "reading manifest: error unmarshalling manifest yaml")
+	require.ErrorContains(t, err, "reading manifest 'local-manifests/invalid-crd.yml': unmarshalling manifest")
 }

@@ -13,47 +13,8 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func TestDownloadManifests(t *testing.T) {
-	// Setup
-	manifestDownloadDest := "downloaded-manifests"
-	require.NoError(t, os.Mkdir(manifestDownloadDest, 0o755))
-	defer func() {
-		require.NoError(t, os.RemoveAll(manifestDownloadDest))
-	}()
-
-	expectedFilePath := filepath.Join(manifestDownloadDest, "dl-manifest-1.yaml")
-
-	manifestURLs := []string{
-		"https://k8s.io/examples/application/nginx-app.yaml",
-	}
-
-	// Test
-	manifestPaths, err := downloadManifests(manifestURLs, manifestDownloadDest)
-
-	// Verify
-	require.NoError(t, err)
-	assert.FileExists(t, expectedFilePath)
-	assert.Contains(t, manifestPaths, expectedFilePath)
-
-	foundBytes, err := os.ReadFile(expectedFilePath)
-	require.NoError(t, err)
-	found := string(foundBytes)
-
-	assert.Contains(t, found, "apiVersion: v1")
-	assert.Contains(t, found, "image: nginx:1.14.2")
-}
-
 func TestManifestImages(t *testing.T) {
 	// Setup
-	expectedContainerImages := []string{
-		"custom-api:1.2.3",
-		"mysql:5.7",
-		"redis:6.0",
-		"nginx:latest",
-		"node:14",
-		"nginx:1.14.2",
-	}
-
 	localManifestsDir := "local-manifests"
 
 	require.NoError(t, os.Mkdir(localManifestsDir, 0o755))
@@ -91,5 +52,12 @@ func TestManifestImages(t *testing.T) {
 
 	// Verify
 	require.NoError(t, err)
-	assert.ElementsMatch(t, expectedContainerImages, containerImages)
+	assert.ElementsMatch(t, []string{
+		"custom-api:1.2.3",
+		"mysql:5.7",
+		"redis:6.0",
+		"nginx:latest",
+		"node:14",
+		"nginx:1.14.2",
+	}, containerImages)
 }

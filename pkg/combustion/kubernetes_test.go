@@ -609,17 +609,14 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 }
 
 func TestConfigureManifests_NoSetup(t *testing.T) {
-	// Setup
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
 	var c Combustion
 
-	// Test
 	manifestsPath, err := c.configureManifests(ctx)
-
-	// Verify
 	require.NoError(t, err)
+
 	assert.Equal(t, "", manifestsPath)
 }
 
@@ -662,7 +659,6 @@ func TestConfigureManifests_HelmChartsError(t *testing.T) {
 }
 
 func TestConfigureManifests(t *testing.T) {
-	// Setup
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -691,15 +687,12 @@ values: content`, "oci://registry-1.docker.io/bitnamicharts"),
 		},
 	}
 
-	// Test
 	manifestsPath, err := c.configureManifests(ctx)
-
-	// Verify
 	require.NoError(t, err)
+
 	assert.Equal(t, "$ARTEFACTS_DIR/kubernetes/manifests", manifestsPath)
 
 	manifestPath := filepath.Join(ctx.ArtefactsDir, K8sDir, K8sManifestsDir, "sample-crd.yaml")
-	require.FileExists(t, manifestPath)
 
 	b, err := os.ReadFile(manifestPath)
 	require.NoError(t, err)

@@ -31,28 +31,8 @@ func TestRegistry_New_InvalidManifestURL(t *testing.T) {
 	_, err := New(ctx, "", nil, "")
 	require.Error(t, err)
 
-	assert.ErrorContains(t, err, "downloading manifests: downloading manifest 'k8s.io/examples/application/nginx-app.yaml'")
+	assert.ErrorContains(t, err, "downloading manifest 'k8s.io/examples/application/nginx-app.yaml'")
 	assert.ErrorContains(t, err, "unsupported protocol scheme")
-}
-
-func TestDownloadManifests_NoManifest(t *testing.T) {
-	manifestPaths, err := downloadManifests(nil, "")
-
-	require.NoError(t, err)
-	assert.Equal(t, 0, len(manifestPaths))
-}
-
-func TestDownloadManifests_InvalidURL(t *testing.T) {
-	// Setup
-	manifestURLs := []string{"k8s.io/examples/application/nginx-app.yaml"}
-	manifestDownloadDest := ""
-
-	// Test
-	manifestPaths, err := downloadManifests(manifestURLs, manifestDownloadDest)
-
-	// Verify
-	require.ErrorContains(t, err, "downloading manifest 'k8s.io/examples/application/nginx-app.yaml': executing request: Get \"k8s.io/examples/application/nginx-app.yaml\": unsupported protocol scheme \"")
-	assert.Equal(t, 0, len(manifestPaths))
 }
 
 func TestRegistry_ContainerImages(t *testing.T) {
@@ -62,7 +42,7 @@ func TestRegistry_ContainerImages(t *testing.T) {
 		assert.NoError(t, os.RemoveAll(manifestsDir))
 	}()
 
-	assert.NoError(t, fileio.CopyFile("testdata/sample-crd.yaml", filepath.Join(manifestsDir, "sample-crd.yaml"), fileio.NonExecutablePerms))
+	require.NoError(t, fileio.CopyFile("testdata/sample-crd.yaml", filepath.Join(manifestsDir, "sample-crd.yaml"), fileio.NonExecutablePerms))
 
 	registry := Registry{
 		embeddedImages: []image.ContainerImage{
