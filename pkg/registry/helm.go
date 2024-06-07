@@ -40,7 +40,11 @@ func (r *Registry) helmChartImages() ([]string, error) {
 	var containerImages []string
 
 	for _, chart := range r.helmCharts {
-		valuesPath := filepath.Join(r.helmValuesDir, chart.ValuesFile)
+		var valuesPath string
+		if chart.ValuesFile != "" {
+			valuesPath = filepath.Join(r.helmValuesDir, chart.ValuesFile)
+		}
+
 		images, err := r.getChartContainerImages(&chart.HelmChart, chart.localPath, valuesPath, r.kubeVersion)
 		if err != nil {
 			return nil, err
