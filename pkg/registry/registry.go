@@ -63,6 +63,7 @@ func (r *Registry) ManifestsPath() string {
 }
 
 func storeManifests(ctx *image.Context, localManifestsDir string) (string, error) {
+	var manifestsPathPopulated bool
 	manifestsDestDir := filepath.Join(ctx.BuildDir, "manifests")
 
 	manifestURLs := ctx.ImageDefinition.Kubernetes.Manifests.URLs
@@ -78,32 +79,25 @@ func storeManifests(ctx *image.Context, localManifestsDir string) (string, error
 				return "", fmt.Errorf("downloading manifest '%s': %w", manifestURL, err)
 			}
 		}
+
+		manifestsPathPopulated = true
 	}
 
-	if err := copyLocalManifests(localManifestsDir, manifestsDestDir); err != nil {
-		return "", fmt.Errorf("copying local manifests: %w", err)
+	if _, err := os.Stat(localManifestsDir); err == nil {
+		if err = fileio.CopyFiles(localManifestsDir, manifestsDestDir, "", false); err != nil {
+			return "", fmt.Errorf("copying manifests: %w", err)
+		}
+
+		manifestsPathPopulated = true
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		zap.S().Warnf("Searching for local manifests failed: %v", err)
+	}
+
+	if !manifestsPathPopulated {
+		return "", nil
 	}
 
 	return manifestsDestDir, nil
-}
-
-func copyLocalManifests(localManifestsDir, manifestsBuildDir string) error {
-	if _, err := os.Stat(localManifestsDir); err != nil {
-		if !errors.Is(err, fs.ErrNotExist) {
-			zap.S().Warnf("Searching for local manifests failed: %v", err)
-		}
-
-		return nil
-	}
-
-	if err := fileio.CopyFiles(localManifestsDir, manifestsBuildDir, ".yaml", false); err != nil {
-		return fmt.Errorf("copying manifests: %w", err)
-	}
-	if err := fileio.CopyFiles(localManifestsDir, manifestsBuildDir, ".yml", false); err != nil {
-		return fmt.Errorf("copying manifests: %w", err)
-	}
-
-	return nil
 }
 
 func storeHelmCharts(ctx *image.Context, helmClient helmClient) ([]*helmChart, error) {
