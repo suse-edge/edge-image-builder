@@ -1,37 +1,17 @@
 # Edge Image Builder (EIB)
 
-## Building
+## Usage
 
-EIB is intended to run inside a container. Some form of container build tool and runtime are needed,
-such as [Podman](https://podman.io/).
+EIB runs as a container. Some form of container runtime is needed, such as [Podman](https://podman.io/).
 
-### Prerequisites
-Before building the EIB image, make sure that you have the development headers and libraries for **gpgme**, **device-mapper** and **libbtrfs** installed on your system:
+The latest version of EIB (1.0.2) can be downloaded from the Open Build Service using the following command:
 
-**SUSE Linux:**
-```shell
-sudo zypper install -y gpgme-devel device-mapper-devel libbtrfs-devel
+```bash
+podman pull registry.opensuse.org/isv/suse/edge/edgeimagebuilder/containerfile/suse/edge-image-builder:1.0.2
 ```
 
-**Ubuntu:** 
-```shell
-sudo apt-get install -y libgpgme-dev libdevmapper-dev libbtrfs-dev
-```
-
-**Fedora:**
-```shell
-sudo dnf -y install gpgme-devel device-mapper-devel btrfs-progs-devel
-```
-
-Build the container (from the root of this project):
-```shell
-podman build -t eib:dev .
-```
-
-## Running
-
-**NOTE:** These docs are incomplete and will be fleshed out as the project matures. At some point when it's
-more mature, an example configuration directory will be added to this repository.
+Alternatively, EIB can be built from this repository. See the [Building from Source](#building-from-source)
+section below.
 
 ### Image Definition
 
@@ -49,7 +29,7 @@ the host machine.
 The following example command attaches the image configuration directory and validates a definition:
 ```shell
 podman run --rm -it -v $IMAGE_DIR:/eib \
-eib:dev \
+$EIB_IMAGE \
 validate --definition-file $DEFINITION_FILE.yaml
 ```
 
@@ -65,7 +45,7 @@ validate --definition-file $DEFINITION_FILE.yaml
 The following example command attaches the image configuration directory and builds an image:
 ```shell
 podman run --rm -it -v $IMAGE_DIR:/eib \
-eib:dev \
+$EIB_IMAGE \
 build --definition-file $DEFINITION_FILE.yaml
 ```
 
@@ -85,7 +65,36 @@ which require it (e.g. Elemental, Kubernetes SELinux, etc.).
   specified to another location within a mounted volume. The directory will contain subdirectories storing the
   respective artifacts of the different builds as well as cached copies of certain downloaded files.
 
-
 ## Testing Images
 
 For details on how to test the built images, see the [Testing Guide](docs/testing-guide.md).
+
+## Building from Source
+
+### Prerequisites
+Before building the EIB image, make sure that you have the development headers and libraries for
+**gpgme**, **device-mapper** and **libbtrfs** installed on your system:
+
+**SUSE Linux:**
+```shell
+sudo zypper install -y gpgme-devel device-mapper-devel libbtrfs-devel
+```
+
+**Ubuntu:**
+```shell
+sudo apt-get install -y libgpgme-dev libdevmapper-dev libbtrfs-dev
+```
+
+**Fedora:**
+```shell
+sudo dnf -y install gpgme-devel device-mapper-devel btrfs-progs-devel
+```
+
+### Building
+
+Build the container (from the root of this project). In the example below, the image tag `eib:dev`
+will be used in the podman command examples above for the `$EIB_IMAGE` variable.
+
+```shell
+podman build -t eib:dev .
+```
