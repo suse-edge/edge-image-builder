@@ -4,11 +4,15 @@
 
 ## General
 
+* Added the ability to automatically copy files into the built images filesystem
+
 ## API
 
 ### Image Definition Changes
 
 ### Image Configuration Directory Changes
+
+* An optional directory named `os-files` may be included to copy files into the resulting image's filesystem at runtime
 
 ## Bug Fixes
 
