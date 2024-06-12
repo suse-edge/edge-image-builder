@@ -3,9 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
@@ -73,21 +71,11 @@ func copyOSFiles(ctx *image.Context) error {
 		}
 	}()
 
-	cmd := generateOSFilesCopyCommand(srcDirectory, destDirectory, logFile)
-	if err := cmd.Run(); err != nil {
+	if err := fileio.CopyFiles(srcDirectory, destDirectory, "", true); err != nil {
 		return fmt.Errorf("running copy os-files command: %w", err)
 	}
 
 	return nil
-}
-
-func generateOSFilesCopyCommand(srcDirectory string, destDirectory string, output io.Writer) *exec.Cmd {
-	cmd := exec.Command("cp", "-R", srcDirectory, destDirectory)
-
-	cmd.Stdout = output
-	cmd.Stderr = output
-
-	return cmd
 }
 
 func writeOSFilesScript(ctx *image.Context) error {
