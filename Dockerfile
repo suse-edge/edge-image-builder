@@ -27,6 +27,7 @@ FROM opensuse/leap:15.5
 # 4. RPM resolution logic
 # 5. Embedded artefact registry
 # 6. Network configuration
+# 7. RAW image modification on aarch64
 RUN zypper addrepo https://download.opensuse.org/repositories/isv:SUSE:Edge:EdgeImageBuilder/SLE-15-SP5/isv:SUSE:Edge:EdgeImageBuilder.repo && \
     zypper --gpg-auto-import-keys refresh && \
     zypper install -y \
@@ -35,8 +36,21 @@ RUN zypper addrepo https://download.opensuse.org/repositories/isv:SUSE:Edge:Edge
     podman \
     createrepo_c \
     helm hauler \
-    nm-configurator && \
-    zypper clean -a
+    nm-configurator
+
+# Make adjustments for running guestfish and image modifications on aarch64
+# guestfish looks for very specific locations on the filesystem for UEFI firmware
+# and also expects the boot kernel to be a portable executable (PE), not ELF.
+RUN if [[ $(uname -m) == "aarch64" ]]; then \
+	zypper install -y qemu-uefi-aarch64; \
+	mkdir -p /usr/share/edk2/aarch64; \
+	cp /usr/share/qemu/aavmf-aarch64-code.bin /usr/share/edk2/aarch64/QEMU_EFI-pflash.raw; \
+	cp /usr/share/qemu/aavmf-aarch64-vars.bin /usr/share/edk2/aarch64/vars-template-pflash.raw; \
+	mv /boot/vmlinux* /boot/backup-vmlinux; \
+fi
+
+# Clean up the repos to reduce size
+RUN zypper clean -a
 
 # Make adjustments for running guestfish and image modifications on aarch64
 # guestfish looks for very specific locations on the filesystem for UEFI firmware
