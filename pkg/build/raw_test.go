@@ -78,7 +78,7 @@ func TestWriteModifyScript(t *testing.T) {
 				"btrfs filesystem label / INSTALL",
 				"sed -i '/ignition.platform/ s/$/ alpha beta /' /tmp/grub.cfg",
 				"truncate -s 64G",
-				"virt-resize --expand /dev/sda3",
+				"virt-resize --expand $ROOT_PART",
 			},
 			expectedMissing: []string{},
 		},
