@@ -13,6 +13,17 @@ set -euo pipefail
 #
 # Guestfish Command Documentation: https://libguestfs.org/guestfish.1.html
 
+# In x86_64, the default root partition is the third partition
+ROOT_PART=/dev/sda3
+
+# Make the necessarry adaptations for aarch64
+if [[ $(uname -m) == "aarch64" ]]; then
+	if ! test -f /dev/kvm; then
+		export LIBGUESTFS_BACKEND_SETTINGS=force_tcg
+	fi
+	ROOT_PART=/dev/sda2
+fi
+
 # Test the block size of the base image and adapt to suit either 512/4096 byte images
 BLOCKSIZE=512
 if ! guestfish -i --blocksize=$BLOCKSIZE -a {{.ImagePath}} echo "[INFO] 512 byte sector check successful."; then
@@ -26,7 +37,7 @@ fi
 {{ if ne .DiskSize "" -}}
 truncate -r {{.ImagePath}} {{.ImagePath}}.expanded
 truncate -s {{.DiskSize}} {{.ImagePath}}.expanded
-virt-resize --expand /dev/sda3 {{.ImagePath}} {{.ImagePath}}.expanded
+virt-resize --expand $ROOT_PART {{.ImagePath}} {{.ImagePath}}.expanded
 cp {{.ImagePath}}.expanded {{.ImagePath}}
 rm -f {{.ImagePath}}.expanded
 {{ end }}
