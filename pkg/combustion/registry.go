@@ -26,10 +26,6 @@ const (
 	registryDir             = "registry"
 	registryPort            = "6545"
 	registryMirrorsFileName = "registries.yaml"
-
-	HelmDir   = "helm"
-	ValuesDir = "values"
-	CertsDir  = "certs"
 )
 
 var (
@@ -125,7 +121,7 @@ func IsEmbeddedArtifactRegistryConfigured(ctx *image.Context) bool {
 	return len(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages) != 0 ||
 		len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0 ||
 		len(ctx.ImageDefinition.Kubernetes.Helm.Charts) != 0 ||
-		isComponentConfigured(ctx, filepath.Join(K8sDir, K8sManifestsDir))
+		isComponentConfigured(ctx, localKubernetesManifestsPath())
 }
 
 func getImageHostnames(containerImages []string) []string {
