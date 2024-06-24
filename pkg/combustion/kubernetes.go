@@ -23,7 +23,7 @@ const (
 	k8sConfigDir    = "config"
 	k8sInstallDir   = "install"
 	k8sImagesDir    = "images"
-	K8sManifestsDir = "manifests"
+	k8sManifestsDir = "manifests"
 
 	helmDir       = "helm"
 	helmValuesDir = "values"
@@ -432,7 +432,7 @@ func KubernetesConfigPath(ctx *image.Context) string {
 }
 
 func localKubernetesManifestsPath() string {
-	return filepath.Join(k8sDir, K8sManifestsDir)
+	return filepath.Join(k8sDir, k8sManifestsDir)
 }
 
 func KubernetesManifestsPath(ctx *image.Context) string {

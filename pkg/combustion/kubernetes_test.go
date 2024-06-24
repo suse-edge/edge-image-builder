@@ -692,7 +692,7 @@ values: content`, "oci://registry-1.docker.io/bitnamicharts"),
 
 	assert.Equal(t, "$ARTEFACTS_DIR/kubernetes/manifests", manifestsPath)
 
-	manifestPath := filepath.Join(ctx.ArtefactsDir, k8sDir, K8sManifestsDir, "sample-crd.yaml")
+	manifestPath := filepath.Join(ctx.ArtefactsDir, k8sDir, k8sManifestsDir, "sample-crd.yaml")
 
 	b, err := os.ReadFile(manifestPath)
 	require.NoError(t, err)
@@ -703,7 +703,7 @@ values: content`, "oci://registry-1.docker.io/bitnamicharts"),
 	assert.Contains(t, contents, "name: my-nginx")
 	assert.Contains(t, contents, "image: nginx:1.14.2")
 
-	chartPath := filepath.Join(ctx.ArtefactsDir, k8sDir, K8sManifestsDir, "apache.yaml")
+	chartPath := filepath.Join(ctx.ArtefactsDir, k8sDir, k8sManifestsDir, "apache.yaml")
 	chartContent := `apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:
@@ -806,7 +806,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	assert.Equal(t, []any{"192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
 
 	// Manifest assertions
-	manifest := filepath.Join(ctx.ArtefactsDir, k8sDir, K8sManifestsDir, "sample-crd.yaml")
+	manifest := filepath.Join(ctx.ArtefactsDir, k8sDir, k8sManifestsDir, "sample-crd.yaml")
 	info, err = os.Stat(manifest)
 	require.NoError(t, err)
 	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
