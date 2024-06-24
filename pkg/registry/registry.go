@@ -63,8 +63,11 @@ func (r *Registry) ManifestsPath() string {
 }
 
 func storeManifests(ctx *image.Context, localManifestsDir string) (string, error) {
+	const manifestsDir = "manifests"
+
 	var manifestsPathPopulated bool
-	manifestsDestDir := filepath.Join(ctx.BuildDir, "manifests")
+
+	manifestsDestDir := filepath.Join(ctx.BuildDir, manifestsDir)
 
 	manifestURLs := ctx.ImageDefinition.Kubernetes.Manifests.URLs
 	if len(manifestURLs) != 0 {
