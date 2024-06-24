@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/schollz/progressbar/v3"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/http"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -110,6 +111,8 @@ func storeHelmCharts(ctx *image.Context, helmClient helmClient) ([]*helmChart, e
 		return nil, nil
 	}
 
+	bar := progressbar.Default(int64(len(helm.Charts)), "Pulling selected Helm charts...")
+
 	helmDir := filepath.Join(ctx.BuildDir, "helm")
 	if err := os.MkdirAll(helmDir, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("creating helm directory: %w", err)
@@ -136,6 +139,8 @@ func storeHelmCharts(ctx *image.Context, helmClient helmClient) ([]*helmChart, e
 			localPath:     localPath,
 			repositoryURL: repository.URL,
 		})
+
+		_ = bar.Add(1)
 	}
 
 	return charts, nil
