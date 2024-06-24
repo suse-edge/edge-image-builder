@@ -112,7 +112,7 @@ func storeHelmCharts(ctx *image.Context, helmClient helmClient) ([]*helmChart, e
 		return nil, fmt.Errorf("creating helm directory: %w", err)
 	}
 
-	chartRepositories := mapChartRepos(helm)
+	chartRepositories := mapChartsToRepos(helm)
 
 	var charts []*helmChart
 
@@ -138,7 +138,7 @@ func storeHelmCharts(ctx *image.Context, helmClient helmClient) ([]*helmChart, e
 	return charts, nil
 }
 
-func mapChartRepos(helm *image.Helm) map[string]*image.HelmRepository {
+func mapChartsToRepos(helm *image.Helm) map[string]*image.HelmRepository {
 	chartRepoMap := make(map[string]*image.HelmRepository)
 
 	for _, chart := range helm.Charts {

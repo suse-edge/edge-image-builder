@@ -369,5 +369,5 @@ func TestMapChartRepos(t *testing.T) {
 		},
 	}
 
-	assert.True(t, reflect.DeepEqual(expectedMap, mapChartRepos(helm)))
+	assert.True(t, reflect.DeepEqual(expectedMap, mapChartsToRepos(helm)))
 }
