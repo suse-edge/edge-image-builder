@@ -167,6 +167,10 @@ func writeRegistryMirrors(ctx *image.Context, hostnames []string) error {
 }
 
 func (c *Combustion) configureEmbeddedArtifactRegistry(ctx *image.Context, containerImages []string) (string, error) {
+	if len(containerImages) == 0 {
+		return "", fmt.Errorf("no container images specified")
+	}
+
 	if ctx.ImageDefinition.Kubernetes.Version != "" {
 		hostnames := getImageHostnames(containerImages)
 
