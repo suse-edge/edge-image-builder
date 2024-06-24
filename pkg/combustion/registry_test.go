@@ -10,32 +10,6 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func TestCreateRegistryCommand(t *testing.T) {
-	// Setup
-	ctx, teardown := setupContext(t)
-	defer teardown()
-
-	// Test
-	cmd, logFile, err := createRegistryCommand(ctx, "testName", []string{"--flag", "test"})
-
-	// Verify
-	require.NoError(t, err)
-	require.NotNil(t, cmd)
-
-	expectedCommand := "testName"
-	expectedArgs := []string{"testName", "--flag", "test"}
-
-	assert.Equal(t, expectedCommand, cmd.Path)
-	assert.Equal(t, expectedArgs, cmd.Args)
-
-	assert.Equal(t, logFile, cmd.Stdout)
-	assert.Equal(t, logFile, cmd.Stderr)
-
-	foundFile := filepath.Join(ctx.BuildDir, "embedded-registry.log")
-	_, err = os.ReadFile(foundFile)
-	require.NoError(t, err)
-}
-
 func TestWriteRegistryScript(t *testing.T) {
 	// Setup
 	ctx, teardown := setupContext(t)
