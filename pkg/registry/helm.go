@@ -64,7 +64,7 @@ func (r *Registry) getChartContainerImages(chart *image.HelmChart, chartPath, va
 
 	containerImages := map[string]bool{}
 	for _, resource := range chartResources {
-		storeManifestImages(resource, containerImages)
+		extractManifestImages(resource, containerImages)
 	}
 
 	var images []string

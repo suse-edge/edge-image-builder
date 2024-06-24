@@ -32,7 +32,7 @@ func (r *Registry) manifestImages() ([]string, error) {
 		}
 
 		for _, resource := range resources {
-			storeManifestImages(resource, containerImages)
+			extractManifestImages(resource, containerImages)
 		}
 	}
 
@@ -75,7 +75,7 @@ func readManifest(manifestPath string) ([]map[string]any, error) {
 	return resources, nil
 }
 
-func storeManifestImages(resource map[string]any, images map[string]bool) {
+func extractManifestImages(resource map[string]any, images map[string]bool) {
 	var k8sKinds = []string{
 		"Pod",
 		"Deployment",

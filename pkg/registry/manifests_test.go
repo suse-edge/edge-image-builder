@@ -61,7 +61,7 @@ func TestReadManifest_EmptyManifest(t *testing.T) {
 	assert.Error(t, err, "invalid manifest")
 }
 
-func TestStoreManifestImages(t *testing.T) {
+func TestExtractManifestImages(t *testing.T) {
 	// Setup
 	var extractedImagesSet = make(map[string]bool)
 	manifestPath := filepath.Join("testdata", "sample-crd.yaml")
@@ -70,7 +70,7 @@ func TestStoreManifestImages(t *testing.T) {
 
 	// Test
 	for _, manifest := range manifestData {
-		storeManifestImages(manifest, extractedImagesSet)
+		extractManifestImages(manifest, extractedImagesSet)
 	}
 	allImages := make([]string, 0, len(extractedImagesSet))
 	for uniqueImage := range extractedImagesSet {
@@ -82,7 +82,7 @@ func TestStoreManifestImages(t *testing.T) {
 	assert.ElementsMatch(t, expectedImages, allImages)
 }
 
-func TestStoreManifestImages_InvalidKinds(t *testing.T) {
+func TestExtractManifestImages_InvalidKinds(t *testing.T) {
 	// Setup
 	var extractedImagesSet = make(map[string]bool)
 	manifestData := map[string]any{
@@ -99,19 +99,19 @@ func TestStoreManifestImages_InvalidKinds(t *testing.T) {
 	}
 
 	// Test
-	storeManifestImages(manifestData, extractedImagesSet)
+	extractManifestImages(manifestData, extractedImagesSet)
 
 	// Verify
 	assert.Equal(t, map[string]bool{}, extractedImagesSet)
 }
 
-func TestStoreManifestImages_EmptyManifest(t *testing.T) {
+func TestExtractManifestImages_EmptyManifest(t *testing.T) {
 	// Setup
 	var extractedImagesSet = make(map[string]bool)
 	var manifestData map[string]any
 
 	// Test
-	storeManifestImages(manifestData, extractedImagesSet)
+	extractManifestImages(manifestData, extractedImagesSet)
 
 	// Verify
 	assert.Equal(t, map[string]bool{}, extractedImagesSet)
