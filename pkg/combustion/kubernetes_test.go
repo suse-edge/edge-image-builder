@@ -782,8 +782,8 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=$ARTEFACTS_DIR/kubernetes/install")
 	assert.Contains(t, contents, "sh $ARTEFACTS_DIR/kubernetes/install-k8s.sh")
 	assert.Contains(t, contents, "systemctl enable rke2-server.service")
-	assert.Contains(t, contents, "mkdir -p /var/lib/rancher/rke2/server/manifests/")
-	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/manifests/* /var/lib/rancher/rke2/server/manifests/")
+	assert.Contains(t, contents, "mkdir -p /opt/k8s/manifests")
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/manifests/* /opt/k8s/manifests/")
 	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/registries.yaml /etc/rancher/rke2/registries.yaml")
 
 	// Config file assertions
