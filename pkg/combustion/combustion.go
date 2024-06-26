@@ -121,6 +121,10 @@ func (c *Combustion) Configure(ctx *image.Context) error {
 			runnable: c.configureRPMs,
 		},
 		{
+			name:     osFilesComponentName,
+			runnable: configureOSFiles,
+		},
+		{
 			name:     systemdComponentName,
 			runnable: configureSystemd,
 		},

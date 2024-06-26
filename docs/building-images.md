@@ -473,6 +473,24 @@ the built image and used to register with Elemental on boot.
 > ```podman run``` command. For more info on why this is required, please see
 > [Package resolution design](design/pkg-resolution.md#running-the-eib-container).
 
+## Operating System Files
+
+Files placed in the `os-files` directory in the image configuration directory will be automatically copied
+into the filesystem of the built image. The exact directory structure will be retained when they are copied.
+For example, if a file exists in a subdirectory named `os-files/etc`, it will be placed in the `/etc` directory
+of the built image.
+
+If the `os-files` directory exists, it cannot be empty.
+
+```bash
+.
+├── definition.yaml
+└── os-files
+    └── etc
+        └── ssh
+            └── sshd_config
+```
+
 ## Custom
 
 EIB has the ability to bundle in custom scripts that will be run during the combustion phase when a node is
