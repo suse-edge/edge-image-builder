@@ -27,18 +27,42 @@ mount /var
 mkdir -p /var/lib/rancher/k3s/agent/images/
 cp {{ .imagesPath }}/* /var/lib/rancher/k3s/agent/images/
 
+umount /var
+
 CONFIGFILE={{ .configFilePath }}/$NODETYPE.yaml
 
 if [ "$HOSTNAME" = {{ .initialiser }} ]; then
     CONFIGFILE={{ .configFilePath }}/{{ .initialiserConfigFile }}
 
     {{- if .manifestsPath }}
-    mkdir -p /var/lib/rancher/k3s/server/manifests/
-    cp {{ .manifestsPath }}/* /var/lib/rancher/k3s/server/manifests/
+    mkdir -p /opt/k8s/manifests
+    cp {{ .manifestsPath }}/* /opt/k8s/manifests/
+
+    cat <<- EOF > /etc/systemd/system/kubernetes-resources-install.service
+    [Unit]
+    Description=Kubernetes Resources Install
+    Requires=k3s.service
+    After=k3s.service
+    ConditionPathExists=/opt/bin/kubectl
+    ConditionPathExists=/etc/rancher/k3s/k3s.yaml
+
+    [Install]
+    WantedBy=multi-user.target
+
+    [Service]
+    Type=oneshot
+    Restart=on-failure
+    RestartSec=30
+    ExecStart=/opt/bin/kubectl apply -f /opt/k8s/manifests --kubeconfig=/etc/rancher/k3s/k3s.yaml
+    # Disable the service and clean up
+    ExecStartPost=/bin/sh -c "systemctl disable kubernetes-resources-install.service"
+    ExecStartPost=rm -f /etc/systemd/system/kubernetes-resources-install.service
+    ExecStartPost=rm -rf /opt/k8s
+    EOF
+
+    systemctl enable kubernetes-resources-install.service
     {{- end }}
 fi
-
-umount /var
 
 {{- if and .apiVIP .apiHost }}
 echo "{{ .apiVIP }} {{ .apiHost }}" >> /etc/hosts
