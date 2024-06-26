@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"github.com/suse-edge/edge-image-builder/pkg/registry"
 	"gopkg.in/yaml.v3"
 )
 
@@ -50,6 +51,36 @@ func (m mockKubernetesArtefactDownloader) DownloadRKE2Artefacts(
 func (m mockKubernetesArtefactDownloader) DownloadK3sArtefacts(arch image.Arch, version, installPath, imagesPath string) error {
 	if m.downloadK3sArtefacts != nil {
 		return m.downloadK3sArtefacts(arch, version, installPath, imagesPath)
+	}
+
+	panic("not implemented")
+}
+
+type mockEmbeddedRegistry struct {
+	helmChartsFunc      func() ([]*registry.HelmCRD, error)
+	containerImagesFunc func() ([]string, error)
+	manifestsPathFunc   func() string
+}
+
+func (m mockEmbeddedRegistry) HelmCharts() ([]*registry.HelmCRD, error) {
+	if m.helmChartsFunc != nil {
+		return m.helmChartsFunc()
+	}
+
+	panic("not implemented")
+}
+
+func (m mockEmbeddedRegistry) ContainerImages() ([]string, error) {
+	if m.containerImagesFunc != nil {
+		return m.containerImagesFunc()
+	}
+
+	panic("not implemented")
+}
+
+func (m mockEmbeddedRegistry) ManifestsPath() string {
+	if m.manifestsPathFunc != nil {
+		return m.manifestsPathFunc()
 	}
 
 	panic("not implemented")
@@ -300,7 +331,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sCluster(t *testing.T) {
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, k8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -499,7 +530,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, k8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -577,47 +608,215 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	assert.Nil(t, configContents["tls-san"])
 }
 
-func TestConfigureKubernetes_InvalidManifestURL(t *testing.T) {
+func TestConfigureManifests_NoSetup(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	var c Combustion
+
+	manifestsPath, err := c.configureManifests(ctx)
+	require.NoError(t, err)
+
+	assert.Equal(t, "", manifestsPath)
+}
+
+func TestConfigureManifests_InvalidManifestDir(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	c := Combustion{
+		Registry: &mockEmbeddedRegistry{
+			manifestsPathFunc: func() string {
+				return "non-existing"
+			},
+		},
+	}
+
+	_, err := c.configureManifests(ctx)
+	require.Error(t, err)
+	assert.EqualError(t, err, "copying manifests to combustion dir: reading source dir: open non-existing: no such file or directory")
+}
+
+func TestConfigureManifests_HelmChartsError(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	c := Combustion{
+		Registry: &mockEmbeddedRegistry{
+			manifestsPathFunc: func() string {
+				// Use local test files
+				return filepath.Join("..", "registry", "testdata")
+			},
+			helmChartsFunc: func() ([]*registry.HelmCRD, error) {
+				return nil, fmt.Errorf("some error")
+			},
+		},
+	}
+
+	_, err := c.configureManifests(ctx)
+	require.Error(t, err)
+	assert.EqualError(t, err, "getting helm charts: some error")
+}
+
+func TestConfigureManifests(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	helmChart := &image.HelmChart{
+		Name:                  "apache",
+		RepositoryName:        "apache-repo",
+		TargetNamespace:       "web",
+		CreateNamespace:       true,
+		InstallationNamespace: "kube-system",
+		Version:               "10.7.0",
+		ValuesFile:            "",
+	}
+
+	c := Combustion{
+		Registry: &mockEmbeddedRegistry{
+			manifestsPathFunc: func() string {
+				// Use local test files
+				return filepath.Join("..", "registry", "testdata")
+			},
+			helmChartsFunc: func() ([]*registry.HelmCRD, error) {
+				return []*registry.HelmCRD{
+					registry.NewHelmCRD(helmChart, "some-content", `
+values: content`, "oci://registry-1.docker.io/bitnamicharts"),
+				}, nil
+			},
+		},
+	}
+
+	manifestsPath, err := c.configureManifests(ctx)
+	require.NoError(t, err)
+
+	assert.Equal(t, "$ARTEFACTS_DIR/kubernetes/manifests", manifestsPath)
+
+	manifestPath := filepath.Join(ctx.ArtefactsDir, k8sDir, k8sManifestsDir, "sample-crd.yaml")
+
+	b, err := os.ReadFile(manifestPath)
+	require.NoError(t, err)
+
+	contents := string(b)
+	assert.Contains(t, contents, "apiVersion: apps/v1")
+	assert.Contains(t, contents, "kind: Deployment")
+	assert.Contains(t, contents, "name: my-nginx")
+	assert.Contains(t, contents, "image: nginx:1.14.2")
+
+	chartPath := filepath.Join(ctx.ArtefactsDir, k8sDir, k8sManifestsDir, "apache.yaml")
+	chartContent := `apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+    name: apache
+    namespace: kube-system
+    annotations:
+        edge.suse.com/repository-url: oci://registry-1.docker.io/bitnamicharts
+        edge.suse.com/source: edge-image-builder
+spec:
+    version: 10.7.0
+    valuesContent: |4-
+        values: content
+    chartContent: some-content
+    targetNamespace: web
+    createNamespace: true
+`
+	b, err = os.ReadFile(chartPath)
+	require.NoError(t, err)
+
+	assert.Equal(t, chartContent, string(b))
+}
+
+func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
 		Version: "v1.29.0+rke2r1",
-	}
-	ctx.ImageDefinition.Kubernetes.Manifests.URLs = []string{
-		"k8s.io/examples/application/nginx-app.yaml",
+		Network: image.Network{
+			APIVIP:  "192.168.122.100",
+			APIHost: "api.cluster01.hosted.on.edge.suse.com",
+		},
 	}
 
 	c := Combustion{
 		KubernetesScriptDownloader: mockKubernetesScriptDownloader{
 			downloadScript: func(distribution, destPath string) (string, error) {
-				return kubernetesScriptInstaller, nil
+				return "install-k8s.sh", nil
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installpath, imagesPath string) error {
+			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
 				return nil
+			},
+		},
+		Registry: mockEmbeddedRegistry{
+			manifestsPathFunc: func() string {
+				// Use local test files
+				return filepath.Join("..", "registry", "testdata")
+			},
+			helmChartsFunc: func() ([]*registry.HelmCRD, error) {
+				return nil, nil
 			},
 		},
 	}
 
-	k8sCombDir := filepath.Join(ctx.CombustionDir, K8sDir)
-	require.NoError(t, os.Mkdir(k8sCombDir, os.ModePerm))
-
-	_, err := c.configureKubernetes(ctx)
-
-	require.ErrorContains(t, err, "configuring kubernetes manifests: downloading manifests to combustion dir: downloading manifest 'k8s.io/examples/application/nginx-app.yaml': executing request: Get \"k8s.io/examples/application/nginx-app.yaml\": unsupported protocol scheme \"\"")
-}
-
-func TestConfigureManifestsNoSetup(t *testing.T) {
-	// Setup
-	ctx, teardown := setupContext(t)
-	defer teardown()
-
-	// Test
-	manifestsPath, err := configureManifests(ctx)
-
-	// Verify
+	scripts, err := c.configureKubernetes(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, "", manifestsPath)
+	require.Len(t, scripts, 1)
+
+	// Script file assertions
+	scriptPath := filepath.Join(ctx.CombustionDir, scripts[0])
+
+	info, err := os.Stat(scriptPath)
+	require.NoError(t, err)
+
+	assert.Equal(t, fileio.ExecutablePerms, info.Mode())
+
+	b, err := os.ReadFile(scriptPath)
+	require.NoError(t, err)
+
+	contents := string(b)
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/images/* /var/lib/rancher/rke2/agent/images/")
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/server.yaml /etc/rancher/rke2/config.yaml")
+	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
+	assert.Contains(t, contents, "export INSTALL_RKE2_ARTIFACT_PATH=$ARTEFACTS_DIR/kubernetes/install")
+	assert.Contains(t, contents, "sh $ARTEFACTS_DIR/kubernetes/install-k8s.sh")
+	assert.Contains(t, contents, "systemctl enable rke2-server.service")
+	assert.Contains(t, contents, "mkdir -p /var/lib/rancher/rke2/server/manifests/")
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/manifests/* /var/lib/rancher/rke2/server/manifests/")
+	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/registries.yaml /etc/rancher/rke2/registries.yaml")
+
+	// Config file assertions
+	configPath := filepath.Join(ctx.ArtefactsDir, "kubernetes", "server.yaml")
+
+	info, err = os.Stat(configPath)
+	require.NoError(t, err)
+
+	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
+
+	b, err = os.ReadFile(configPath)
+	require.NoError(t, err)
+
+	var configContents map[string]any
+	require.NoError(t, yaml.Unmarshal(b, &configContents))
+
+	require.Contains(t, configContents, "cni")
+	assert.Equal(t, "cilium", configContents["cni"], "default CNI is not set")
+	assert.Equal(t, nil, configContents["server"])
+	assert.Equal(t, []any{"192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
+
+	// Manifest assertions
+	manifest := filepath.Join(ctx.ArtefactsDir, k8sDir, k8sManifestsDir, "sample-crd.yaml")
+	info, err = os.Stat(manifest)
+	require.NoError(t, err)
+	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
+
+	b, err = os.ReadFile(manifest)
+	require.NoError(t, err)
+
+	contents = string(b)
+	assert.Contains(t, contents, "apiVersion: apps/v1")
+	assert.Contains(t, contents, "kind: Deployment")
+	assert.Contains(t, contents, "name: my-nginx")
+	assert.Contains(t, contents, "image: nginx:1.14.2")
 }

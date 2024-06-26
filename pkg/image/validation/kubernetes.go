@@ -35,7 +35,7 @@ func validateKubernetes(ctx *image.Context) []FailedValidation {
 
 	failures = append(failures, validateNodes(&def.Kubernetes)...)
 	failures = append(failures, validateManifestURLs(&def.Kubernetes)...)
-	failures = append(failures, validateHelm(&def.Kubernetes, ctx.ImageConfigDir)...)
+	failures = append(failures, validateHelm(&def.Kubernetes, combustion.HelmValuesPath(ctx), combustion.HelmCertsPath(ctx))...)
 
 	return failures
 }
@@ -146,7 +146,7 @@ func validateManifestURLs(k8s *image.Kubernetes) []FailedValidation {
 	return failures
 }
 
-func validateHelm(k8s *image.Kubernetes, imageConfigDir string) []FailedValidation {
+func validateHelm(k8s *image.Kubernetes, valuesDir, certsDir string) []FailedValidation {
 	var failures []FailedValidation
 
 	if len(k8s.Helm.Charts) == 0 {
@@ -175,20 +175,20 @@ func validateHelm(k8s *image.Kubernetes, imageConfigDir string) []FailedValidati
 	seenHelmRepos := make(map[string]bool)
 	for _, chart := range k8s.Helm.Charts {
 		c := chart
-		failures = append(failures, validateChart(&c, helmRepositoryNames, imageConfigDir)...)
+		failures = append(failures, validateChart(&c, helmRepositoryNames, valuesDir)...)
 
 		seenHelmRepos[chart.RepositoryName] = true
 	}
 
 	for _, repo := range k8s.Helm.Repositories {
 		r := repo
-		failures = append(failures, validateRepo(&r, seenHelmRepos, imageConfigDir)...)
+		failures = append(failures, validateRepo(&r, seenHelmRepos, certsDir)...)
 	}
 
 	return failures
 }
 
-func validateChart(chart *image.HelmChart, repositoryNames []string, imageConfigDir string) []FailedValidation {
+func validateChart(chart *image.HelmChart, repositoryNames []string, valuesDir string) []FailedValidation {
 	var failures []FailedValidation
 
 	if chart.Name == "" {
@@ -219,7 +219,7 @@ func validateChart(chart *image.HelmChart, repositoryNames []string, imageConfig
 		})
 	}
 
-	if failure := validateHelmChartValues(chart.Name, chart.ValuesFile, imageConfigDir); failure != "" {
+	if failure := validateHelmChartValues(chart.Name, chart.ValuesFile, valuesDir); failure != "" {
 		failures = append(failures, FailedValidation{
 			UserMessage: failure,
 		})
@@ -228,7 +228,7 @@ func validateChart(chart *image.HelmChart, repositoryNames []string, imageConfig
 	return failures
 }
 
-func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool, imageConfigDir string) []FailedValidation {
+func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool, certsDir string) []FailedValidation {
 	var failures []FailedValidation
 
 	parsedURL, err := url.Parse(repo.URL)
@@ -246,7 +246,7 @@ func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool, ima
 	failures = append(failures, validateHelmRepoAuth(repo)...)
 	failures = append(failures, validateHelmRepoArgs(parsedURL, repo)...)
 
-	if failure := validateHelmRepoCert(repo.Name, repo.CAFile, imageConfigDir); failure != "" {
+	if failure := validateHelmRepoCert(repo.Name, repo.CAFile, certsDir); failure != "" {
 		failures = append(failures, FailedValidation{
 			UserMessage: failure,
 		})
@@ -353,7 +353,7 @@ func validateHelmRepoArgs(parsedURL *url.URL, repo *image.HelmRepository) []Fail
 	return failures
 }
 
-func validateHelmRepoCert(repoName, certFile string, imageConfigDir string) string {
+func validateHelmRepoCert(repoName, certFile, certsDir string) string {
 	if certFile == "" {
 		return ""
 	}
@@ -364,7 +364,7 @@ func validateHelmRepoCert(repoName, certFile string, imageConfigDir string) stri
 			repoName, strings.Join(validExtensions, ", "))
 	}
 
-	certFilePath := filepath.Join(imageConfigDir, combustion.K8sDir, combustion.HelmDir, combustion.CertsDir, certFile)
+	certFilePath := filepath.Join(certsDir, certFile)
 	_, err := os.Stat(certFilePath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -378,7 +378,7 @@ func validateHelmRepoCert(repoName, certFile string, imageConfigDir string) stri
 	return ""
 }
 
-func validateHelmChartValues(chartName, valuesFile string, imageConfigDir string) string {
+func validateHelmChartValues(chartName, valuesFile, valuesDir string) string {
 	if valuesFile == "" {
 		return ""
 	}
@@ -387,7 +387,7 @@ func validateHelmChartValues(chartName, valuesFile string, imageConfigDir string
 		return fmt.Sprintf("Helm chart 'valuesFile' field for %q must be the name of a valid yaml file ending in '.yaml' or '.yml'.", chartName)
 	}
 
-	valuesFilePath := filepath.Join(imageConfigDir, combustion.K8sDir, combustion.HelmDir, combustion.ValuesDir, valuesFile)
+	valuesFilePath := filepath.Join(valuesDir, valuesFile)
 	_, err := os.Stat(valuesFilePath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {

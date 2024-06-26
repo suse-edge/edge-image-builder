@@ -27,8 +27,8 @@ type HelmCRD struct {
 	} `yaml:"spec"`
 }
 
-func NewHelmCRD(chart *image.HelmChart, chartContent, valuesContent, repositoryURL string) HelmCRD {
-	return HelmCRD{
+func NewHelmCRD(chart *image.HelmChart, chartContent, valuesContent, repositoryURL string) *HelmCRD {
+	return &HelmCRD{
 		APIVersion: helmChartAPIVersion,
 		Kind:       helmChartKind,
 		Metadata: struct {

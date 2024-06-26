@@ -1,12 +1,5 @@
 package image
 
-type HelmClient interface {
-	AddRepo(repository *HelmRepository) error
-	RegistryLogin(repository *HelmRepository) error
-	Pull(chart string, repository *HelmRepository, version, destDir string) (string, error)
-	Template(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error)
-}
-
 type LocalRPMConfig struct {
 	// RPMPath is the path to the directory holding RPMs that will be side-loaded
 	RPMPath string

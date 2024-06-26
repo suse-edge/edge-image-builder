@@ -973,7 +973,7 @@ func TestValidateHelmCharts(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			k := test.K8s
-			failures := validateHelm(&k, "")
+			failures := validateHelm(&k, "kubernetes/helm/values", "kubernetes/helm/certs")
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
 
 			var foundMessages []string

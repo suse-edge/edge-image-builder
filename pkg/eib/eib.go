@@ -18,6 +18,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/network"
 	"github.com/suse-edge/edge-image-builder/pkg/podman"
+	"github.com/suse-edge/edge-image-builder/pkg/registry"
 	"github.com/suse-edge/edge-image-builder/pkg/rpm"
 	"github.com/suse-edge/edge-image-builder/pkg/rpm/resolver"
 	"go.uber.org/zap"
@@ -139,8 +140,14 @@ func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion
 	}
 
 	if combustion.IsEmbeddedArtifactRegistryConfigured(ctx) {
-		certsDir := filepath.Join(ctx.ImageConfigDir, combustion.K8sDir, combustion.HelmDir, combustion.CertsDir)
-		combustionHandler.HelmClient = helm.New(ctx.BuildDir, certsDir)
+		helmClient := helm.New(ctx.BuildDir, combustion.HelmCertsPath(ctx))
+
+		r, err := registry.New(ctx, combustion.KubernetesManifestsPath(ctx), helmClient, combustion.HelmValuesPath(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("initialising embedded artifact registry: %w", err)
+		}
+
+		combustionHandler.Registry = r
 	}
 
 	if ctx.ImageDefinition.Kubernetes.Version != "" {
