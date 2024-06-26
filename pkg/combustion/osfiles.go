@@ -59,20 +59,8 @@ func copyOSFiles(ctx *image.Context) error {
 		return fmt.Errorf("no files found in directory %s", srcDirectory)
 	}
 
-	logFilename := filepath.Join(ctx.BuildDir, osFilesLogFile)
-	logFile, err := os.Create(logFilename)
-	if err != nil {
-		return fmt.Errorf("creating log file: %w", err)
-	}
-
-	defer func() {
-		if err = logFile.Close(); err != nil {
-			zap.S().Warnf("failed to close copy os-files log file properly: %s", err)
-		}
-	}()
-
 	if err := fileio.CopyFiles(srcDirectory, destDirectory, "", true); err != nil {
-		return fmt.Errorf("running copy os-files command: %w", err)
+		return fmt.Errorf("copying os-files: %w", err)
 	}
 
 	return nil

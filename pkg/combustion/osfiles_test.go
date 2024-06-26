@@ -1,6 +1,7 @@
 package combustion
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,7 +12,7 @@ import (
 )
 
 func setupOsFilesConfigDir(t *testing.T, empty bool) (ctx *image.Context, teardown func()) {
-	ctx, teardownCtx := setupContext(t)
+	ctx, teardown = setupContext(t)
 
 	testOsFilesDir := filepath.Join(ctx.ImageConfigDir, osFilesConfigDir)
 	err := os.Mkdir(testOsFilesDir, 0o755)
@@ -26,8 +27,6 @@ func setupOsFilesConfigDir(t *testing.T, empty bool) (ctx *image.Context, teardo
 		_, err = os.Create(testFile)
 		require.NoError(t, err)
 	}
-
-	teardown = teardownCtx
 
 	return
 }
@@ -53,8 +52,7 @@ func TestConfigureOSFiles(t *testing.T) {
 
 	// -- Files
 	expectedFile := filepath.Join(ctx.CombustionDir, osFilesConfigDir, "etc", "ssh", "test-config-file")
-	_, err = os.Stat(expectedFile)
-	require.NoError(t, err)
+	assert.FileExists(t, expectedFile)
 }
 
 func TestConfigureOSFiles_EmptyDirectory(t *testing.T) {
@@ -69,5 +67,5 @@ func TestConfigureOSFiles_EmptyDirectory(t *testing.T) {
 	assert.Nil(t, scriptName)
 
 	srcDirectory := filepath.Join(ctx.ImageConfigDir, osFilesConfigDir)
-	assert.Errorf(t, err, "no files found in directory %s", srcDirectory)
+	assert.EqualError(t, err, fmt.Sprintf("no files found in directory %s", srcDirectory))
 }
