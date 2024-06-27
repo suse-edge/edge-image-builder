@@ -26,7 +26,7 @@ WantedBy=multi-user.target
 [Service]
 Type=oneshot
 Restart=on-failure
-RestartSec=30
+RestartSec=60
 # Copy kubectl in order to avoid SELinux permission issues
 ExecStartPre=cp /var/lib/rancher/rke2/bin/kubectl /opt/k8s/kubectl
 ExecStart=/opt/k8s/kubectl apply -f /opt/k8s/manifests --kubeconfig /etc/rancher/rke2/rke2.yaml

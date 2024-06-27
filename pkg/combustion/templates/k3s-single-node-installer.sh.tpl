@@ -26,7 +26,7 @@ WantedBy=multi-user.target
 [Service]
 Type=oneshot
 Restart=on-failure
-RestartSec=30
+RestartSec=60
 ExecStart=/opt/bin/kubectl apply -f /opt/k8s/manifests --kubeconfig=/etc/rancher/k3s/k3s.yaml
 # Disable the service and clean up
 ExecStartPost=/bin/sh -c "systemctl disable kubernetes-resources-install.service"
