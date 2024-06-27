@@ -5,6 +5,7 @@
 ## General
 
 * Added the ability to automatically copy files into the built images filesystem
+* Kubernetes manifests are now applied in a systemd service
 
 ## API
 
