@@ -32,38 +32,38 @@ umount /var
 CONFIGFILE={{ .configFilePath }}/$NODETYPE.yaml
 
 if [ "$HOSTNAME" = {{ .initialiser }} ]; then
-    CONFIGFILE={{ .configFilePath }}/{{ .initialiserConfigFile }}
+CONFIGFILE={{ .configFilePath }}/{{ .initialiserConfigFile }}
 
-    {{- if .manifestsPath }}
-    mkdir -p /opt/k8s/manifests
-    cp {{ .manifestsPath }}/* /opt/k8s/manifests/
+{{ if .manifestsPath }}
+mkdir -p /opt/k8s/manifests
+cp {{ .manifestsPath }}/* /opt/k8s/manifests/
 
-    cat <<- EOF > /etc/systemd/system/kubernetes-resources-install.service
-    [Unit]
-    Description=Kubernetes Resources Install
-    Requires=rke2-server.service
-    After=rke2-server.service
-    ConditionPathExists=/var/lib/rancher/rke2/bin/kubectl
-    ConditionPathExists=/etc/rancher/rke2/rke2.yaml
+cat <<- EOF > /etc/systemd/system/kubernetes-resources-install.service
+[Unit]
+Description=Kubernetes Resources Install
+Requires=rke2-server.service
+After=rke2-server.service
+ConditionPathExists=/var/lib/rancher/rke2/bin/kubectl
+ConditionPathExists=/etc/rancher/rke2/rke2.yaml
 
-    [Install]
-    WantedBy=multi-user.target
+[Install]
+WantedBy=multi-user.target
 
-    [Service]
-    Type=oneshot
-    Restart=on-failure
-    RestartSec=30
-    # Copy kubectl in order to avoid SELinux permission issues
-    ExecStartPre=cp /var/lib/rancher/rke2/bin/kubectl /opt/k8s/kubectl
-    ExecStart=/opt/k8s/kubectl apply -f /opt/k8s/manifests --kubeconfig /etc/rancher/rke2/rke2.yaml
-    # Disable the service and clean up
-    ExecStartPost=/bin/sh -c "systemctl disable kubernetes-resources-install.service"
-    ExecStartPost=rm -f /etc/systemd/system/kubernetes-resources-install.service
-    ExecStartPost=rm -rf /opt/k8s
-    EOF
+[Service]
+Type=oneshot
+Restart=on-failure
+RestartSec=30
+# Copy kubectl in order to avoid SELinux permission issues
+ExecStartPre=cp /var/lib/rancher/rke2/bin/kubectl /opt/k8s/kubectl
+ExecStart=/opt/k8s/kubectl apply -f /opt/k8s/manifests --kubeconfig /etc/rancher/rke2/rke2.yaml
+# Disable the service and clean up
+ExecStartPost=/bin/sh -c "systemctl disable kubernetes-resources-install.service"
+ExecStartPost=rm -f /etc/systemd/system/kubernetes-resources-install.service
+ExecStartPost=rm -rf /opt/k8s
+EOF
 
-    systemctl enable kubernetes-resources-install.service
-    {{- end }}
+systemctl enable kubernetes-resources-install.service
+{{- end }}
 fi
 
 {{- if .apiHost }}
