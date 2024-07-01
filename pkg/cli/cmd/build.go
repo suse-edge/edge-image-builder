@@ -6,7 +6,7 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/suse-edge/edge-image-builder/pkg/env"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 	"gopkg.in/yaml.v3"
@@ -19,7 +19,7 @@ type BuildFlags struct {
 }
 
 var BuildArgs BuildFlags
-var ArtifactSources env.ArtifactSources
+var ArtifactSources image.ArtifactSources
 
 func NewBuildCommand(action func(*cli.Context) error) *cli.Command {
 	buildFlags := []cli.Flag{

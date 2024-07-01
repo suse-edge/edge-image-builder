@@ -1,7 +1,5 @@
 package image
 
-import "github.com/suse-edge/edge-image-builder/pkg/env"
-
 type LocalRPMConfig struct {
 	// RPMPath is the path to the directory holding RPMs that will be side-loaded
 	RPMPath string
@@ -21,5 +19,22 @@ type Context struct {
 	// ImageDefinition contains the image definition properties.
 	ImageDefinition *Definition
 	// ArtifactSources contains the information necessary for the deployment of external artifacts.
-	ArtifactSources *env.ArtifactSources
+	ArtifactSources *ArtifactSources
+}
+
+type ArtifactSources struct {
+	MetalLB struct {
+		Chart      string
+		Repository string
+		Version    string
+	}
+	EndpointCopierOperator struct {
+		Chart      string
+		Repository string
+		Version    string
+	}
+	Elemental struct {
+		RegisterRepository    string
+		SystemAgentRepository string
+	}
 }
