@@ -1,7 +1,6 @@
 package combustion
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/env"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
@@ -11,8 +10,13 @@ func ComponentHelmCharts(ctx *image.Context) ([]image.HelmChart, []image.HelmRep
 	}
 
 	const (
-		suseEdgeRepositoryName = "suse-edge"
-		installationNamespace  = "kube-system"
+		metallbRepositoryName = "suse-edge-metallb"
+		metallbNamespace      = "metallb-system"
+
+		endpointCopierOperatorRepositoryName = "suse-edge-endpoint-copier-operator"
+		endpointCopierOperatorNamespace      = "endpoint-copier-operator"
+
+		installationNamespace = "kube-system"
 	)
 
 	var charts []image.HelmChart
@@ -20,31 +24,36 @@ func ComponentHelmCharts(ctx *image.Context) ([]image.HelmChart, []image.HelmRep
 
 	if ctx.ImageDefinition.Kubernetes.Network.APIVIP != "" {
 		metalLBChart := image.HelmChart{
-			Name:                  "metallb",
-			RepositoryName:        suseEdgeRepositoryName,
-			TargetNamespace:       "metallb-system",
+			Name:                  ctx.ArtifactSources.MetalLB.Chart,
+			RepositoryName:        metallbRepositoryName,
+			TargetNamespace:       metallbNamespace,
 			CreateNamespace:       true,
 			InstallationNamespace: installationNamespace,
-			Version:               "0.14.3",
+			Version:               ctx.ArtifactSources.MetalLB.Version,
 		}
 
 		endpointCopierOperatorChart := image.HelmChart{
-			Name:                  "endpoint-copier-operator",
-			RepositoryName:        suseEdgeRepositoryName,
-			TargetNamespace:       "endpoint-copier-operator",
+			Name:                  ctx.ArtifactSources.EndpointCopierOperator.Chart,
+			RepositoryName:        endpointCopierOperatorRepositoryName,
+			TargetNamespace:       endpointCopierOperatorNamespace,
 			CreateNamespace:       true,
 			InstallationNamespace: installationNamespace,
-			Version:               "0.2.0",
+			Version:               ctx.ArtifactSources.EndpointCopierOperator.Version,
 		}
 
 		charts = append(charts, metalLBChart, endpointCopierOperatorChart)
 
-		suseEdgeRepo := image.HelmRepository{
-			Name: suseEdgeRepositoryName,
-			URL:  env.EdgeHelmRepository,
+		metallbRepo := image.HelmRepository{
+			Name: metallbRepositoryName,
+			URL:  ctx.ArtifactSources.MetalLB.Repository,
 		}
 
-		repos = append(repos, suseEdgeRepo)
+		endpointCopierOperatorRepo := image.HelmRepository{
+			Name: endpointCopierOperatorRepositoryName,
+			URL:  ctx.ArtifactSources.EndpointCopierOperator.Repository,
+		}
+
+		repos = append(repos, metallbRepo, endpointCopierOperatorRepo)
 	}
 
 	return charts, repos

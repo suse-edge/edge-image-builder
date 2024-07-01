@@ -9,6 +9,7 @@ import (
 
 	"github.com/suse-edge/edge-image-builder/pkg/cli/cmd"
 	"github.com/suse-edge/edge-image-builder/pkg/eib"
+	"github.com/suse-edge/edge-image-builder/pkg/env"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/urfave/cli/v2"
@@ -60,7 +61,7 @@ func Run(_ *cli.Context) error {
 		zap.S().Fatalf("Failed to create combustion directories: %s", err)
 	}
 
-	ctx := buildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, imageDefinition)
+	ctx := buildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, imageDefinition, &cmd.ArtifactSources)
 
 	if cmdErr = validateImageDefinition(ctx); cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
@@ -129,13 +130,14 @@ func parseImageDefinition(configDir, definitionFile string) (*image.Definition, 
 }
 
 // Assembles the image build context with user-provided values and implementation defaults.
-func buildContext(buildDir, combustionDir, artefactsDir, configDir string, imageDefinition *image.Definition) *image.Context {
+func buildContext(buildDir, combustionDir, artefactsDir, configDir string, imageDefinition *image.Definition, artifactSources *env.ArtifactSources) *image.Context {
 	ctx := &image.Context{
 		ImageConfigDir:  configDir,
 		BuildDir:        buildDir,
 		CombustionDir:   combustionDir,
 		ArtefactsDir:    artefactsDir,
 		ImageDefinition: imageDefinition,
+		ArtifactSources: artifactSources,
 	}
 	return ctx
 }
