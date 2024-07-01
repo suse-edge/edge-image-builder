@@ -9,8 +9,8 @@ cp {{ .imagesPath }}/* /var/lib/rancher/rke2/agent/images/
 umount /var
 
 {{- if .manifestsPath }}
-mkdir -p /opt/k8s/manifests
-cp {{ .manifestsPath }}/* /opt/k8s/manifests/
+mkdir -p /opt/eib-k8s/manifests
+cp {{ .manifestsPath }}/* /opt/eib-k8s/manifests/
 
 cat <<- EOF > /etc/systemd/system/kubernetes-resources-install.service
 [Unit]
@@ -28,12 +28,12 @@ Type=oneshot
 Restart=on-failure
 RestartSec=60
 # Copy kubectl in order to avoid SELinux permission issues
-ExecStartPre=cp /var/lib/rancher/rke2/bin/kubectl /opt/k8s/kubectl
-ExecStart=/opt/k8s/kubectl apply -f /opt/k8s/manifests --kubeconfig /etc/rancher/rke2/rke2.yaml
+ExecStartPre=cp /var/lib/rancher/rke2/bin/kubectl /opt/eib-k8s/kubectl
+ExecStart=/opt/eib-k8s/kubectl apply -f /opt/eib-k8s/manifests --kubeconfig /etc/rancher/rke2/rke2.yaml
 # Disable the service and clean up
 ExecStartPost=/bin/sh -c "systemctl disable kubernetes-resources-install.service"
 ExecStartPost=rm -f /etc/systemd/system/kubernetes-resources-install.service
-ExecStartPost=rm -rf /opt/k8s
+ExecStartPost=rm -rf /opt/eib-k8s
 EOF
 
 systemctl enable kubernetes-resources-install.service

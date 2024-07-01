@@ -35,8 +35,8 @@ if [ "$HOSTNAME" = {{ .initialiser }} ]; then
 CONFIGFILE={{ .configFilePath }}/{{ .initialiserConfigFile }}
 
 {{ if .manifestsPath }}
-mkdir -p /opt/k8s/manifests
-cp {{ .manifestsPath }}/* /opt/k8s/manifests/
+mkdir -p /opt/eib-k8s/manifests
+cp {{ .manifestsPath }}/* /opt/eib-k8s/manifests/
 
 cat <<- EOF > /etc/systemd/system/kubernetes-resources-install.service
 [Unit]
@@ -53,11 +53,11 @@ WantedBy=multi-user.target
 Type=oneshot
 Restart=on-failure
 RestartSec=60
-ExecStart=/opt/bin/kubectl apply -f /opt/k8s/manifests --kubeconfig=/etc/rancher/k3s/k3s.yaml
+ExecStart=/opt/bin/kubectl apply -f /opt/eib-k8s/manifests --kubeconfig=/etc/rancher/k3s/k3s.yaml
 # Disable the service and clean up
 ExecStartPost=/bin/sh -c "systemctl disable kubernetes-resources-install.service"
 ExecStartPost=rm -f /etc/systemd/system/kubernetes-resources-install.service
-ExecStartPost=rm -rf /opt/k8s
+ExecStartPost=rm -rf /opt/eib-k8s
 EOF
 
 systemctl enable kubernetes-resources-install.service
