@@ -69,6 +69,18 @@ func NewBuildCommand(action func(*cli.Context) error) *cli.Command {
 			Usage:       "Version of the Endpoint Copier Operator Helm chart",
 			Category:    "Artifact sources",
 		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "elemental.register-repository",
+			Destination: &ArtifactSources.Elemental.RegisterRepository,
+			Usage:       "Address of the elemental-register RPM repository",
+			Category:    "Artifact sources",
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "elemental.system-agent-repository",
+			Destination: &ArtifactSources.Elemental.SystemAgentRepository,
+			Usage:       "Address of the elemental-system-agent RPM repository",
+			Category:    "Artifact sources",
+		}),
 	}
 
 	return &cli.Command{

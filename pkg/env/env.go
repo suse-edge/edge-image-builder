@@ -1,9 +1,5 @@
 package env
 
-var (
-	ElementalPackageRepository = "https://download.opensuse.org/repositories/isv:/Rancher:/Elemental:/Maintenance:/5.5/standard/"
-)
-
 type ArtifactSources struct {
 	MetalLB struct {
 		Chart      string
@@ -14,5 +10,9 @@ type ArtifactSources struct {
 		Chart      string
 		Repository string
 		Version    string
+	}
+	Elemental struct {
+		RegisterRepository    string
+		SystemAgentRepository string
 	}
 }
