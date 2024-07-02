@@ -39,6 +39,6 @@ RUN zypper addrepo https://download.opensuse.org/repositories/isv:SUSE:Edge:Edge
     zypper clean -a
 
 COPY --from=0 /src/eib /bin/eib
-COPY artifacts.yaml artifacts.yaml
+COPY config/artifacts.yaml artifacts.yaml
 
 ENTRYPOINT ["/bin/eib"]
