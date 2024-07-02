@@ -11,7 +11,6 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/cache"
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
-	"github.com/suse-edge/edge-image-builder/pkg/env"
 	"github.com/suse-edge/edge-image-builder/pkg/helm"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
@@ -72,7 +71,7 @@ func appendKubernetesSELinuxRPMs(ctx *image.Context) error {
 		return fmt.Errorf("identifying selinux repository: %w", err)
 	}
 
-	appendRPMs(ctx, repository, selinuxPackage)
+	appendRPMs(ctx, []image.AddRepo{repository}, selinuxPackage)
 
 	gpgKeysDir := combustion.GPGKeysPath(ctx)
 	if err = os.MkdirAll(gpgKeysDir, os.ModePerm); err != nil {
@@ -98,12 +97,19 @@ func appendElementalRPMs(ctx *image.Context) {
 
 	log.AuditInfo("Elemental registration is configured. The necessary RPM packages will be downloaded.")
 
-	appendRPMs(ctx, image.AddRepo{URL: env.ElementalPackageRepository}, combustion.ElementalPackages...)
+	appendRPMs(ctx, []image.AddRepo{
+		{
+			URL: ctx.ArtifactSources.Elemental.RegisterRepository,
+		},
+		{
+			URL: ctx.ArtifactSources.Elemental.SystemAgentRepository,
+		},
+	}, combustion.ElementalPackages...)
 }
 
-func appendRPMs(ctx *image.Context, repository image.AddRepo, packages ...string) {
+func appendRPMs(ctx *image.Context, repos []image.AddRepo, packages ...string) {
 	repositories := ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos
-	repositories = append(repositories, repository)
+	repositories = append(repositories, repos...)
 
 	packageList := ctx.ImageDefinition.OperatingSystem.Packages.PKGList
 	packageList = append(packageList, packages...)

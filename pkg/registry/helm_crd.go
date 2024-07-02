@@ -1,6 +1,8 @@
 package registry
 
 import (
+	"strings"
+
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
@@ -36,7 +38,9 @@ func NewHelmCRD(chart *image.HelmChart, chartContent, valuesContent, repositoryU
 			Namespace   string            `yaml:"namespace,omitempty"`
 			Annotations map[string]string `yaml:"annotations"`
 		}{
-			Name:      chart.Name,
+			// Some OCI registries (incl. oci://registry.suse.com/edge) use a `-chart` suffix
+			// in the names of the charts which may conflict with .Release.Name references.
+			Name:      strings.TrimSuffix(chart.Name, "-chart"),
 			Namespace: chart.InstallationNamespace,
 			Annotations: map[string]string{
 				"edge.suse.com/source":         helmChartSource,

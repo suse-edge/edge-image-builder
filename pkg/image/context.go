@@ -18,4 +18,23 @@ type Context struct {
 	ArtefactsDir string
 	// ImageDefinition contains the image definition properties.
 	ImageDefinition *Definition
+	// ArtifactSources contains the information necessary for the deployment of external artifacts.
+	ArtifactSources *ArtifactSources
+}
+
+type ArtifactSources struct {
+	MetalLB struct {
+		Chart      string
+		Repository string
+		Version    string
+	}
+	EndpointCopierOperator struct {
+		Chart      string
+		Repository string
+		Version    string
+	}
+	Elemental struct {
+		RegisterRepository    string
+		SystemAgentRepository string
+	}
 }
