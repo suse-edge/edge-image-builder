@@ -18,4 +18,23 @@ type Context struct {
 	ArtefactsDir string
 	// ImageDefinition contains the image definition properties.
 	ImageDefinition *Definition
+	// ArtifactSources contains the information necessary for the deployment of external artifacts.
+	ArtifactSources *ArtifactSources
+}
+
+type ArtifactSources struct {
+	MetalLB struct {
+		Chart      string `yaml:"chart"`
+		Repository string `yaml:"repository"`
+		Version    string `yaml:"version"`
+	} `yaml:"metallb"`
+	EndpointCopierOperator struct {
+		Chart      string `yaml:"chart"`
+		Repository string `yaml:"repository"`
+		Version    string `yaml:"version"`
+	} `yaml:"endpoint-copier-operator"`
+	Elemental struct {
+		RegisterRepository    string `yaml:"register-repository"`
+		SystemAgentRepository string `yaml:"system-agent-repository"`
+	} `yaml:"elemental"`
 }

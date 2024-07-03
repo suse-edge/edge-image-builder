@@ -6,6 +6,8 @@
 
 * Added the ability to automatically copy files into the built images filesystem
 * Kubernetes manifests are now applied in a systemd service
+* Artifact sources origin and metadata are now extracted from a configuration file (`config/artifacts.yaml`)
+* Dropped `-chart` suffix from installed Helm chart names
 
 ## API
 

@@ -13,6 +13,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -60,7 +61,13 @@ func Run(_ *cli.Context) error {
 		zap.S().Fatalf("Failed to create combustion directories: %s", err)
 	}
 
-	ctx := buildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, imageDefinition)
+	artifactSources, err := parseArtifactSources()
+	if err != nil {
+		log.Auditf("Loading artifact sources metadata failed. %s", checkBuildLogMessage)
+		zap.S().Fatalf("Parsing artifact sources failed: %v", err)
+	}
+
+	ctx := buildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, imageDefinition, artifactSources)
 
 	if cmdErr = validateImageDefinition(ctx); cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
@@ -128,14 +135,35 @@ func parseImageDefinition(configDir, definitionFile string) (*image.Definition, 
 	return imageDefinition, nil
 }
 
+func parseArtifactSources() (*image.ArtifactSources, error) {
+	const artifactsConfigFile = "artifacts.yaml"
+
+	b, err := os.ReadFile(artifactsConfigFile)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, fmt.Errorf("artifact sources file '%s' does not exist", artifactsConfigFile)
+		}
+
+		return nil, fmt.Errorf("reading artifact sources file: %w", err)
+	}
+
+	var sources image.ArtifactSources
+	if err = yaml.Unmarshal(b, &sources); err != nil {
+		return nil, fmt.Errorf("decoding artifacts sources: %w", err)
+	}
+
+	return &sources, nil
+}
+
 // Assembles the image build context with user-provided values and implementation defaults.
-func buildContext(buildDir, combustionDir, artefactsDir, configDir string, imageDefinition *image.Definition) *image.Context {
+func buildContext(buildDir, combustionDir, artefactsDir, configDir string, imageDefinition *image.Definition, artifactSources *image.ArtifactSources) *image.Context {
 	ctx := &image.Context{
 		ImageConfigDir:  configDir,
 		BuildDir:        buildDir,
 		CombustionDir:   combustionDir,
 		ArtefactsDir:    artefactsDir,
 		ImageDefinition: imageDefinition,
+		ArtifactSources: artifactSources,
 	}
 	return ctx
 }
