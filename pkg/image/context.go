@@ -24,17 +24,17 @@ type Context struct {
 
 type ArtifactSources struct {
 	MetalLB struct {
-		Chart      string
-		Repository string
-		Version    string
-	}
+		Chart      string `yaml:"chart"`
+		Repository string `yaml:"repository"`
+		Version    string `yaml:"version"`
+	} `yaml:"metallb"`
 	EndpointCopierOperator struct {
-		Chart      string
-		Repository string
-		Version    string
-	}
+		Chart      string `yaml:"chart"`
+		Repository string `yaml:"repository"`
+		Version    string `yaml:"version"`
+	} `yaml:"endpoint-copier-operator"`
 	Elemental struct {
-		RegisterRepository    string
-		SystemAgentRepository string
-	}
+		RegisterRepository    string `yaml:"register-repository"`
+		SystemAgentRepository string `yaml:"system-agent-repository"`
+	} `yaml:"elemental"`
 }

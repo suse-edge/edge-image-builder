@@ -6,20 +6,10 @@
 
 * Added the ability to automatically copy files into the built images filesystem
 * Kubernetes manifests are now applied in a systemd service
-* Introduced artifact configuration file (`artifacts.yaml`) used for specifying sources origin and metadata
+* Artifact sources origin and metadata are now extracted from a configuration file (`config/artifacts.yaml`)
 * Dropped `-chart` suffix from installed Helm chart names
 
 ## API
-
-* Added CLI arg options to override artifact sources specified in `artifacts.yaml`:
-  * `--elemental.register-repository` used for specifying the RPM repository to install the `elemental-register` package from
-  * `--elemental.system-agent-repository` used for specifying the RPM repository to install the `elemental-system-agent` package from
-  * `--metallb.chart` used for specifying the name of the MetalLB Helm chart
-  * `--metallb.repository` used for specifying the Helm repository containing the MetalLB chart
-  * `--metallb.version` used for specifying the version of the MetalLB Helm chart
-  * `--endpoint-copier-operator.chart` used for specifying the name of the Endpoint Copier Operator Helm chart
-  * `--endpoint-copier-operator.repository` used for specifying the Helm repository containing the Endpoint Copier Operator chart
-  * `--endpoint-copier-operator.version` used for specifying the version of the Endpoint Copier Operator Helm chart
 
 ### Image Definition Changes
 
