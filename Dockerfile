@@ -18,7 +18,7 @@ RUN --mount=type=cache,id=gomod,target=/go/pkg/mod \
     go build ./cmd/eib
 
 # ----- Deliverable Image -----
-FROM opensuse/leap:15.5
+FROM opensuse/leap:15.6
 
 # Dependency uses by line
 # 1. ISO image building
