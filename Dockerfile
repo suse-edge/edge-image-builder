@@ -41,4 +41,7 @@ RUN zypper addrepo https://download.opensuse.org/repositories/isv:SUSE:Edge:Edge
 COPY --from=0 /src/eib /bin/eib
 COPY config/artifacts.yaml artifacts.yaml
 
+# Test eib executable to verify glibc compatibility on openSUSE Leap
+RUN /bin/eib version
+
 ENTRYPOINT ["/bin/eib"]
