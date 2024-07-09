@@ -9,10 +9,11 @@ set -euo pipefail
 #  LocalRPMList - list of local RPMs for which dependency resolution has to be done
 #  LocalGPGList - list of local GPG keys that will be imported in the resolver image
 #  NoGPGCheck   - when set to true skips the GPG validation for all third-party repositories and local RPMs
+#  Arch         - sets the architecture of the rpm packages to pull
 
 {{ if ne .RegCode "" }}
 suseconnect -r {{ .RegCode }}
-SLE_SP=$(cat /etc/rpm/macros.sle | awk '/sle/ {print $2};' | cut -c4) && suseconnect -p PackageHub/15.$SLE_SP/$(uname -m)
+SLE_SP=$(cat /etc/rpm/macros.sle | awk '/sle/ {print $2};' | cut -c4) && suseconnect -p PackageHub/15.$SLE_SP/{{ .Arch }}
 zypper ref
 trap "suseconnect -d" EXIT
 {{ end -}}

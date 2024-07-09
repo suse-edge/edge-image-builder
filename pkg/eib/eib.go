@@ -141,7 +141,7 @@ func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion
 		imgType := ctx.ImageDefinition.Image.ImageType
 		baseBuilder := resolver.NewTarballBuilder(ctx.BuildDir, imgPath, imgType, p)
 
-		combustionHandler.RPMResolver = resolver.New(ctx.BuildDir, p, baseBuilder, "")
+		combustionHandler.RPMResolver = resolver.New(ctx.BuildDir, p, baseBuilder, "", string(ctx.ImageDefinition.Image.Arch))
 		combustionHandler.RPMRepoCreator = rpm.NewRepoCreator(ctx.BuildDir)
 	}
 

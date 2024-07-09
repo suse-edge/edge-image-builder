@@ -16,8 +16,8 @@ set -euo pipefail
 # In x86_64, the default root partition is the third partition
 ROOT_PART=/dev/sda3
 
-# Make the necessarry adaptations for aarch64
-if [[ $(uname -m) == "aarch64" ]]; then
+# Make the necessary adaptations for aarch64
+if [[ {{ .Arch }} == "aarch64" ]]; then
 	if ! test -f /dev/kvm; then
 		export LIBGUESTFS_BACKEND_SETTINGS=force_tcg
 	fi

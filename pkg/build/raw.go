@@ -106,6 +106,7 @@ func (b *Builder) writeModifyScript(imageFilename string, includeCombustion, ren
 		ConfigureCombustion bool
 		RenameFilesystem    bool
 		DiskSize            string
+		Arch                string
 	}{
 		ImagePath:           imageFilename,
 		CombustionDir:       b.context.CombustionDir,
@@ -114,6 +115,7 @@ func (b *Builder) writeModifyScript(imageFilename string, includeCombustion, ren
 		ConfigureCombustion: includeCombustion,
 		RenameFilesystem:    renameFilesystem,
 		DiskSize:            string(b.context.ImageDefinition.OperatingSystem.RawConfiguration.DiskSize),
+		Arch:                string(b.context.ImageDefinition.Image.Arch),
 	}
 
 	data, err := template.Parse(modifyScriptName, modifyRawImageTemplate, &values)
