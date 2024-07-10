@@ -1,5 +1,5 @@
 # ----- EIB Builder Image -----
-FROM registry.suse.com/bci/golang:1.22-1.11.6
+FROM registry.suse.com/bci/golang:1.22-1.34.7
 
 # Dependency uses by line
 # 1. Podman Go library
@@ -18,7 +18,7 @@ RUN --mount=type=cache,id=gomod,target=/go/pkg/mod \
     go build ./cmd/eib
 
 # ----- Deliverable Image -----
-FROM opensuse/leap:15.5
+FROM opensuse/leap:15.6
 
 # Dependency uses by line
 # 1. ISO image building
