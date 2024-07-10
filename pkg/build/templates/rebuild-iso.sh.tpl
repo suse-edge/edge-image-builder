@@ -32,7 +32,7 @@ NEW_SQUASH_FILE=${RAW_EXTRACT_DIR}/${SQUASH_BASENAME}
 # Select the desired install device - assumes data destruction and makes the installation fully unattended by enabling GRUB timeout
 {{ if ne .InstallDevice "" -}}
 echo -e "set timeout=3\nset timeout_style=menu\n$(cat ${ISO_EXTRACT_DIR}/boot/grub2/grub.cfg)" > ${ISO_EXTRACT_DIR}/boot/grub2/grub.cfg
-sed -i '/ignition.platform/ s|$| rd.kiwi.oem.installdevice={{.InstallDevice}} |' ${ISO_EXTRACT_DIR}/boot/grub2/grub.cfg
+sed -i '/root=install:CDLABEL=INSTALL/ s|$| rd.kiwi.oem.installdevice={{.InstallDevice}} |' ${ISO_EXTRACT_DIR}/boot/grub2/grub.cfg
 {{ end -}}
 
 
