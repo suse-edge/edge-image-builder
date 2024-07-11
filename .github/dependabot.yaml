@@ -13,3 +13,9 @@ updates:
       - "kind/dependabot"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "docker"
+    directory: "/"
+    labels:
+      - "kind/dependabot"
+    schedule:
+      interval: "weekly"

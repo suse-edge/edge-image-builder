@@ -49,4 +49,7 @@ RUN mkdir -p /usr/share/edk2/aarch64 && \
 COPY --from=0 /src/eib /bin/eib
 COPY config/artifacts.yaml artifacts.yaml
 
+# Test eib executable to verify glibc compatibility on openSUSE Leap
+RUN /bin/eib version
+
 ENTRYPOINT ["/bin/eib"]
