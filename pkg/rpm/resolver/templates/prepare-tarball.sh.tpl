@@ -11,7 +11,7 @@ WORK_DIR={{.WorkDir}}
 IMG_PATH={{.ImgPath}}
 
 # Make the necessarry adaptations for aarch64
-if [[ $(uname -m) == "aarch64" ]]; then
+if [[ {{ .Arch }} == "aarch64" ]]; then
 	export LIBGUESTFS_BACKEND_SETTINGS=force_tcg
 fi
 
