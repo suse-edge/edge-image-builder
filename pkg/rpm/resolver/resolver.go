@@ -56,14 +56,17 @@ type Resolver struct {
 	// path to the mounts.conf filepath that overrides the default mounts.conf configuration;
 	// if left empty the default override path will be used. For more info - https://github.com/containers/common/blob/v0.57/docs/containers-mounts.conf.5.md
 	overrideMountsPath string
+	// architecture of the packages the resolver should pull
+	arch string
 }
 
-func New(workDir string, podman Podman, baseImageBuilder BaseResolverImageBuilder, overrideMountsPath string) *Resolver {
+func New(workDir string, podman Podman, baseImageBuilder BaseResolverImageBuilder, overrideMountsPath, arch string) *Resolver {
 	return &Resolver{
 		dir:                      workDir,
 		podman:                   podman,
 		baseResolverImageBuilder: baseImageBuilder,
 		overrideMountsPath:       overrideMountsPath,
+		arch:                     arch,
 	}
 }
 
@@ -185,11 +188,13 @@ func (r *Resolver) writeRPMResolutionScript(localRPMConfig *image.LocalRPMConfig
 		LocalRPMList string
 		LocalGPGList string
 		NoGPGCheck   bool
+		Arch         string
 	}{
 		RegCode:    packages.RegCode,
 		AddRepo:    packages.AdditionalRepos,
 		CacheDir:   r.generateResolverImgRPMRepoPath(),
 		NoGPGCheck: packages.NoGPGCheck,
+		Arch:       r.arch,
 	}
 
 	if len(packages.PKGList) > 0 {

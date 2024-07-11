@@ -8,6 +8,7 @@
 * Kubernetes manifests are now applied in a systemd service
 * Artifact sources origin and metadata are now extracted from a configuration file (`config/artifacts.yaml`)
 * Dropped `-chart` suffix from installed Helm chart names
+* Added ability to build aarch64 images on an aarch64 host machine
 
 ## API
 

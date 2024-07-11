@@ -34,15 +34,18 @@ type TarballImageBuilder struct {
 	imgPath string
 	// type of the image that will be used as base (either ISO or RAW)
 	imgType string
+	// architecture of the image that will be built
+	arch string
 	// imgImporter used to import the tarball archive as a container image
 	imgImporter ImageImporter
 }
 
-func NewTarballBuilder(workDir, imgPath, imgType string, importer ImageImporter) *TarballImageBuilder {
+func NewTarballBuilder(workDir, imgPath, imgType, arch string, importer ImageImporter) *TarballImageBuilder {
 	return &TarballImageBuilder{
 		dir:         workDir,
 		imgPath:     imgPath,
 		imgType:     imgType,
+		arch:        arch,
 		imgImporter: importer,
 	}
 }
@@ -94,11 +97,13 @@ func (t *TarballImageBuilder) writeTarballImageScript() error {
 		ImgPath     string
 		ArchiveName string
 		ImgType     string
+		Arch        string
 	}{
 		WorkDir:     t.getTarballImgDir(),
 		ImgPath:     t.getBaseISOCopyPath(),
 		ArchiveName: tarballName,
 		ImgType:     t.imgType,
+		Arch:        t.arch,
 	}
 
 	data, err := template.Parse(prepareTarballScriptName, prepareTraballTemplate, &values)

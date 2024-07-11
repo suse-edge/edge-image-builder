@@ -10,6 +10,11 @@ set -euo pipefail
 WORK_DIR={{.WorkDir}}
 IMG_PATH={{.ImgPath}}
 
+# Make the necessarry adaptations for aarch64
+if [[ {{ .Arch }} == "aarch64" ]]; then
+	export LIBGUESTFS_BACKEND_SETTINGS=force_tcg
+fi
+
 {{ if eq .ImgType "iso" -}}
 xorriso -osirrox on -indev $IMG_PATH extract / $WORK_DIR/iso-root/
 
