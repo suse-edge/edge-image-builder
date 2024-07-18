@@ -27,7 +27,7 @@ FROM opensuse/leap:15.6
 # 4. RPM resolution logic
 # 5. Embedded artefact registry
 # 6. Network configuration
-RUN zypper addrepo https://download.opensuse.org/repositories/isv:SUSE:Edge:EdgeImageBuilder/SLE-15-SP5/isv:SUSE:Edge:EdgeImageBuilder.repo && \
+RUN zypper addrepo https://download.opensuse.org/repositories/isv:SUSE:Edge:EdgeImageBuilder/Leap-15.6/isv:SUSE:Edge:EdgeImageBuilder.repo && \
     zypper --gpg-auto-import-keys refresh && \
     zypper install -y \
     xorriso squashfs  \
