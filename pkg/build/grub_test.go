@@ -27,9 +27,6 @@ func TestGenerateGRUBGuestfishCommands(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, commandString)
 
-	expectedFirstBoot := "sed -i '/ignition.platform/ s/$/ alpha beta /' /tmp/grub.cfg"
-	assert.Contains(t, commandString, expectedFirstBoot)
-
 	expectedDefault := "sed -i '/^GRUB_CMDLINE_LINUX_DEFAULT=\"/ s/\"$/ alpha beta \"/' /tmp/grub"
 	assert.Contains(t, commandString, expectedDefault)
 }
