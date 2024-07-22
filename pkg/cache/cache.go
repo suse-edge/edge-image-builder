@@ -17,12 +17,7 @@ type Cache struct {
 	cacheDir string
 }
 
-func New(rootDir string) (*Cache, error) {
-	cacheDir := filepath.Join(rootDir, "cache")
-	if err := os.MkdirAll(cacheDir, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("creating a cache directory: %w", err)
-	}
-
+func New(cacheDir string) (*Cache, error) {
 	return &Cache{cacheDir: cacheDir}, nil
 }
 

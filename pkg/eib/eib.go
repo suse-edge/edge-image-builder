@@ -126,6 +126,12 @@ func appendHelm(ctx *image.Context) {
 }
 
 func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion, error) {
+	cacheDir := filepath.Join(rootDir, "cache")
+	if err := os.MkdirAll(cacheDir, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("creating a cache directory: %w", err)
+	}
+	ctx.CacheDir = cacheDir
+
 	combustionHandler := &combustion.Combustion{
 		NetworkConfigGenerator:       network.ConfigGenerator{},
 		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
@@ -157,7 +163,7 @@ func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion
 	}
 
 	if ctx.ImageDefinition.Kubernetes.Version != "" {
-		c, err := cache.New(rootDir)
+		c, err := cache.New(cacheDir)
 		if err != nil {
 			return nil, fmt.Errorf("initialising cache instance: %w", err)
 		}

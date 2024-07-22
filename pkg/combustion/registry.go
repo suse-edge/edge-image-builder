@@ -2,6 +2,7 @@ package combustion
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -207,6 +208,11 @@ func registryArtefactsPath(ctx *image.Context) string {
 }
 
 func populateRegistry(ctx *image.Context, images []string) error {
+	imageCacheDir := filepath.Join(ctx.CacheDir, "images")
+	if err := os.MkdirAll(imageCacheDir, os.ModePerm); err != nil {
+		return fmt.Errorf("creating container image cache dir: %w", err)
+	}
+
 	bar := progressbar.Default(int64(len(images)), "Populating Embedded Artifact Registry...")
 	zap.S().Infof("Adding the following images to the embedded artifact registry:\n%s", images)
 
@@ -227,22 +233,50 @@ func populateRegistry(ctx *image.Context, images []string) error {
 	arch := ctx.ImageDefinition.Image.Arch.Short()
 
 	for _, img := range images {
-		if err = storeImage(img, arch, logFile); err != nil {
-			return fmt.Errorf("adding image to registry store: %w", err)
-		}
-
 		convertedImage := strings.ReplaceAll(img, "/", "_")
 		convertedImageName := fmt.Sprintf("%s-%s", convertedImage, registryTarSuffix)
 
+		imageCacheLocation := filepath.Join(imageCacheDir, convertedImageName)
 		imageTarDest := filepath.Join(registryArtefactsPath(ctx), convertedImageName)
-		if err = generateRegistryTar(imageTarDest, logFile); err != nil {
-			return fmt.Errorf("generating registry store tarball: %w", err)
+
+		exists, err := imageExists(imageCacheLocation)
+		if err != nil {
+			return fmt.Errorf("checking if image already cached: %w", err)
 		}
 
+		if exists {
+			if err = fileio.CopyFile(imageCacheLocation, imageTarDest, fileio.ExecutablePerms); err != nil {
+				return fmt.Errorf("copying cached container image: %w", err)
+			}
+		} else {
+			if err = storeImage(img, arch, logFile); err != nil {
+				return fmt.Errorf("adding image to registry store: %w", err)
+			}
+
+			if err = generateRegistryTar(imageTarDest, logFile); err != nil {
+				return fmt.Errorf("generating registry store tarball: %w", err)
+			}
+
+			if err = fileio.CopyFile(imageTarDest, imageCacheLocation, fileio.ExecutablePerms); err != nil {
+				return fmt.Errorf("copying container image to cache: %w", err)
+			}
+		}
 		if err = bar.Add(1); err != nil {
 			zap.S().Debugf("Error incrementing the progress bar: %s", err)
 		}
 	}
 
 	return nil
+}
+
+func imageExists(imagePath string) (bool, error) {
+	if _, err := os.Stat(imagePath); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("looking for cached image: %w", err)
+	}
+
+	return true, nil
 }

@@ -20,6 +20,8 @@ type Context struct {
 	ImageDefinition *Definition
 	// ArtifactSources contains the information necessary for the deployment of external artifacts.
 	ArtifactSources *ArtifactSources
+	// CacheDir contains all of the artifacts that are cached for the build process.
+	CacheDir string
 }
 
 type ArtifactSources struct {
