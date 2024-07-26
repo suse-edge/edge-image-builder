@@ -11,7 +11,10 @@ import (
 )
 
 func setup(t *testing.T) (cache *Cache, teardown func()) {
-	cache, err := New("test-cache")
+	cacheDir := "test-cache"
+	assert.NoError(t, os.MkdirAll(cacheDir, os.ModePerm))
+
+	cache, err := New(cacheDir)
 	require.NoError(t, err)
 
 	return cache, func() {
