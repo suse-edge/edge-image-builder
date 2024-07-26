@@ -62,7 +62,6 @@ type Combustion struct {
 	RPMResolver                  rpmResolver
 	RPMRepoCreator               rpmRepoCreator
 	Registry                     embeddedRegistry
-	CacheDir                     string
 }
 
 // Configure iterates over all separate Combustion components and configures them independently.

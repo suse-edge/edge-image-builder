@@ -2,7 +2,6 @@ package combustion
 
 import (
 	_ "embed"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -239,13 +238,8 @@ func populateRegistry(ctx *image.Context, images []string) error {
 		imageCacheLocation := filepath.Join(imageCacheDir, convertedImageName)
 		imageTarDest := filepath.Join(registryArtefactsPath(ctx), convertedImageName)
 
-		exists, err := imageExists(imageCacheLocation)
-		if err != nil {
-			return fmt.Errorf("checking if image already cached: %w", err)
-		}
-
-		if exists {
-			if err = fileio.CopyFile(imageCacheLocation, imageTarDest, fileio.ExecutablePerms); err != nil {
+		if fileio.FileExists(imageCacheLocation) {
+			if err = fileio.CopyFile(imageCacheLocation, imageTarDest, fileio.NonExecutablePerms); err != nil {
 				return fmt.Errorf("copying cached container image: %w", err)
 			}
 		} else {
@@ -257,7 +251,7 @@ func populateRegistry(ctx *image.Context, images []string) error {
 				return fmt.Errorf("generating registry store tarball: %w", err)
 			}
 
-			if err = fileio.CopyFile(imageTarDest, imageCacheLocation, fileio.ExecutablePerms); err != nil {
+			if err = fileio.CopyFile(imageTarDest, imageCacheLocation, fileio.NonExecutablePerms); err != nil {
 				return fmt.Errorf("copying container image to cache: %w", err)
 			}
 		}
@@ -267,16 +261,4 @@ func populateRegistry(ctx *image.Context, images []string) error {
 	}
 
 	return nil
-}
-
-func imageExists(imagePath string) (bool, error) {
-	if _, err := os.Stat(imagePath); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return false, nil
-		}
-
-		return false, fmt.Errorf("looking for cached image: %w", err)
-	}
-
-	return true, nil
 }

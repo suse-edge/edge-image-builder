@@ -130,3 +130,16 @@ func createFileWithPerms(dest string, perms os.FileMode) (*os.File, error) {
 
 	return file, nil
 }
+
+func FileExists(filePath string) bool {
+	if _, err := os.Stat(filePath); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return false
+		}
+
+		zap.S().Warnf("Searching for file at (%s) failed: %s", filePath, err)
+		return false
+	}
+
+	return true
+}
