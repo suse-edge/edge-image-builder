@@ -210,13 +210,14 @@ type Helm struct {
 }
 
 type HelmChart struct {
-	Name                  string `yaml:"name"`
-	RepositoryName        string `yaml:"repositoryName"`
-	Version               string `yaml:"version"`
-	TargetNamespace       string `yaml:"targetNamespace"`
-	CreateNamespace       bool   `yaml:"createNamespace"`
-	InstallationNamespace string `yaml:"installationNamespace"`
-	ValuesFile            string `yaml:"valuesFile"`
+	Name                  string   `yaml:"name"`
+	RepositoryName        string   `yaml:"repositoryName"`
+	Version               string   `yaml:"version"`
+	TargetNamespace       string   `yaml:"targetNamespace"`
+	CreateNamespace       bool     `yaml:"createNamespace"`
+	InstallationNamespace string   `yaml:"installationNamespace"`
+	ValuesFile            string   `yaml:"valuesFile"`
+	APIVersions           []string `yaml:"apiVersions"`
 }
 
 type HelmRepository struct {

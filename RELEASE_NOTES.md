@@ -22,6 +22,7 @@
 ## Bug Fixes
 
 * [#498](https://github.com/suse-edge/edge-image-builder/issues/498) - Fix kernelArgs issue with Leap Micro 6.0
+* [#481](https://github.com/suse-edge/edge-image-builder/issues/481) - Certain Helm charts fail when templated without specified API Versions
 
 ---
 

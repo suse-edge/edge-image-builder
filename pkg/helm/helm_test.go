@@ -502,6 +502,7 @@ func TestTemplateCommand(t *testing.T) {
 		repo            string
 		chart           string
 		version         string
+		apiVersions     []string
 		kubeVersion     string
 		targetNamespace string
 		valuesPath      string
@@ -512,6 +513,7 @@ func TestTemplateCommand(t *testing.T) {
 			repo:            "suse-edge/kubevirt",
 			chart:           "kubevirt",
 			version:         "0.2.1",
+			apiVersions:     []string{"batch/v1", "apps/v1/Deployment"},
 			kubeVersion:     "v1.29.0+rke2r1",
 			targetNamespace: "kubevirt-ns",
 			valuesPath:      "/kubevirt/values.yaml",
@@ -527,6 +529,8 @@ func TestTemplateCommand(t *testing.T) {
 				"0.2.1",
 				"-f",
 				"/kubevirt/values.yaml",
+				"--api-versions",
+				"batch/v1,apps/v1/Deployment",
 				"--kube-version",
 				"v1.29.0+rke2r1",
 			},
@@ -553,7 +557,7 @@ func TestTemplateCommand(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			cmd := templateCommand(test.chart, test.repo, test.version, test.valuesPath, test.kubeVersion, test.targetNamespace, &stdout, &stderr)
+			cmd := templateCommand(test.chart, test.repo, test.version, test.valuesPath, test.kubeVersion, test.targetNamespace, test.apiVersions, &stdout, &stderr)
 
 			assert.Equal(t, test.expectedArgs, cmd.Args)
 			assert.Equal(t, &stdout, cmd.Stdout)

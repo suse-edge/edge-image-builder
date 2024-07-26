@@ -16,7 +16,7 @@ type mockHelmClient struct {
 	addRepoFunc       func(repository *image.HelmRepository) error
 	registryLoginFunc func(repository *image.HelmRepository) error
 	pullFunc          func(chart string, repository *image.HelmRepository, version, destDir string) (string, error)
-	templateFunc      func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error)
+	templateFunc      func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string, apiVersions []string) ([]map[string]any, error)
 }
 
 func (m mockHelmClient) AddRepo(repository *image.HelmRepository) error {
@@ -40,9 +40,9 @@ func (m mockHelmClient) Pull(chart string, repository *image.HelmRepository, ver
 	panic("not implemented")
 }
 
-func (m mockHelmClient) Template(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error) {
+func (m mockHelmClient) Template(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string, apiVersions []string) ([]map[string]any, error) {
 	if m.templateFunc != nil {
-		return m.templateFunc(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace)
+		return m.templateFunc(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace, apiVersions)
 	}
 	panic("not implemented")
 }
@@ -68,7 +68,7 @@ func TestRegistry_HelmChartImages_TemplateError(t *testing.T) {
 			},
 		},
 		helmClient: mockHelmClient{
-			templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error) {
+			templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string, apiVersions []string) ([]map[string]any, error) {
 				return nil, fmt.Errorf("failed templating")
 			},
 		},
@@ -92,7 +92,7 @@ func TestRegistry_HelmChartImages(t *testing.T) {
 			},
 		},
 		helmClient: mockHelmClient{
-			templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error) {
+			templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string, apiVersions []string) ([]map[string]any, error) {
 				return []map[string]any{
 					{
 						"kind":  "Deployment",

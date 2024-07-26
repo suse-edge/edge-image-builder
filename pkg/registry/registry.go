@@ -20,7 +20,7 @@ type helmClient interface {
 	AddRepo(repository *image.HelmRepository) error
 	RegistryLogin(repository *image.HelmRepository) error
 	Pull(chart string, repository *image.HelmRepository, version, destDir string) (string, error)
-	Template(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error)
+	Template(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string, apiVersions []string) ([]map[string]any, error)
 }
 
 type helmChart struct {
