@@ -1,9 +1,19 @@
 # Building Images
 
-Two things are necessary to build an image using EIB:
+Three things are necessary to build an image using EIB:
+1. A SLE Micro image to use as the base of the created image
 1. A definition file that describes the image to build
 1. A directory that contains the base SLE Micro image to modify, along with any other custom files that
    will be included in the built image
+
+# SUSE Linux Enterprise Micro Images
+
+SLE Micro images can be found on [suse.com](http://www.suse.com). There are multiple formats available, however
+only the following image types are compatible with EIB:
+* `.raw` - If the compressed version is downloaded (i.e. ending with `.raw.xz`), it must be manually
+  decompressed before using the image with EIB.
+* `.iso` - Only the self-install ISOs (i.e. ending in `-SelfInstall-GM.install.iso`) may be modified
+  by EIB.
 
 # Image Definition File
 
