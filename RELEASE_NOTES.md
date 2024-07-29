@@ -10,6 +10,7 @@
 * Dropped `-chart` suffix from installed Helm chart names
 * Added ability to build aarch64 images on an aarch64 host machine
 * Added caching for container images
+* Added built image name output to build command
 
 ## API
 

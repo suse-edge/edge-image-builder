@@ -51,7 +51,8 @@ func (b *Builder) Build() error {
 			image.TypeISO, image.TypeRAW)
 	}
 
-	log.Audit("Image build complete!")
+	log.Auditf("Build complete, the image can be found at: %s",
+		b.context.ImageDefinition.Image.OutputImageName)
 	return nil
 }
 
