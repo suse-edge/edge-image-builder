@@ -57,7 +57,7 @@ func (r *Registry) helmChartImages() ([]string, error) {
 }
 
 func (r *Registry) getChartContainerImages(chart *image.HelmChart, chartPath, valuesPath, kubeVersion string) ([]string, error) {
-	chartResources, err := r.helmClient.Template(chart.Name, chartPath, chart.Version, valuesPath, kubeVersion, chart.TargetNamespace)
+	chartResources, err := r.helmClient.Template(chart.Name, chartPath, chart.Version, valuesPath, kubeVersion, chart.TargetNamespace, chart.APIVersions)
 	if err != nil {
 		return nil, fmt.Errorf("templating chart: %w", err)
 	}

@@ -190,6 +190,8 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, true, kubernetes.Helm.Charts[0].CreateNamespace)
 	assert.Equal(t, "apache-system", kubernetes.Helm.Charts[0].InstallationNamespace)
 	assert.Equal(t, "apache-values.yaml", kubernetes.Helm.Charts[0].ValuesFile)
+	assert.Equal(t, "batch/v1", kubernetes.Helm.Charts[0].APIVersions[0])
+	assert.Equal(t, "apps/v1/Deployment", kubernetes.Helm.Charts[0].APIVersions[1])
 
 	assert.Equal(t, "metallb", kubernetes.Helm.Charts[1].Name)
 	assert.Equal(t, "suse-edge", kubernetes.Helm.Charts[1].RepositoryName)

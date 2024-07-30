@@ -62,7 +62,7 @@ func TestRegistry_ContainerImages(t *testing.T) {
 			},
 		},
 		helmClient: mockHelmClient{
-			templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string) ([]map[string]any, error) {
+			templateFunc: func(chart, repository, version, valuesFilePath, kubeVersion, targetNamespace string, apiVersions []string) ([]map[string]any, error) {
 				return []map[string]any{
 					{
 						"kind":  "Deployment",
