@@ -71,29 +71,8 @@ For details on how to test the built images, see the [Testing Guide](docs/testin
 
 ## Building from Source
 
-### Prerequisites
-Before building the EIB image, make sure that you have the development headers and libraries for
-**gpgme**, **device-mapper** and **libbtrfs** installed on your system:
-
-**SUSE Linux:**
-```shell
-sudo zypper install -y gpgme-devel device-mapper-devel libbtrfs-devel
-```
-
-**Ubuntu:**
-```shell
-sudo apt-get install -y libgpgme-dev libdevmapper-dev libbtrfs-dev
-```
-
-**Fedora:**
-```shell
-sudo dnf -y install gpgme-devel device-mapper-devel btrfs-progs-devel
-```
-
-### Building
-
-Build the container (from the root of this project). In the example below, the image tag `eib:dev`
-will be used in the podman command examples above for the `$EIB_IMAGE` variable.
+Build the container (from the root of this project). The image tag `eib:dev`
+will be used in the Podman command examples above for the `$EIB_IMAGE` variable.
 
 ```shell
 podman build -t eib:dev .
