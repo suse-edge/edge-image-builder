@@ -152,6 +152,10 @@ func (c *Combustion) Configure(ctx *image.Context) error {
 			name:     certsComponentName,
 			runnable: configureCertificates,
 		},
+		{
+			name:     cleanupComponentName,
+			runnable: configureCleanup,
+		},
 	}
 
 	for _, component := range combustionComponents {
