@@ -1,10 +1,11 @@
 package combustion
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
