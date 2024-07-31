@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	cleanupScriptName    = "99-remove-combustion.sh"
+	cleanupScriptName    = "99-cleanup-combustion.sh"
 	cleanupComponentName = "cleanup"
 )
 

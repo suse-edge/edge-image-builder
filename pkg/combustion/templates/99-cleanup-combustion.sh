@@ -4,5 +4,5 @@ set -euo pipefail
 rm -r /combustion
 
 if test -d /artefacts; then
-		rm -r /artefacts
+  rm -r /artefacts
 fi
