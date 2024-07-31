@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	cleanupScriptName    = "99-cleanup-combustion.sh"
+	cleanupScriptName    = "cleanup-combustion.sh"
 	cleanupComponentName = "cleanup"
 )
 
-//go:embed templates/99-cleanup-combustion.sh
+//go:embed templates/cleanup-combustion.sh
 var cleanupScript string
 
 func configureCleanup(ctx *image.Context) ([]string, error) {

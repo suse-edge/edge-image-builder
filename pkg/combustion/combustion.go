@@ -152,10 +152,6 @@ func (c *Combustion) Configure(ctx *image.Context) error {
 			name:     certsComponentName,
 			runnable: configureCertificates,
 		},
-		{
-			name:     cleanupComponentName,
-			runnable: configureCleanup,
-		},
 	}
 
 	for _, component := range combustionComponents {
@@ -166,6 +162,17 @@ func (c *Combustion) Configure(ctx *image.Context) error {
 
 		combustionScripts = append(combustionScripts, scripts...)
 	}
+
+	// We manually add the cleanup component as to always make sure it is last
+	cleanupComponent := componentWrapper{
+		name:     cleanupComponentName,
+		runnable: configureCleanup,
+	}
+	s, err := cleanupComponent.runnable(ctx)
+	if err != nil {
+		return fmt.Errorf("configuring cleanup component %q: %w", cleanupComponent.name, err)
+	}
+	combustionScripts = append(combustionScripts, s...)
 
 	var networkScript string
 	if isComponentConfigured(ctx, networkConfigDir) {

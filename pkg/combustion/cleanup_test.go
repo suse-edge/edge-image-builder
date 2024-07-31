@@ -1,6 +1,7 @@
 package combustion
 
 import (
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,7 +14,7 @@ func TestConfigureCleanupRaw(t *testing.T) {
 	// Setup
 	ctx, teardown := setupContext(t)
 	defer teardown()
-	ctx.ImageDefinition.Image.ImageType = "raw"
+	ctx.ImageDefinition.Image.ImageType = image.TypeRAW
 
 	// Test
 	scriptNames, err := configureCleanup(ctx)
@@ -34,7 +35,7 @@ func TestConfigureCleanupISO(t *testing.T) {
 	// Setup
 	ctx, teardown := setupContext(t)
 	defer teardown()
-	ctx.ImageDefinition.Image.ImageType = "iso"
+	ctx.ImageDefinition.Image.ImageType = image.TypeISO
 
 	// Test
 	scriptNames, err := configureCleanup(ctx)
