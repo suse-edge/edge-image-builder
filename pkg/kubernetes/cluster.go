@@ -196,7 +196,7 @@ func setClusterCNI(config map[string]any) {
 	config[cniKey] = cniDefaultValue
 }
 
-func setClusterAPIAddress(config map[string]any, apiAddress string, port int) {
+func setClusterAPIAddress(config map[string]any, apiAddress string, port uint16) {
 	if apiAddress == "" {
 		zap.S().Warn("Attempted to set an empty cluster API address")
 		return
