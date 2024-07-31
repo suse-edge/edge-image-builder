@@ -21,7 +21,7 @@ const (
 var cleanupScript string
 
 func configureCleanup(ctx *image.Context) ([]string, error) {
-	if ctx.ImageDefinition.Image.ImageType != "raw" {
+	if ctx.ImageDefinition.Image.ImageType != image.TypeRAW {
 		log.AuditComponentSkipped(cleanupComponentName)
 		zap.S().Info("skipping cleanup component, image type is not raw")
 		return nil, nil

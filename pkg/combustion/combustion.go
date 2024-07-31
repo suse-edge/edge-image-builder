@@ -164,13 +164,9 @@ func (c *Combustion) Configure(ctx *image.Context) error {
 	}
 
 	// We manually add the cleanup component as to always make sure it is last
-	cleanupComponent := componentWrapper{
-		name:     cleanupComponentName,
-		runnable: configureCleanup,
-	}
-	s, err := cleanupComponent.runnable(ctx)
+	s, err := configureCleanup(ctx)
 	if err != nil {
-		return fmt.Errorf("configuring cleanup component %q: %w", cleanupComponent.name, err)
+		return fmt.Errorf("configuring cleanup component %q: %w", cleanupComponentName, err)
 	}
 	combustionScripts = append(combustionScripts, s...)
 
