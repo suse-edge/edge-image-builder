@@ -3,6 +3,7 @@ package image
 import (
 	"bytes"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/version"
 	"regexp"
 	"strconv"
 	"strings"
@@ -234,6 +235,12 @@ type HelmAuthentication struct {
 	Password string `yaml:"password"`
 }
 
+type InvalidSchemaVersionError struct{}
+
+func (e InvalidSchemaVersionError) Error() string {
+	return "InvalidSchemaVersionError"
+}
+
 func ParseDefinition(data []byte) (*Definition, error) {
 	var definition Definition
 
@@ -244,6 +251,10 @@ func ParseDefinition(data []byte) (*Definition, error) {
 		return nil, fmt.Errorf("could not parse the image definition: %w", err)
 	}
 	definition.Image.ImageType = strings.ToLower(definition.Image.ImageType)
+
+	if !version.IsSchemaVersionSupported(definition.APIVersion) {
+		return nil, &InvalidSchemaVersionError{}
+	}
 
 	return &definition, nil
 }
