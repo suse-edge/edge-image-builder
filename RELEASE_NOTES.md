@@ -11,6 +11,7 @@
 * Added ability to build aarch64 images on an aarch64 host machine
 * Added caching for container images
 * Added built image name output to build command
+* Leftover combustion artifacts are now removed on first boot
 
 ## API
 

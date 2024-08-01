@@ -163,6 +163,13 @@ func (c *Combustion) Configure(ctx *image.Context) error {
 		combustionScripts = append(combustionScripts, scripts...)
 	}
 
+	// We manually add the cleanup component as to always make sure it is last
+	s, err := configureCleanup(ctx)
+	if err != nil {
+		return fmt.Errorf("configuring cleanup component %q: %w", cleanupComponentName, err)
+	}
+	combustionScripts = append(combustionScripts, s...)
+
 	var networkScript string
 	if isComponentConfigured(ctx, networkConfigDir) {
 		networkScript = networkConfigScriptName
