@@ -2,12 +2,13 @@ package image
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/version"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/suse-edge/edge-image-builder/pkg/version"
 	"gopkg.in/yaml.v3"
 )
 
@@ -235,11 +236,7 @@ type HelmAuthentication struct {
 	Password string `yaml:"password"`
 }
 
-type InvalidSchemaVersionError struct{}
-
-func (e InvalidSchemaVersionError) Error() string {
-	return "InvalidSchemaVersionError"
-}
+var ErrorInvalidSchemaVersion = errors.New("invalid schema version")
 
 func ParseDefinition(data []byte) (*Definition, error) {
 	var definition Definition
@@ -253,7 +250,7 @@ func ParseDefinition(data []byte) (*Definition, error) {
 	definition.Image.ImageType = strings.ToLower(definition.Image.ImageType)
 
 	if !version.IsSchemaVersionSupported(definition.APIVersion) {
-		return nil, &InvalidSchemaVersionError{}
+		return nil, ErrorInvalidSchemaVersion
 	}
 
 	return &definition, nil

@@ -3,7 +3,6 @@ package build
 import (
 	"errors"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/version"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -13,6 +12,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/eib"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
+	"github.com/suse-edge/edge-image-builder/pkg/version"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
@@ -128,7 +128,7 @@ func parseImageDefinition(configDir, definitionFile string) (*image.Definition, 
 
 	imageDefinition, err := image.ParseDefinition(configData)
 	if err != nil {
-		if errors.Is(err, image.InvalidSchemaVersionError{}) {
+		if errors.Is(err, image.ErrorInvalidSchemaVersion) {
 			m := "Invalid schema version specified. This version of Edge Image Builder supports the following schema versions: %s"
 			msg := fmt.Sprintf(m, strings.Join(version.SupportedSchemaVersions, ", "))
 			return nil, &cmd.Error{
