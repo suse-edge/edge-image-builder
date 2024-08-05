@@ -1,0 +1,14 @@
+controller:
+  replicas: 1
+  ranchersso:
+    enabled: true
+manager:
+  enabled: false
+cve:
+  scanner:
+    enabled: false
+    replicas: 1
+k3s:
+  enabled: true
+crdwebhook:
+  enabled: false
