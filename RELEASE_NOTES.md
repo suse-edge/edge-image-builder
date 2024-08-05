@@ -4,6 +4,20 @@
 
 ## General
 
+## API
+
+### Image Definition Changes
+
+### Image Configuration Directory Changes
+
+## Bug Fixes
+
+---
+
+# v1.1.0-rc1
+
+## General
+
 * Added the ability to automatically copy files into the built images filesystem
 * Kubernetes manifests are now applied in a systemd service
 * Artifact sources origin and metadata are now extracted from a configuration file (`config/artifacts.yaml`)
@@ -16,6 +30,8 @@
 ## API
 
 ### Image Definition Changes
+
+* The `apiVersion` field now supports both `1.0` and `1.1` values
 
 ### Image Configuration Directory Changes
 
