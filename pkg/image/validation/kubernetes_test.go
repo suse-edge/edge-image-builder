@@ -11,7 +11,7 @@ import (
 
 var validNetwork = image.Network{
 	APIHost: "host.com",
-	APIVIP:  "127.0.0.1",
+	APIVIP:  "172.16.2.1",
 }
 
 func TestValidateKubernetes(t *testing.T) {
@@ -140,6 +140,184 @@ func TestIsKubernetesDefined(t *testing.T) {
 	assert.False(t, result)
 }
 
+func TestValidateNetwork(t *testing.T) {
+	tests := map[string]struct {
+		K8s                    image.Kubernetes
+		ExpectedFailedMessages []string
+	}{
+		`valid v4 VIP`: {
+			K8s: image.Kubernetes{
+				Network: validNetwork,
+			},
+		},
+		`valid v6 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP:  "FC00::1",
+				},
+			},
+		},
+		`valid single node - no network config`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{},
+				Nodes: []image.Node{
+					{
+						Hostname: "host",
+						Type:     image.KubernetesNodeTypeServer,
+					},
+				},
+			},
+		},
+		`invalid multi-node - no network config`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{},
+				Nodes: []image.Node{
+					{
+						Hostname: "host1",
+						Type:     image.KubernetesNodeTypeServer,
+					},
+					{
+						Hostname: "host2",
+						Type:     image.KubernetesNodeTypeAgent,
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
+			},
+		},
+		`malformed v4 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP:  "192.168.1",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid cluster API address ('192.168.1')",
+			},
+		},
+		`malformed v6 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP:  "FC00::1::1",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid cluster API address ('fc00::1::1')",
+			},
+		},
+		`undefined v4 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP:  "0.0.0.0",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (0.0.0.0)",
+			},
+		},
+		`undefined v6 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP:  "::",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (::)",
+			},
+		},
+		`loopback v4 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP:  "127.0.0.1",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (127.0.0.1)",
+			},
+		},
+		`loopback v6 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP:  "::1",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (::1)",
+			},
+		},
+		`multicast v4 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP:  "224.224.224.224",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (224.224.224.224)",
+			},
+		},
+		`multicast v6 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP:  "FF01::1",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (ff01::1)",
+			},
+		},
+		`link-local v4 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP:  "169.254.1.1",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (169.254.1.1)",
+			},
+		},
+		`link-local v6 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP:  "FE80::1",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (fe80::1)",
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			k := test.K8s
+			failures := validateNetwork(&k)
+			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+
+			var foundMessages []string
+			for _, foundValidation := range failures {
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+			}
+
+			for _, expectedMessage := range test.ExpectedFailedMessages {
+				assert.Contains(t, foundMessages, expectedMessage)
+			}
+
+		})
+	}
+}
+
 func TestValidateNodes(t *testing.T) {
 	tests := map[string]struct {
 		K8s                    image.Kubernetes
@@ -164,24 +342,6 @@ func TestValidateNodes(t *testing.T) {
 		`no nodes`: {
 			K8s: image.Kubernetes{
 				Nodes: []image.Node{},
-			},
-		},
-		`with nodes - no network config`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{},
-				Nodes: []image.Node{
-					{
-						Hostname: "host1",
-						Type:     image.KubernetesNodeTypeServer,
-					},
-					{
-						Hostname: "host2",
-						Type:     image.KubernetesNodeTypeAgent,
-					},
-				},
-			},
-			ExpectedFailedMessages: []string{
-				"The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
 			},
 		},
 		`no hostname`: {
