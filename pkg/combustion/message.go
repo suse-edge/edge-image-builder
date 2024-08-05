@@ -25,7 +25,7 @@ func configureMessage(ctx *image.Context) ([]string, error) {
 	values := struct {
 		Version string
 	}{
-		Version: version.GetVersion(),
+		Version: version.GetEibVersion(),
 	}
 
 	data, err := template.Parse(messageScriptName, messageScript, &values)

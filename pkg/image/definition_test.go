@@ -241,6 +241,16 @@ operatingSystem:
 	assert.ErrorContains(t, err, "line 7: field zone not found in type image.Time")
 }
 
+func TestParseDefinition_InvalidSchemaVersion(t *testing.T) {
+	badConfig := `
+apiVersion: 10.0
+`
+
+	_, err := ParseDefinition([]byte(badConfig))
+
+	require.ErrorIs(t, err, ErrorInvalidSchemaVersion)
+}
+
 func TestArch_Short(t *testing.T) {
 	assert.Equal(t, "amd64", ArchTypeX86.Short())
 	assert.Equal(t, "arm64", ArchTypeARM.Short())

@@ -6,11 +6,13 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/cli/cmd"
 	"github.com/suse-edge/edge-image-builder/pkg/eib"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
+	"github.com/suse-edge/edge-image-builder/pkg/version"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
@@ -126,6 +128,15 @@ func parseImageDefinition(configDir, definitionFile string) (*image.Definition, 
 
 	imageDefinition, err := image.ParseDefinition(configData)
 	if err != nil {
+		if errors.Is(err, image.ErrorInvalidSchemaVersion) {
+			m := "Invalid schema version specified. This version of Edge Image Builder supports the following schema versions: %s"
+			msg := fmt.Sprintf(m, strings.Join(version.SupportedSchemaVersions, ", "))
+			return nil, &cmd.Error{
+				UserMessage: msg,
+				LogMessage:  msg,
+			}
+		}
+
 		return nil, &cmd.Error{
 			UserMessage: fmt.Sprintf("The image definition file '%s' could not be parsed.", definitionFilePath),
 			LogMessage:  fmt.Sprintf("Parsing definition file failed: %v", err),
