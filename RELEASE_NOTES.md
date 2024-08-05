@@ -17,6 +17,8 @@
 
 ### Image Definition Changes
 
+* The `apiVersion` field now supports both `1.0` and `1.1` values
+
 ### Image Configuration Directory Changes
 
 * An optional directory named `os-files` may be included to copy files into the resulting image's filesystem at runtime
