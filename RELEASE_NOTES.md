@@ -12,6 +12,8 @@
 
 ## Bug Fixes
 
+* [#512](https://github.com/suse-edge/edge-image-builder/issues/512) - EIB assumes apiVIP to be IPv4 only when creating the target URL
+
 ---
 
 # v1.1.0-rc1

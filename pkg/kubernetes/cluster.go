@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"strings"
@@ -202,7 +203,12 @@ func setClusterAPIAddress(config map[string]any, apiAddress string, port uint16)
 		return
 	}
 
-	config[serverKey] = fmt.Sprintf("https://%s:%d", apiAddress, port)
+	ip, err := netip.ParseAddr(apiAddress)
+	if err != nil {
+		panic("Invalid Kubernetes VIP address")
+	}
+
+	config[serverKey] = fmt.Sprintf("https://%s", netip.AddrPortFrom(ip, port).String())
 }
 
 func setSELinux(config map[string]any) {

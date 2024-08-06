@@ -258,8 +258,8 @@ kubernetes:
 * `version` - Required; Specifies the version of a particular K3s or RKE2 release (e.g.`v1.28.8+k3s1` or `v1.28.8+rke2r1`)
 * `network` - Required for multi-node clusters, optional for single-node clusters; Defines the network configuration 
 for bootstrapping a cluster.
-  * `apiVIP` - Required for multi-node clusters, optional for single-node clusters; Specifies the IP address which
-  will serve as the cluster LoadBalancer, backed by MetalLB.
+  * `apiVIP` - Required for multi-node clusters, optional for single-node clusters; Specifies the IPv4 or IPv6 address
+  which will serve as the cluster LoadBalancer, backed by MetalLB.
   * `apiHost` - Optional; Specifies the domain address for accessing the cluster.
 * `nodes` - Required for multi-node clusters; Defines a list of all nodes that form the cluster.
   * `hostname` - Required; Indicates the fully qualified domain name (FQDN) to identify the particular node on which
