@@ -281,6 +281,9 @@ func TestSetClusterAPIAddress(t *testing.T) {
 
 	setClusterAPIAddress(config, "192.168.122.50", 9345)
 	assert.Equal(t, "https://192.168.122.50:9345", config["server"])
+
+	setClusterAPIAddress(config, "FC00:1:2:3::50", 9345)
+	assert.Equal(t, "https://[fc00:1:2:3::50]:9345", config["server"])
 }
 
 func TestAppendClusterTLSSAN(t *testing.T) {
