@@ -38,6 +38,28 @@ CONFIGFILE={{ .configFilePath }}/{{ .initialiserConfigFile }}
 mkdir -p /opt/eib-k8s/manifests
 cp {{ .manifestsPath }}/* /opt/eib-k8s/manifests/
 
+cat <<- 'EOF' > /opt/eib-k8s/create_manifests.sh
+#!/bin/bash
+set -x
+failed=false
+
+for file in /opt/eib-k8s/manifests/*; do
+    output=$(/opt/bin/kubectl create -f "$file" --kubeconfig=/etc/rancher/k3s/k3s.yaml 2>&1)
+
+    if [ $? != 0 ]; then
+        if ! echo "$output" | grep -q "AlreadyExists"; then
+            failed=true
+        fi
+    fi
+done
+
+if [ $failed = "true" ]; then
+    exit 1
+fi
+EOF
+
+chmod +x /opt/eib-k8s/create_manifests.sh
+
 cat <<- EOF > /etc/systemd/system/kubernetes-resources-install.service
 [Unit]
 Description=Kubernetes Resources Install
@@ -53,7 +75,7 @@ WantedBy=multi-user.target
 Type=oneshot
 Restart=on-failure
 RestartSec=60
-ExecStart=/opt/bin/kubectl apply -f /opt/eib-k8s/manifests --kubeconfig=/etc/rancher/k3s/k3s.yaml
+ExecStart=/opt/eib-k8s/create_manifests.sh
 # Disable the service and clean up
 ExecStartPost=/bin/sh -c "systemctl disable kubernetes-resources-install.service"
 ExecStartPost=rm -f /etc/systemd/system/kubernetes-resources-install.service
