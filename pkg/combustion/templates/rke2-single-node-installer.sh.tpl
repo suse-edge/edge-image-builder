@@ -14,17 +14,17 @@ cp {{ .manifestsPath }}/* /opt/eib-k8s/manifests/
 
 cat <<- 'EOF' > /opt/eib-k8s/create_manifests.sh
 #!/bin/bash
-set -x
 failed=false
 
 for file in /opt/eib-k8s/manifests/*; do
     output=$(/opt/eib-k8s/kubectl create -f "$file" --kubeconfig /etc/rancher/rke2/rke2.yaml 2>&1)
 
     if [ $? != 0 ]; then
-        if ! echo "$output" | grep -q "AlreadyExists"; then
+        if [[ "$output" != *"AlreadyExists"* ]]; then
             failed=true
         fi
     fi
+    echo "$output"
 done
 
 if [ $failed = "true" ]; then
@@ -38,6 +38,7 @@ cat <<- EOF > /etc/systemd/system/kubernetes-resources-install.service
 [Unit]
 Description=Kubernetes Resources Install
 Requires=rke2-server.service
+PartOf=rke2-server.service
 After=rke2-server.service
 ConditionPathExists=/var/lib/rancher/rke2/bin/kubectl
 ConditionPathExists=/etc/rancher/rke2/rke2.yaml
@@ -50,6 +51,7 @@ Type=oneshot
 Restart=on-failure
 RestartSec=60
 # Copy kubectl in order to avoid SELinux permission issues
+ExecStartPre=/bin/sh -c 'until systemctl is-active --quiet rke2-server.service; do sleep 10; done'
 ExecStartPre=cp /var/lib/rancher/rke2/bin/kubectl /opt/eib-k8s/kubectl
 ExecStart=/opt/eib-k8s/create_manifests.sh
 # Disable the service and clean up

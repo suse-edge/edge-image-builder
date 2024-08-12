@@ -40,17 +40,17 @@ cp {{ .manifestsPath }}/* /opt/eib-k8s/manifests/
 
 cat <<- 'EOF' > /opt/eib-k8s/create_manifests.sh
 #!/bin/bash
-set -x
 failed=false
 
 for file in /opt/eib-k8s/manifests/*; do
     output=$(/opt/bin/kubectl create -f "$file" --kubeconfig=/etc/rancher/k3s/k3s.yaml 2>&1)
 
     if [ $? != 0 ]; then
-        if ! echo "$output" | grep -q "AlreadyExists"; then
+        if [[ "$output" != *"AlreadyExists"* ]]; then
             failed=true
         fi
     fi
+    echo "$output"
 done
 
 if [ $failed = "true" ]; then
@@ -64,6 +64,7 @@ cat <<- EOF > /etc/systemd/system/kubernetes-resources-install.service
 [Unit]
 Description=Kubernetes Resources Install
 Requires=k3s.service
+PartOf=k3s.service
 After=k3s.service
 ConditionPathExists=/opt/bin/kubectl
 ConditionPathExists=/etc/rancher/k3s/k3s.yaml
@@ -75,6 +76,7 @@ WantedBy=multi-user.target
 Type=oneshot
 Restart=on-failure
 RestartSec=60
+ExecStartPre=/bin/sh -c 'until systemctl is-active --quiet k3s.service; do sleep 10; done'
 ExecStart=/opt/eib-k8s/create_manifests.sh
 # Disable the service and clean up
 ExecStartPost=/bin/sh -c "systemctl disable kubernetes-resources-install.service"
