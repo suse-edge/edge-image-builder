@@ -14,7 +14,7 @@ require (
 	github.com/urfave/cli/v2 v2.27.3
 	go.uber.org/zap v1.27.0
 	golang.org/x/sync v0.8.0
-	golang.org/x/text v0.16.0
+	golang.org/x/text v0.17.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
