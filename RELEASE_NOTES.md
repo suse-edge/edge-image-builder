@@ -4,6 +4,8 @@
 
 ## General
 
+* Directories and their contents placed in custom/files are now copied
+
 ## API
 
 ### Image Definition Changes

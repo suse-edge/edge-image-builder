@@ -106,8 +106,12 @@ func CopyFiles(src, dest, ext string, copySubDir bool) error {
 				zap.S().Debugf("Skipping %s as it is not a '%s' file", file.Name(), ext)
 				continue
 			}
+			info, infoErr := file.Info()
+			if infoErr != nil {
+				return fmt.Errorf("reading file info %w", infoErr)
+			}
 
-			err := CopyFile(sourcePath, destPath, NonExecutablePerms)
+			err := CopyFile(sourcePath, destPath, info.Mode())
 			if err != nil {
 				return fmt.Errorf("copying file %s: %w", sourcePath, err)
 			}
