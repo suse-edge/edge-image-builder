@@ -100,23 +100,33 @@ func TestRKE2ImageArtefacts(t *testing.T) {
 			},
 		},
 		{
-			name:          "aarch64 artefacts with calico CNI",
-			cni:           image.CNITypeCalico,
-			arch:          image.ArchTypeARM,
-			expectedError: "calico is not supported on aarch64 platforms",
+			name: "aarch64 artefacts with calico CNI",
+			cni:  image.CNITypeCalico,
+			arch: image.ArchTypeARM,
+			expectedArtefacts: []string{
+				"rke2-images-core.linux-arm64.tar.zst",
+				"rke2-images-calico.linux-arm64.tar.zst",
+			},
 		},
 		{
-			name:          "aarch64 artefacts with cilium CNI",
-			cni:           image.CNITypeCilium,
-			arch:          image.ArchTypeARM,
-			expectedError: "cilium is not supported on aarch64 platforms",
+			name: "aarch64 artefacts with cilium CNI",
+			cni:  image.CNITypeCilium,
+			arch: image.ArchTypeARM,
+			expectedArtefacts: []string{
+				"rke2-images-core.linux-arm64.tar.zst",
+				"rke2-images-cilium.linux-arm64.tar.zst",
+			},
 		},
 		{
 			name:          "aarch64 artefacts with canal CNI + multus",
 			cni:           image.CNITypeCanal,
 			multusEnabled: true,
 			arch:          image.ArchTypeARM,
-			expectedError: "multus is not supported on aarch64 platforms",
+			expectedArtefacts: []string{
+				"rke2-images-core.linux-arm64.tar.zst",
+				"rke2-images-canal.linux-arm64.tar.zst",
+				"rke2-images-multus.linux-arm64.tar.zst",
+			},
 		},
 	}
 
