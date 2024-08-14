@@ -4,6 +4,8 @@
 
 ## General
 
+* Improved Kubernetes definition validation
+
 ## API
 
 ### Image Definition Changes

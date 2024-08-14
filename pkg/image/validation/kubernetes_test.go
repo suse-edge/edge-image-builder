@@ -18,46 +18,19 @@ var validNetwork = image.Network{
 	APIVIP:  "127.0.0.1",
 }
 
-func setupContext(t *testing.T) (ctx *image.Context, teardown func()) {
+func TestValidateKubernetes(t *testing.T) {
 	configDir, err := os.MkdirTemp("", "eib-config-")
 	require.NoError(t, err)
 
-	buildDir, err := os.MkdirTemp("", "eib-build-")
-	require.NoError(t, err)
-
-	combustionDir, err := os.MkdirTemp("", "eib-combustion-")
-	require.NoError(t, err)
-
-	artefactsDir, err := os.MkdirTemp("", "eib-artefacts-")
-	require.NoError(t, err)
-
-	ctx = &image.Context{
-		ImageConfigDir:  configDir,
-		BuildDir:        buildDir,
-		CombustionDir:   combustionDir,
-		ArtefactsDir:    artefactsDir,
-		ImageDefinition: &image.Definition{},
-	}
-
-	return ctx, func() {
-		assert.NoError(t, os.RemoveAll(combustionDir))
-		assert.NoError(t, os.RemoveAll(buildDir))
-		assert.NoError(t, os.RemoveAll(artefactsDir))
+	defer func() {
 		assert.NoError(t, os.RemoveAll(configDir))
-	}
-}
+	}()
 
-func TestValidateKubernetes(t *testing.T) {
-	ctx, teardown := setupContext(t)
-	defer teardown()
-
-	valuesDir := filepath.Join(ctx.ImageConfigDir, "kubernetes", "helm", "values")
-	err := os.MkdirAll(valuesDir, os.ModePerm)
-	require.NoError(t, err)
+	valuesDir := filepath.Join(configDir, "kubernetes", "helm", "values")
+	require.NoError(t, os.MkdirAll(valuesDir, os.ModePerm))
 
 	apacheValuesPath := filepath.Join(valuesDir, "apache-values.yaml")
-	err = os.WriteFile(apacheValuesPath, []byte(""), 0o600)
-	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(apacheValuesPath, []byte(""), 0o600))
 
 	tests := map[string]struct {
 		K8s                    image.Kubernetes
@@ -149,8 +122,13 @@ func TestValidateKubernetes(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			ctx.ImageDefinition.Kubernetes = test.K8s
-			failures := validateKubernetes(ctx)
+			ctx := image.Context{
+				ImageConfigDir: configDir,
+				ImageDefinition: &image.Definition{
+					Kubernetes: test.K8s,
+				},
+			}
+			failures := validateKubernetes(&ctx)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
 
 			var foundMessages []string
@@ -1030,16 +1008,18 @@ func TestValidateHelmCharts(t *testing.T) {
 }
 
 func TestValidateAdditionalArtifacts(t *testing.T) {
-	ctx, teardown := setupContext(t)
-	defer teardown()
-
-	manifestsDir := filepath.Join(ctx.ImageConfigDir, "kubernetes", "manifests")
-	err := os.MkdirAll(manifestsDir, os.ModePerm)
+	configDir, err := os.MkdirTemp("", "eib-config-")
 	require.NoError(t, err)
+
+	defer func() {
+		assert.NoError(t, os.RemoveAll(configDir))
+	}()
+
+	manifestsDir := filepath.Join(configDir, "kubernetes", "manifests")
+	require.NoError(t, os.MkdirAll(manifestsDir, os.ModePerm))
 
 	testManifest := filepath.Join(manifestsDir, "manifest.yaml")
-	err = os.WriteFile(testManifest, []byte(""), 0o600)
-	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(testManifest, []byte(""), 0o600))
 
 	tests := map[string]struct {
 		K8s                    image.Kubernetes
@@ -1078,7 +1058,12 @@ func TestValidateAdditionalArtifacts(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			ctx.ImageDefinition.Kubernetes = test.K8s
+			ctx := &image.Context{
+				ImageConfigDir: configDir,
+				ImageDefinition: &image.Definition{
+					Kubernetes: test.K8s,
+				},
+			}
 			failures := validateAdditionalArtifacts(ctx)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
 
