@@ -2,8 +2,12 @@ package validation
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -14,7 +18,47 @@ var validNetwork = image.Network{
 	APIVIP:  "127.0.0.1",
 }
 
+func setupContext(t *testing.T) (ctx *image.Context, teardown func()) {
+	configDir, err := os.MkdirTemp("", "eib-config-")
+	require.NoError(t, err)
+
+	buildDir, err := os.MkdirTemp("", "eib-build-")
+	require.NoError(t, err)
+
+	combustionDir, err := os.MkdirTemp("", "eib-combustion-")
+	require.NoError(t, err)
+
+	artefactsDir, err := os.MkdirTemp("", "eib-artefacts-")
+	require.NoError(t, err)
+
+	ctx = &image.Context{
+		ImageConfigDir:  configDir,
+		BuildDir:        buildDir,
+		CombustionDir:   combustionDir,
+		ArtefactsDir:    artefactsDir,
+		ImageDefinition: &image.Definition{},
+	}
+
+	return ctx, func() {
+		assert.NoError(t, os.RemoveAll(combustionDir))
+		assert.NoError(t, os.RemoveAll(buildDir))
+		assert.NoError(t, os.RemoveAll(artefactsDir))
+		assert.NoError(t, os.RemoveAll(configDir))
+	}
+}
+
 func TestValidateKubernetes(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	valuesDir := filepath.Join(ctx.ImageConfigDir, "kubernetes", "helm", "values")
+	err := os.MkdirAll(valuesDir, os.ModePerm)
+	require.NoError(t, err)
+
+	apacheValuesPath := filepath.Join(valuesDir, "apache-values.yaml")
+	err = os.WriteFile(apacheValuesPath, []byte(""), 0o600)
+	require.NoError(t, err)
+
 	tests := map[string]struct {
 		K8s                    image.Kubernetes
 		ExpectedFailedMessages []string
@@ -24,6 +68,7 @@ func TestValidateKubernetes(t *testing.T) {
 		},
 		`all valid`: {
 			K8s: image.Kubernetes{
+				Version: "1.0",
 				Network: validNetwork,
 				Nodes: []image.Node{
 					{
@@ -104,12 +149,8 @@ func TestValidateKubernetes(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			ctx := image.Context{
-				ImageDefinition: &image.Definition{
-					Kubernetes: test.K8s,
-				},
-			}
-			failures := validateKubernetes(&ctx)
+			ctx.ImageDefinition.Kubernetes = test.K8s
+			failures := validateKubernetes(ctx)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
 
 			var foundMessages []string
@@ -984,6 +1025,72 @@ func TestValidateHelmCharts(t *testing.T) {
 			for _, expectedMessage := range test.ExpectedFailedMessages {
 				assert.Contains(t, foundMessages, expectedMessage)
 			}
+		})
+	}
+}
+
+func TestValidateAdditionalArtifacts(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	manifestsDir := filepath.Join(ctx.ImageConfigDir, "kubernetes", "manifests")
+	err := os.MkdirAll(manifestsDir, os.ModePerm)
+	require.NoError(t, err)
+
+	testManifest := filepath.Join(manifestsDir, "manifest.yaml")
+	err = os.WriteFile(testManifest, []byte(""), 0o600)
+	require.NoError(t, err)
+
+	tests := map[string]struct {
+		K8s                    image.Kubernetes
+		ExpectedFailedMessages []string
+	}{
+		`missing versions all sections`: {
+			K8s: image.Kubernetes{
+				Manifests: image.Manifests{
+					URLs: []string{
+						"example.com",
+					},
+				},
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "",
+							RepositoryName: "another-apache-repo",
+							Version:        "10.7.0",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "apache-repo",
+							URL:  "oci://registry-1.docker.io/bitnamicharts",
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Kubernetes version must be defined when Helm charts are specified",
+				"Kubernetes version must be defined when manifest URLs are specified",
+				"Kubernetes version must be defined when local manifests are configured",
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			ctx.ImageDefinition.Kubernetes = test.K8s
+			failures := validateAdditionalArtifacts(ctx)
+			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+
+			var foundMessages []string
+			for _, foundValidation := range failures {
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+			}
+
+			for _, expectedMessage := range test.ExpectedFailedMessages {
+				assert.Contains(t, foundMessages, expectedMessage)
+			}
+
 		})
 	}
 }

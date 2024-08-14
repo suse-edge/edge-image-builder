@@ -30,6 +30,7 @@ func validateKubernetes(ctx *image.Context) []FailedValidation {
 	var failures []FailedValidation
 
 	if !isKubernetesDefined(&def.Kubernetes) {
+		failures = append(failures, validateAdditionalArtifacts(ctx)...)
 		return failures
 	}
 
@@ -413,4 +414,36 @@ func validateHelmChartDuplicates(charts []image.HelmChart) string {
 	}
 
 	return ""
+}
+
+func validateAdditionalArtifacts(ctx *image.Context) []FailedValidation {
+	var failures []FailedValidation
+
+	if _, err := os.Stat(combustion.KubernetesManifestsPath(ctx)); !os.IsNotExist(err) {
+		dirEntries, err := os.ReadDir(combustion.KubernetesManifestsPath(ctx))
+		if err != nil {
+			failures = append(failures, FailedValidation{
+				Error: fmt.Errorf("kubernetes manifests directory could not be read: %w", err),
+			})
+		}
+
+		if len(dirEntries) != 0 {
+			failures = append(failures, FailedValidation{
+				UserMessage: "Kubernetes version must be defined when local manifests are configured",
+			})
+		}
+	}
+
+	if len(ctx.ImageDefinition.Kubernetes.Helm.Charts) != 0 {
+		failures = append(failures, FailedValidation{
+			UserMessage: "Kubernetes version must be defined when Helm charts are specified",
+		})
+	}
+	if len(ctx.ImageDefinition.Kubernetes.Manifests.URLs) != 0 {
+		failures = append(failures, FailedValidation{
+			UserMessage: "Kubernetes version must be defined when manifest URLs are specified",
+		})
+	}
+
+	return failures
 }
