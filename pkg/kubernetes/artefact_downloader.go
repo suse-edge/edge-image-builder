@@ -92,23 +92,14 @@ func rke2ImageArtefacts(cni string, multusEnabled bool, arch image.Arch) ([]stri
 	case image.CNITypeCanal:
 		artefacts = append(artefacts, fmt.Sprintf(rke2CanalImages, artefactArch))
 	case image.CNITypeCalico:
-		if arch == image.ArchTypeARM {
-			return nil, fmt.Errorf("calico is not supported on %s platforms", arch)
-		}
 		artefacts = append(artefacts, fmt.Sprintf(rke2CalicoImages, artefactArch))
 	case image.CNITypeCilium:
-		if arch == image.ArchTypeARM {
-			return nil, fmt.Errorf("cilium is not supported on %s platforms", arch)
-		}
 		artefacts = append(artefacts, fmt.Sprintf(rke2CiliumImages, artefactArch))
 	default:
 		return nil, fmt.Errorf("unsupported CNI: %s", cni)
 	}
 
 	if multusEnabled {
-		if arch == image.ArchTypeARM {
-			return nil, fmt.Errorf("multus is not supported on %s platforms", arch)
-		}
 		artefacts = append(artefacts, fmt.Sprintf(rke2MultusImages, artefactArch))
 	}
 
