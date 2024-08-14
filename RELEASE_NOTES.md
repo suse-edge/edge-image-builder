@@ -4,6 +4,7 @@
 
 ## General
 
+* Improved Kubernetes definition validation
 * Allow RKE2 deployments with Calico, Cilium and Multus on aarch64 platforms
 
 ## API
