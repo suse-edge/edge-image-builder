@@ -4,6 +4,8 @@
 
 ## General
 
+* Allow RKE2 deployments with Calico, Cilium and Multus on aarch64 platforms
+
 ## API
 
 ### Image Definition Changes
