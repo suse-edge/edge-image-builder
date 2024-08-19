@@ -64,7 +64,6 @@ cat <<- EOF > /etc/systemd/system/kubernetes-resources-install.service
 [Unit]
 Description=Kubernetes Resources Install
 Requires=k3s.service
-PartOf=k3s.service
 After=k3s.service
 ConditionPathExists=/opt/bin/kubectl
 ConditionPathExists=/etc/rancher/k3s/k3s.yaml
@@ -76,7 +75,7 @@ WantedBy=multi-user.target
 Type=oneshot
 Restart=on-failure
 RestartSec=60
-ExecStartPre=/bin/sh -c 'until systemctl is-active --quiet k3s.service; do sleep 10; done'
+ExecStartPre=/bin/sh -c 'until [ "\$(systemctl show -p SubState --value k3s.service)" = "running" ]; do sleep 10; done'
 ExecStart=/opt/eib-k8s/create_manifests.sh
 # Disable the service and clean up
 ExecStartPost=/bin/sh -c "systemctl disable kubernetes-resources-install.service"
