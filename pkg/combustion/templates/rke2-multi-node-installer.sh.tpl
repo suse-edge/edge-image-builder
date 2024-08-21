@@ -46,9 +46,11 @@ for file in /opt/eib-k8s/manifests/*; do
     output=$(/opt/eib-k8s/kubectl create -f "$file" --kubeconfig /etc/rancher/rke2/rke2.yaml 2>&1)
 
     if [ $? != 0 ]; then
-        if [[ "$output" != *"AlreadyExists"* ]]; then
-            failed=true
+      while IFS= read -r line; do
+        if [[ "$line" != *"AlreadyExists"* ]]; then
+          failed=true
         fi
+      done <<< "$output"
     fi
     echo "$output"
 done
