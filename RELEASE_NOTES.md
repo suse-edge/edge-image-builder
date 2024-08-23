@@ -7,6 +7,7 @@
 * Improved Kubernetes definition validation
 * Allow RKE2 deployments with Calico, Cilium and Multus on aarch64 platforms
 * Helm chart installation backOffLimit changed from 1000(default) to 20
+* Improved Kubernetes resource installation handling
 * Ensure that kernel arguments are applied during firstboot when kexec is used in ISO installations
 
 ## API
