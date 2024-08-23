@@ -6,6 +6,7 @@
 
 * Improved Kubernetes definition validation
 * Allow RKE2 deployments with Calico, Cilium and Multus on aarch64 platforms
+* OS files and user provided certificates now maintain original permissions when copied to the final image
 
 ## API
 
