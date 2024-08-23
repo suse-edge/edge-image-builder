@@ -7,6 +7,7 @@
 * Improved Kubernetes definition validation
 * Allow RKE2 deployments with Calico, Cilium and Multus on aarch64 platforms
 * Improved Kubernetes resource installation handling
+* Ensure that kernel arguments are applied during firstboot when kexec is used in ISO installations
 
 ## API
 
@@ -17,6 +18,7 @@
 ## Bug Fixes
 
 * [#491](https://github.com/suse-edge/edge-image-builder/issues/491) - Large Helm manifests fail to install
+* [#543](https://github.com/suse-edge/edge-image-builder/issues/543) - Kernel cmdline arguments aren't honoured in SL Micro 6.0 for SelfInstall ISO's
 
 ---
 
