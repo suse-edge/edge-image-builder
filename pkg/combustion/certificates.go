@@ -60,11 +60,11 @@ func copyCertificates(ctx *image.Context) error {
 		return fmt.Errorf("creating certificates directory '%s': %w", destDir, err)
 	}
 
-	if err := fileio.CopyFiles(srcDir, destDir, ".pem", false); err != nil {
+	if err := fileio.CopyFiles(srcDir, destDir, ".pem", false, true); err != nil {
 		return fmt.Errorf("copying pem files: %w", err)
 	}
 
-	if err := fileio.CopyFiles(srcDir, destDir, ".crt", false); err != nil {
+	if err := fileio.CopyFiles(srcDir, destDir, ".crt", false, true); err != nil {
 		return fmt.Errorf("copying certificates: %w", err)
 	}
 

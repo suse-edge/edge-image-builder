@@ -77,7 +77,7 @@ func CopyFileN(src io.Reader, dest string, perms os.FileMode, n int64) error {
 //
 // If `copySubDir` is used with 'ext', iterates through all sub-directories
 // and only copies files with the specified extension.
-func CopyFiles(src, dest, ext string, copySubDir bool) error {
+func CopyFiles(src, dest, ext string, copySubDir, maintainPerms bool) error {
 	files, err := os.ReadDir(src)
 	if err != nil {
 		return fmt.Errorf("reading source dir: %w", err)
@@ -97,7 +97,7 @@ func CopyFiles(src, dest, ext string, copySubDir bool) error {
 				continue
 			}
 
-			err = CopyFiles(sourcePath, destPath, ext, true)
+			err = CopyFiles(sourcePath, destPath, ext, true, maintainPerms)
 			if err != nil {
 				return fmt.Errorf("copying files from sub-directory '%s': %w", destPath, err)
 			}
@@ -107,7 +107,17 @@ func CopyFiles(src, dest, ext string, copySubDir bool) error {
 				continue
 			}
 
-			err := CopyFile(sourcePath, destPath, NonExecutablePerms)
+			perms := NonExecutablePerms
+			if maintainPerms {
+				fileInfo, InfoErr := file.Info()
+				if err != nil {
+					return fmt.Errorf("reading file info: %w", InfoErr)
+				}
+
+				perms = fileInfo.Mode()
+			}
+
+			err := CopyFile(sourcePath, destPath, perms)
 			if err != nil {
 				return fmt.Errorf("copying file %s: %w", sourcePath, err)
 			}

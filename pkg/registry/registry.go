@@ -88,7 +88,7 @@ func storeManifests(ctx *image.Context, localManifestsDir string) (string, error
 	}
 
 	if _, err := os.Stat(localManifestsDir); err == nil {
-		if err = fileio.CopyFiles(localManifestsDir, manifestsDestDir, "", false); err != nil {
+		if err = fileio.CopyFiles(localManifestsDir, manifestsDestDir, "", false, false); err != nil {
 			return "", fmt.Errorf("copying manifests: %w", err)
 		}
 
