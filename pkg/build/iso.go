@@ -100,6 +100,7 @@ func (b *Builder) writeIsoScript(templateContents, outputFilename string) error 
 	scriptName := filepath.Join(b.context.BuildDir, outputFilename)
 	isoExtractPath := filepath.Join(b.context.BuildDir, isoExtractDir)
 	rawExtractPath := filepath.Join(b.context.BuildDir, rawExtractDir)
+	argLine := strings.Join(b.context.ImageDefinition.OperatingSystem.KernelArgs, " ")
 	arguments := struct {
 		IsoExtractDir       string
 		RawExtractDir       string
@@ -108,6 +109,7 @@ func (b *Builder) writeIsoScript(templateContents, outputFilename string) error 
 		CombustionDir       string
 		ArtefactsDir        string
 		InstallDevice       string
+		KernelArgs          string
 	}{
 		IsoExtractDir:       isoExtractPath,
 		RawExtractDir:       rawExtractPath,
@@ -116,6 +118,7 @@ func (b *Builder) writeIsoScript(templateContents, outputFilename string) error 
 		CombustionDir:       b.context.CombustionDir,
 		ArtefactsDir:        b.context.ArtefactsDir,
 		InstallDevice:       b.context.ImageDefinition.OperatingSystem.IsoConfiguration.InstallDevice,
+		KernelArgs:          argLine,
 	}
 
 	contents, err := template.Parse("iso-script", templateContents, arguments)
