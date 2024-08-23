@@ -37,6 +37,10 @@ func TestParse(t *testing.T) {
 	}
 	assert.Equal(t, expectedKernelArgs, definition.OperatingSystem.KernelArgs)
 
+	// Operating System -> FIPS
+	enableFIPS := definition.OperatingSystem.EnableFips
+	assert.Equal(t, true, enableFIPS)
+
 	// Operating System -> Groups
 	groupConfigs := definition.OperatingSystem.Groups
 	require.Len(t, groupConfigs, 2)

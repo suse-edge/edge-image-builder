@@ -35,6 +35,17 @@ func TestValidateVersion(t *testing.T) {
 				"Helm chart APIVersions field is not supported in EIB version 1.0, must use EIB version 1.1",
 			},
 		},
+		`invalid version with FIPS enabled`: {
+			ImageDefinition: image.Definition{
+				APIVersion: "1.0",
+				OperatingSystem: image.OperatingSystem{
+					EnableFips: true,
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Automated FIPS configuration is not supported in EIB version 1.0, please use EIB version >= 1.1",
+			},
+		},
 	}
 
 	for name, test := range tests {

@@ -29,6 +29,7 @@ operatingSystem:
     - alpha=foo
     - beta=bar
     - baz
+  enableFIPS: true
   systemd:
     enable:
       - enable0

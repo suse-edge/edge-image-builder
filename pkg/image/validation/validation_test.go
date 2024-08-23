@@ -40,7 +40,7 @@ func TestValidateDefinition(t *testing.T) {
 				},
 			},
 		},
-		`one error from each`: {
+		`invalid in each`: {
 			Definition: image.Definition{
 				APIVersion: "1.0",
 				Image: image.Image{
@@ -49,7 +49,7 @@ func TestValidateDefinition(t *testing.T) {
 					OutputImageName: "output.iso",
 				},
 				OperatingSystem: image.OperatingSystem{
-					KernelArgs: []string{"foo="},
+					KernelArgs: []string{"foo=", "fips=1"},
 				},
 				EmbeddedArtifactRegistry: image.EmbeddedArtifactRegistry{
 					ContainerImages: []image.ContainerImage{
@@ -78,6 +78,7 @@ func TestValidateDefinition(t *testing.T) {
 				},
 				osComponent: {
 					"Kernel arguments must be specified as 'key=value'.",
+					"FIPS mode has been specified via kernel arguments, please use the 'enableFIPS: true' option instead.",
 				},
 				registryComponent: {
 					"The 'name' field is required for each entry in 'images'.",

@@ -75,6 +75,7 @@ operatingSystem:
   kernelArgs:
   - arg1
   - arg2
+  enableFIPS: true
   groups:
     - name: group1
     - name: group2
@@ -153,6 +154,7 @@ The remainder of the operating system customizations may be applied regardless o
   parameter is omitted. If this option is set, the default entries will need to be manually added if they are
   still in use.
 * `kernelArgs` - Provides a list of flags that should be passed to the kernel on boot.
+* `enableFIPS` - Specifies whether to setup the operating system for FIPS mode (Default: false)
 * `groups` - Defines a list of operating system groups to create. This will not fail if the 
 group already exists. Each entry is made up of the following fields:
   * `name` - Required; Name of the group to create.
