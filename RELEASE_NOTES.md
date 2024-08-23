@@ -16,6 +16,8 @@
 
 ## Bug Fixes
 
+* [#491](https://github.com/suse-edge/edge-image-builder/issues/491) - Large Helm manifests fail to install
+
 ---
 
 # v1.1.0-rc1

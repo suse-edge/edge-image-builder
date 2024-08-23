@@ -2,8 +2,12 @@ package validation
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
@@ -15,6 +19,19 @@ var validNetwork = image.Network{
 }
 
 func TestValidateKubernetes(t *testing.T) {
+	configDir, err := os.MkdirTemp("", "eib-config-")
+	require.NoError(t, err)
+
+	defer func() {
+		assert.NoError(t, os.RemoveAll(configDir))
+	}()
+
+	valuesDir := filepath.Join(configDir, "kubernetes", "helm", "values")
+	require.NoError(t, os.MkdirAll(valuesDir, os.ModePerm))
+
+	apacheValuesPath := filepath.Join(valuesDir, "apache-values.yaml")
+	require.NoError(t, os.WriteFile(apacheValuesPath, []byte(""), 0o600))
+
 	tests := map[string]struct {
 		K8s                    image.Kubernetes
 		ExpectedFailedMessages []string
@@ -24,6 +41,7 @@ func TestValidateKubernetes(t *testing.T) {
 		},
 		`all valid`: {
 			K8s: image.Kubernetes{
+				Version: "1.0",
 				Network: validNetwork,
 				Nodes: []image.Node{
 					{
@@ -105,6 +123,7 @@ func TestValidateKubernetes(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			ctx := image.Context{
+				ImageConfigDir: configDir,
 				ImageDefinition: &image.Definition{
 					Kubernetes: test.K8s,
 				},
@@ -984,6 +1003,79 @@ func TestValidateHelmCharts(t *testing.T) {
 			for _, expectedMessage := range test.ExpectedFailedMessages {
 				assert.Contains(t, foundMessages, expectedMessage)
 			}
+		})
+	}
+}
+
+func TestValidateAdditionalArtifacts(t *testing.T) {
+	configDir, err := os.MkdirTemp("", "eib-config-")
+	require.NoError(t, err)
+
+	defer func() {
+		assert.NoError(t, os.RemoveAll(configDir))
+	}()
+
+	manifestsDir := filepath.Join(configDir, "kubernetes", "manifests")
+	require.NoError(t, os.MkdirAll(manifestsDir, os.ModePerm))
+
+	testManifest := filepath.Join(manifestsDir, "manifest.yaml")
+	require.NoError(t, os.WriteFile(testManifest, []byte(""), 0o600))
+
+	tests := map[string]struct {
+		K8s                    image.Kubernetes
+		ExpectedFailedMessages []string
+	}{
+		`missing versions all sections`: {
+			K8s: image.Kubernetes{
+				Manifests: image.Manifests{
+					URLs: []string{
+						"example.com",
+					},
+				},
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:           "",
+							RepositoryName: "another-apache-repo",
+							Version:        "10.7.0",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "apache-repo",
+							URL:  "oci://registry-1.docker.io/bitnamicharts",
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Kubernetes version must be defined when Helm charts are specified",
+				"Kubernetes version must be defined when manifest URLs are specified",
+				"Kubernetes version must be defined when local manifests are configured",
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			ctx := &image.Context{
+				ImageConfigDir: configDir,
+				ImageDefinition: &image.Definition{
+					Kubernetes: test.K8s,
+				},
+			}
+			failures := validateAdditionalArtifacts(ctx)
+			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+
+			var foundMessages []string
+			for _, foundValidation := range failures {
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+			}
+
+			for _, expectedMessage := range test.ExpectedFailedMessages {
+				assert.Contains(t, foundMessages, expectedMessage)
+			}
+
 		})
 	}
 }

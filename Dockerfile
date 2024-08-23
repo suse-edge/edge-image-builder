@@ -27,7 +27,9 @@ FROM opensuse/leap:15.6
 # 4. RPM resolution logic
 # 5. Embedded artefact registry
 # 6. Network configuration
+# 7. SUSE registry certificates
 RUN zypper addrepo https://download.opensuse.org/repositories/isv:SUSE:Edge:EdgeImageBuilder/Leap-15.6/isv:SUSE:Edge:EdgeImageBuilder.repo && \
+    zypper addrepo https://download.opensuse.org/repositories/SUSE:CA/15.6/SUSE:CA.repo && \
     zypper --gpg-auto-import-keys refresh && \
     zypper install -y \
     xorriso squashfs  \
@@ -35,7 +37,8 @@ RUN zypper addrepo https://download.opensuse.org/repositories/isv:SUSE:Edge:Edge
     podman \
     createrepo_c \
     helm hauler \
-    nm-configurator && \
+    nm-configurator \
+    ca-certificates-suse && \
     zypper clean -a
 
 # Make adjustments for running guestfish and image modifications on aarch64
