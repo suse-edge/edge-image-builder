@@ -68,7 +68,7 @@ func copyCustomFiles(fromDir, toDir string) error {
 	}
 
 	if err = fileio.CopyFiles(fromDir, toDir, "", true); err != nil {
-		return fmt.Errorf("copying custom: %w", err)
+		return fmt.Errorf("copying custom files and directories: %w", err)
 	}
 
 	return nil

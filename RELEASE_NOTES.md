@@ -4,7 +4,9 @@
 
 ## General
 
-* Directories and their contents placed in custom/files are now copied
+* The "custom files" functionality may now include directories, which will be maintained when copied to the image
+* Improved Kubernetes definition validation
+* Allow RKE2 deployments with Calico, Cilium and Multus on aarch64 platforms
 
 ## API
 
