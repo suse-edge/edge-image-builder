@@ -35,6 +35,10 @@ echo -e "set timeout=3\nset timeout_style=menu\n$(cat ${ISO_EXTRACT_DIR}/boot/gr
 sed -i '/root=install:CDLABEL=INSTALL/ s|$| rd.kiwi.oem.installdevice={{.InstallDevice}} |' ${ISO_EXTRACT_DIR}/boot/grub2/grub.cfg
 {{ end -}}
 
+# Ensure that kernel arguments are appended to ISO grub.cfg so they are applied to firstboot via kexec
+{{ if (gt (len .KernelArgs) 0) -}}
+sed -i '/root=install:CDLABEL=INSTALL/ s|$| rd.kiwi.install.pass.bootparam {{.KernelArgs}} |' ${ISO_EXTRACT_DIR}/boot/grub2/grub.cfg
+{{ end -}}
 
 cd ${RAW_EXTRACT_DIR}
 mksquashfs ${RAW_IMAGE_FILE} ${CHECKSUM_FILE} ${NEW_SQUASH_FILE}
