@@ -10,6 +10,7 @@ const (
 	helmChartAPIVersion = "helm.cattle.io/v1"
 	helmChartKind       = "HelmChart"
 	helmChartSource     = "edge-image-builder"
+	helmBackoffLimit    = 20
 )
 
 type HelmCRD struct {
@@ -26,6 +27,7 @@ type HelmCRD struct {
 		ChartContent    string `yaml:"chartContent"`
 		TargetNamespace string `yaml:"targetNamespace,omitempty"`
 		CreateNamespace bool   `yaml:"createNamespace,omitempty"`
+		BackOffLimit    int    `yaml:"backOffLimit"`
 	} `yaml:"spec"`
 }
 
@@ -53,12 +55,14 @@ func NewHelmCRD(chart *image.HelmChart, chartContent, valuesContent, repositoryU
 			ChartContent    string `yaml:"chartContent"`
 			TargetNamespace string `yaml:"targetNamespace,omitempty"`
 			CreateNamespace bool   `yaml:"createNamespace,omitempty"`
+			BackOffLimit    int    `yaml:"backOffLimit"`
 		}{
 			Version:         chart.Version,
 			ValuesContent:   valuesContent,
 			ChartContent:    chartContent,
 			TargetNamespace: chart.TargetNamespace,
 			CreateNamespace: chart.CreateNamespace,
+			BackOffLimit:    helmBackoffLimit,
 		},
 	}
 }
