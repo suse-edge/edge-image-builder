@@ -59,7 +59,7 @@ func copyOSFiles(ctx *image.Context) error {
 		return fmt.Errorf("no files found in directory %s", srcDirectory)
 	}
 
-	if err := fileio.CopyFiles(srcDirectory, destDirectory, "", true, true); err != nil {
+	if err := fileio.CopyFiles(srcDirectory, destDirectory, "", true, nil); err != nil {
 		return fmt.Errorf("copying os-files: %w", err)
 	}
 

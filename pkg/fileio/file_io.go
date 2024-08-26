@@ -10,11 +10,11 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
+var (
 	// ExecutablePerms are Linux permissions (rwxr--r--) for executable files (scripts, binaries, etc.)
-	ExecutablePerms os.FileMode = 0o744
+	ExecutablePerms = os.FileMode(0o744)
 	// NonExecutablePerms are Linux permissions (rw-r--r--) for non-executable files (configs, RPMs, etc.)
-	NonExecutablePerms os.FileMode = 0o644
+	NonExecutablePerms = os.FileMode(0o644)
 )
 
 func CopyFile(src string, dest string, perms os.FileMode) error {
@@ -77,7 +77,7 @@ func CopyFileN(src io.Reader, dest string, perms os.FileMode, n int64) error {
 //
 // If `copySubDir` is used with 'ext', iterates through all sub-directories
 // and only copies files with the specified extension.
-func CopyFiles(src, dest, ext string, copySubDir, maintainPerms bool) error {
+func CopyFiles(src, dest, ext string, copySubDir bool, overridePerms *os.FileMode) error {
 	files, err := os.ReadDir(src)
 	if err != nil {
 		return fmt.Errorf("reading source dir: %w", err)
@@ -97,7 +97,7 @@ func CopyFiles(src, dest, ext string, copySubDir, maintainPerms bool) error {
 				continue
 			}
 
-			err = CopyFiles(sourcePath, destPath, ext, true, maintainPerms)
+			err = CopyFiles(sourcePath, destPath, ext, true, overridePerms)
 			if err != nil {
 				return fmt.Errorf("copying files from sub-directory '%s': %w", destPath, err)
 			}
@@ -107,8 +107,10 @@ func CopyFiles(src, dest, ext string, copySubDir, maintainPerms bool) error {
 				continue
 			}
 
-			perms := NonExecutablePerms
-			if maintainPerms {
+			var perms os.FileMode
+			if overridePerms != nil {
+				perms = *overridePerms
+			} else {
 				fileInfo, InfoErr := file.Info()
 				if err != nil {
 					return fmt.Errorf("reading file info: %w", InfoErr)
