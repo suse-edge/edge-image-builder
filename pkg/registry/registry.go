@@ -122,20 +122,19 @@ func storeHelmCharts(ctx *image.Context, helmClient helmClient) ([]*helmChart, e
 
 	var charts []*helmChart
 
-	for _, chart := range helm.Charts {
-		c := chart
-		repository, ok := chartRepositories[c.RepositoryName]
+	for i := range helm.Charts {
+		repository, ok := chartRepositories[helm.Charts[i].RepositoryName]
 		if !ok {
-			return nil, fmt.Errorf("repository not found for chart %s", c.Name)
+			return nil, fmt.Errorf("repository not found for chart %s", helm.Charts[i].Name)
 		}
 
-		localPath, err := downloadChart(helmClient, &c, repository, helmDir)
+		localPath, err := downloadChart(helmClient, &helm.Charts[i], repository, helmDir)
 		if err != nil {
 			return nil, fmt.Errorf("downloading chart: %w", err)
 		}
 
 		charts = append(charts, &helmChart{
-			HelmChart:     c,
+			HelmChart:     helm.Charts[i],
 			localPath:     localPath,
 			repositoryURL: repository.URL,
 		})
@@ -149,11 +148,10 @@ func storeHelmCharts(ctx *image.Context, helmClient helmClient) ([]*helmChart, e
 func mapChartsToRepos(helm *image.Helm) map[string]*image.HelmRepository {
 	chartRepoMap := make(map[string]*image.HelmRepository)
 
-	for _, chart := range helm.Charts {
-		for _, repo := range helm.Repositories {
-			if chart.RepositoryName == repo.Name {
-				r := repo
-				chartRepoMap[chart.RepositoryName] = &r
+	for i := range helm.Charts {
+		for j := range helm.Repositories {
+			if helm.Charts[i].RepositoryName == helm.Repositories[j].Name {
+				chartRepoMap[helm.Charts[i].RepositoryName] = &helm.Repositories[j]
 			}
 		}
 	}
