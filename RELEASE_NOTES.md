@@ -4,6 +4,7 @@
 
 ## General
 
+* The "custom files" functionality may now include directories, which will be maintained when copied to the image
 * Improved Kubernetes definition validation
 * Allow RKE2 deployments with Calico, Cilium and Multus on aarch64 platforms
 * Helm chart installation backOffLimit changed from 1000(default) to 20

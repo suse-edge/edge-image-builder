@@ -108,10 +108,9 @@ func TestCopyCustomFiles_MissingFromDir(t *testing.T) {
 	defer teardown()
 
 	// Test
-	files, err := copyCustomFiles("missing", ctx.CombustionDir, nil)
+	err := copyCustomFiles("missing", ctx.CombustionDir)
 
 	// Verify
-	assert.Nil(t, files)
 	assert.Nil(t, err)
 }
 
@@ -126,10 +125,10 @@ func TestCopyCustomFiles_EmptyFromDir(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test
-	scripts, err := copyCustomFiles(fullScriptsDir, ctx.CombustionDir, nil)
+	scripts, err := copyCustomScripts(fullScriptsDir, ctx.CombustionDir, nil)
 
 	// Verify
 	require.Error(t, err)
-	assert.ErrorContains(t, err, "no files found in directory")
+	assert.ErrorContains(t, err, "no scripts found in directory")
 	assert.Nil(t, scripts)
 }

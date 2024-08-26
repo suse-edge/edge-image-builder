@@ -519,6 +519,8 @@ not begin with a number.
 └── custom
     ├── files
     │   ├── custom-binary
+    │   ├── sub-directory
+    │   │   └── sub-directory-file.txt
     │   └── custom-script.sh
     └── scripts
         └── 70-manual-configuration.sh
@@ -527,4 +529,4 @@ not begin with a number.
 * `custom` - May be included to inject files into the built image. Files are organized by subdirectory as follows:
   * `scripts` - If present, all the files in this directory will be included in the built image and automatically
     executed during the combustion phase.
-  * `files` - If present, all the files in this directory will be available at combustion time on the booted node.
+  * `files` - If present, all the files, directories, and subdirectories in this directory will be available at combustion time on the booted node.
