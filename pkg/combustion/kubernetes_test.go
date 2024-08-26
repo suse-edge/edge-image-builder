@@ -719,6 +719,7 @@ spec:
     chartContent: some-content
     targetNamespace: web
     createNamespace: true
+    backOffLimit: 20
 `
 	b, err = os.ReadFile(chartPath)
 	require.NoError(t, err)
