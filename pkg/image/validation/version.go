@@ -8,6 +8,8 @@ const (
 	versionComponent = "Version"
 )
 
+// Note: This method of validating the EIB version in the image definition is only a temporary implementation
+// until a more robust solution can be found.
 func validateVersion(ctx *image.Context) []FailedValidation {
 	var failures []FailedValidation
 	definition := *ctx.ImageDefinition
