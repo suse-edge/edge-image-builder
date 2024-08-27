@@ -47,8 +47,7 @@ func handleCustomFiles(ctx *image.Context) error {
 
 func handleCustomScripts(ctx *image.Context) ([]string, error) {
 	fullScriptsDir := generateComponentPath(ctx, filepath.Join(customDir, customScriptsDir))
-	executablePerms := fileio.ExecutablePerms
-	scripts, err := copyCustomScripts(fullScriptsDir, ctx.CombustionDir, &executablePerms)
+	scripts, err := copyCustomScripts(fullScriptsDir, ctx.CombustionDir, &fileio.ExecutablePerms)
 	return scripts, err
 }
 
@@ -67,7 +66,7 @@ func copyCustomFiles(fromDir, toDir string) error {
 		return fmt.Errorf("no files found in directory %s", fromDir)
 	}
 
-	if err = fileio.CopyFiles(fromDir, toDir, "", true); err != nil {
+	if err = fileio.CopyFiles(fromDir, toDir, "", true, nil); err != nil {
 		return fmt.Errorf("copying custom files and directories: %w", err)
 	}
 

@@ -151,35 +151,52 @@ func TestCopyFiles(t *testing.T) {
 		name                     string
 		expectedRootDirFileNames []string
 		expectedSubDirFileNames  []string
-		extentsion               string
+		expectedPerms            []os.FileMode
+		extension                string
 		destDirPrefix            string
 		copySubDir               bool
+		perms                    *os.FileMode
 	}{
 		{
 			name:                     "Copy full directory filesystem",
-			expectedRootDirFileNames: []string{"gpg.gpg", "rpm.rpm", "sub1-copy-files"},
+			expectedRootDirFileNames: []string{"gpg.gpg", "rpm.rpm", "sub1-copy-files", "unwritable.txt"},
 			expectedSubDirFileNames:  []string{"dummy.txt", "gpg.gpg", "rpm.rpm"},
+			expectedPerms:            []os.FileMode{NonExecutablePerms, 0o755},
 			destDirPrefix:            "eib-copy-files-all-dirs-",
 			copySubDir:               true,
+			perms:                    &NonExecutablePerms,
 		},
 		{
 			name:                     "Copy full directory structure and files with specific extension",
 			expectedRootDirFileNames: []string{"rpm.rpm", "sub1-copy-files"},
 			expectedSubDirFileNames:  []string{"rpm.rpm"},
+			expectedPerms:            []os.FileMode{NonExecutablePerms, 0o755},
 			destDirPrefix:            "eib-copy-files-ext-all-dirs-",
-			extentsion:               ".rpm",
+			extension:                ".rpm",
 			copySubDir:               true,
+			perms:                    &NonExecutablePerms,
 		},
 		{
 			name:                     "Copy all files only from the root directory",
-			expectedRootDirFileNames: []string{"gpg.gpg", "rpm.rpm"},
+			expectedRootDirFileNames: []string{"gpg.gpg", "rpm.rpm", "unwritable.txt"},
+			expectedPerms:            []os.FileMode{NonExecutablePerms},
 			destDirPrefix:            "eib-copy-files-root-dir-only-",
+			perms:                    &NonExecutablePerms,
 		},
 		{
 			name:                     "Copy files with specific extension only from the root directory",
 			expectedRootDirFileNames: []string{"rpm.rpm"},
+			expectedPerms:            []os.FileMode{NonExecutablePerms},
 			destDirPrefix:            "eib-copy-files-root-dir-only-",
-			extentsion:               ".rpm",
+			extension:                ".rpm",
+			perms:                    &NonExecutablePerms,
+		},
+		{
+			name:                     "Copy files while maintaining their original permissions only from root directory",
+			expectedRootDirFileNames: []string{"gpg.gpg", "rpm.rpm", "unwritable.txt"},
+			expectedPerms:            []os.FileMode{NonExecutablePerms, 0o444},
+			destDirPrefix:            "eib-copy-files-keep-perms-root-dir-only-",
+			perms:                    nil,
 		},
 	}
 
@@ -188,7 +205,7 @@ func TestCopyFiles(t *testing.T) {
 			rootDir, err := os.MkdirTemp("", test.destDirPrefix)
 			require.NoError(t, err)
 
-			err = CopyFiles(testDataPath, rootDir, test.extentsion, test.copySubDir)
+			err = CopyFiles(testDataPath, rootDir, test.extension, test.copySubDir, test.perms)
 			require.NoError(t, err)
 
 			if test.copySubDir {
@@ -198,6 +215,8 @@ func TestCopyFiles(t *testing.T) {
 				assertDir(t, rootDir, test.expectedRootDirFileNames, "")
 			}
 
+			assertPerms(t, rootDir, test.expectedPerms)
+
 			err = os.RemoveAll(rootDir)
 			require.NoError(t, err)
 		})
@@ -205,7 +224,7 @@ func TestCopyFiles(t *testing.T) {
 }
 
 func TestCopyFilesMissingSource(t *testing.T) {
-	err := CopyFiles("", "", "", false)
+	err := CopyFiles("", "", "", false, &NonExecutablePerms)
 	assert.EqualError(t, err, "reading source dir: open : no such file or directory")
 }
 
@@ -214,7 +233,7 @@ func TestCopyFilesMissingDestination(t *testing.T) {
 	require.NoError(t, err)
 	testDataPath := filepath.Join(pwd, "testdata", "copy-files")
 
-	err = CopyFiles(testDataPath, "", "", false)
+	err = CopyFiles(testDataPath, "", "", false, &NonExecutablePerms)
 	assert.EqualError(t, err, "creating directory '': mkdir : no such file or directory")
 }
 
@@ -245,4 +264,21 @@ func assertDir(t *testing.T, dirPath string, expectedFileNames []string, expecte
 	}
 
 	assert.Equal(t, expectedFileNames, fileNames)
+}
+
+func assertPerms(t *testing.T, dirPath string, expectedPerms []os.FileMode) {
+	rootDirFiles, err := os.ReadDir(dirPath)
+	require.NoError(t, err)
+
+	var filePerms []os.FileMode
+	for _, file := range rootDirFiles {
+		fileInfo, err := file.Info()
+		require.NoError(t, err)
+
+		filePerms = append(filePerms, fileInfo.Mode().Perm())
+	}
+
+	for _, perm := range filePerms {
+		assert.Contains(t, expectedPerms, perm)
+	}
 }

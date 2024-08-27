@@ -150,7 +150,7 @@ func (r *Resolver) prepare(localRPMConfig *image.LocalRPMConfig, packages *image
 
 func (r *Resolver) prepareLocalRPMs(localRPMConfig *image.LocalRPMConfig) error {
 	rpmDest := r.generateRPMPathInBuildContext()
-	if err := fileio.CopyFiles(localRPMConfig.RPMPath, rpmDest, ".rpm", false); err != nil {
+	if err := fileio.CopyFiles(localRPMConfig.RPMPath, rpmDest, ".rpm", false, &fileio.NonExecutablePerms); err != nil {
 		return fmt.Errorf("copying local rpms to %s: %w", rpmDest, err)
 	}
 
@@ -163,7 +163,7 @@ func (r *Resolver) prepareLocalRPMs(localRPMConfig *image.LocalRPMConfig) error 
 
 	if localRPMConfig.GPGKeysPath != "" {
 		gpgDest := r.generateGPGPathInBuildContext()
-		if err := fileio.CopyFiles(localRPMConfig.GPGKeysPath, gpgDest, "", false); err != nil {
+		if err := fileio.CopyFiles(localRPMConfig.GPGKeysPath, gpgDest, "", false, &fileio.NonExecutablePerms); err != nil {
 			return fmt.Errorf("copying local GPG keys to %s: %w", gpgDest, err)
 		}
 

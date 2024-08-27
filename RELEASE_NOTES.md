@@ -7,6 +7,7 @@
 * The "custom files" functionality may now include directories, which will be maintained when copied to the image
 * Improved Kubernetes definition validation
 * Allow RKE2 deployments with Calico, Cilium and Multus on aarch64 platforms
+* OS files and user provided certificates now maintain original permissions when copied to the final image
 * Helm chart installation backOffLimit changed from 1000(default) to 20
 * Improved Kubernetes resource installation handling
 * Ensure that kernel arguments are applied during firstboot when kexec is used in ISO installations

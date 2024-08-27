@@ -387,7 +387,7 @@ func (c *Combustion) configureManifests(ctx *image.Context) (string, error) {
 
 	if c.Registry != nil {
 		if c.Registry.ManifestsPath() != "" {
-			if err := fileio.CopyFiles(c.Registry.ManifestsPath(), manifestDestDir, "", false); err != nil {
+			if err := fileio.CopyFiles(c.Registry.ManifestsPath(), manifestDestDir, "", false, &fileio.NonExecutablePerms); err != nil {
 				return "", fmt.Errorf("copying manifests to combustion dir: %w", err)
 			}
 
