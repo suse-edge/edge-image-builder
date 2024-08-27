@@ -16,6 +16,8 @@
 
 ### Image Definition Changes
 
+* Introduced a dedicated FIPS mode option, adding the required packages, kernel arguments, and crypto selection
+
 ### Image Configuration Directory Changes
 
 ## Bug Fixes

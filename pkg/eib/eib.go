@@ -30,6 +30,7 @@ func Run(ctx *image.Context, rootBuildDir string) error {
 	}
 
 	appendElementalRPMs(ctx)
+	appendFips(ctx)
 	appendHelm(ctx)
 
 	c, err := buildCombustion(ctx, rootBuildDir)
@@ -107,6 +108,15 @@ func appendElementalRPMs(ctx *image.Context) {
 	}, combustion.ElementalPackages...)
 }
 
+func appendFips(ctx *image.Context) {
+	fips := ctx.ImageDefinition.OperatingSystem.EnableFips
+	if fips {
+		log.AuditInfo("FIPS mode is configured. The necessary RPM packages will be downloaded.")
+		appendRPMs(ctx, nil, combustion.FipsPackages...)
+		appendKernelArgs(ctx, combustion.FipsKernelArgs...)
+	}
+}
+
 func appendRPMs(ctx *image.Context, repos []image.AddRepo, packages ...string) {
 	repositories := ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos
 	repositories = append(repositories, repos...)
@@ -123,6 +133,12 @@ func appendHelm(ctx *image.Context) {
 
 	ctx.ImageDefinition.Kubernetes.Helm.Charts = append(ctx.ImageDefinition.Kubernetes.Helm.Charts, componentCharts...)
 	ctx.ImageDefinition.Kubernetes.Helm.Repositories = append(ctx.ImageDefinition.Kubernetes.Helm.Repositories, componentRepos...)
+}
+
+func appendKernelArgs(ctx *image.Context, kernelArgs ...string) {
+	kernelArgList := ctx.ImageDefinition.OperatingSystem.KernelArgs
+	kernelArgList = append(kernelArgList, kernelArgs...)
+	ctx.ImageDefinition.OperatingSystem.KernelArgs = kernelArgList
 }
 
 func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion, error) {

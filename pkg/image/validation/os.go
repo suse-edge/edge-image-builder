@@ -46,6 +46,12 @@ func validateKernelArgs(os *image.OperatingSystem) []FailedValidation {
 					UserMessage: "Kernel arguments must be specified as 'key=value'.",
 				})
 			}
+
+			if (key == "fips" && value == "1") && !os.EnableFips {
+				failures = append(failures, FailedValidation{
+					UserMessage: "FIPS mode has been specified via kernel arguments, please use the 'enableFIPS: true' option instead.",
+				})
+			}
 		}
 
 		if _, exists := seenKeys[key]; exists {

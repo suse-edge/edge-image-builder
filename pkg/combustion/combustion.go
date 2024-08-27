@@ -129,6 +129,10 @@ func (c *Combustion) Configure(ctx *image.Context) error {
 			runnable: configureSystemd,
 		},
 		{
+			name:     fipsComponentName,
+			runnable: configureFips,
+		},
+		{
 			name:     elementalComponentName,
 			runnable: configureElemental,
 		},
