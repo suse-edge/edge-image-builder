@@ -111,9 +111,9 @@ func CopyFiles(src, dest, ext string, copySubDir bool, overridePerms *os.FileMod
 			if overridePerms != nil {
 				perms = *overridePerms
 			} else {
-				fileInfo, InfoErr := file.Info()
+				fileInfo, infoErr := file.Info()
 				if err != nil {
-					return fmt.Errorf("reading file info: %w", InfoErr)
+					return fmt.Errorf("reading file info: %w", infoErr)
 				}
 
 				perms = fileInfo.Mode()
