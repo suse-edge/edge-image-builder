@@ -174,11 +174,10 @@ func validateHelm(k8s *image.Kubernetes, valuesDir, certsDir string) []FailedVal
 	}
 
 	seenHelmRepos := make(map[string]bool)
-	for _, chart := range k8s.Helm.Charts {
-		c := chart
-		failures = append(failures, validateChart(&c, helmRepositoryNames, valuesDir)...)
+	for i := range k8s.Helm.Charts {
+		failures = append(failures, validateChart(&k8s.Helm.Charts[i], helmRepositoryNames, valuesDir)...)
 
-		seenHelmRepos[chart.RepositoryName] = true
+		seenHelmRepos[k8s.Helm.Charts[i].RepositoryName] = true
 	}
 
 	for _, repo := range k8s.Helm.Repositories {
@@ -405,12 +404,12 @@ func validateHelmChartValues(chartName, valuesFile, valuesDir string) string {
 func validateHelmChartDuplicates(charts []image.HelmChart) string {
 	seenHelmCharts := make(map[string]bool)
 
-	for _, chart := range charts {
-		if _, exists := seenHelmCharts[chart.Name]; exists {
-			return fmt.Sprintf("The 'helmCharts' field contains duplicate entries: %s", chart.Name)
+	for i := range charts {
+		if _, exists := seenHelmCharts[charts[i].Name]; exists {
+			return fmt.Sprintf("The 'helmCharts' field contains duplicate entries: %s", charts[i].Name)
 		}
 
-		seenHelmCharts[chart.Name] = true
+		seenHelmCharts[charts[i].Name] = true
 	}
 
 	return ""
