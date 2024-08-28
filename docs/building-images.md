@@ -484,6 +484,9 @@ the built image and used to register with Elemental on boot.
 > To ensure a successful build, this process requires the ```--privileged``` flag to be passed to the
 > ```podman run``` command. For more info on why this is required, please see
 > [Package resolution design](design/pkg-resolution.md#running-the-eib-container).
+> 
+> Additionally, when using SL Micro 6.0, an [`sccRegistrationCode`](#operating-system) must be provided in the `operatingSystem` section
+> of the image definition so that the necessary Elemental RPMs can be downloaded.
 
 ## Operating System Files
 
