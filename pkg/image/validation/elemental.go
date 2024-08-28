@@ -3,10 +3,11 @@ package validation
 import (
 	"errors"
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
-	"go.uber.org/zap"
 	"os"
 	"path/filepath"
+
+	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"go.uber.org/zap"
 )
 
 const (

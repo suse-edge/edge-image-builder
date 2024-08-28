@@ -2,12 +2,13 @@ package validation
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
 func TestValidateElemental(t *testing.T) {
@@ -25,11 +26,11 @@ func TestValidateElemental(t *testing.T) {
 	require.NoError(t, os.WriteFile(validElementalConfig, []byte(""), 0o600))
 
 	tests := map[string]struct {
-		ImageDefinition        image.Definition
+		ImageDefinition        *image.Definition
 		ExpectedFailedMessages []string
 	}{
 		`valid 1.1`: {
-			ImageDefinition: image.Definition{
+			ImageDefinition: &image.Definition{
 				APIVersion: "1.1",
 				OperatingSystem: image.OperatingSystem{
 					Packages: image.Packages{
@@ -39,7 +40,7 @@ func TestValidateElemental(t *testing.T) {
 			},
 		},
 		`1.1 no registration code`: {
-			ImageDefinition: image.Definition{
+			ImageDefinition: &image.Definition{
 				APIVersion: "1.1",
 			},
 			ExpectedFailedMessages: []string{
@@ -52,7 +53,7 @@ func TestValidateElemental(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			ctx := image.Context{
 				ImageConfigDir:  configDir,
-				ImageDefinition: &test.ImageDefinition,
+				ImageDefinition: test.ImageDefinition,
 			}
 			failures := validateElemental(&ctx)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
@@ -119,7 +120,7 @@ func TestValidateElementalConfigDir(t *testing.T) {
 
 	elementalDirUnreadable := filepath.Join(configDirUnreadable, "elemental")
 	require.NoError(t, os.MkdirAll(elementalDirUnreadable, os.ModePerm))
-	require.NoError(t, os.Chmod(elementalDirUnreadable, 0333))
+	require.NoError(t, os.Chmod(elementalDirUnreadable, 0o333))
 
 	tests := map[string]struct {
 		ExpectedFailedMessages []string
