@@ -11,6 +11,8 @@
 * Helm chart installation backOffLimit changed from 1000(default) to 20
 * Improved Kubernetes resource installation handling
 * Ensure that kernel arguments are applied during firstboot when kexec is used in ISO installations
+* Improved Elemental handling when using SL Micro 6.0
+* Added Elemental configuration validation
 
 ## API
 
