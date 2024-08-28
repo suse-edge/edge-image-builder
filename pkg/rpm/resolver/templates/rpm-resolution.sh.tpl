@@ -13,7 +13,6 @@ set -euo pipefail
 
 {{ if ne .RegCode "" }}
 suseconnect -r {{ .RegCode }}
-SLE_SP=$(cat /etc/rpm/macros.sle | awk '/sle/ {print $2};' | cut -c4) && suseconnect -p PackageHub/15.$SLE_SP/{{ .Arch }}
 zypper ref
 trap "suseconnect -d" EXIT
 {{ end -}}
