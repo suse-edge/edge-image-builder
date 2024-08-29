@@ -24,6 +24,7 @@
 
 * [#491](https://github.com/suse-edge/edge-image-builder/issues/491) - Large Helm manifests fail to install
 * [#543](https://github.com/suse-edge/edge-image-builder/issues/543) - Kernel cmdline arguments aren't honoured in SL Micro 6.0 for SelfInstall ISO's
+* [#550](https://github.com/suse-edge/edge-image-builder/issues/550) - PackageHub inclusion in RPM resolution silently errors on SLE Micro 6.0
 
 ---
 
