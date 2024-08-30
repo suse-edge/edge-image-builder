@@ -25,7 +25,10 @@
 * Helm chart installation backOffLimit changed from 1000(default) to 20
 * Improved Kubernetes resource installation handling
 * Ensure that kernel arguments are applied during firstboot when kexec is used in ISO installations
-* Fetch the necessary packages (Elemental 1.6.x) for Phone Home deployments in SL Micro 6.0
+* Dependency upgrades
+  * "Phone Home" deployments are now utilizing Elemental v1.6 (upgraded from v1.4)
+  * Embedded registry is now utilizing Hauler v1.0.7 (upgraded from v1.0.1)
+  * Network customizations are now utilizing nmc v0.3.1 (upgraded from v0.3.0)
 
 ## API
 
