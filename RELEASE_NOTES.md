@@ -4,6 +4,20 @@
 
 ## General
 
+## API
+
+### Image Definition Changes
+
+### Image Configuration Directory Changes
+
+## Bug Fixes
+
+---
+
+# v1.1.0-rc2
+
+## General
+
 * The "custom files" functionality may now include directories, which will be maintained when copied to the image
 * Improved Kubernetes definition validation
 * Allow RKE2 deployments with Calico, Cilium and Multus on aarch64 platforms
@@ -18,8 +32,6 @@
 ### Image Definition Changes
 
 * Introduced a dedicated FIPS mode option, adding the required packages, kernel arguments, and crypto selection
-
-### Image Configuration Directory Changes
 
 ## Bug Fixes
 
