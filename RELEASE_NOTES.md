@@ -16,7 +16,6 @@
 * Added built image name output to build command 
 * Leftover combustion artifacts are now removed on first boot
 * OS files and user provided certificates now maintain original permissions when copied to the final image
-
 * Dependency upgrades
   * "Phone Home" deployments are now utilizing Elemental v1.6 (upgraded from v1.4)
   * Embedded registry is now utilizing Hauler v1.0.7 (upgraded from v1.0.1)
