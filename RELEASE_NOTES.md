@@ -1,30 +1,22 @@
 # Edge Image Builder Releases
 
-# Next
+# v1.1.0
 
 ## General
 
-## API
-
-### Image Definition Changes
-
-### Image Configuration Directory Changes
-
-## Bug Fixes
-
----
-
-# v1.1.0-rc2
-
-## General
-
+* Adds support for SL Micro 6.0
+  * SLE Micro 5.5 may still be used as the base image, however not all customization features of EIB will work
+* Added ability to build aarch64 images on an aarch64 host machine
+* Added the ability to automatically copy files into the built images filesystem (see Image Configuration Directory Changes below)
 * The "custom files" functionality may now include directories, which will be maintained when copied to the image
-* Improved Kubernetes definition validation
-* Allow RKE2 deployments with Calico, Cilium and Multus on aarch64 platforms
-* OS files and user provided certificates now maintain original permissions when copied to the final image
+* Kubernetes manifests are now applied in a systemd service instead of using the `/manifests` directory 
 * Helm chart installation backOffLimit changed from 1000(default) to 20
-* Improved Kubernetes resource installation handling
-* Ensure that kernel arguments are applied during firstboot when kexec is used in ISO installations
+* Dropped `-chart` suffix from installed Helm chart names
+* Added caching for container images
+* Added built image name output to build command 
+* Leftover combustion artifacts are now removed on first boot
+* OS files and user provided certificates now maintain original permissions when copied to the final image
+
 * Dependency upgrades
   * "Phone Home" deployments are now utilizing Elemental v1.6 (upgraded from v1.4)
   * Embedded registry is now utilizing Hauler v1.0.7 (upgraded from v1.0.1)
@@ -34,34 +26,9 @@
 
 ### Image Definition Changes
 
-* Introduced a dedicated FIPS mode option, adding the required packages, kernel arguments, and crypto selection
-
-## Bug Fixes
-
-* [#491](https://github.com/suse-edge/edge-image-builder/issues/491) - Large Helm manifests fail to install
-* [#543](https://github.com/suse-edge/edge-image-builder/issues/543) - Kernel cmdline arguments aren't honoured in SL Micro 6.0 for SelfInstall ISO's
-* [#550](https://github.com/suse-edge/edge-image-builder/issues/550) - PackageHub inclusion in RPM resolution silently errors on SLE Micro 6.0
-
----
-
-# v1.1.0-rc1
-
-## General
-
-* Added the ability to automatically copy files into the built images filesystem
-* Kubernetes manifests are now applied in a systemd service
-* Artifact sources origin and metadata are now extracted from a configuration file (`config/artifacts.yaml`)
-* Dropped `-chart` suffix from installed Helm chart names
-* Added ability to build aarch64 images on an aarch64 host machine
-* Added caching for container images
-* Added built image name output to build command
-* Leftover combustion artifacts are now removed on first boot
-
-## API
-
-### Image Definition Changes
-
-* The `apiVersion` field now supports both `1.0` and `1.1` values
+* The current version of the image definition has been incremented to `1.1` to include the changes below 
+  * Existing definitions using the `1.0` version of the schema will continue to work with EIB
+* Introduced a dedicated FIPS mode option (`enableFIPS`) which will enable FIPS mode on the node
 
 ### Image Configuration Directory Changes
 
@@ -69,8 +36,11 @@
 
 ## Bug Fixes
 
-* [#498](https://github.com/suse-edge/edge-image-builder/issues/498) - Fix kernelArgs issue with Leap Micro 6.0
 * [#481](https://github.com/suse-edge/edge-image-builder/issues/481) - Certain Helm charts fail when templated without specified API Versions
+* [#491](https://github.com/suse-edge/edge-image-builder/issues/491) - Large Helm manifests fail to install
+* [#498](https://github.com/suse-edge/edge-image-builder/issues/498) - Fix kernelArgs issue with Leap Micro 6.0
+* [#543](https://github.com/suse-edge/edge-image-builder/issues/543) - Kernel cmdline arguments aren't honoured in SL Micro 6.0 for SelfInstall ISO's
+* [#550](https://github.com/suse-edge/edge-image-builder/issues/550) - PackageHub inclusion in RPM resolution silently errors on SLE Micro 6.0
 
 ---
 
