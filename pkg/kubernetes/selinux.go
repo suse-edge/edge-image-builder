@@ -10,10 +10,10 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func SELinuxPackage(version string) (string, error) {
-	const (
-		k3sPackage  = "k3s-selinux"
-		rke2Package = "rke2-selinux"
+func SELinuxPackage(version string, sources *image.ArtifactSources) (string, error) {
+	var (
+		k3sPackage  = sources.Kubernetes.K3s.SelinuxPackage
+		rke2Package = sources.Kubernetes.Rke2.SelinuxPackage
 	)
 
 	switch {
@@ -26,10 +26,10 @@ func SELinuxPackage(version string) (string, error) {
 	}
 }
 
-func SELinuxRepository(version string) (image.AddRepo, error) {
-	const (
-		k3sRepository  = "https://rpm.rancher.io/k3s/stable/common/slemicro/noarch"
-		rke2Repository = "https://rpm.rancher.io/rke2/stable/common/slemicro/noarch"
+func SELinuxRepository(version string, sources *image.ArtifactSources) (image.AddRepo, error) {
+	var (
+		k3sRepository  = sources.Kubernetes.K3s.SelinuxRepository
+		rke2Repository = sources.Kubernetes.Rke2.SelinuxRepository
 	)
 
 	var url string
