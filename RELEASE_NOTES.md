@@ -4,6 +4,8 @@
 
 ## General
 
+* Added `--allow-vendor-change` to the RPM installation command in `10-rpm-install.sh`
+
 ## API
 
 ### Image Definition Changes

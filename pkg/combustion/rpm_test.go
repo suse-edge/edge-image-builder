@@ -351,7 +351,7 @@ func TestConfigureRPMs_SuccessfulConfig(t *testing.T) {
 
 	foundContents := string(foundBytes)
 	zypperAR := fmt.Sprintf("zypper ar file://$ARTEFACTS_DIR/rpms/%[1]s %[1]s", expectedRepoName)
-	zypperInstall := fmt.Sprintf("zypper --no-gpg-checks install -r %s -y --force-resolution --auto-agree-with-licenses %s", expectedRepoName, strings.Join(expectedPkg, " "))
+	zypperInstall := fmt.Sprintf("zypper --no-gpg-checks install -r %s -y --force-resolution --auto-agree-with-licenses --allow-vendor-change %s", expectedRepoName, strings.Join(expectedPkg, " "))
 	zypperRR := fmt.Sprintf("zypper rr %s", expectedRepoName)
 	assert.Contains(t, foundContents, zypperAR)
 	assert.Contains(t, foundContents, zypperInstall)

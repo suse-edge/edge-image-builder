@@ -7,5 +7,5 @@ set -euo pipefail
 {{/* PKGList  - list of packages that will be installed */ -}}
 
 zypper ar file://{{.RepoPath}}/{{.RepoName}} {{.RepoName}}
-zypper --no-gpg-checks install -r {{.RepoName}} -y --force-resolution --auto-agree-with-licenses {{.PKGList}}
+zypper --no-gpg-checks install -r {{.RepoName}} -y --force-resolution --auto-agree-with-licenses --allow-vendor-change {{.PKGList}}
 zypper rr {{.RepoName}}
