@@ -4,7 +4,7 @@
 
 ## General
 
-* Extracted the K3S and RKE2 package and repository definitions into artifacts.yaml
+* Extracted the K3S and RKE2 SELinux package and repository definitions into artifacts.yaml
 
 ## API
 
