@@ -41,8 +41,8 @@ type ArtifactSources struct {
 	} `yaml:"elemental"`
 	Kubernetes struct {
 		K3s struct {
-			SelinuxPackage    string `yaml:"selinuxPackage"`
-			SelinuxRepository string `yaml:"selinuxRepository"`
+			SELinuxPackage    string `yaml:"selinuxPackage"`
+			SELinuxRepository string `yaml:"selinuxRepository"`
 		} `yaml:"k3s"`
 		Rke2 struct {
 			SelinuxPackage    string `yaml:"selinuxPackage"`
