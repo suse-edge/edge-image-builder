@@ -9,3 +9,10 @@ endpoint-copier-operator:
 elemental:
   register-repository: https://download.opensuse.org/repositories/isv:/Rancher:/Elemental:/Staging/standard
   system-agent-repository: https://download.opensuse.org/repositories/isv:/Rancher:/Elemental:/Staging/standard
+kubernetes:
+  k3s:
+    selinuxPackage: k3s-selinux-1.6-1.slemicro.noarch
+    selinuxRepository: https://rpm.rancher.io/k3s/stable/common/slemicro/noarch
+  rke2:
+    selinuxPackage: rke2-selinux
+    selinuxRepository: https://rpm.rancher.io/rke2/stable/common/slemicro/noarch

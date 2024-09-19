@@ -4,6 +4,8 @@
 
 ## General
 
+* Extracted the K3S and RKE2 SELinux package and repository definitions into artifacts.yaml
+
 ## API
 
 ### Image Definition Changes
@@ -11,6 +13,8 @@
 ### Image Configuration Directory Changes
 
 ## Bug Fixes
+
+* [#565](https://github.com/suse-edge/edge-image-builder/issues/565) - K3S SELinux uses an outdated package
 
 ---
 
