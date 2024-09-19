@@ -11,34 +11,25 @@ import (
 )
 
 func SELinuxPackage(version string, sources *image.ArtifactSources) (string, error) {
-	var (
-		k3sPackage  = sources.Kubernetes.K3s.SelinuxPackage
-		rke2Package = sources.Kubernetes.Rke2.SelinuxPackage
-	)
 
 	switch {
 	case strings.Contains(version, image.KubernetesDistroK3S):
-		return k3sPackage, nil
+		return sources.Kubernetes.K3s.SELinuxPackage, nil
 	case strings.Contains(version, image.KubernetesDistroRKE2):
-		return rke2Package, nil
+		return sources.Kubernetes.Rke2.SELinuxPackage, nil
 	default:
 		return "", fmt.Errorf("invalid kubernetes version: %s", version)
 	}
 }
 
 func SELinuxRepository(version string, sources *image.ArtifactSources) (image.AddRepo, error) {
-	var (
-		k3sRepository  = sources.Kubernetes.K3s.SelinuxRepository
-		rke2Repository = sources.Kubernetes.Rke2.SelinuxRepository
-	)
-
 	var url string
 
 	switch {
 	case strings.Contains(version, image.KubernetesDistroK3S):
-		url = k3sRepository
+		url = sources.Kubernetes.K3s.SELinuxRepository
 	case strings.Contains(version, image.KubernetesDistroRKE2):
-		url = rke2Repository
+		url = sources.Kubernetes.Rke2.SELinuxRepository
 	default:
 		return image.AddRepo{}, fmt.Errorf("invalid kubernetes version: %s", version)
 	}
