@@ -31,7 +31,6 @@ func TestValidateElemental(t *testing.T) {
 	}{
 		`valid 1.1`: {
 			ImageDefinition: &image.Definition{
-				APIVersion: "1.1",
 				OperatingSystem: image.OperatingSystem{
 					Packages: image.Packages{
 						RegCode: "registration-code",
@@ -40,9 +39,7 @@ func TestValidateElemental(t *testing.T) {
 			},
 		},
 		`1.1 no registration code`: {
-			ImageDefinition: &image.Definition{
-				APIVersion: "1.1",
-			},
+			ImageDefinition: &image.Definition{},
 			ExpectedFailedMessages: []string{
 				"Operating system package registration code field must be defined when using Elemental with SL Micro 6.0",
 			},

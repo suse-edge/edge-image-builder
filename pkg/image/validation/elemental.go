@@ -1,26 +1,37 @@
 package validation
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/suse-edge/edge-image-builder/pkg/image"
-	"go.uber.org/zap"
 )
 
 const (
-	elementalComponent = "Elemental"
+	elementalComponent      = "Elemental"
+	elementalConfigFilename = "elemental_config.yaml"
 )
 
 func validateElemental(ctx *image.Context) []FailedValidation {
 	var failures []FailedValidation
 
 	elementalConfigDir := filepath.Join(ctx.ImageConfigDir, "elemental")
+	if _, err := os.Stat(elementalConfigDir); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Elemental config directory could not be read: %s", err),
+			Error:       err,
+		})
+		return failures
+	}
+
 	failures = append(failures, validateElementalDir(elementalConfigDir)...)
 
-	if ctx.ImageDefinition.APIVersion == "1.1" && ctx.ImageDefinition.OperatingSystem.Packages.RegCode == "" {
+	if ctx.ImageDefinition.OperatingSystem.Packages.RegCode == "" {
 		failures = append(failures, FailedValidation{
 			UserMessage: "Operating system package registration code field must be defined when using Elemental with SL Micro 6.0",
 		})
@@ -34,34 +45,27 @@ func validateElementalDir(elementalConfigDir string) []FailedValidation {
 
 	elementalConfigDirEntries, err := os.ReadDir(elementalConfigDir)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil
-		}
-
-		zap.S().Errorf("Elemental config directory could not be read: %s", err)
 		failures = append(failures, FailedValidation{
 			UserMessage: fmt.Sprintf("Elemental config directory could not be read: %s", err),
+			Error:       err,
 		})
 	}
 
-	if len(elementalConfigDirEntries) == 0 {
+	switch len(elementalConfigDirEntries) {
+	case 0:
 		failures = append(failures, FailedValidation{
 			UserMessage: "Elemental config directory should not be present if it is empty",
 		})
-	}
-
-	if len(elementalConfigDirEntries) > 1 {
-		failures = append(failures, FailedValidation{
-			UserMessage: "Elemental config directory should only contain a singular 'elemental_config.yaml' file",
-		})
-	}
-
-	if len(elementalConfigDirEntries) == 1 {
-		if elementalConfigDirEntries[0].Name() != "elemental_config.yaml" {
+	case 1:
+		if elementalConfigDirEntries[0].Name() != elementalConfigFilename {
 			failures = append(failures, FailedValidation{
-				UserMessage: "Elemental config file should only be named `elemental_config.yaml`",
+				UserMessage: fmt.Sprintf("Elemental config file should only be named `%s`", elementalConfigFilename),
 			})
 		}
+	default:
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Elemental config directory should only contain a singular '%s' file", elementalConfigFilename),
+		})
 	}
 
 	return failures
