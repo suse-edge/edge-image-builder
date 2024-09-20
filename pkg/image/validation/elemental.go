@@ -23,7 +23,7 @@ func validateElemental(ctx *image.Context) []FailedValidation {
 		}
 
 		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Elemental config directory could not be read: %s", err),
+			UserMessage: "Elemental config directory could not be read",
 			Error:       err,
 		})
 		return failures
