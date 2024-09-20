@@ -46,7 +46,7 @@ func validateElementalDir(elementalConfigDir string) []FailedValidation {
 	elementalConfigDirEntries, err := os.ReadDir(elementalConfigDir)
 	if err != nil {
 		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Elemental config directory could not be read: %s", err),
+			UserMessage: "Elemental config directory could not be read",
 			Error:       err,
 		})
 	}
