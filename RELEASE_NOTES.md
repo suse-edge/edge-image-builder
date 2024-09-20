@@ -4,6 +4,24 @@
 
 ## General
 
+* Extracted the K3S and RKE2 SELinux package and repository definitions into artifacts.yaml
+
+## API
+
+### Image Definition Changes
+
+### Image Configuration Directory Changes
+
+## Bug Fixes
+
+* [#565](https://github.com/suse-edge/edge-image-builder/issues/565) - K3S SELinux uses an outdated package
+
+---
+
+# v1.1.0-rc2
+
+## General
+
 * The "custom files" functionality may now include directories, which will be maintained when copied to the image
 * Improved Kubernetes definition validation
 * Allow RKE2 deployments with Calico, Cilium and Multus on aarch64 platforms
@@ -13,6 +31,10 @@
 * Ensure that kernel arguments are applied during firstboot when kexec is used in ISO installations
 * Improved Elemental handling when using SL Micro 6.0
 * Added Elemental configuration validation
+* Dependency upgrades
+  * "Phone Home" deployments are now utilizing Elemental v1.6 (upgraded from v1.4)
+  * Embedded registry is now utilizing Hauler v1.0.7 (upgraded from v1.0.1)
+  * Network customizations are now utilizing nmc v0.3.1 (upgraded from v0.3.0)
 
 ## API
 
@@ -20,12 +42,11 @@
 
 * Introduced a dedicated FIPS mode option, adding the required packages, kernel arguments, and crypto selection
 
-### Image Configuration Directory Changes
-
 ## Bug Fixes
 
 * [#491](https://github.com/suse-edge/edge-image-builder/issues/491) - Large Helm manifests fail to install
 * [#543](https://github.com/suse-edge/edge-image-builder/issues/543) - Kernel cmdline arguments aren't honoured in SL Micro 6.0 for SelfInstall ISO's
+* [#550](https://github.com/suse-edge/edge-image-builder/issues/550) - PackageHub inclusion in RPM resolution silently errors on SLE Micro 6.0
 
 ---
 

@@ -39,4 +39,14 @@ type ArtifactSources struct {
 		RegisterRepository    string `yaml:"register-repository"`
 		SystemAgentRepository string `yaml:"system-agent-repository"`
 	} `yaml:"elemental"`
+	Kubernetes struct {
+		K3s struct {
+			SELinuxPackage    string `yaml:"selinuxPackage"`
+			SELinuxRepository string `yaml:"selinuxRepository"`
+		} `yaml:"k3s"`
+		Rke2 struct {
+			SELinuxPackage    string `yaml:"selinuxPackage"`
+			SELinuxRepository string `yaml:"selinuxRepository"`
+		} `yaml:"rke2"`
+	} `yaml:"kubernetes"`
 }
