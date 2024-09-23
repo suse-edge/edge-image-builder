@@ -49,6 +49,8 @@ func validateElementalDir(elementalConfigDir string) []FailedValidation {
 			UserMessage: "Elemental config directory could not be read",
 			Error:       err,
 		})
+
+		return failures
 	}
 
 	switch len(elementalConfigDirEntries) {

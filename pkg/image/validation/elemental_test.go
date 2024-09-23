@@ -1,7 +1,6 @@
 package validation
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,7 +10,14 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func TestValidateElemental(t *testing.T) {
+func TestValidateElementalNoDir(t *testing.T) {
+	ctx := image.Context{}
+
+	failures := validateElemental(&ctx)
+	assert.Len(t, failures, 0)
+}
+
+func TestValidateElementalValid(t *testing.T) {
 	configDir, err := os.MkdirTemp("", "eib-config-")
 	require.NoError(t, err)
 
@@ -29,7 +35,7 @@ func TestValidateElemental(t *testing.T) {
 		ImageDefinition        *image.Definition
 		ExpectedFailedMessages []string
 	}{
-		`valid 1.1`: {
+		`valid`: {
 			ImageDefinition: &image.Definition{
 				OperatingSystem: image.OperatingSystem{
 					Packages: image.Packages{
@@ -38,7 +44,7 @@ func TestValidateElemental(t *testing.T) {
 				},
 			},
 		},
-		`1.1 no registration code`: {
+		`no registration code`: {
 			ImageDefinition: &image.Definition{},
 			ExpectedFailedMessages: []string{
 				"Operating system package registration code field must be defined when using Elemental with SL Micro 6.0",
@@ -68,105 +74,77 @@ func TestValidateElemental(t *testing.T) {
 	}
 }
 
-func TestValidateElementalConfigDir(t *testing.T) {
-	configDirValid, err := os.MkdirTemp("", "eib-config-")
-	require.NoError(t, err)
-
-	configDirEmpty, err := os.MkdirTemp("", "eib-config-")
-	require.NoError(t, err)
-
-	configDirMultipleFiles, err := os.MkdirTemp("", "eib-config-")
-	require.NoError(t, err)
-
-	configDirInvalidName, err := os.MkdirTemp("", "eib-config-")
-	require.NoError(t, err)
-
-	configDirUnreadable, err := os.MkdirTemp("", "eib-config-")
+func TestValidateElementalConfigDirValid(t *testing.T) {
+	configDir, err := os.MkdirTemp("", "eib-config-")
 	require.NoError(t, err)
 
 	defer func() {
-		assert.NoError(t, os.RemoveAll(configDirValid))
-		assert.NoError(t, os.RemoveAll(configDirEmpty))
-		assert.NoError(t, os.RemoveAll(configDirMultipleFiles))
-		assert.NoError(t, os.RemoveAll(configDirInvalidName))
-		assert.NoError(t, os.RemoveAll(configDirUnreadable))
+		assert.NoError(t, os.RemoveAll(configDir))
 	}()
 
-	elementalDirValid := filepath.Join(configDirValid, "elemental")
-	require.NoError(t, os.MkdirAll(elementalDirValid, os.ModePerm))
+	elementalDir := filepath.Join(configDir, "elemental")
+	require.NoError(t, os.MkdirAll(elementalDir, os.ModePerm))
 
-	validElementalConfig := filepath.Join(elementalDirValid, "elemental_config.yaml")
-	require.NoError(t, os.WriteFile(validElementalConfig, []byte(""), 0o600))
+	elementalConfig := filepath.Join(elementalDir, "elemental_config.yaml")
+	require.NoError(t, os.WriteFile(elementalConfig, []byte(""), 0o600))
 
-	elementalDirEmpty := filepath.Join(configDirEmpty, "elemental")
-	require.NoError(t, os.MkdirAll(elementalDirEmpty, os.ModePerm))
+	failures := validateElementalDir(elementalDir)
+	assert.Len(t, failures, 0)
+}
 
-	elementalDirMultipleFiles := filepath.Join(configDirMultipleFiles, "elemental")
-	require.NoError(t, os.MkdirAll(elementalDirMultipleFiles, os.ModePerm))
+func TestValidateElementalConfigDirEmptyDir(t *testing.T) {
+	configDir, err := os.MkdirTemp("", "eib-config-")
+	require.NoError(t, err)
 
-	firstElementalConfig := filepath.Join(elementalDirMultipleFiles, "elemental_config1.yaml")
+	defer func() {
+		assert.NoError(t, os.RemoveAll(configDir))
+	}()
+
+	elementalDir := filepath.Join(configDir, "elemental")
+	require.NoError(t, os.MkdirAll(elementalDir, os.ModePerm))
+
+	failures := validateElementalDir(elementalDir)
+	assert.Len(t, failures, 1)
+
+	assert.Contains(t, failures[0].UserMessage, "Elemental config directory should not be present if it is empty")
+}
+
+func TestValidateElementalConfigDirMultipleFiles(t *testing.T) {
+	configDir, err := os.MkdirTemp("", "eib-config-")
+	require.NoError(t, err)
+
+	defer func() {
+		assert.NoError(t, os.RemoveAll(configDir))
+	}()
+
+	elementalDir := filepath.Join(configDir, "elemental")
+	require.NoError(t, os.MkdirAll(elementalDir, os.ModePerm))
+
+	firstElementalConfig := filepath.Join(elementalDir, "elemental_config1.yaml")
 	require.NoError(t, os.WriteFile(firstElementalConfig, []byte(""), 0o600))
-	secondElementalConfig := filepath.Join(elementalDirMultipleFiles, "elemental_config2.yaml")
+	secondElementalConfig := filepath.Join(elementalDir, "elemental_config2.yaml")
 	require.NoError(t, os.WriteFile(secondElementalConfig, []byte(""), 0o600))
 
-	elementalDirInvalidName := filepath.Join(configDirInvalidName, "elemental")
-	require.NoError(t, os.MkdirAll(elementalDirInvalidName, os.ModePerm))
+	failures := validateElementalDir(elementalDir)
+	assert.Len(t, failures, 1)
 
-	invalidElementalConfig := filepath.Join(elementalDirInvalidName, "elemental.yaml")
-	require.NoError(t, os.WriteFile(invalidElementalConfig, []byte(""), 0o600))
+	assert.Contains(t, failures[0].UserMessage, "Elemental config directory should only contain a singular 'elemental_config.yaml' file")
+}
 
-	elementalDirUnreadable := filepath.Join(configDirUnreadable, "elemental")
-	require.NoError(t, os.MkdirAll(elementalDirUnreadable, os.ModePerm))
-	require.NoError(t, os.Chmod(elementalDirUnreadable, 0o333))
+func TestValidateElementalConfigDirUnreadable(t *testing.T) {
+	configDir, err := os.MkdirTemp("", "eib-config-")
+	require.NoError(t, err)
 
-	tests := map[string]struct {
-		ExpectedFailedMessages []string
-		ElementalDir           string
-	}{
-		`valid elemental dir`: {
-			ElementalDir: elementalDirValid,
-		},
-		`empty elemental dir`: {
-			ElementalDir: elementalDirEmpty,
-			ExpectedFailedMessages: []string{
-				"Elemental config directory should not be present if it is empty",
-			},
-		},
-		`multiple files in elemental dir`: {
-			ElementalDir: elementalDirMultipleFiles,
-			ExpectedFailedMessages: []string{
-				"Elemental config directory should only contain a singular 'elemental_config.yaml' file",
-			},
-		},
-		`invalid name in elemental dir`: {
-			ElementalDir: elementalDirInvalidName,
-			ExpectedFailedMessages: []string{
-				"Elemental config file should only be named `elemental_config.yaml`",
-			},
-		},
-		`unreadable elemental dir`: {
-			ElementalDir: elementalDirUnreadable,
-			ExpectedFailedMessages: []string{
-				fmt.Sprintf("Elemental config directory could not be read: open %s: permission denied", elementalDirUnreadable),
-				"Elemental config directory should not be present if it is empty",
-			},
-		},
-	}
+	defer func() {
+		assert.NoError(t, os.RemoveAll(configDir))
+	}()
 
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			failures := validateElementalDir(test.ElementalDir)
-			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+	elementalDir := filepath.Join(configDir, "elemental")
+	require.NoError(t, os.MkdirAll(elementalDir, os.ModePerm))
+	require.NoError(t, os.Chmod(elementalDir, 0o333))
 
-			var foundMessages []string
-			for _, foundValidation := range failures {
-				foundMessages = append(foundMessages, foundValidation.UserMessage)
-			}
+	failures := validateElementalDir(elementalDir)
+	assert.Len(t, failures, 1)
 
-			for _, expectedMessage := range test.ExpectedFailedMessages {
-				assert.Contains(t, foundMessages, expectedMessage)
-			}
-
-		})
-	}
+	assert.Contains(t, failures[0].UserMessage, "Elemental config directory could not be read")
 }

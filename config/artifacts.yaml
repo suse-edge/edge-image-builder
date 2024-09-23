@@ -6,9 +6,6 @@ endpoint-copier-operator:
   chart: endpoint-copier-operator
   repository: https://suse-edge.github.io/charts
   version: 0.2.1
-elemental:
-  register-repository: https://download.opensuse.org/repositories/isv:/Rancher:/Elemental:/Staging/standard
-  system-agent-repository: https://download.opensuse.org/repositories/isv:/Rancher:/Elemental:/Staging/standard
 kubernetes:
   k3s:
     selinuxPackage: k3s-selinux-1.6-1.slemicro.noarch
