@@ -17,7 +17,7 @@ func TestValidateElementalNoDir(t *testing.T) {
 	assert.Len(t, failures, 0)
 }
 
-func TestValidateElementalValid(t *testing.T) {
+func TestValidateElemental(t *testing.T) {
 	configDir, err := os.MkdirTemp("", "eib-config-")
 	require.NoError(t, err)
 
@@ -35,7 +35,7 @@ func TestValidateElementalValid(t *testing.T) {
 		ImageDefinition        *image.Definition
 		ExpectedFailedMessages []string
 	}{
-		`valid`: {
+		`valid, registration code no side-loaded rpms`: {
 			ImageDefinition: &image.Definition{
 				OperatingSystem: image.OperatingSystem{
 					Packages: image.Packages{
@@ -44,10 +44,11 @@ func TestValidateElementalValid(t *testing.T) {
 				},
 			},
 		},
-		`no registration code`: {
+		`invalid, no registration code no side-loaded rpms`: {
 			ImageDefinition: &image.Definition{},
 			ExpectedFailedMessages: []string{
-				"Operating system package registration code field must be defined when using Elemental with SL Micro 6.0",
+				"Operating system package registration code field must be defined when using Elemental or the " +
+					"[elemental-register elemental-system-agent] RPMs must be manually side-loaded",
 			},
 		},
 	}
@@ -147,4 +148,136 @@ func TestValidateElementalConfigDirUnreadable(t *testing.T) {
 	assert.Len(t, failures, 1)
 
 	assert.Contains(t, failures[0].UserMessage, "Elemental config directory could not be read")
+}
+
+func TestValidateElementalConfigurationManualRPMsNoRegistrationCode(t *testing.T) {
+	configDir, err := os.MkdirTemp("", "eib-config-")
+	require.NoError(t, err)
+
+	defer func() {
+		assert.NoError(t, os.RemoveAll(configDir))
+	}()
+
+	ctx := &image.Context{
+		ImageConfigDir:  configDir,
+		ImageDefinition: &image.Definition{},
+	}
+
+	elementalDir := filepath.Join(configDir, "elemental")
+	require.NoError(t, os.MkdirAll(elementalDir, os.ModePerm))
+
+	elementalConfig := filepath.Join(elementalDir, "elemental_config.yaml")
+	require.NoError(t, os.WriteFile(elementalConfig, []byte(""), 0o600))
+
+	rpmDir := filepath.Join(configDir, "rpms")
+	require.NoError(t, os.MkdirAll(rpmDir, os.ModePerm))
+
+	elementalAgent := filepath.Join(rpmDir, "elemental-system-agent.rpm")
+	require.NoError(t, os.WriteFile(elementalAgent, []byte(""), 0o600))
+
+	elementalRegister := filepath.Join(rpmDir, "elemental-register.rpm")
+	require.NoError(t, os.WriteFile(elementalRegister, []byte(""), 0o600))
+
+	failures := validateElementalConfiguration(ctx)
+	assert.Len(t, failures, 0)
+}
+
+func TestValidateElementalConfigurationManualRPMsWithRegistrationCode(t *testing.T) {
+	configDir, err := os.MkdirTemp("", "eib-config-")
+	require.NoError(t, err)
+
+	defer func() {
+		assert.NoError(t, os.RemoveAll(configDir))
+	}()
+
+	ctx := &image.Context{
+		ImageConfigDir: configDir,
+		ImageDefinition: &image.Definition{
+			OperatingSystem: image.OperatingSystem{
+				Packages: image.Packages{
+					RegCode: "registration-code",
+				},
+			},
+		},
+	}
+
+	elementalDir := filepath.Join(configDir, "elemental")
+	require.NoError(t, os.MkdirAll(elementalDir, os.ModePerm))
+
+	elementalConfig := filepath.Join(elementalDir, "elemental_config.yaml")
+	require.NoError(t, os.WriteFile(elementalConfig, []byte(""), 0o600))
+
+	rpmDir := filepath.Join(configDir, "rpms")
+	require.NoError(t, os.MkdirAll(rpmDir, os.ModePerm))
+
+	elementalAgent := filepath.Join(rpmDir, "elemental-system-agent.rpm")
+	require.NoError(t, os.WriteFile(elementalAgent, []byte(""), 0o600))
+
+	elementalRegister := filepath.Join(rpmDir, "elemental-register.rpm")
+	require.NoError(t, os.WriteFile(elementalRegister, []byte(""), 0o600))
+
+	failures := validateElementalConfiguration(ctx)
+	assert.Len(t, failures, 0)
+}
+
+func TestValidateElementalConfigurationManualRPMsMissingAgent(t *testing.T) {
+	configDir, err := os.MkdirTemp("", "eib-config-")
+	require.NoError(t, err)
+
+	defer func() {
+		assert.NoError(t, os.RemoveAll(configDir))
+	}()
+
+	ctx := &image.Context{
+		ImageConfigDir:  configDir,
+		ImageDefinition: &image.Definition{},
+	}
+
+	elementalDir := filepath.Join(configDir, "elemental")
+	require.NoError(t, os.MkdirAll(elementalDir, os.ModePerm))
+
+	elementalConfig := filepath.Join(elementalDir, "elemental_config.yaml")
+	require.NoError(t, os.WriteFile(elementalConfig, []byte(""), 0o600))
+
+	rpmDir := filepath.Join(configDir, "rpms")
+	require.NoError(t, os.MkdirAll(rpmDir, os.ModePerm))
+
+	elementalRegister := filepath.Join(rpmDir, "elemental-register.rpm")
+	require.NoError(t, os.WriteFile(elementalRegister, []byte(""), 0o600))
+
+	failures := validateElementalConfiguration(ctx)
+	assert.Len(t, failures, 1)
+
+	assert.Contains(t, failures[0].UserMessage, "Not all of the necessary Elemental packages are provided, packages found: [elemental-register], packages missing: [elemental-system-agent]")
+}
+
+func TestValidateElementalConfigurationManualRPMsMissingRegister(t *testing.T) {
+	configDir, err := os.MkdirTemp("", "eib-config-")
+	require.NoError(t, err)
+
+	defer func() {
+		assert.NoError(t, os.RemoveAll(configDir))
+	}()
+
+	ctx := &image.Context{
+		ImageConfigDir:  configDir,
+		ImageDefinition: &image.Definition{},
+	}
+
+	elementalDir := filepath.Join(configDir, "elemental")
+	require.NoError(t, os.MkdirAll(elementalDir, os.ModePerm))
+
+	elementalConfig := filepath.Join(elementalDir, "elemental_config.yaml")
+	require.NoError(t, os.WriteFile(elementalConfig, []byte(""), 0o600))
+
+	rpmDir := filepath.Join(configDir, "rpms")
+	require.NoError(t, os.MkdirAll(rpmDir, os.ModePerm))
+
+	elementalAgent := filepath.Join(rpmDir, "elemental-system-agent.rpm")
+	require.NoError(t, os.WriteFile(elementalAgent, []byte(""), 0o600))
+
+	failures := validateElementalConfiguration(ctx)
+	assert.Len(t, failures, 1)
+
+	assert.Contains(t, failures[0].UserMessage, "Not all of the necessary Elemental packages are provided, packages found: [elemental-system-agent], packages missing: [elemental-register]")
 }
