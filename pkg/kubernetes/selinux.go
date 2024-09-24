@@ -10,35 +10,26 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func SELinuxPackage(version string) (string, error) {
-	const (
-		k3sPackage  = "k3s-selinux"
-		rke2Package = "rke2-selinux"
-	)
+func SELinuxPackage(version string, sources *image.ArtifactSources) (string, error) {
 
 	switch {
 	case strings.Contains(version, image.KubernetesDistroK3S):
-		return k3sPackage, nil
+		return sources.Kubernetes.K3s.SELinuxPackage, nil
 	case strings.Contains(version, image.KubernetesDistroRKE2):
-		return rke2Package, nil
+		return sources.Kubernetes.Rke2.SELinuxPackage, nil
 	default:
 		return "", fmt.Errorf("invalid kubernetes version: %s", version)
 	}
 }
 
-func SELinuxRepository(version string) (image.AddRepo, error) {
-	const (
-		k3sRepository  = "https://rpm.rancher.io/k3s/stable/common/slemicro/noarch"
-		rke2Repository = "https://rpm.rancher.io/rke2/stable/common/slemicro/noarch"
-	)
-
+func SELinuxRepository(version string, sources *image.ArtifactSources) (image.AddRepo, error) {
 	var url string
 
 	switch {
 	case strings.Contains(version, image.KubernetesDistroK3S):
-		url = k3sRepository
+		url = sources.Kubernetes.K3s.SELinuxRepository
 	case strings.Contains(version, image.KubernetesDistroRKE2):
-		url = rke2Repository
+		url = sources.Kubernetes.Rke2.SELinuxRepository
 	default:
 		return image.AddRepo{}, fmt.Errorf("invalid kubernetes version: %s", version)
 	}

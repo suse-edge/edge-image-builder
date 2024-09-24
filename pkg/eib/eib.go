@@ -62,12 +62,12 @@ func appendKubernetesSELinuxRPMs(ctx *image.Context) error {
 	log.AuditInfo("SELinux is enabled in the Kubernetes configuration. " +
 		"The necessary RPM packages will be downloaded.")
 
-	selinuxPackage, err := kubernetes.SELinuxPackage(ctx.ImageDefinition.Kubernetes.Version)
+	selinuxPackage, err := kubernetes.SELinuxPackage(ctx.ImageDefinition.Kubernetes.Version, ctx.ArtifactSources)
 	if err != nil {
 		return fmt.Errorf("identifying selinux package: %w", err)
 	}
 
-	repository, err := kubernetes.SELinuxRepository(ctx.ImageDefinition.Kubernetes.Version)
+	repository, err := kubernetes.SELinuxRepository(ctx.ImageDefinition.Kubernetes.Version, ctx.ArtifactSources)
 	if err != nil {
 		return fmt.Errorf("identifying selinux repository: %w", err)
 	}
