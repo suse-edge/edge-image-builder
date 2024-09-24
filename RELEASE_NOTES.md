@@ -4,9 +4,8 @@
 
 ## General
 
-* Adds support for SL Micro 6.0
-  * SLE Micro 5.5 may still be used as the base image, however not all customization features of EIB will work
-* Added the ability to build aarch64 images on an aarch64 host machine
+* Adds support for customizing SL Micro 6.0 base images (for SLE Micro 5.5 images, EIB 1.0.x must still be used)
+* Added ability to build aarch64 images on an aarch64 host machine
 * Added the ability to automatically copy files into the built images filesystem (see Image Configuration Directory Changes below)
 * The "custom files" functionality may now include directories, which will be maintained when copied to the image
 * Kubernetes manifests are now applied in a systemd service instead of using the `/manifests` directory 
