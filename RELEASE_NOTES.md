@@ -7,7 +7,6 @@
 * Adds support for customizing SL Micro 6.0 base images (for SLE Micro 5.5 images, EIB 1.0.x must still be used)
 * Added the ability to build aarch64 images on an aarch64 host machine
 * Added the ability to automatically copy files into the built images filesystem (see Image Configuration Directory Changes below)
-* The "custom files" functionality may now include directories, which will be maintained when copied to the image
 * Kubernetes manifests are now applied in a systemd service instead of using the `/manifests` directory 
 * Helm chart installation backOffLimit changed from 1000(default) to 20
 * Dropped `-chart` suffix from installed Helm chart names
@@ -31,6 +30,7 @@
 ### Image Configuration Directory Changes
 
 * An optional directory named `os-files` may be included to copy files into the resulting image's filesystem at runtime
+* The `custom/files` directory may now include subdirectories, which will be maintained when copied to the image
 
 ## Bug Fixes
 
