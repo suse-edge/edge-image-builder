@@ -33,6 +33,7 @@
 * An optional directory named `os-files` may be included to copy files into the resulting image's filesystem at runtime
 * The `custom/files` directory may now include subdirectories, which will be maintained when copied to the image
 * Elemental configuration now requires a registration code in order to install the necessary RPMs from the official sources
+  * Alternatively, the necessary Elemental RPMs can be manually side-loaded instead
 
 ## Bug Fixes
 

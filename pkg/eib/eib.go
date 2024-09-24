@@ -6,6 +6,8 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/suse-edge/edge-image-builder/pkg/build"
@@ -96,9 +98,18 @@ func appendElementalRPMs(ctx *image.Context) {
 		return
 	}
 
-	log.AuditInfo("Elemental registration is configured. The necessary RPM packages will be downloaded.")
-	appendRPMs(ctx, nil, combustion.ElementalPackages...)
+	rpmsPath := combustion.RPMsPath(ctx)
+	rpmDirEntries, err := os.ReadDir(rpmsPath)
+	if err != nil && !os.IsNotExist(err) {
+		zap.S().Warnf("Looking for '%s' dir failed unexpectedly: %s", rpmsPath, err)
+	}
 
+	if !slices.ContainsFunc(rpmDirEntries, func(entry os.DirEntry) bool {
+		return strings.Contains(entry.Name(), combustion.ElementalPackages[0])
+	}) {
+		log.AuditInfo("Elemental registration is configured. The necessary RPM packages will be downloaded.")
+		appendRPMs(ctx, nil, combustion.ElementalPackages...)
+	}
 }
 
 func appendFips(ctx *image.Context) {
