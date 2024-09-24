@@ -35,10 +35,6 @@ type ArtifactSources struct {
 		Repository string `yaml:"repository"`
 		Version    string `yaml:"version"`
 	} `yaml:"endpoint-copier-operator"`
-	Elemental struct {
-		RegisterRepository    string `yaml:"register-repository"`
-		SystemAgentRepository string `yaml:"system-agent-repository"`
-	} `yaml:"elemental"`
 	Kubernetes struct {
 		K3s struct {
 			SELinuxPackage    string `yaml:"selinuxPackage"`
