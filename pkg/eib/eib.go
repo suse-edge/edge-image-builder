@@ -97,15 +97,8 @@ func appendElementalRPMs(ctx *image.Context) {
 	}
 
 	log.AuditInfo("Elemental registration is configured. The necessary RPM packages will be downloaded.")
+	appendRPMs(ctx, nil, combustion.ElementalPackages...)
 
-	appendRPMs(ctx, []image.AddRepo{
-		{
-			URL: ctx.ArtifactSources.Elemental.RegisterRepository,
-		},
-		{
-			URL: ctx.ArtifactSources.Elemental.SystemAgentRepository,
-		},
-	}, combustion.ElementalPackages...)
 }
 
 func appendFips(ctx *image.Context) {

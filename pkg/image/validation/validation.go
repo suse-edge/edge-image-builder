@@ -15,11 +15,12 @@ func ValidateDefinition(ctx *image.Context) map[string][]FailedValidation {
 	failures := map[string][]FailedValidation{}
 
 	validations := map[string]validateComponent{
-		versionComponent:  validateVersion,
-		imageComponent:    validateImage,
-		osComponent:       validateOperatingSystem,
-		registryComponent: validateEmbeddedArtifactRegistry,
-		k8sComponent:      validateKubernetes,
+		versionComponent:   validateVersion,
+		imageComponent:     validateImage,
+		osComponent:        validateOperatingSystem,
+		registryComponent:  validateEmbeddedArtifactRegistry,
+		k8sComponent:       validateKubernetes,
+		elementalComponent: validateElemental,
 	}
 	for componentName, v := range validations {
 		componentFailures := v(ctx)

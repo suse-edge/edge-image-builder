@@ -9,6 +9,7 @@
 * Added the ability to automatically copy files into the built images filesystem (see Image Configuration Directory Changes below)
 * Kubernetes manifests are now applied in a systemd service instead of using the `/manifests` directory 
 * Helm chart installation backOffLimit changed from 1000(default) to 20
+* Added Elemental configuration validation
 * Dropped `-chart` suffix from installed Helm chart names
 * Added caching for container images
 * Added built image name output to build command 
@@ -31,6 +32,7 @@
 
 * An optional directory named `os-files` may be included to copy files into the resulting image's filesystem at runtime
 * The `custom/files` directory may now include subdirectories, which will be maintained when copied to the image
+* Elemental configuration now requires a registration code in order to install the necessary RPMs from the official sources
 
 ## Bug Fixes
 
