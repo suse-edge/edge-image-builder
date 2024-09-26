@@ -1,0 +1,9 @@
+global:
+  ironicIP: 10.124.137.251
+  enable_vmedia_tls: false
+metal3-ironic:
+  global:
+    predictableNicNames: "true"
+  persistence:
+    ironic:
+      size: "5Gi"
