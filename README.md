@@ -4,10 +4,10 @@
 
 EIB runs as a container. Some form of container runtime is needed, such as [Podman](https://podman.io/).
 
-The latest version of EIB (1.0.2) can be downloaded from the Open Build Service using the following command:
+The latest version of EIB (1.1.0) can be downloaded from the Open Build Service using the following command:
 
 ```bash
-podman pull registry.opensuse.org/isv/suse/edge/edgeimagebuilder/containerfile/suse/edge-image-builder:1.0.2
+podman pull registry.opensuse.org/isv/suse/edge/edgeimagebuilder/containerfile-sp6/suse/edge-image-builder:1.1.0
 ```
 
 Alternatively, EIB can be built from this repository. See the [Building from Source](#building-from-source)
