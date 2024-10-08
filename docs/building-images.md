@@ -185,7 +185,7 @@ be included; if neither are provided, this section is ignored.
 `localectl list-keymaps` on a Linux system. If unset, EIB will default this value to `us`.
 * `packages` - Defines packages that will be installed when the node is booted. EIB will determine the necessary
 dependencies and download them into the built image. For detailed information on how to use this configuration,
-see the [Installing pacakges](.installing-packages.md) guide.
+see the [Installing packages](./installing-packages.md) guide.
   * `noGPGCheck` - Defines if GPG validation should be disabled for all additional repositories and side-loaded
   RPMs. **Disabling GPG validation is intended for development purposes only.**
   * `packageList` - Defines a list of packages to install from SUSE's internal RPM repositories or
