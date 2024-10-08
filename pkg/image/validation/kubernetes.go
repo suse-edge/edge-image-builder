@@ -10,8 +10,6 @@ import (
 	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
-	"go.uber.org/zap"
-
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
@@ -219,11 +217,7 @@ func validateChart(chart *image.HelmChart, repositoryNames []string, valuesDir s
 		})
 	}
 
-	if failure := validateHelmChartValues(chart.Name, chart.ValuesFile, valuesDir); failure != "" {
-		failures = append(failures, FailedValidation{
-			UserMessage: failure,
-		})
-	}
+	failures = append(failures, validateHelmChartValues(chart.Name, chart.ValuesFile, valuesDir)...)
 
 	return failures
 }
@@ -233,9 +227,9 @@ func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool, cer
 
 	parsedURL, err := url.Parse(repo.URL)
 	if err != nil {
-		zap.S().Errorf("Helm repository URL '%s' could not be parsed: %s", repo.URL, err)
 		failures = append(failures, FailedValidation{
 			UserMessage: fmt.Sprintf("Helm repository URL '%s' could not be parsed.", repo.URL),
+			Error:       err,
 		})
 
 		return failures
@@ -245,12 +239,7 @@ func validateRepo(repo *image.HelmRepository, seenHelmRepos map[string]bool, cer
 	failures = append(failures, validateHelmRepoURL(parsedURL, repo)...)
 	failures = append(failures, validateHelmRepoAuth(repo)...)
 	failures = append(failures, validateHelmRepoArgs(parsedURL, repo)...)
-
-	if failure := validateHelmRepoCert(repo.Name, repo.CAFile, certsDir); failure != "" {
-		failures = append(failures, FailedValidation{
-			UserMessage: failure,
-		})
-	}
+	failures = append(failures, validateHelmRepoCert(repo.Name, repo.CAFile, certsDir)...)
 
 	return failures
 }
@@ -353,52 +342,70 @@ func validateHelmRepoArgs(parsedURL *url.URL, repo *image.HelmRepository) []Fail
 	return failures
 }
 
-func validateHelmRepoCert(repoName, certFile, certsDir string) string {
+func validateHelmRepoCert(repoName, certFile, certsDir string) []FailedValidation {
 	if certFile == "" {
-		return ""
+		return nil
 	}
+
+	var failures []FailedValidation
 
 	validExtensions := []string{".pem", ".crt", ".cer"}
 	if !slices.Contains(validExtensions, filepath.Ext(certFile)) {
-		return fmt.Sprintf("Helm chart 'caFile' field for %q must be the name of a valid cert file/bundle with one of the following extensions: %s",
-			repoName, strings.Join(validExtensions, ", "))
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Helm chart 'caFile' field for %q must be the name of a valid cert file/bundle with one of the following extensions: %s",
+				repoName, strings.Join(validExtensions, ", ")),
+		})
+		return failures
 	}
 
 	certFilePath := filepath.Join(certsDir, certFile)
 	_, err := os.Stat(certFilePath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return fmt.Sprintf("Helm repo cert file/bundle '%s' could not be found at '%s'.", certFile, certFilePath)
+			failures = append(failures, FailedValidation{
+				UserMessage: fmt.Sprintf("Helm repo cert file/bundle '%s' could not be found at '%s'.", certFile, certFilePath),
+			})
+		} else {
+			failures = append(failures, FailedValidation{
+				UserMessage: fmt.Sprintf("Helm repo cert file/bundle '%s' could not be read", certFile),
+				Error:       err,
+			})
 		}
-
-		zap.S().Errorf("Helm repo cert file/bundle '%s' could not be read: %s", certFile, err)
-		return fmt.Sprintf("Helm repo cert file/bundle '%s' could not be read.", certFile)
 	}
 
-	return ""
+	return failures
 }
 
-func validateHelmChartValues(chartName, valuesFile, valuesDir string) string {
+func validateHelmChartValues(chartName, valuesFile, valuesDir string) []FailedValidation {
 	if valuesFile == "" {
-		return ""
+		return nil
 	}
 
+	var failures []FailedValidation
+
 	if filepath.Ext(valuesFile) != ".yaml" && filepath.Ext(valuesFile) != ".yml" {
-		return fmt.Sprintf("Helm chart 'valuesFile' field for %q must be the name of a valid yaml file ending in '.yaml' or '.yml'.", chartName)
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Helm chart 'valuesFile' field for %q must be the name of a valid yaml file ending in '.yaml' or '.yml'.", chartName),
+		})
+		return failures
 	}
 
 	valuesFilePath := filepath.Join(valuesDir, valuesFile)
 	_, err := os.Stat(valuesFilePath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return fmt.Sprintf("Helm chart values file '%s' could not be found at '%s'.", valuesFile, valuesFilePath)
+			failures = append(failures, FailedValidation{
+				UserMessage: fmt.Sprintf("Helm chart values file '%s' could not be found at '%s'.", valuesFile, valuesFilePath),
+			})
+		} else {
+			failures = append(failures, FailedValidation{
+				UserMessage: fmt.Sprintf("Helm chart values file '%s' could not be read.", valuesFile),
+				Error:       err,
+			})
 		}
-
-		zap.S().Errorf("Helm chart values file '%s' could not be read: %s", valuesFile, err)
-		return fmt.Sprintf("Helm chart values file '%s' could not be read.", valuesFile)
 	}
 
-	return ""
+	return failures
 }
 
 func validateHelmChartDuplicates(charts []image.HelmChart) string {
