@@ -1,8 +1,8 @@
-apiVersion: 1.0
+apiVersion: 1.1
 image:
   arch: x86_64
   imageType: iso
-  baseImage: SLE-Micro.x86_64-5.5.0-Default-SelfInstall-GM2.install.iso
+  baseImage: SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso
   outputImageName: iso-image.iso
 operatingSystem:
   isoConfiguration:

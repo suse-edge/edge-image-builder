@@ -11,7 +11,7 @@ import (
 
 func TestNewCluster_SingleNodeRKE2_MissingConfig(t *testing.T) {
 	kubernetes := &image.Kubernetes{
-		Version: "v1.29.0+rke2r1",
+		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP:  "192.168.122.50",
@@ -36,7 +36,7 @@ func TestNewCluster_SingleNodeRKE2_MissingConfig(t *testing.T) {
 
 func TestNewCluster_SingleNodeK3s_MissingConfig(t *testing.T) {
 	kubernetes := &image.Kubernetes{
-		Version: "v1.29.0+k3s1",
+		Version: "v1.30.3+k3s1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP:  "192.168.122.50",
@@ -84,7 +84,7 @@ func TestNewCluster_SingleNode_ExistingConfig(t *testing.T) {
 
 func TestNewCluster_MultiNodeRKE2_MissingConfig(t *testing.T) {
 	kubernetes := &image.Kubernetes{
-		Version: "v1.29.0+rke2r1",
+		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP:  "192.168.122.50",
@@ -134,7 +134,7 @@ func TestNewCluster_MultiNodeRKE2_MissingConfig(t *testing.T) {
 
 func TestNewCluster_MultiNodeRKE2_ExistingConfig(t *testing.T) {
 	kubernetes := &image.Kubernetes{
-		Version: "v1.29.0+rke2r1",
+		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
 			APIVIP:  "192.168.122.50",

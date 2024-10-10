@@ -102,7 +102,7 @@ func TestConfigureKubernetes_UnsupportedVersion(t *testing.T) {
 	ctx := &image.Context{
 		ImageDefinition: &image.Definition{
 			Kubernetes: image.Kubernetes{
-				Version: "v1.29.0",
+				Version: "v1.30.3",
 			},
 		},
 	}
@@ -111,7 +111,7 @@ func TestConfigureKubernetes_UnsupportedVersion(t *testing.T) {
 
 	scripts, err := c.configureKubernetes(ctx)
 	require.Error(t, err)
-	assert.EqualError(t, err, "cannot configure kubernetes version: v1.29.0")
+	assert.EqualError(t, err, "cannot configure kubernetes version: v1.30.3")
 	assert.Nil(t, scripts)
 }
 
@@ -120,7 +120,7 @@ func TestConfigureKubernetes_ScriptInstallerErrorK3s(t *testing.T) {
 	defer teardown()
 
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
-		Version: "v1.29.0+k3s1",
+		Version: "v1.30.3+k3s1",
 	}
 
 	c := Combustion{
@@ -142,7 +142,7 @@ func TestConfigureKubernetes_ScriptInstallerErrorRKE2(t *testing.T) {
 	defer teardown()
 
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
-		Version: "v1.29.0+rke2r1",
+		Version: "v1.30.3+rke2r1",
 	}
 
 	c := Combustion{
@@ -164,7 +164,7 @@ func TestConfigureKubernetes_ArtefactDownloaderErrorK3s(t *testing.T) {
 	defer teardown()
 
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
-		Version: "v1.29.0+k3s1",
+		Version: "v1.30.3+k3s1",
 	}
 
 	c := Combustion{
@@ -191,7 +191,7 @@ func TestConfigureKubernetes_ArtefactDownloaderErrorRKE2(t *testing.T) {
 	defer teardown()
 
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
-		Version: "v1.29.0+rke2r1",
+		Version: "v1.30.3+rke2r1",
 	}
 
 	c := Combustion{
@@ -218,7 +218,7 @@ func TestConfigureKubernetes_SuccessfulSingleNodeK3sCluster(t *testing.T) {
 	defer teardown()
 
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
-		Version: "v1.29.0+k3s1",
+		Version: "v1.30.3+k3s1",
 		Network: image.Network{
 			APIVIP:  "192.168.122.100",
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
@@ -290,7 +290,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sCluster(t *testing.T) {
 	defer teardown()
 
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
-		Version: "v1.29.0+k3s1",
+		Version: "v1.30.3+k3s1",
 		Network: image.Network{
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 			APIVIP:  "192.168.122.100",
@@ -421,7 +421,7 @@ func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
 	defer teardown()
 
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
-		Version: "v1.29.0+rke2r1",
+		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
 			APIVIP:  "192.168.122.100",
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
@@ -489,7 +489,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 	defer teardown()
 
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
-		Version: "v1.29.0+rke2r1",
+		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 			APIVIP:  "192.168.122.100",
@@ -732,7 +732,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	defer teardown()
 
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
-		Version: "v1.29.0+rke2r1",
+		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
 			APIVIP:  "192.168.122.100",
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
