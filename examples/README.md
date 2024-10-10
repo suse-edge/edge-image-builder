@@ -51,8 +51,8 @@ and the results of performing multiple builds:
 ```bash
 .
 ├── base-images
-│   ├── SLE-Micro.x86_64-5.5.0-Default-GM.raw
-│   ├── SLE-Micro.x86_64-5.5.0-Default-SelfInstall-GM2.install.iso
+│   ├── SL-Micro.x86_64-6.0-Default-GM2.raw
+│   ├── SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso
 ├── definitions
 │   ├── iso
 │   │   └── basic.yaml
@@ -80,7 +80,7 @@ podman run --rm --privileged -it \
 
 | Option       | Default Value                                                           |
 |--------------|-------------------------------------------------------------------------|
-| Base Image   | `base-images/SLE-Micro.x86_64-5.5.0-Default-SelfInstall-GM.install.iso` |
+| Base Image   | `base-images/SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso`   |
 | Output Image | `out/basic.iso`                                                         |
 
 * Configures the `root` password to be `slemicro`.
@@ -96,10 +96,10 @@ podman run --rm --privileged -it \
 
 ### `raw/basic.yaml`
 
-| Option       | Default Value                                       |
-|--------------|-----------------------------------------------------|
-| Base Image   | `base-images/SLE-Micro.x86_64-5.5.0-Default-GM.raw` |
-| Output Image | `out/basic.raw`                                     |
+| Option       | Default Value                                     |
+|--------------|---------------------------------------------------|
+| Base Image   | `base-images/SL-Micro.x86_64-6.0-Default-GM2.raw` |
+| Output Image | `out/basic.raw`                                   |
 
 * Configures the `root` password to be `slemicro`.
 

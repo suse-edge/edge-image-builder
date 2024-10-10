@@ -514,7 +514,7 @@ func TestTemplateCommand(t *testing.T) {
 			chart:           "kubevirt",
 			version:         "0.2.1",
 			apiVersions:     []string{"batch/v1", "apps/v1/Deployment"},
-			kubeVersion:     "v1.29.0+rke2r1",
+			kubeVersion:     "v1.30.3+rke2r1",
 			targetNamespace: "kubevirt-ns",
 			valuesPath:      "/kubevirt/values.yaml",
 			expectedArgs: []string{
@@ -532,14 +532,14 @@ func TestTemplateCommand(t *testing.T) {
 				"--api-versions",
 				"batch/v1,apps/v1/Deployment",
 				"--kube-version",
-				"v1.29.0+rke2r1",
+				"v1.30.3+rke2r1",
 			},
 		},
 		{
 			name:        "Template without optional parameters",
 			repo:        "suse-edge/kubevirt",
 			chart:       "kubevirt",
-			kubeVersion: "v1.29.0+rke2r1",
+			kubeVersion: "v1.30.3+rke2r1",
 			expectedArgs: []string{
 				"helm",
 				"template",
@@ -547,7 +547,7 @@ func TestTemplateCommand(t *testing.T) {
 				"kubevirt",
 				"suse-edge/kubevirt",
 				"--kube-version",
-				"v1.29.0+rke2r1",
+				"v1.30.3+rke2r1",
 			},
 		},
 	}

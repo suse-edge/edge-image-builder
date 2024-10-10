@@ -41,7 +41,7 @@ func TestValidateKubernetes(t *testing.T) {
 		},
 		`all valid`: {
 			K8s: image.Kubernetes{
-				Version: "1.0",
+				Version: "v1.30.3+k3s1",
 				Network: validNetwork,
 				Nodes: []image.Node{
 					{
@@ -77,7 +77,7 @@ func TestValidateKubernetes(t *testing.T) {
 		},
 		`failures all sections`: {
 			K8s: image.Kubernetes{
-				Version: "1.0",
+				Version: "v1.30.3",
 				Network: validNetwork,
 				Nodes: []image.Node{
 					{
@@ -146,7 +146,7 @@ func TestValidateKubernetes(t *testing.T) {
 
 func TestIsKubernetesDefined(t *testing.T) {
 	result := isKubernetesDefined(&image.Kubernetes{
-		Version: "1.0",
+		Version: "v1.30.3+k3s1",
 	})
 	assert.True(t, result)
 

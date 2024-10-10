@@ -1,7 +1,7 @@
 # Building Images
 
 Three things are necessary to build an image using EIB:
-1. A SLE Micro image to use as the base of the created image
+1. A SLE Micro image to use as the base of the created image that matches the architecture of the host machine
 1. A definition file that describes the image to build
 1. A directory that contains the base SLE Micro image to modify, along with any other custom files that
    will be included in the built image
@@ -29,17 +29,17 @@ The following can be used as the minimum configuration required to create an ima
 required for each image definition.
 
 ```yaml
-apiVersion: 1.0
+apiVersion: 1.1
 image:
   imageType: iso
   arch: x86_64
-  baseImage: SLE-Micro.x86_64-5.5.0-Default-SelfInstall-GM.install.iso
+  baseImage: SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso
   outputImageName: eib-image.iso
 ```
 
 * `apiVersion` - Indicates the version of the definition file schema for EIB to expect.
 * `imageType` - Must be either `iso` or `raw` depending on the type of image being customized.
-* `arch` - Must be `x86_64`; future versions of EIB will support multiple architectures.
+* `arch` - Must be `x86_64` or `aarch64`.
 * `baseImage` - Indicates the name of the image file used as the base for the built image. Base image files must be
   uncompressed before they can be modified by EIB. This file must be located
   under the `base-images` directory of the image configuration directory (see below for more information).
@@ -211,7 +211,7 @@ This section contains all necessary settings to configure and bootstrap a Kubern
 
 ```yaml
 kubernetes:
-  version: v1.28.8+rke2r1
+  version: v1.30.3+rke2r1
   network:
     apiVIP: 192.168.122.100
     apiHost: api.cluster01.hosted.on.edge.suse.com
@@ -257,7 +257,7 @@ kubernetes:
           password: pass
 ```
 
-* `version` - Required; Specifies the version of a particular K3s or RKE2 release (e.g.`v1.28.8+k3s1` or `v1.28.8+rke2r1`)
+* `version` - Required; Specifies the version of a particular K3s or RKE2 release (e.g.`v1.30.3+k3s1` or `v1.30.3+rke2r1`)
 * `network` - Required for multi-node clusters, optional for single-node clusters; Defines the network configuration 
 for bootstrapping a cluster.
   * `apiVIP` - Required for multi-node clusters, optional for single-node clusters; Specifies the IP address which
@@ -369,8 +369,8 @@ The Image Configuration Directory contains all the files necessary for EIB to bu
 ├── definition-1.yaml
 ├── definition-2.yaml
 └── base-images
-    ├── SLE-Micro.x86_64-5.5.0-Default-SelfInstall-GM2.install.iso
-    └── SLE-Micro.x86_64-5.5.0-Default-GM.raw
+    ├── SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso
+    └── SL-Micro.x86_64-6.0-Default-GM2.raw
 ```
 
 * `*.yaml` - All image definition files should be in the root of the image configuration directory. Multiple definition

@@ -8,6 +8,12 @@ EIB's **RPM resolution** process and package installation has been tested on the
 1. [Ubuntu 22.04](https://releases.ubuntu.com/jammy/)
 1. [Fedora Linux](https://fedoraproject.org/server/download)
 
+## Tech preview systems
+EIB's **RPM resolution** process and package installation has been tested on the following `aarch64` systems:
+1. [openSUSE Leap](https://get.opensuse.org/leap)
+2. [Mac OS](https://www.apple.com/macos)
+1. [Ubuntu 24.04](https://releases.ubuntu.com/noble/)
+
 ## Specify packages for installation
 You can configure packages for installation in the following ways:
 1. Providing a `packageList` configuration under `operatingSystem.packages` in the EIB image configuration file
@@ -56,7 +62,7 @@ EIB configuration directory tree:
 .
 ├── eib-config-iso.yaml
 ├── base-images
-│   └── SLE-Micro.x86_64-5.5.0-Default-RT-GM.raw
+│   └── SL-Micro.x86_64-6.0-Default-GM2.raw
 └── rpms
     ├── gpg-keys
     │   └── reiserfs-kpm-default-debuginfo.key
@@ -77,7 +83,7 @@ EIB configuration directory tree:
 .
 ├── eib-config-iso.yaml
 ├── base-images
-│   └── SLE-Micro.x86_64-5.5.0-Default-RT-GM.raw
+│   └── SL-Micro.x86_64-6.0-Default-GM2.raw
 └── rpms
     ├── gpg-keys
     │   └── git.key

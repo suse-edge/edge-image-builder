@@ -21,12 +21,12 @@ func TestParse(t *testing.T) {
 	require.NoError(t, err)
 
 	// - Definition
-	assert.Equal(t, "1.0", definition.APIVersion)
+	assert.Equal(t, "1.1", definition.APIVersion)
 	assert.EqualValues(t, "x86_64", definition.Image.Arch)
 	assert.Equal(t, "iso", definition.Image.ImageType)
 
 	// - Image
-	assert.Equal(t, "slemicro5.5.iso", definition.Image.BaseImage)
+	assert.Equal(t, "sl-micro6.0.iso", definition.Image.BaseImage)
 	assert.Equal(t, "eibimage.iso", definition.Image.OutputImageName)
 
 	// - Operating System -> Kernel Arguments
@@ -159,7 +159,7 @@ func TestParse(t *testing.T) {
 	kubernetes := definition.Kubernetes
 
 	// Version
-	assert.Equal(t, "v1.29.0+rke2r1", kubernetes.Version)
+	assert.Equal(t, "v1.30.3+rke2r1", kubernetes.Version)
 
 	// Network
 	assert.Equal(t, "192.168.122.100", kubernetes.Network.APIVIP)
@@ -229,7 +229,7 @@ func TestParseBadConfig_InvalidFormat(t *testing.T) {
 
 func TestParseBadConfig_UnknownFields(t *testing.T) {
 	badConfig := `
-apiVersion: 1.0
+apiVersion: 1.1
 image:
   type: iso
 operatingSystem:
