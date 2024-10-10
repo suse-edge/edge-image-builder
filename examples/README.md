@@ -80,7 +80,7 @@ podman run --rm --privileged -it \
 
 | Option       | Default Value                                                           |
 |--------------|-------------------------------------------------------------------------|
-| Base Image   | `base-images/SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso` |
+| Base Image   | `base-images/SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso`   |
 | Output Image | `out/basic.iso`                                                         |
 
 * Configures the `root` password to be `slemicro`.

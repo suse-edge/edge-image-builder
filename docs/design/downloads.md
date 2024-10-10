@@ -40,7 +40,7 @@ nm-configurator
 
 These artifacts are programmatically downloaded by EIB during build time. Some of these artifacts may be copied to the RTD image.
 
-### Elemental (Not relevant for SL Micro 6.0)
+### Elemental
 Source
 ```
 https://download.opensuse.org/repositories/isv:/Rancher:/Elemental:/Maintenance:/5.5/standard/
