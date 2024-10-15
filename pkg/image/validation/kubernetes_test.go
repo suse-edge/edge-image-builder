@@ -15,7 +15,7 @@ import (
 
 var validNetwork = image.Network{
 	APIHost: "host.com",
-	APIVIP:  "127.0.0.1",
+	APIVIP4: "127.0.0.1",
 }
 
 func TestValidateKubernetes(t *testing.T) {

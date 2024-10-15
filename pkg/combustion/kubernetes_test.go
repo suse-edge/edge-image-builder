@@ -220,7 +220,7 @@ func TestConfigureKubernetes_SuccessfulSingleNodeK3sCluster(t *testing.T) {
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
 		Version: "v1.30.3+k3s1",
 		Network: image.Network{
-			APIVIP:  "192.168.122.100",
+			APIVIP4: "192.168.122.100",
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 		},
 	}
@@ -293,7 +293,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sCluster(t *testing.T) {
 		Version: "v1.30.3+k3s1",
 		Network: image.Network{
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
-			APIVIP:  "192.168.122.100",
+			APIVIP4: "192.168.122.100",
 		},
 		Nodes: []image.Node{
 			{
@@ -423,7 +423,7 @@ func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
 		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
-			APIVIP:  "192.168.122.100",
+			APIVIP4: "192.168.122.100",
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 		},
 	}
@@ -492,7 +492,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
-			APIVIP:  "192.168.122.100",
+			APIVIP4: "192.168.122.100",
 		},
 		Nodes: []image.Node{
 			{
@@ -734,7 +734,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
 		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
-			APIVIP:  "192.168.122.100",
+			APIVIP4: "192.168.122.100",
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 		},
 	}

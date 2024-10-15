@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"net/netip"
 	"testing"
 
 	"github.com/google/uuid"
@@ -14,7 +15,7 @@ func TestNewCluster_SingleNodeRKE2_MissingConfig(t *testing.T) {
 		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
-			APIVIP:  "192.168.122.50",
+			APIVIP4: "192.168.122.50",
 		},
 	}
 
@@ -39,7 +40,7 @@ func TestNewCluster_SingleNodeK3s_MissingConfig(t *testing.T) {
 		Version: "v1.30.3+k3s1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
-			APIVIP:  "192.168.122.50",
+			APIVIP4: "192.168.122.50",
 		},
 	}
 
@@ -63,7 +64,7 @@ func TestNewCluster_SingleNode_ExistingConfig(t *testing.T) {
 	kubernetes := &image.Kubernetes{
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
-			APIVIP:  "192.168.122.50",
+			APIVIP4: "192.168.122.50",
 		},
 	}
 
@@ -87,7 +88,7 @@ func TestNewCluster_MultiNodeRKE2_MissingConfig(t *testing.T) {
 		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
-			APIVIP:  "192.168.122.50",
+			APIVIP4: "192.168.122.50",
 		},
 		Nodes: []image.Node{
 			{
@@ -137,7 +138,7 @@ func TestNewCluster_MultiNodeRKE2_ExistingConfig(t *testing.T) {
 		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
-			APIVIP:  "192.168.122.50",
+			APIVIP4: "192.168.122.50",
 		},
 		Nodes: []image.Node{
 			{
@@ -276,10 +277,12 @@ func TestIdentifyInitialiserNode(t *testing.T) {
 func TestSetClusterAPIAddress(t *testing.T) {
 	config := map[string]any{}
 
-	setClusterAPIAddress(config, "", 9345)
+	setClusterAPIAddress(config, nil, nil, 9345)
 	assert.NotContains(t, config, "server")
+	ip4, err := netip.ParseAddr("192.168.122.50")
+	assert.NoError(t, err)
 
-	setClusterAPIAddress(config, "192.168.122.50", 9345)
+	setClusterAPIAddress(config, &ip4, nil, 9345)
 	assert.Equal(t, "https://192.168.122.50:9345", config["server"])
 }
 
