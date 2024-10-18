@@ -261,7 +261,7 @@ kubernetes:
 * `network` - Required for multi-node clusters, optional for single-node clusters; Defines the network configuration 
 for bootstrapping a cluster.
   * `apiVIP` - Required for multi-node clusters, optional for single-node clusters; Specifies the IP address which
-  will serve as the cluster LoadBalancer, backed by MetalLB.
+  will serve as the cluster LoadBalancer, backed by MetalLB. Supports IPV4 and IPV6 addresses.
   * `apiHost` - Optional; Specifies the domain address for accessing the cluster.
 * `nodes` - Required for multi-node clusters; Defines a list of all nodes that form the cluster.
   * `hostname` - Required; Indicates the fully qualified domain name (FQDN) to identify the particular node on which
