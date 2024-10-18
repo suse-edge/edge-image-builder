@@ -91,7 +91,7 @@ systemctl enable kubernetes-resources-install.service
 {{- end }}
 fi
 
-{{- if .apiHost }}
+{{- if and .apiVIP .apiHost }}
 echo "{{ .apiVIP }} {{ .apiHost }}" >> /etc/hosts
 {{- end }}
 

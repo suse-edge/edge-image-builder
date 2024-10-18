@@ -3,6 +3,7 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"strings"
@@ -316,11 +317,18 @@ func (c *Combustion) downloadRKE2Artefacts(ctx *image.Context, cluster *kubernet
 }
 
 func kubernetesVIPManifest(k *image.Kubernetes) (string, error) {
+	ip, err := netip.ParseAddr(k.Network.APIVIP)
+	if err != nil {
+		return "", fmt.Errorf("parsing kubernetes APIVIP address: %w", err)
+	}
+
 	manifest := struct {
 		APIAddress string
+		IsIPV4     bool
 		RKE2       bool
 	}{
 		APIAddress: k.Network.APIVIP,
+		IsIPV4:     ip.Is4(),
 		RKE2:       strings.Contains(k.Version, image.KubernetesDistroRKE2),
 	}
 

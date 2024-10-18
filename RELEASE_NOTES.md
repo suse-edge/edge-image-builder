@@ -4,6 +4,8 @@
 
 ## General
 
+* Added support for IPV6 addresses in the Kubernetes 'apiVIP' field
+
 ## API
 
 ### Image Definition Changes

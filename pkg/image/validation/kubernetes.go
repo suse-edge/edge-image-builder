@@ -3,6 +3,7 @@ package validation
 import (
 	"errors"
 	"fmt"
+	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -32,6 +33,7 @@ func validateKubernetes(ctx *image.Context) []FailedValidation {
 		return failures
 	}
 
+	failures = append(failures, validateNetwork(&def.Kubernetes)...)
 	failures = append(failures, validateNodes(&def.Kubernetes)...)
 	failures = append(failures, validateManifestURLs(&def.Kubernetes)...)
 	failures = append(failures, validateHelm(&def.Kubernetes, combustion.HelmValuesPath(ctx), combustion.HelmCertsPath(ctx))...)
@@ -50,12 +52,6 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 	if numNodes <= 1 {
 		// Single node cluster, node configurations are not required
 		return failures
-	}
-
-	if k8s.Network.APIVIP == "" {
-		failures = append(failures, FailedValidation{
-			UserMessage: "The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
-		})
 	}
 
 	var nodeTypes []string
@@ -111,6 +107,48 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 	if len(initialisers) > 1 {
 		failures = append(failures, FailedValidation{
 			UserMessage: "Only one node may be specified as the cluster initializer.",
+		})
+	}
+
+	return failures
+}
+
+func validateNetwork(k8s *image.Kubernetes) []FailedValidation {
+	var failures []FailedValidation
+
+	if k8s.Network.APIVIP == "" {
+		if len(k8s.Nodes) >= 1 {
+			failures = append(failures, FailedValidation{
+				UserMessage: "The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
+			})
+			return failures
+		}
+
+		return failures
+	}
+
+	parsedIP, err := netip.ParseAddr(k8s.Network.APIVIP)
+	if err != nil {
+		failures = append(failures, FailedValidation{
+			UserMessage: fmt.Sprintf("Invalid address value %q for field 'apiVIP'.", k8s.Network.APIVIP),
+			Error:       err,
+		})
+
+		return failures
+	}
+
+	if !parsedIP.Is4() && !parsedIP.Is6() {
+		failures = append(failures, FailedValidation{
+			UserMessage: "Only IPv4 and IPv6 addresses are valid values for field 'apiVIP'.",
+		})
+
+		return failures
+	}
+
+	if !parsedIP.IsGlobalUnicast() {
+		msg := fmt.Sprintf("Invalid non-unicast cluster API address (%s) for field 'apiVIP'.", k8s.Network.APIVIP)
+		failures = append(failures, FailedValidation{
+			UserMessage: msg,
 		})
 	}
 

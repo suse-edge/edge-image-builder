@@ -15,7 +15,7 @@ import (
 
 var validNetwork = image.Network{
 	APIHost: "host.com",
-	APIVIP:  "127.0.0.1",
+	APIVIP:  "192.168.1.1",
 }
 
 func TestValidateKubernetes(t *testing.T) {
@@ -78,7 +78,10 @@ func TestValidateKubernetes(t *testing.T) {
 		`failures all sections`: {
 			K8s: image.Kubernetes{
 				Version: "v1.30.3",
-				Network: validNetwork,
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP:  "127.0.0.1",
+				},
 				Nodes: []image.Node{
 					{
 						Type:        image.KubernetesNodeTypeServer,
@@ -116,6 +119,7 @@ func TestValidateKubernetes(t *testing.T) {
 				"Helm chart 'name' field must be defined.",
 				"Helm repository 'name' field for \"apache-repo\" must match the 'repositoryName' field in at least one defined Helm chart.",
 				"Helm chart 'repositoryName' \"another-apache-repo\" for Helm chart \"\" does not match the name of any defined repository.",
+				"Invalid non-unicast cluster API address (127.0.0.1) for field 'apiVIP'.",
 			},
 		},
 	}
@@ -183,24 +187,6 @@ func TestValidateNodes(t *testing.T) {
 		`no nodes`: {
 			K8s: image.Kubernetes{
 				Nodes: []image.Node{},
-			},
-		},
-		`with nodes - no network config`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{},
-				Nodes: []image.Node{
-					{
-						Hostname: "host1",
-						Type:     image.KubernetesNodeTypeServer,
-					},
-					{
-						Hostname: "host2",
-						Type:     image.KubernetesNodeTypeAgent,
-					},
-				},
-			},
-			ExpectedFailedMessages: []string{
-				"The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
 			},
 		},
 		`no hostname`: {
@@ -1065,6 +1051,106 @@ func TestValidateAdditionalArtifacts(t *testing.T) {
 				},
 			}
 			failures := validateAdditionalArtifacts(ctx)
+			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+
+			var foundMessages []string
+			for _, foundValidation := range failures {
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+			}
+
+			for _, expectedMessage := range test.ExpectedFailedMessages {
+				assert.Contains(t, foundMessages, expectedMessage)
+			}
+
+		})
+	}
+}
+
+func TestValidateNetwork(t *testing.T) {
+	tests := map[string]struct {
+		K8s                    image.Kubernetes
+		ExpectedFailedMessages []string
+	}{
+		`no network defined, no nodes defined`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{},
+			},
+		},
+		`no network defined, nodes defined`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{},
+				Nodes: []image.Node{
+					{
+						Hostname:    "node1",
+						Type:        "server",
+						Initialiser: false,
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
+			},
+		},
+		`valid ipv4`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIVIP: "192.168.1.1",
+				},
+			},
+		},
+		`valid ipv6`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIVIP: "fd12:3456:789a::21",
+				},
+			},
+		},
+		`invalid ipv4`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIVIP: "500.168.1.1",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid address value \"500.168.1.1\" for field 'apiVIP'.",
+			},
+		},
+		`non-unicast ipv4`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIVIP: "127.0.0.1",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (127.0.0.1) for field 'apiVIP'.",
+			},
+		},
+		`invalid ipv6`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIVIP: "xxxx:3456:789a::21",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid address value \"xxxx:3456:789a::21\" for field 'apiVIP'.",
+			},
+		},
+		`non-unicast ipv6`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIVIP: "ff02::1",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (ff02::1) for field 'apiVIP'.",
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			k := test.K8s
+			failures := validateNetwork(&k)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
 
 			var foundMessages []string
