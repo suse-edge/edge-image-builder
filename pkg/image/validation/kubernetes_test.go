@@ -18,19 +18,6 @@ var validNetwork = image.Network{
 	APIVIP:  "192.168.1.1",
 }
 
-var multiNode = []image.Node{
-	{
-		Hostname:    "foo",
-		Type:        image.KubernetesNodeTypeServer,
-		Initialiser: true,
-	},
-	{
-		Hostname:    "bar",
-		Type:        image.KubernetesNodeTypeServer,
-		Initialiser: true,
-	},
-}
-
 func TestValidateKubernetes(t *testing.T) {
 	configDir, err := os.MkdirTemp("", "eib-config-")
 	require.NoError(t, err)
@@ -1087,7 +1074,6 @@ func TestValidateNetwork(t *testing.T) {
 		`no network defined`: {
 			K8s: image.Kubernetes{
 				Network: image.Network{},
-				Nodes:   multiNode,
 			},
 			ExpectedFailedMessages: []string{
 				"The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
@@ -1098,7 +1084,6 @@ func TestValidateNetwork(t *testing.T) {
 				Network: image.Network{
 					APIVIP: "192.168.1.1",
 				},
-				Nodes: multiNode,
 			},
 		},
 		`valid ipv6`: {
@@ -1106,7 +1091,6 @@ func TestValidateNetwork(t *testing.T) {
 				Network: image.Network{
 					APIVIP: "fd12:3456:789a::21",
 				},
-				Nodes: multiNode,
 			},
 		},
 		`invalid ipv4`: {
@@ -1114,12 +1098,9 @@ func TestValidateNetwork(t *testing.T) {
 				Network: image.Network{
 					APIVIP: "500.168.1.1",
 				},
-				Nodes: multiNode,
 			},
 			ExpectedFailedMessages: []string{
-				"Invalid APIVIP address \"500.168.1.1\" for field 'apiVIP'.",
-				"\"500.168.1.1\" is not an IPV4 or IPV6 address, only IPV4 and IPV6 addresses are valid for field 'apiVIP'.",
-				"Invalid non-unicast cluster API address (500.168.1.1) for field 'apiVIP'.",
+				"Invalid address value \"500.168.1.1\" for field 'apiVIP'.",
 			},
 		},
 		`non-unicast ipv4`: {
@@ -1127,7 +1108,6 @@ func TestValidateNetwork(t *testing.T) {
 				Network: image.Network{
 					APIVIP: "127.0.0.1",
 				},
-				Nodes: multiNode,
 			},
 			ExpectedFailedMessages: []string{
 				"Invalid non-unicast cluster API address (127.0.0.1) for field 'apiVIP'.",
@@ -1138,12 +1118,9 @@ func TestValidateNetwork(t *testing.T) {
 				Network: image.Network{
 					APIVIP: "xxxx:3456:789a::21",
 				},
-				Nodes: multiNode,
 			},
 			ExpectedFailedMessages: []string{
-				"Invalid APIVIP address \"xxxx:3456:789a::21\" for field 'apiVIP'.",
-				"\"xxxx:3456:789a::21\" is not an IPV4 or IPV6 address, only IPV4 and IPV6 addresses are valid for field 'apiVIP'.",
-				"Invalid non-unicast cluster API address (xxxx:3456:789a::21) for field 'apiVIP'.",
+				"Invalid address value \"xxxx:3456:789a::21\" for field 'apiVIP'.",
 			},
 		},
 		`non-unicast ipv6`: {
@@ -1151,7 +1128,6 @@ func TestValidateNetwork(t *testing.T) {
 				Network: image.Network{
 					APIVIP: "ff02::1",
 				},
-				Nodes: multiNode,
 			},
 			ExpectedFailedMessages: []string{
 				"Invalid non-unicast cluster API address (ff02::1) for field 'apiVIP'.",

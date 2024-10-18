@@ -8,8 +8,7 @@ spec:
   addresses:
   {{- if .IsIPV4 }}
     - {{ .APIAddress }}/32
-  {{- end }}
-  {{- if .IsIPV6 }}
+  {{- else }}
     - {{ .APIAddress }}/128
   {{- end }}
   avoidBuggyIPs: true

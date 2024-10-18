@@ -325,12 +325,10 @@ func kubernetesVIPManifest(k *image.Kubernetes) (string, error) {
 	manifest := struct {
 		APIAddress string
 		IsIPV4     bool
-		IsIPV6     bool
 		RKE2       bool
 	}{
 		APIAddress: k.Network.APIVIP,
 		IsIPV4:     ip.Is4(),
-		IsIPV6:     ip.Is6(),
 		RKE2:       strings.Contains(k.Version, image.KubernetesDistroRKE2),
 	}
 

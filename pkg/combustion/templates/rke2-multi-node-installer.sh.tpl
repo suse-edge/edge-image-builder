@@ -94,6 +94,7 @@ fi
 {{- if and .apiVIP .apiHost }}
 echo "{{ .apiVIP }} {{ .apiHost }}" >> /etc/hosts
 {{- end }}
+
 mkdir -p /etc/rancher/rke2/
 cp $CONFIGFILE /etc/rancher/rke2/config.yaml
 

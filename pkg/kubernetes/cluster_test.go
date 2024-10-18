@@ -277,19 +277,19 @@ func TestIdentifyInitialiserNode(t *testing.T) {
 func TestSetClusterAPIAddress(t *testing.T) {
 	config := map[string]any{}
 
-	setClusterAPIAddress(config, nil, nil, 9345)
+	setClusterAPIAddress(config, nil, 9345)
 	assert.NotContains(t, config, "server")
 
 	ip4, err := netip.ParseAddr("192.168.122.50")
 	assert.NoError(t, err)
 
-	setClusterAPIAddress(config, &ip4, nil, 9345)
+	setClusterAPIAddress(config, &ip4, 9345)
 	assert.Equal(t, "https://192.168.122.50:9345", config["server"])
 
 	ip6, err := netip.ParseAddr("fd12:3456:789a::21")
 	assert.NoError(t, err)
 
-	setClusterAPIAddress(config, nil, &ip6, 9345)
+	setClusterAPIAddress(config, &ip6, 9345)
 	assert.Equal(t, "https://[fd12:3456:789a::21]:9345", config["server"])
 }
 

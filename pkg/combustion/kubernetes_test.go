@@ -847,7 +847,6 @@ func TestKubernetesVIPManifestValidIPV6(t *testing.T) {
 
 	manifest, err := kubernetesVIPManifest(k8s)
 	require.NoError(t, err)
-	fmt.Println(manifest)
 
 	assert.Contains(t, manifest, "- fd12:3456:789a::21/128")
 	assert.Contains(t, manifest, "- name: k8s-api")
