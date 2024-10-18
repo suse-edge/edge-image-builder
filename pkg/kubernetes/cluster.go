@@ -181,9 +181,7 @@ func setMultiNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string]
 	}
 
 	setClusterToken(config)
-	if kubernetes.Network.APIVIP != "" {
-		appendClusterTLSSAN(config, kubernetes.Network.APIVIP)
-	}
+	appendClusterTLSSAN(config, kubernetes.Network.APIVIP)
 
 	setSELinux(config)
 	if kubernetes.Network.APIHost != "" {
