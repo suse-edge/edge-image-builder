@@ -1071,9 +1071,21 @@ func TestValidateNetwork(t *testing.T) {
 		K8s                    image.Kubernetes
 		ExpectedFailedMessages []string
 	}{
-		`no network defined`: {
+		`no network defined, no nodes defined`: {
 			K8s: image.Kubernetes{
 				Network: image.Network{},
+			},
+		},
+		`no network defined, nodes defined`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{},
+				Nodes: []image.Node{
+					{
+						Hostname:    "node1",
+						Type:        "server",
+						Initialiser: false,
+					},
+				},
 			},
 			ExpectedFailedMessages: []string{
 				"The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
