@@ -15,7 +15,20 @@ import (
 
 var validNetwork = image.Network{
 	APIHost: "host.com",
-	APIVIP4: "192.168.1.1",
+	APIVIP:  "192.168.1.1",
+}
+
+var multiNode = []image.Node{
+	{
+		Hostname:    "foo",
+		Type:        image.KubernetesNodeTypeServer,
+		Initialiser: true,
+	},
+	{
+		Hostname:    "bar",
+		Type:        image.KubernetesNodeTypeServer,
+		Initialiser: true,
+	},
 }
 
 func TestValidateKubernetes(t *testing.T) {
@@ -80,7 +93,7 @@ func TestValidateKubernetes(t *testing.T) {
 				Version: "v1.30.3",
 				Network: image.Network{
 					APIHost: "host.com",
-					APIVIP4: "127.0.0.1",
+					APIVIP:  "127.0.0.1",
 				},
 				Nodes: []image.Node{
 					{
@@ -189,24 +202,6 @@ func TestValidateNodes(t *testing.T) {
 				Nodes: []image.Node{},
 			},
 		},
-		//`with nodes - no network config`: {
-		//	K8s: image.Kubernetes{
-		//		Network: image.Network{},
-		//		Nodes: []image.Node{
-		//			{
-		//				Hostname: "host1",
-		//				Type:     image.KubernetesNodeTypeServer,
-		//			},
-		//			{
-		//				Hostname: "host2",
-		//				Type:     image.KubernetesNodeTypeAgent,
-		//			},
-		//		},
-		//	},
-		//	ExpectedFailedMessages: []string{
-		//		"The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
-		//	},
-		//},
 		`no hostname`: {
 			K8s: image.Kubernetes{
 				Network: validNetwork,
@@ -1084,184 +1079,82 @@ func TestValidateAdditionalArtifacts(t *testing.T) {
 	}
 }
 
-func TestValidateNodes(t *testing.T) {
+func TestValidateNetwork(t *testing.T) {
 	tests := map[string]struct {
 		K8s                    image.Kubernetes
 		ExpectedFailedMessages []string
 	}{
-		`valid`: {
+		`no network defined`: {
 			K8s: image.Kubernetes{
-				Network: validNetwork,
-				Nodes: []image.Node{
-					{
-						Hostname: "agent1",
-						Type:     image.KubernetesNodeTypeAgent,
-					},
-					{
-						Hostname:    "server",
-						Type:        image.KubernetesNodeTypeServer,
-						Initialiser: true,
-					},
-				},
-			},
-		},
-		`no nodes`: {
-			K8s: image.Kubernetes{
-				Nodes: []image.Node{},
-			},
-		},
-		//`with nodes - no network config`: {
-		//	K8s: image.Kubernetes{
-		//		Network: image.Network{},
-		//		Nodes: []image.Node{
-		//			{
-		//				Hostname: "host1",
-		//				Type:     image.KubernetesNodeTypeServer,
-		//			},
-		//			{
-		//				Hostname: "host2",
-		//				Type:     image.KubernetesNodeTypeAgent,
-		//			},
-		//		},
-		//	},
-		//	ExpectedFailedMessages: []string{
-		//		"The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
-		//	},
-		//},
-		`no hostname`: {
-			K8s: image.Kubernetes{
-				Network: validNetwork,
-				Nodes: []image.Node{
-					{
-						Hostname: "host1",
-						Type:     image.KubernetesNodeTypeServer,
-					},
-					{
-						Type: image.KubernetesNodeTypeServer,
-					},
-				},
+				Network: image.Network{},
+				Nodes:   multiNode,
 			},
 			ExpectedFailedMessages: []string{
-				"The 'hostname' field is required for entries in the 'nodes' section.",
+				"The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
 			},
 		},
-		`missing type`: {
+		`valid ipv4`: {
 			K8s: image.Kubernetes{
-				Network: validNetwork,
-				Nodes: []image.Node{
-					{
-						Hostname: "host1",
-						Type:     image.KubernetesNodeTypeServer,
-					},
-					{
-						Hostname: "valid",
-					},
+				Network: image.Network{
+					APIVIP: "192.168.1.1",
 				},
-			},
-			ExpectedFailedMessages: []string{
-				fmt.Sprintf("The 'type' field for entries in the 'nodes' section must be one of: %s", strings.Join(validNodeTypes, ", ")),
+				Nodes: multiNode,
 			},
 		},
-		`invalid type`: {
+		`valid ipv6`: {
 			K8s: image.Kubernetes{
-				Network: validNetwork,
-				Nodes: []image.Node{
-					{
-						Hostname: "valid",
-						Type:     image.KubernetesNodeTypeServer,
-					},
-					{
-						Hostname: "invalid",
-						Type:     "abnormal",
-					},
+				Network: image.Network{
+					APIVIP: "fd12:3456:789a::21",
 				},
-			},
-			ExpectedFailedMessages: []string{
-				fmt.Sprintf("The 'type' field for entries in the 'nodes' section must be one of: %s", strings.Join(validNodeTypes, ", ")),
+				Nodes: multiNode,
 			},
 		},
-		`incorrect initialiser type`: {
+		`invalid ipv4`: {
 			K8s: image.Kubernetes{
-				Network: validNetwork,
-				Nodes: []image.Node{
-					{
-						Hostname: "valid",
-						Type:     image.KubernetesNodeTypeServer,
-					},
-					{
-						Hostname:    "invalid",
-						Initialiser: true,
-						Type:        image.KubernetesNodeTypeAgent,
-					},
+				Network: image.Network{
+					APIVIP: "500.168.1.1",
 				},
+				Nodes: multiNode,
 			},
 			ExpectedFailedMessages: []string{
-				fmt.Sprintf("The node labeled with 'initialiser' must be of type '%s'.", image.KubernetesNodeTypeServer),
+				"Invalid APIVIP address \"500.168.1.1\" for field 'apiVIP'.",
+				"\"500.168.1.1\" is not an IPV4 or IPV6 address, only IPV4 and IPV6 addresses are valid for field 'apiVIP'.",
+				"Invalid non-unicast cluster API address (500.168.1.1) for field 'apiVIP'.",
 			},
 		},
-		`duplicate entries`: {
+		`non-unicast ipv4`: {
 			K8s: image.Kubernetes{
-				Network: validNetwork,
-				Nodes: []image.Node{
-					{
-						Hostname:    "foo",
-						Type:        image.KubernetesNodeTypeServer,
-						Initialiser: true,
-					},
-					{
-						Hostname: "bar",
-						Type:     image.KubernetesNodeTypeAgent,
-					},
-					{
-						Hostname: "bar",
-						Type:     image.KubernetesNodeTypeAgent,
-					},
-					{
-						Hostname: "foo",
-						Type:     image.KubernetesNodeTypeAgent,
-					},
+				Network: image.Network{
+					APIVIP: "127.0.0.1",
 				},
+				Nodes: multiNode,
 			},
 			ExpectedFailedMessages: []string{
-				"The 'nodes' section contains duplicate entries: bar, foo",
+				"Invalid non-unicast cluster API address (127.0.0.1) for field 'apiVIP'.",
 			},
 		},
-		`no server node`: {
+		`invalid ipv6`: {
 			K8s: image.Kubernetes{
-				Network: validNetwork,
-				Nodes: []image.Node{
-					{
-						Hostname: "foo",
-						Type:     image.KubernetesNodeTypeAgent,
-					},
-					{
-						Hostname: "bar",
-						Type:     image.KubernetesNodeTypeAgent,
-					},
+				Network: image.Network{
+					APIVIP: "xxxx:3456:789a::21",
 				},
+				Nodes: multiNode,
 			},
 			ExpectedFailedMessages: []string{
-				fmt.Sprintf("There must be at least one node of type '%s' defined.", image.KubernetesNodeTypeServer),
+				"Invalid APIVIP address \"xxxx:3456:789a::21\" for field 'apiVIP'.",
+				"\"xxxx:3456:789a::21\" is not an IPV4 or IPV6 address, only IPV4 and IPV6 addresses are valid for field 'apiVIP'.",
+				"Invalid non-unicast cluster API address (xxxx:3456:789a::21) for field 'apiVIP'.",
 			},
 		},
-		`multiple initialisers`: {
+		`non-unicast ipv6`: {
 			K8s: image.Kubernetes{
-				Network: validNetwork,
-				Nodes: []image.Node{
-					{
-						Hostname:    "foo",
-						Type:        image.KubernetesNodeTypeServer,
-						Initialiser: true,
-					},
-					{
-						Hostname:    "bar",
-						Type:        image.KubernetesNodeTypeServer,
-						Initialiser: true,
-					},
+				Network: image.Network{
+					APIVIP: "ff02::1",
 				},
+				Nodes: multiNode,
 			},
 			ExpectedFailedMessages: []string{
-				"Only one node may be specified as the cluster initializer.",
+				"Invalid non-unicast cluster API address (ff02::1) for field 'apiVIP'.",
 			},
 		},
 	}
@@ -1269,7 +1162,7 @@ func TestValidateNodes(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			k := test.K8s
-			failures := validateNodes(&k)
+			failures := validateNetwork(&k)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))
 
 			var foundMessages []string

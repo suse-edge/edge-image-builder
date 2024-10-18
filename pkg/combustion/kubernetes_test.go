@@ -220,7 +220,7 @@ func TestConfigureKubernetes_SuccessfulSingleNodeK3sCluster(t *testing.T) {
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
 		Version: "v1.30.3+k3s1",
 		Network: image.Network{
-			APIVIP4: "192.168.122.100",
+			APIVIP:  "192.168.122.100",
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 		},
 	}
@@ -293,7 +293,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sCluster(t *testing.T) {
 		Version: "v1.30.3+k3s1",
 		Network: image.Network{
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
-			APIVIP4: "192.168.122.100",
+			APIVIP:  "192.168.122.100",
 		},
 		Nodes: []image.Node{
 			{
@@ -423,7 +423,7 @@ func TestConfigureKubernetes_SuccessfulSingleNodeRKE2Cluster(t *testing.T) {
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
 		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
-			APIVIP4: "192.168.122.100",
+			APIVIP:  "192.168.122.100",
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 		},
 	}
@@ -492,7 +492,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2Cluster(t *testing.T) {
 		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
-			APIVIP4: "192.168.122.100",
+			APIVIP:  "192.168.122.100",
 		},
 		Nodes: []image.Node{
 			{
@@ -734,7 +734,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
 		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
-			APIVIP4: "192.168.122.100",
+			APIVIP:  "192.168.122.100",
 			APIHost: "api.cluster01.hosted.on.edge.suse.com",
 		},
 	}
@@ -820,4 +820,48 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	assert.Contains(t, contents, "kind: Deployment")
 	assert.Contains(t, contents, "name: my-nginx")
 	assert.Contains(t, contents, "image: nginx:1.14.2")
+}
+
+func TestKubernetesVIPManifestValidIPV4(t *testing.T) {
+	k8s := &image.Kubernetes{
+		Version: "v1.30.3+rke2r1",
+		Network: image.Network{
+			APIVIP: "192.168.1.1",
+		},
+	}
+
+	manifest, err := kubernetesVIPManifest(k8s)
+	require.NoError(t, err)
+
+	assert.Contains(t, manifest, "- 192.168.1.1/32")
+	assert.Contains(t, manifest, "- name: rke2-api")
+}
+
+func TestKubernetesVIPManifestValidIPV6(t *testing.T) {
+	k8s := &image.Kubernetes{
+		Version: "v1.30.3+k3s1",
+		Network: image.Network{
+			APIVIP: "fd12:3456:789a::21",
+		},
+	}
+
+	manifest, err := kubernetesVIPManifest(k8s)
+	require.NoError(t, err)
+	fmt.Println(manifest)
+
+	assert.Contains(t, manifest, "- fd12:3456:789a::21/128")
+	assert.Contains(t, manifest, "- name: k8s-api")
+	assert.NotContains(t, manifest, "rke2")
+}
+
+func TestKubernetesVIPManifestInvalidIP(t *testing.T) {
+	k8s := &image.Kubernetes{
+		Version: "v1.30.3+k3s1",
+		Network: image.Network{
+			APIVIP: "1111",
+		},
+	}
+
+	_, err := kubernetesVIPManifest(k8s)
+	require.ErrorContains(t, err, "parsing kubernetes APIVIP address: ParseAddr(\"1111\"): unable to parse IP")
 }

@@ -115,6 +115,7 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 
 func validateNetwork(k8s *image.Kubernetes) []FailedValidation {
 	var failures []FailedValidation
+	ip := k8s.Network.APIVIP
 
 	numNodes := len(k8s.Nodes)
 	if numNodes <= 1 {
@@ -122,55 +123,29 @@ func validateNetwork(k8s *image.Kubernetes) []FailedValidation {
 		return failures
 	}
 
-	ip4 := k8s.Network.APIVIP4
-	ip6 := k8s.Network.APIVIP6
-
-	if ip4 == "" && ip6 == "" {
+	if ip == "" {
 		failures = append(failures, FailedValidation{
-			UserMessage: "The 'apiVIP' or 'apiVIP6' field is required in the 'network' section when defining entries under 'nodes'.",
+			UserMessage: "The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
 		})
 	}
 
-	if ip4 != "" {
-		ip, err := netip.ParseAddr(ip4)
+	if ip != "" {
+		parsedIP, err := netip.ParseAddr(ip)
 		if err != nil {
 			failures = append(failures, FailedValidation{
-				UserMessage: fmt.Sprintf("Invalid IPV4 address %q for field 'apiVIP'.", ip4),
+				UserMessage: fmt.Sprintf("Invalid APIVIP address %q for field 'apiVIP'.", ip),
 				Error:       err,
 			})
 		}
 
-		if !ip.Is4() {
+		if !parsedIP.Is4() && !parsedIP.Is6() {
 			failures = append(failures, FailedValidation{
-				UserMessage: fmt.Sprintf("%q is not an IPV4 address, only IPV4 addresses are valid for field 'apiVIP'.", ip4),
+				UserMessage: fmt.Sprintf("%q is not an IPV4 or IPV6 address, only IPV4 and IPV6 addresses are valid for field 'apiVIP'.", ip),
 			})
 		}
 
-		if !ip.IsGlobalUnicast() {
-			msg := fmt.Sprintf("Invalid non-unicast cluster API address (%s) for field 'apiVIP'.", ip4)
-			failures = append(failures, FailedValidation{
-				UserMessage: msg,
-			})
-		}
-	}
-
-	if ip6 != "" {
-		ip, err := netip.ParseAddr(ip6)
-		if err != nil {
-			failures = append(failures, FailedValidation{
-				UserMessage: fmt.Sprintf("Invalid IPV6 address %q for field 'apiVIP6'.", ip6),
-				Error:       err,
-			})
-		}
-
-		if !ip.Is6() {
-			failures = append(failures, FailedValidation{
-				UserMessage: fmt.Sprintf("%q is not an IPV6 address, only IPV6 addresses are valid for field 'apiVIP6'.", ip6),
-			})
-		}
-
-		if !ip.IsGlobalUnicast() {
-			msg := fmt.Sprintf("Invalid non-unicast cluster API address (%s) for field 'apiVIP6'.", ip6)
+		if !parsedIP.IsGlobalUnicast() {
+			msg := fmt.Sprintf("Invalid non-unicast cluster API address (%s) for field 'apiVIP'.", ip)
 			failures = append(failures, FailedValidation{
 				UserMessage: msg,
 			})

@@ -56,22 +56,20 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 	}
 
 	var ip4 *netip.Addr
-	if kubernetes.Network.APIVIP4 != "" {
-		ip4Holder, ipErr := netip.ParseAddr(kubernetes.Network.APIVIP4)
+	var ip6 *netip.Addr
+	if kubernetes.Network.APIVIP != "" {
+		ipHolder, ipErr := netip.ParseAddr(kubernetes.Network.APIVIP)
 		if ipErr != nil {
-			return nil, fmt.Errorf("parsing kubernetes ipv4 address: %w", ipErr)
+			return nil, fmt.Errorf("parsing kubernetes APIVIP address: %w", ipErr)
 		}
-		ip4 = &ip4Holder
+
+		if ipHolder.Is4() {
+			ip4 = &ipHolder
+		} else {
+			ip6 = &ipHolder
+		}
 	}
 
-	var ip6 *netip.Addr
-	if kubernetes.Network.APIVIP6 != "" {
-		ip6Holder, ipErr := netip.ParseAddr(kubernetes.Network.APIVIP6)
-		if ipErr != nil {
-			return nil, fmt.Errorf("parsing kubernetes ipv6 address: %w", ipErr)
-		}
-		ip6 = &ip6Holder
-	}
 	setMultiNodeConfigDefaults(kubernetes, serverConfig, ip4, ip6)
 
 	agentConfigPath := filepath.Join(configPath, agentConfigFile)
@@ -155,14 +153,8 @@ func setSingleNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string
 	if strings.Contains(kubernetes.Version, image.KubernetesDistroRKE2) {
 		setClusterCNI(config)
 	}
-	if kubernetes.Network.APIVIP4 != "" || kubernetes.Network.APIVIP6 != "" {
-		if kubernetes.Network.APIVIP4 != "" {
-			appendClusterTLSSAN(config, kubernetes.Network.APIVIP4)
-		}
-
-		if kubernetes.Network.APIVIP6 != "" {
-			appendClusterTLSSAN(config, kubernetes.Network.APIVIP6)
-		}
+	if kubernetes.Network.APIVIP != "" {
+		appendClusterTLSSAN(config, kubernetes.Network.APIVIP)
 
 		if strings.Contains(kubernetes.Version, image.KubernetesDistroK3S) {
 			appendDisabledServices(config, "servicelb")
@@ -189,12 +181,10 @@ func setMultiNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string]
 	}
 
 	setClusterToken(config)
-	if kubernetes.Network.APIVIP4 != "" {
-		appendClusterTLSSAN(config, kubernetes.Network.APIVIP4)
+	if kubernetes.Network.APIVIP != "" {
+		appendClusterTLSSAN(config, kubernetes.Network.APIVIP)
 	}
-	if kubernetes.Network.APIVIP6 != "" {
-		appendClusterTLSSAN(config, kubernetes.Network.APIVIP6)
-	}
+
 	setSELinux(config)
 	if kubernetes.Network.APIHost != "" {
 		appendClusterTLSSAN(config, kubernetes.Network.APIHost)

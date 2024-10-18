@@ -194,8 +194,7 @@ type Kubernetes struct {
 
 type Network struct {
 	APIHost string `yaml:"apiHost"`
-	APIVIP4 string `yaml:"apiVIP"`
-	APIVIP6 string `yaml:"apiVIP6"`
+	APIVIP  string `yaml:"apiVIP"`
 }
 
 type Node struct {

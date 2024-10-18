@@ -6,11 +6,11 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-  {{- if .APIAddress4 }}
-    - {{ .APIAddress4 }}/32
+  {{- if .IsIPV4 }}
+    - {{ .APIAddress }}/32
   {{- end }}
-  {{- if .APIAddress6 }}
-    - {{ .APIAddress6 }}/128
+  {{- if .IsIPV6 }}
+    - {{ .APIAddress }}/128
   {{- end }}
   avoidBuggyIPs: true
   serviceAllocation:

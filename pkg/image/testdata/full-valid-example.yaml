@@ -83,7 +83,6 @@ kubernetes:
   version: v1.30.3+rke2r1
   network:
     apiVIP: 192.168.122.100
-    apiVIP6: fd12:3456:789a::21
     apiHost: api.cluster01.hosted.on.edge.suse.com
   nodes:
     - hostname: node1.suse.com
