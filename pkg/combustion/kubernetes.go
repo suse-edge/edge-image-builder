@@ -319,7 +319,7 @@ func (c *Combustion) downloadRKE2Artefacts(ctx *image.Context, cluster *kubernet
 func kubernetesVIPManifest(k *image.Kubernetes) (string, error) {
 	ip, err := netip.ParseAddr(k.Network.APIVIP)
 	if err != nil {
-		return "", fmt.Errorf("parsing kubernetes APIVIP address: %w", err)
+		return "", fmt.Errorf("parsing kubernetes apiVIP address: %w", err)
 	}
 
 	manifest := struct {

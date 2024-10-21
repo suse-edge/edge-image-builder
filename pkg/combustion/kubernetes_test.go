@@ -862,5 +862,5 @@ func TestKubernetesVIPManifestInvalidIP(t *testing.T) {
 	}
 
 	_, err := kubernetesVIPManifest(k8s)
-	require.ErrorContains(t, err, "parsing kubernetes APIVIP address: ParseAddr(\"1111\"): unable to parse IP")
+	require.ErrorContains(t, err, "parsing kubernetes apiVIP address: ParseAddr(\"1111\"): unable to parse IP")
 }
