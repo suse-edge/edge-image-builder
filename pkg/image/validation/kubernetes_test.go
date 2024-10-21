@@ -1085,10 +1085,15 @@ func TestValidateNetwork(t *testing.T) {
 						Type:        "server",
 						Initialiser: false,
 					},
+					{
+						Hostname:    "node2",
+						Type:        "server",
+						Initialiser: false,
+					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
+				"The 'apiVIP' field is required in the 'network' section for multi node clusters.",
 			},
 		},
 		`valid ipv4`: {

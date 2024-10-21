@@ -117,11 +117,10 @@ func validateNetwork(k8s *image.Kubernetes) []FailedValidation {
 	var failures []FailedValidation
 
 	if k8s.Network.APIVIP == "" {
-		if len(k8s.Nodes) >= 1 {
+		if len(k8s.Nodes) > 1 {
 			failures = append(failures, FailedValidation{
-				UserMessage: "The 'apiVIP' field is required in the 'network' section when defining entries under 'nodes'.",
+				UserMessage: "The 'apiVIP' field is required in the 'network' section for multi node clusters.",
 			})
-			return failures
 		}
 
 		return failures

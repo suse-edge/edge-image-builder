@@ -55,9 +55,9 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 		return &Cluster{ServerConfig: serverConfig}, nil
 	}
 
-	ip, ipErr := netip.ParseAddr(kubernetes.Network.APIVIP)
-	if ipErr != nil {
-		return nil, fmt.Errorf("parsing kubernetes APIVIP address: %w", ipErr)
+	ip, err := netip.ParseAddr(kubernetes.Network.APIVIP)
+	if err != nil {
+		return nil, fmt.Errorf("parsing kubernetes APIVIP address: %w", err)
 	}
 
 	setMultiNodeConfigDefaults(kubernetes, serverConfig, &ip)
