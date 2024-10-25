@@ -12,6 +12,8 @@
 
 ## Bug Fixes
 
+* [#594](https://github.com/suse-edge/edge-image-builder/issues/594) - Package install breaks package resolution if packages is already installed on root OS
+
 ---
 
 # v1.1.0
