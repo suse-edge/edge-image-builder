@@ -38,6 +38,8 @@ rpm --import {{ .LocalGPGList }}
 rpm -Kv {{ .LocalRPMList }}
 {{ end -}}
 
+mkdir -p {{.CacheDir}}
+
 zypper \
   --pkg-cache-dir {{.CacheDir}} \
   --gpg-auto-import-keys \
