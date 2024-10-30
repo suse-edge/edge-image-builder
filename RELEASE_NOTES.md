@@ -12,6 +12,7 @@
 
 ## Bug Fixes
 
+* [#593](https://github.com/suse-edge/edge-image-builder/issues/593) - OS files script should mount /var
 * [#594](https://github.com/suse-edge/edge-image-builder/issues/594) - Package install breaks package resolution if packages is already installed on root OS
 
 ---
