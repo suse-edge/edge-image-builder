@@ -13,6 +13,11 @@ set -euo pipefail
 
 {{ if ne .RegCode "" }}
 suseconnect -r {{ .RegCode }}
+{{/*
+This is a temporary workaround for EIB 1.2 to support SL Micro 6.0. In the future, this
+will need a variable to dictate the SL Micro version.
+*/}}
+suseconnect -p SL-Micro-Extras/6.0/{{ .Arch }}
 zypper ref
 trap "suseconnect -d" EXIT
 {{ end -}}
