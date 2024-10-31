@@ -1,5 +1,11 @@
 # Edge Image Builder Releases
 
+# v1.1.2
+
+## Bug Fixes
+
+* [#593](https://github.com/suse-edge/edge-image-builder/issues/593) - OS files script should mount /var
+
 # v1.1.1
 
 ## Bug Fixes
