@@ -35,9 +35,33 @@ echo -e "set timeout=3\nset timeout_style=menu\n$(cat ${ISO_EXTRACT_DIR}/boot/gr
 sed -i '/root=install:CDLABEL=INSTALL/ s|$| rd.kiwi.oem.installdevice={{.InstallDevice}} |' ${ISO_EXTRACT_DIR}/boot/grub2/grub.cfg
 {{ end -}}
 
-# Ensure that kernel arguments are appended to ISO grub.cfg so they are applied to firstboot via kexec
 {{ if (gt (len .KernelArgs) 0) -}}
-sed -i '/root=install:CDLABEL=INSTALL/ s|$| rd.kiwi.install.pass.bootparam {{.KernelArgs}} |' ${ISO_EXTRACT_DIR}/boot/grub2/grub.cfg
+# Remove all original kernel arguments from ISO command line that match input kernelArgs *and* have values
+{{ range .KernelArgsList -}}
+value=$(echo {{ . }} | cut -f1 -d"=")
+sed -i "s/$value=[^=]//" ${ISO_EXTRACT_DIR}/boot/grub2/grub.cfg
+{{ end -}}
+
+# Unpack the initrd from the SelfInstall ISO and copy the early microcode into new initrd
+mkdir -p ${ISO_EXTRACT_DIR}/temp-initram/early/ ${ISO_EXTRACT_DIR}/temp-initram/main/
+cp ${ISO_EXTRACT_DIR}/boot/{{ .Arch }}/loader/initrd ${ISO_EXTRACT_DIR}/temp-initram/
+cd ${ISO_EXTRACT_DIR}/temp-initram/early && lsinitrd --unpackearly ${ISO_EXTRACT_DIR}/temp-initram/initrd
+find . -print0 | cpio --null --create --format=newc > ${ISO_EXTRACT_DIR}/temp-initram/new-initrd
+# NOTE: We pipe the following command to true to avoid issues with mknod failing when unprivileged
+cd ${ISO_EXTRACT_DIR}/temp-initram/main && lsinitrd --unpack ${ISO_EXTRACT_DIR}/temp-initram/initrd || true
+
+# Remove the original kernel arguments from initrd config that match input kernelArgs and add desired ones
+{{ range .KernelArgsList -}}
+value=$(echo {{ . }} | cut -f1 -d"=")
+sed -i "s/$value=[^=]//" config.bootoptions
+{{ end -}}
+sed -i '1s|$| {{ .KernelArgs }}|' config.bootoptions
+
+# Repack the contents of the initrd into the new file, including the new kernel cmdline arguments
+find . | cpio --create --format=newc >> ${ISO_EXTRACT_DIR}/temp-initram/new-initrd
+
+# Add the desired kernel cmdline arguments to the ISO kernel cmdline so they're available during deployment
+sed -i '/root=install:CDLABEL=INSTALL/ s|$| {{.KernelArgs}} |' ${ISO_EXTRACT_DIR}/boot/grub2/grub.cfg
 {{ end -}}
 
 cd ${RAW_EXTRACT_DIR}
@@ -51,5 +75,8 @@ xorriso -indev ${ISO_SOURCE} \
         -map ${ARTEFACTS_DIR} /artefacts \
 {{- if .InstallDevice }}
         -map ${ISO_EXTRACT_DIR}/boot/grub2/grub.cfg /boot/grub2/grub.cfg \
+{{- end }}
+{{- if (gt (len .KernelArgs) 0) }}
+        -map ${ISO_EXTRACT_DIR}/temp-initram/new-initrd /boot/{{ .Arch }}/loader/initrd \
 {{- end }}
         -boot_image any replay -changes_pending yes
