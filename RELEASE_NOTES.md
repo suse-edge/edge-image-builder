@@ -4,6 +4,10 @@
 
 ## General
 
+* Adds better handling for user-supplied kernel cmdline arguments:
+  * Removes duplicates found between default and user-supplied arguments in all scenarios (RAW cmdline, ISO cmdline, and `kexec` config.bootoptions).
+  * Removes the reliance on `rd.kiwi.install.pass.bootparam` to pull user-supplied arguments post-`kexec` (with SelfInstall ISO).
+
 ## API
 
 ### Image Definition Changes
@@ -14,6 +18,7 @@
 
 * [#593](https://github.com/suse-edge/edge-image-builder/issues/593) - OS files script should mount /var
 * [#594](https://github.com/suse-edge/edge-image-builder/issues/594) - Package install breaks package resolution if packages is already installed on root OS
+* [#604](https://github.com/suse-edge/edge-image-builder/issues/604) - Handle kernel arguments better, especially when duplicated
 
 ---
 

@@ -27,9 +27,11 @@ func (b *Builder) generateGRUBGuestfishCommands() (string, error) {
 
 	argLine := strings.Join(b.context.ImageDefinition.OperatingSystem.KernelArgs, " ")
 	values := struct {
-		KernelArgs string
+		KernelArgs     string
+		KernelArgsList []string
 	}{
-		KernelArgs: argLine,
+		KernelArgs:     argLine,
+		KernelArgsList: b.context.ImageDefinition.OperatingSystem.KernelArgs,
 	}
 
 	snippet, err := template.Parse("guestfish-snippet", guestfishSnippet, values)

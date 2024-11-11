@@ -110,6 +110,8 @@ func (b *Builder) writeIsoScript(templateContents, outputFilename string) error 
 		ArtefactsDir        string
 		InstallDevice       string
 		KernelArgs          string
+		KernelArgsList      []string
+		Arch                string
 	}{
 		IsoExtractDir:       isoExtractPath,
 		RawExtractDir:       rawExtractPath,
@@ -119,6 +121,8 @@ func (b *Builder) writeIsoScript(templateContents, outputFilename string) error 
 		ArtefactsDir:        b.context.ArtefactsDir,
 		InstallDevice:       b.context.ImageDefinition.OperatingSystem.IsoConfiguration.InstallDevice,
 		KernelArgs:          argLine,
+		KernelArgsList:      b.context.ImageDefinition.OperatingSystem.KernelArgs,
+		Arch:                string(b.context.ImageDefinition.Image.Arch),
 	}
 
 	contents, err := template.Parse("iso-script", templateContents, arguments)
