@@ -13,7 +13,7 @@ set -euo pipefail
 #  EnableExtras - registers the SL-Micro-Extras repo for use in resolution
 
 {{ if ne .RegCode "" }}
-suseconnect -r {{ .RegCode }}
+suseconnect -r {{ .RegCode }} {{- with .RegUrl }} --url "{{ . }}" {{- end }}
 {{ if $.EnableExtras -}}
 suseconnect -p SL-Micro-Extras/6.0/{{ .Arch }}
 {{ end -}}
