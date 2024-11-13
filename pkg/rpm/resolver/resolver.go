@@ -189,12 +189,14 @@ func (r *Resolver) writeRPMResolutionScript(localRPMConfig *image.LocalRPMConfig
 		LocalGPGList string
 		NoGPGCheck   bool
 		Arch         string
+		EnableExtras bool
 	}{
-		RegCode:    packages.RegCode,
-		AddRepo:    packages.AdditionalRepos,
-		CacheDir:   r.generateResolverImgRPMRepoPath(),
-		NoGPGCheck: packages.NoGPGCheck,
-		Arch:       r.arch,
+		RegCode:      packages.RegCode,
+		AddRepo:      packages.AdditionalRepos,
+		CacheDir:     r.generateResolverImgRPMRepoPath(),
+		NoGPGCheck:   packages.NoGPGCheck,
+		Arch:         r.arch,
+		EnableExtras: packages.EnableExtras,
 	}
 
 	if len(packages.PKGList) > 0 {

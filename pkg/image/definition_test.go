@@ -94,6 +94,7 @@ func TestParse(t *testing.T) {
 	// Operating System -> Packages
 	pkgConfig := definition.OperatingSystem.Packages
 	assert.True(t, pkgConfig.NoGPGCheck)
+	assert.True(t, pkgConfig.EnableExtras)
 	require.Len(t, pkgConfig.PKGList, 6)
 	require.Len(t, pkgConfig.AdditionalRepos, 2)
 	expectedPKGList := []string{

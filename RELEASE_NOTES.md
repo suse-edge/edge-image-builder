@@ -8,6 +8,8 @@
 
 ### Image Definition Changes
 
+* Added the `enableExtras` flag to enable the SUSE Linux Extras repository during RPM resolution.
+
 ### Image Configuration Directory Changes
 
 ## Bug Fixes
