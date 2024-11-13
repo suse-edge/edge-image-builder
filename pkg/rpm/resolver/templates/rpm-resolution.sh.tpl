@@ -14,9 +14,9 @@ set -euo pipefail
 
 {{ if ne .RegCode "" }}
 suseconnect -r {{ .RegCode }}
-{{- if $.EnableExtras -}}
+{{ if $.EnableExtras -}}
 suseconnect -p SL-Micro-Extras/6.0/{{ .Arch }}
-{{- end -}}
+{{ end -}}
 zypper ref
 trap "suseconnect -d" EXIT
 {{ end -}}
