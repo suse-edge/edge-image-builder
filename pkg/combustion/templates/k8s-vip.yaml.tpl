@@ -6,10 +6,11 @@ metadata:
   namespace: metallb-system
 spec:
   addresses:
-  {{- if .IsIPV4 }}
-    - {{ .APIAddress }}/32
-  {{- else }}
-    - {{ .APIAddress }}/128
+  {{- if .APIAddress4 }}
+    - {{ .APIAddress4 }}/32
+  {{- end }}
+  {{- if .APIAddress6 }}
+    - {{ .APIAddress6 }}/128
   {{- end }}
   avoidBuggyIPs: true
   serviceAllocation:
@@ -36,6 +37,17 @@ metadata:
   labels:
     serviceType: kubernetes-vip
 spec:
+  {{- if and .APIAddress4 .APIAddress6 }}
+  ipFamilyPolicy: RequireDualStack
+  ipFamilies:
+    - IPv4
+    - IPv6
+  {{- end }}
+  {{- if and (eq .APIAddress4 "false") (eq .APIAddress6 "true") }}
+    ipFamilyPolicy: SingleStack
+    ipFamilies:
+      - IPv6
+  {{- end }}
   ports:
 {{- if .RKE2 }}
   - name: rke2-api

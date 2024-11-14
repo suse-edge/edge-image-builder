@@ -3,7 +3,6 @@ package validation
 import (
 	"errors"
 	"fmt"
-	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -116,7 +115,7 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 func validateNetwork(k8s *image.Kubernetes) []FailedValidation {
 	var failures []FailedValidation
 
-	if k8s.Network.APIVIP == "" {
+	if k8s.Network.APIVIP4 == "" && k8s.Network.APIVIP6 == "" {
 		if len(k8s.Nodes) > 1 {
 			failures = append(failures, FailedValidation{
 				UserMessage: "The 'apiVIP' field is required in the 'network' section for multi node clusters.",
@@ -126,30 +125,30 @@ func validateNetwork(k8s *image.Kubernetes) []FailedValidation {
 		return failures
 	}
 
-	parsedIP, err := netip.ParseAddr(k8s.Network.APIVIP)
-	if err != nil {
-		failures = append(failures, FailedValidation{
-			UserMessage: fmt.Sprintf("Invalid address value %q for field 'apiVIP'.", k8s.Network.APIVIP),
-			Error:       err,
-		})
+	//parsedIP, err := netip.ParseAddr(k8s.Network.APIVIP4)
+	//if err != nil {
+	//	failures = append(failures, FailedValidation{
+	//		UserMessage: fmt.Sprintf("Invalid address value %q for field 'apiVIP'.", k8s.Network.APIVIP4),
+	//		Error:       err,
+	//	})
+	//
+	//	return failures
+	//}
 
-		return failures
-	}
-
-	if !parsedIP.Is4() && !parsedIP.Is6() {
-		failures = append(failures, FailedValidation{
-			UserMessage: "Only IPv4 and IPv6 addresses are valid values for field 'apiVIP'.",
-		})
-
-		return failures
-	}
-
-	if !parsedIP.IsGlobalUnicast() {
-		msg := fmt.Sprintf("Invalid non-unicast cluster API address (%s) for field 'apiVIP'.", k8s.Network.APIVIP)
-		failures = append(failures, FailedValidation{
-			UserMessage: msg,
-		})
-	}
+	//if !parsedIP.Is4() && !parsedIP.Is6() {
+	//	failures = append(failures, FailedValidation{
+	//		UserMessage: "Only IPv4 and IPv6 addresses are valid values for field 'apiVIP'.",
+	//	})
+	//
+	//	return failures
+	//}
+	//
+	//if !parsedIP.IsGlobalUnicast() {
+	//	msg := fmt.Sprintf("Invalid non-unicast cluster API address (%s) for field 'apiVIP'.", k8s.Network.APIVIP4)
+	//	failures = append(failures, FailedValidation{
+	//		UserMessage: msg,
+	//	})
+	//}
 
 	return failures
 }

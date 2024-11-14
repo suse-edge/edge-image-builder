@@ -22,7 +22,7 @@ func ComponentHelmCharts(ctx *image.Context) ([]image.HelmChart, []image.HelmRep
 	var charts []image.HelmChart
 	var repos []image.HelmRepository
 
-	if ctx.ImageDefinition.Kubernetes.Network.APIVIP != "" {
+	if ctx.ImageDefinition.Kubernetes.Network.APIVIP4 != "" || ctx.ImageDefinition.Kubernetes.Network.APIVIP6 != "" {
 		metalLBChart := image.HelmChart{
 			Name:                  ctx.ArtifactSources.MetalLB.Chart,
 			RepositoryName:        metallbRepositoryName,

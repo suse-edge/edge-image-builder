@@ -35,6 +35,7 @@ const (
 	k8sAgentConfigFile      = "agent.yaml"
 
 	k8sInstallScript = "20-k8s-install.sh"
+	setNodeIPScript  = "set-node-ip.sh"
 )
 
 var (
@@ -52,6 +53,9 @@ var (
 
 	//go:embed templates/k8s-vip.yaml.tpl
 	k8sVIPManifest string
+
+	//go:embed templates/set-node-ip.sh.tpl
+	nodeIPScriptTemplate string
 )
 
 func (c *Combustion) configureKubernetes(ctx *image.Context) ([]string, error) {
@@ -84,6 +88,10 @@ func (c *Combustion) configureKubernetes(ctx *image.Context) ([]string, error) {
 	if err != nil {
 		log.AuditComponentFailed(k8sComponentName)
 		return nil, fmt.Errorf("initialising cluster config: %w", err)
+	}
+
+	if err = createNodeIPScript(ctx, cluster.ServerConfig); err != nil {
+		return nil, fmt.Errorf("creating set node IP script: %w", err)
 	}
 
 	artefactsPath := kubernetesArtefactsPath(ctx)
@@ -148,18 +156,20 @@ func (c *Combustion) configureK3S(ctx *image.Context, cluster *kubernetes.Cluste
 
 	templateValues := map[string]any{
 		"installScript":   installScript,
-		"apiVIP":          ctx.ImageDefinition.Kubernetes.Network.APIVIP,
+		"apiVIP4":         ctx.ImageDefinition.Kubernetes.Network.APIVIP4,
+		"apiVIP6":         ctx.ImageDefinition.Kubernetes.Network.APIVIP6,
 		"apiHost":         ctx.ImageDefinition.Kubernetes.Network.APIHost,
 		"binaryPath":      binaryPath,
 		"imagesPath":      imagesPath,
 		"manifestsPath":   manifestsPath,
 		"configFilePath":  prependArtefactPath(k8sDir),
 		"registryMirrors": prependArtefactPath(filepath.Join(k8sDir, registryMirrorsFileName)),
+		"setNodeIPScript": setNodeIPScript,
 	}
 
 	singleNode := len(ctx.ImageDefinition.Kubernetes.Nodes) < 2
 	if singleNode {
-		if ctx.ImageDefinition.Kubernetes.Network.APIVIP == "" {
+		if ctx.ImageDefinition.Kubernetes.Network.APIVIP4 == "" || ctx.ImageDefinition.Kubernetes.Network.APIVIP6 == "" {
 			zap.S().Info("Virtual IP address for k3s cluster is not provided and will not be configured")
 		} else {
 			log.Audit("WARNING: A Virtual IP address for the k3s cluster has been provided. " +
@@ -243,18 +253,20 @@ func (c *Combustion) configureRKE2(ctx *image.Context, cluster *kubernetes.Clust
 
 	templateValues := map[string]any{
 		"installScript":   installScript,
-		"apiVIP":          ctx.ImageDefinition.Kubernetes.Network.APIVIP,
+		"apiVIP4":         ctx.ImageDefinition.Kubernetes.Network.APIVIP4,
+		"apiVIP6":         ctx.ImageDefinition.Kubernetes.Network.APIVIP6,
 		"apiHost":         ctx.ImageDefinition.Kubernetes.Network.APIHost,
 		"installPath":     installPath,
 		"imagesPath":      imagesPath,
 		"manifestsPath":   manifestsPath,
 		"configFilePath":  prependArtefactPath(k8sDir),
 		"registryMirrors": prependArtefactPath(filepath.Join(k8sDir, registryMirrorsFileName)),
+		"setNodeIPScript": setNodeIPScript,
 	}
 
 	singleNode := len(ctx.ImageDefinition.Kubernetes.Nodes) < 2
 	if singleNode {
-		if ctx.ImageDefinition.Kubernetes.Network.APIVIP == "" {
+		if ctx.ImageDefinition.Kubernetes.Network.APIVIP4 == "" || ctx.ImageDefinition.Kubernetes.Network.APIVIP6 == "" {
 			zap.S().Info("Virtual IP address for RKE2 cluster is not provided and will not be configured")
 		}
 
@@ -317,22 +329,75 @@ func (c *Combustion) downloadRKE2Artefacts(ctx *image.Context, cluster *kubernet
 }
 
 func kubernetesVIPManifest(k *image.Kubernetes) (string, error) {
-	ip, err := netip.ParseAddr(k.Network.APIVIP)
-	if err != nil {
-		return "", fmt.Errorf("parsing kubernetes apiVIP address: %w", err)
+	var err error
+
+	var ip4 netip.Addr
+	if k.Network.APIVIP4 != "" {
+		ip4, err = netip.ParseAddr(k.Network.APIVIP4)
+		if err != nil {
+			return "", fmt.Errorf("parsing kubernetes apiVIP address: %w", err)
+		}
+	}
+
+	var ip6 netip.Addr
+	if k.Network.APIVIP6 != "" {
+		ip6, err = netip.ParseAddr(k.Network.APIVIP6)
+		if err != nil {
+			return "", fmt.Errorf("parsing kubernetes apiVIP address: %w", err)
+		}
 	}
 
 	manifest := struct {
-		APIAddress string
-		IsIPV4     bool
-		RKE2       bool
+		APIAddress4 string
+		APIAddress6 string
+		IsIPV4      bool
+		IsIPV6      bool
+		RKE2        bool
 	}{
-		APIAddress: k.Network.APIVIP,
-		IsIPV4:     ip.Is4(),
-		RKE2:       strings.Contains(k.Version, image.KubernetesDistroRKE2),
+		APIAddress4: k.Network.APIVIP4,
+		APIAddress6: k.Network.APIVIP6,
+		IsIPV4:      ip4.Is4(),
+		IsIPV6:      ip6.Is6(),
+		RKE2:        strings.Contains(k.Version, image.KubernetesDistroRKE2),
 	}
 
 	return template.Parse("k8s-vip", k8sVIPManifest, &manifest)
+}
+
+func createNodeIPScript(ctx *image.Context, serverConfig map[string]any) error {
+	// Setting the Node IP only matters if we're doing dual-stack or single-stack IPv6
+	if ctx.ImageDefinition.Kubernetes.Network.APIVIP6 == "" {
+		return nil
+	}
+
+	var isIPv4Enabled bool
+	if ctx.ImageDefinition.Kubernetes.Network.APIVIP4 != "" {
+		isIPv4Enabled = true
+	}
+
+	manifest := struct {
+		IPv4Enabled    bool
+		IPv6Enabled    bool
+		PrioritizeIPv6 bool
+		RKE2           bool
+	}{
+		IPv4Enabled:    isIPv4Enabled,
+		IPv6Enabled:    true,
+		PrioritizeIPv6: isIPv6Priority(serverConfig),
+		RKE2:           strings.Contains(ctx.ImageDefinition.Kubernetes.Version, image.KubernetesDistroRKE2),
+	}
+
+	data, err := template.Parse("set-node-ip", nodeIPScriptTemplate, &manifest)
+	if err != nil {
+		return fmt.Errorf("parsing '%s' template: %w", setNodeIPScript, err)
+	}
+
+	nodeIPScript := filepath.Join(ctx.CombustionDir, setNodeIPScript)
+	if err = os.WriteFile(nodeIPScript, []byte(data), fileio.ExecutablePerms); err != nil {
+		return fmt.Errorf("writing set node IP script: %w", err)
+	}
+
+	return nil
 }
 
 func storeKubernetesClusterConfig(cluster *kubernetes.Cluster, destPath string) error {
@@ -375,7 +440,7 @@ func (c *Combustion) configureManifests(ctx *image.Context) (string, error) {
 	manifestsPath := localKubernetesManifestsPath()
 	manifestDestDir := filepath.Join(ctx.ArtefactsDir, manifestsPath)
 
-	if ctx.ImageDefinition.Kubernetes.Network.APIVIP != "" {
+	if ctx.ImageDefinition.Kubernetes.Network.APIVIP4 != "" || ctx.ImageDefinition.Kubernetes.Network.APIVIP6 != "" {
 		if err := os.MkdirAll(manifestDestDir, os.ModePerm); err != nil {
 			return "", fmt.Errorf("creating manifests destination dir: %w", err)
 		}
@@ -457,4 +522,15 @@ func HelmCertsPath(ctx *image.Context) string {
 
 func kubernetesArtefactsPath(ctx *image.Context) string {
 	return filepath.Join(ctx.ArtefactsDir, k8sDir)
+}
+
+func isIPv6Priority(serverConfig map[string]any) bool {
+	if clusterCIDR, ok := serverConfig["cluster-cidr"].(string); ok {
+		cidrs := strings.Split(clusterCIDR, ",")
+		if len(cidrs) > 0 {
+			return strings.Contains(cidrs[0], ":")
+		}
+	}
+
+	return false
 }

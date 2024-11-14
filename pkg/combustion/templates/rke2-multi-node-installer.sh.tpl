@@ -91,12 +91,23 @@ systemctl enable kubernetes-resources-install.service
 {{- end }}
 fi
 
-{{- if and .apiVIP .apiHost }}
-echo "{{ .apiVIP }} {{ .apiHost }}" >> /etc/hosts
+{{- if and .apiVIP4 .apiHost }}
+echo "{{ .apiVIP4 }} {{ .apiHost }}" >> /etc/hosts
+{{- end }}
+
+{{- if and .apiVIP6 .apiHost }}
+echo "{{ .apiVIP6 }} {{ .apiHost }}" >> /etc/hosts
 {{- end }}
 
 mkdir -p /etc/rancher/rke2/
 cp $CONFIGFILE /etc/rancher/rke2/config.yaml
+
+if [ "$NODETYPE" = "server" ]; then
+{{- if .apiVIP6 }}
+chmod +x {{ .setNodeIPScript }}
+sh {{ .setNodeIPScript }}
+{{- end }}
+fi
 
 if [ -f {{ .registryMirrors }} ]; then
 cp {{ .registryMirrors }} /etc/rancher/rke2/registries.yaml
