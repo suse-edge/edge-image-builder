@@ -105,6 +105,7 @@ operatingSystem:
   keymap: us
   packages:
     noGPGCheck: false
+    enableExtras: false
     packageList:
       - pkg1
       - pkg2
@@ -188,6 +189,9 @@ dependencies and download them into the built image. For detailed information on
 see the [Installing packages](./installing-packages.md) guide.
   * `noGPGCheck` - Defines if GPG validation should be disabled for all additional repositories and side-loaded
   RPMs. **Disabling GPG validation is intended for development purposes only.**
+  * `enableExtras` - Enables the RPM resolution process to pull packages from the SUSE Linux Extras repository.
+  Defaults to `false` if omitted. **Packages from this repository are unsupported and not intended to be installed on
+  a production system. Use this flag only if you have a specific reason.**
   * `packageList` - Defines a list of packages to install from SUSE's internal RPM repositories or
   from additionally provided third-party repositories.
   * `additionalRepos` - Defines a list of third-party RPM repositories that will be added to the package manager of
