@@ -17,7 +17,7 @@ const (
 func validateImage(ctx *image.Context) []FailedValidation {
 	def := ctx.ImageDefinition
 
-	validImageTypes := []string{image.TypeISO, image.TypeRAW}
+	validImageTypes := []string{image.TypeISO, image.TypeRAW, image.TypeCombustion}
 	validArchTypes := []string{string(image.ArchTypeARM), string(image.ArchTypeX86)}
 
 	var failures []FailedValidation
@@ -44,17 +44,13 @@ func validateImage(ctx *image.Context) []FailedValidation {
 		})
 	}
 
-	if def.Image.OutputImageName == "" {
+	if def.Image.ImageType != image.TypeCombustion && def.Image.OutputImageName == "" {
 		failures = append(failures, FailedValidation{
 			UserMessage: "The 'outputImageName' field is required in the 'image' section.",
 		})
 	}
 
-	if def.Image.BaseImage == "" {
-		failures = append(failures, FailedValidation{
-			UserMessage: "The 'baseImage' field is required in the 'image' section.",
-		})
-	} else {
+	if def.Image.BaseImage != "" {
 		baseImageFilename := filepath.Join(ctx.ImageConfigDir, "base-images", def.Image.BaseImage)
 		_, err := os.Stat(baseImageFilename)
 		if err != nil {

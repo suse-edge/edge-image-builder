@@ -14,4 +14,9 @@ var (
 		Value:       "/eib",
 		Destination: &BuildArgs.ConfigDir,
 	}
+	RootBuildDirFlag = &cli.StringFlag{
+		Name:        "build-dir",
+		Usage:       "Full path to the directory to store build artifacts",
+		Destination: &BuildArgs.RootBuildDir,
+	}
 )

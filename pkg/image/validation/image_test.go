@@ -39,17 +39,6 @@ func TestValidateImage(t *testing.T) {
 				},
 			},
 		},
-		`missing all fields`: {
-			ImageDefinition: image.Definition{
-				Image: image.Image{},
-			},
-			ExpectedFailedMessages: []string{
-				"The 'imageType' field is required in the 'image' section.",
-				"The 'arch' field is required in the 'image' section.",
-				"The 'outputImageName' field is required in the 'image' section.",
-				"The 'baseImage' field is required in the 'image' section.",
-			},
-		},
 		`invalid enum values`: {
 			ImageDefinition: image.Definition{
 				Image: image.Image{
@@ -60,7 +49,7 @@ func TestValidateImage(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"The 'imageType' field must be one of: iso, raw",
+				"The 'imageType' field must be one of: iso, raw, combustion",
 				"The 'arch' field must be one of: aarch64, x86_64",
 			},
 		},

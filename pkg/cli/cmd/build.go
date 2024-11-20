@@ -23,11 +23,7 @@ func NewBuildCommand(action func(*cli.Context) error) *cli.Command {
 		Flags: []cli.Flag{
 			DefinitionFileFlag,
 			ConfigDirFlag,
-			&cli.StringFlag{
-				Name:        "build-dir",
-				Usage:       "Full path to the directory to store build artifacts",
-				Destination: &BuildArgs.RootBuildDir,
-			},
+			RootBuildDirFlag,
 		},
 	}
 }

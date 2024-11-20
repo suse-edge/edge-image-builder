@@ -85,6 +85,12 @@ func (c *Combustion) configureRPMs(ctx *image.Context) ([]string, error) {
 func SkipRPMComponent(ctx *image.Context) bool {
 	pkg := ctx.ImageDefinition.OperatingSystem.Packages
 
+	// If ther is no BaseImage defined we cannot determine the needed RPMs
+	// Needed to support creation of the combustion.tar.gz
+	if ctx.ImageDefinition.Image.BaseImage == "" {
+		return true
+	}
+
 	if isComponentConfigured(ctx, rpmDir) {
 		// isComponentConfigured will indicate if the directory exists, but not
 		// if there are RPMs in there. If there aren't any, it is still possible to

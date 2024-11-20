@@ -179,7 +179,7 @@ func (c *Combustion) Configure(ctx *image.Context) error {
 		networkScript = networkConfigScriptName
 	}
 
-	script, err := assembleScript(combustionScripts, networkScript)
+	script, err := assembleScript(combustionScripts, networkScript, ctx.ImageDefinition.Image.ImageType)
 	if err != nil {
 		return fmt.Errorf("assembling script: %w", err)
 	}

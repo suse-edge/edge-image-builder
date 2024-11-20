@@ -11,15 +11,17 @@ import (
 //go:embed templates/script-base.sh.tpl
 var combustionScriptBase string
 
-func assembleScript(scripts []string, networkScript string) (string, error) {
+func assembleScript(scripts []string, networkScript string, imageType string) (string, error) {
 	slices.Sort(scripts)
 
 	values := struct {
 		NetworkScript string
 		Scripts       []string
+		ImageType     string
 	}{
 		NetworkScript: networkScript,
 		Scripts:       scripts,
+		ImageType:     imageType,
 	}
 
 	data, err := template.Parse("combustion-base", combustionScriptBase, values)

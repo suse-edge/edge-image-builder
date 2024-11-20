@@ -8,7 +8,7 @@ import (
 )
 
 func TestAssembleScript_DynamicNetwork(t *testing.T) {
-	script, err := assembleScript([]string{"foo.sh", "bar.sh", "baz.sh"}, "")
+	script, err := assembleScript([]string{"foo.sh", "bar.sh", "baz.sh"}, "", "")
 	require.NoError(t, err)
 
 	assert.Contains(t, script, "# combustion: network")
@@ -30,8 +30,24 @@ echo "Running foo.sh"
 `)
 }
 
+func TestAssembleScript_MountCombustion(t *testing.T) {
+	script, err := assembleScript([]string{""}, "", "combustion")
+	require.NoError(t, err)
+
+	assert.Contains(t, script, `
+mount -o ro /dev/disk/by-label/combustion /mnt
+`)
+}
+func TestAssembleScript_MountISO(t *testing.T) {
+	script, err := assembleScript([]string{""}, "", "iso")
+	require.NoError(t, err)
+
+	assert.Contains(t, script, `
+mount -o ro /dev/disk/by-label/INSTALL /mnt
+`)
+}
 func TestAssembleScript_StaticNetwork(t *testing.T) {
-	script, err := assembleScript([]string{"foo.sh", "bar.sh", "baz.sh"}, "configure-network.sh")
+	script, err := assembleScript([]string{"foo.sh", "bar.sh", "baz.sh"}, "configure-network.sh", "")
 	require.NoError(t, err)
 
 	assert.Contains(t, script, "# combustion: prepare network")
