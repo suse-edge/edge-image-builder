@@ -44,10 +44,17 @@ func validateImage(ctx *image.Context) []FailedValidation {
 		})
 	}
 
-	if def.Image.ImageType != image.TypeCombustion && def.Image.OutputImageName == "" {
-		failures = append(failures, FailedValidation{
-			UserMessage: "The 'outputImageName' field is required in the 'image' section.",
-		})
+	if def.Image.ImageType != image.TypeCombustion {
+		if def.Image.OutputImageName == "" {
+			failures = append(failures, FailedValidation{
+				UserMessage: "The 'outputImageName' field is required in the 'image' section.",
+			})
+		}
+		if def.Image.BaseImage == "" {
+			failures = append(failures, FailedValidation{
+				UserMessage: "The 'baseImage' field is required in the 'image' section.",
+			})
+		}
 	}
 
 	if def.Image.BaseImage != "" {

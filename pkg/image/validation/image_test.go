@@ -39,6 +39,38 @@ func TestValidateImage(t *testing.T) {
 				},
 			},
 		},
+		`complete valid combustion definition`: {
+			ImageDefinition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeCombustion,
+					Arch:      image.ArchTypeX86,
+				},
+			},
+		},
+		`missing fields when using ISO`: {
+			ImageDefinition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeISO,
+					Arch:      image.ArchTypeX86,
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"The 'outputImageName' field is required in the 'image' section.",
+				"The 'baseImage' field is required in the 'image' section.",
+			},
+		},
+		`missing fields when using RAW`: {
+			ImageDefinition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+					Arch:      image.ArchTypeX86,
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"The 'outputImageName' field is required in the 'image' section.",
+				"The 'baseImage' field is required in the 'image' section.",
+			},
+		},
 		`invalid enum values`: {
 			ImageDefinition: image.Definition{
 				Image: image.Image{
