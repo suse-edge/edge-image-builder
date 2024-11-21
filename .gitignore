@@ -19,3 +19,7 @@ go.work
 
 # IDE
 .idea
+
+# Don't upload test data
+examples/*/base-images
+examples/*/_build

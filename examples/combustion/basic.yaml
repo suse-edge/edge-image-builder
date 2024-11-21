@@ -1,0 +1,19 @@
+apiVersion: 1.1
+image:
+  imageType: combustion
+operatingSystem:
+  time:
+    timezone: Europe/Berlin
+    ntp:
+      forceWait: true
+      pools:
+        - 0.de.pool.ntp.org
+        - 1.de.pool.ntp.org
+        - 2.de.pool.ntp.org
+  keymap: de
+  users:
+    - username: root
+      createHomeDir: true
+      encryptedPassword: $6$jHugJNNd3HElGsUZ$eodjVe4te5ps44SVcWshdfWizrP.xAyd71CVEXazBJ/.v799/WRCBXxfYmunlBO2yp1hm/zb4r8EmnrrNCF.P/
+      sshKeys:
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAkfuT5nRHeb6EbbA+fdkt/d4ITDSWrVJiLtZnJdNw+x eib-testing
