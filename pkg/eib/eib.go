@@ -150,7 +150,7 @@ func appendHelm(ctx *image.Context) {
 }
 
 func appendKernelArgs(ctx *image.Context, kernelArgs ...string) {
-	if ctx.ImageDefinition.Image.BaseImage == "" {
+	if ctx.ImageDefinition.Image.ImageType == image.TypeCombustion {
 		log.AuditInfof("Manually add these kernel args: %v", kernelArgs)
 		return
 	}
