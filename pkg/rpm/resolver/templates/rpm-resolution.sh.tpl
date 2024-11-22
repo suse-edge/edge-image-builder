@@ -3,6 +3,7 @@ set -euo pipefail
 
 #  Template Fields
 #  RegCode      - scc.suse.com registration code
+#  RegUrl       - registration server url
 #  AddRepo      - additional third-party repositories that will be used in the resolution process
 #  CacheDir     - zypper cache directory where all rpm dependencies will be downloaded to
 #  PKGList      - list of packages for which to do the dependency resolution
