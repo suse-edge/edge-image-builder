@@ -18,11 +18,11 @@ exec > >(exec tee -a /dev/tty0) 2>&1
 cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1
 
 {{ if eq .ImageType "combustion" -}}
-mount -o ro /dev/disk/by-label/combustion /mnt
+export ARTEFACTS_DIR=../artefacts
 {{- else -}}
 mount -o ro /dev/disk/by-label/INSTALL /mnt
-{{- end }}
 export ARTEFACTS_DIR=/mnt/artefacts
+{{- end }}
 
 {{ range .Scripts -}}
 echo "Running {{ . }}"
@@ -30,4 +30,6 @@ echo "Running {{ . }}"
 
 {{ end -}}
 
+{{ if ne .ImageType "combustion" -}}
 umount /mnt
+{{- end }}

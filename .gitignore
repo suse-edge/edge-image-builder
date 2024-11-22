@@ -23,3 +23,4 @@ go.work
 # Don't upload test data
 examples/*/base-images
 examples/*/_build
+examples/*/*.iso

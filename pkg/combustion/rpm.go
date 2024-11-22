@@ -85,9 +85,8 @@ func (c *Combustion) configureRPMs(ctx *image.Context) ([]string, error) {
 func SkipRPMComponent(ctx *image.Context) bool {
 	pkg := ctx.ImageDefinition.OperatingSystem.Packages
 
-	// If ther is no BaseImage defined we cannot determine the needed RPMs
-	// Needed to support creation of the combustion.tar.gz
-	if ctx.ImageDefinition.Image.BaseImage == "" {
+	// If we are building a combustion for Kiwi skip the RPMs
+	if ctx.ImageDefinition.Image.ImageType == image.TypeCombustion && ctx.ImageDefinition.Image.BaseImage == "" {
 		return true
 	}
 

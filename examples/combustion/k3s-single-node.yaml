@@ -1,7 +1,16 @@
 apiVersion: 1.1
 image:
+  arch: x86_64
   imageType: combustion
   baseImage: SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso
+  outputImageName: combustion.tar
+kubernetes:
+  version: v1.30.3+k3s1
+  network:
+    apiVIP: 192.168.100.19
+  manifests:
+    urls:
+      - https://k8s.io/examples/application/nginx-app.yaml
 operatingSystem:
   packages:
     enableExtras: true
@@ -9,7 +18,7 @@ operatingSystem:
       - open-iscsi
       - nfs-client
       - screen
-    sccRegistrationCode: scc-reg-code
+    sccRegistrationCode: put-code-here
   time:
     timezone: Europe/Berlin
     ntp:

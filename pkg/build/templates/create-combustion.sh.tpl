@@ -11,6 +11,4 @@ mkdir -p {{ .CombustionTmpPath }}
 cp -r {{ .CombustionDir }} {{ .CombustionTmpPath }}
 cp -r {{ .ArtefactsDir }} {{ .CombustionTmpPath }}
 
-mkisofs -J -o {{ .CombustionTmpPath }}/combustion.iso -V combustion {{ .CombustionTmpPath }}
-
-tar -cvf {{.OutputImageFilename}} -C {{ .CombustionTmpPath }} .
+mkisofs -J -o {{.OutputImageFilename}} -V COMBUSTION {{ .CombustionTmpPath }}

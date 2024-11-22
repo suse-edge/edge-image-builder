@@ -30,12 +30,15 @@ echo "Running foo.sh"
 `)
 }
 
-func TestAssembleScript_MountCombustion(t *testing.T) {
+func TestAssembleScript_CombustionNoMount(t *testing.T) {
 	script, err := assembleScript([]string{""}, "", "combustion")
 	require.NoError(t, err)
 
-	assert.Contains(t, script, `
-mount -o ro /dev/disk/by-label/combustion /mnt
+	assert.NotContains(t, script, `
+mount -o ro /dev/disk/by-label/INSTALL /mnt
+`)
+	assert.NotContains(t, script, `
+umount / mnt
 `)
 }
 func TestAssembleScript_MountISO(t *testing.T) {

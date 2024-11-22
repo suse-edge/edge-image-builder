@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/creasty/defaults"
 	"github.com/suse-edge/edge-image-builder/pkg/version"
 	"gopkg.in/yaml.v3"
 )
@@ -60,10 +59,10 @@ func (a Arch) Short() string {
 }
 
 type Image struct {
-	ImageType       string `default:"combustion" yaml:"imageType"`
-	Arch            Arch   `default:"x86_64" yaml:"arch"`
+	ImageType       string `yaml:"imageType"`
+	Arch            Arch   `yaml:"arch"`
 	BaseImage       string `yaml:"baseImage"`
-	OutputImageName string `default:"combustion.tar.gz" yaml:"outputImageName"`
+	OutputImageName string `yaml:"outputImageName"`
 }
 
 type OperatingSystem struct {
@@ -251,9 +250,7 @@ func ParseDefinition(data []byte) (*Definition, error) {
 	if err := decoder.Decode(&definition); err != nil {
 		return nil, fmt.Errorf("could not parse the image definition: %w", err)
 	}
-	if err := defaults.Set(&definition); err != nil {
-		return nil, fmt.Errorf("defaults in definition: %w", err)
-	}
+
 	definition.Image.ImageType = strings.ToLower(definition.Image.ImageType)
 
 	if !version.IsSchemaVersionSupported(definition.APIVersion) {

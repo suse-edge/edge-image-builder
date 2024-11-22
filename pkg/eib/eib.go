@@ -164,7 +164,11 @@ func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion
 		}
 
 		imgPath := filepath.Join(ctx.ImageConfigDir, "base-images", ctx.ImageDefinition.Image.BaseImage)
-		imgType := image.TypeISO
+		var imgType string = ctx.ImageDefinition.Image.ImageType
+		// If we are building a combustion archive and provide an ISO use the ISO path
+		if ctx.ImageDefinition.Image.ImageType == image.TypeCombustion {
+			imgType = image.TypeISO
+		}
 		baseBuilder := resolver.NewTarballBuilder(ctx.BuildDir, imgPath, imgType, string(ctx.ImageDefinition.Image.Arch), p)
 
 		combustionHandler.RPMResolver = resolver.New(ctx.BuildDir, p, baseBuilder, "", string(ctx.ImageDefinition.Image.Arch))
