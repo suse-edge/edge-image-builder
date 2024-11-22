@@ -150,6 +150,10 @@ func appendHelm(ctx *image.Context) {
 }
 
 func appendKernelArgs(ctx *image.Context, kernelArgs ...string) {
+	if ctx.ImageDefinition.Image.BaseImage == "" {
+		log.AuditInfof("Manually add these kernel args: %v", kernelArgs)
+		return
+	}
 	kernelArgList := ctx.ImageDefinition.OperatingSystem.KernelArgs
 	kernelArgList = append(kernelArgList, kernelArgs...)
 	ctx.ImageDefinition.OperatingSystem.KernelArgs = kernelArgList
