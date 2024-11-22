@@ -4,7 +4,8 @@
 
 ## General
 
-* Added support for IPv6 addresses in the Kubernetes 'apiVIP' field
+* Added 'apiVIP6' in Kubernetes field for IPv6 addresses
+* Implemented IPv6 Single and Dual-Stack handling for Kubernetes
 
 ## API
 

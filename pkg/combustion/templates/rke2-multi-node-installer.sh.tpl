@@ -104,7 +104,6 @@ cp $CONFIGFILE /etc/rancher/rke2/config.yaml
 
 if [ "$NODETYPE" = "server" ]; then
 {{- if .apiVIP6 }}
-chmod +x {{ .setNodeIPScript }}
 sh {{ .setNodeIPScript }}
 {{- end }}
 fi

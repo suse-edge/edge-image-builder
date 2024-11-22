@@ -76,7 +76,6 @@ mkdir -p /etc/rancher/rke2/
 cp {{ .configFilePath }}/{{ .configFile }} /etc/rancher/rke2/config.yaml
 
 {{- if .apiVIP6 }}
-chmod +x {{ .setNodeIPScript }}
 sh {{ .setNodeIPScript }}
 {{- end }}
 

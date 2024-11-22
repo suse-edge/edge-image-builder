@@ -73,7 +73,7 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 		ip6 = &ip6Holder
 	}
 
-	prioritizeIPv6 := isIPv6Priority(serverConfig)
+	prioritizeIPv6 := IsIPv6Priority(serverConfig)
 	setMultiNodeConfigDefaults(kubernetes, serverConfig, ip4, ip6, prioritizeIPv6)
 
 	agentConfigPath := filepath.Join(configPath, agentConfigFile)
@@ -167,6 +167,10 @@ func setSingleNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string
 
 	if kubernetes.Network.APIVIP6 != "" {
 		appendClusterTLSSAN(config, kubernetes.Network.APIVIP6)
+
+		if strings.Contains(kubernetes.Version, image.KubernetesDistroK3S) && kubernetes.Network.APIVIP4 == "" {
+			appendDisabledServices(config, "servicelb")
+		}
 	}
 
 	if kubernetes.Network.APIHost != "" {
@@ -232,9 +236,12 @@ func setClusterAPIAddress(config map[string]any, ip4 *netip.Addr, ip6 *netip.Add
 		return
 	}
 
-	if ip6 != nil && prioritizeIPv6 {
+	switch {
+	case ip6 != nil && prioritizeIPv6:
 		config[serverKey] = fmt.Sprintf("https://%s", netip.AddrPortFrom(*ip6, port).String())
-	} else if ip4 != nil {
+	case ip6 != nil && ip4 == nil:
+		config[serverKey] = fmt.Sprintf("https://%s", netip.AddrPortFrom(*ip6, port).String())
+	default:
 		config[serverKey] = fmt.Sprintf("https://%s", netip.AddrPortFrom(*ip4, port).String())
 	}
 }
@@ -323,11 +330,12 @@ func ServersCount(nodes []image.Node) int {
 	return servers
 }
 
-func isIPv6Priority(serverConfig map[string]any) bool {
+func IsIPv6Priority(serverConfig map[string]any) bool {
 	if clusterCIDR, ok := serverConfig["cluster-cidr"].(string); ok {
 		cidrs := strings.Split(clusterCIDR, ",")
 		if len(cidrs) > 0 {
-			return strings.Contains(cidrs[0], ":")
+			fmt.Println(strings.Contains(cidrs[0], ":"))
+			return strings.Contains(cidrs[0], "::")
 		}
 	}
 

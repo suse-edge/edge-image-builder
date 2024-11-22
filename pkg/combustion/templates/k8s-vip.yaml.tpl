@@ -43,10 +43,10 @@ spec:
     - IPv4
     - IPv6
   {{- end }}
-  {{- if and (eq .APIAddress4 "false") (eq .APIAddress6 "true") }}
-    ipFamilyPolicy: SingleStack
-    ipFamilies:
-      - IPv6
+  {{- if .OnlyIPv6 }}
+  ipFamilyPolicy: SingleStack
+  ipFamilies:
+    - IPv6
   {{- end }}
   ports:
 {{- if .RKE2 }}

@@ -63,11 +63,11 @@ try_get_ipv4() {
             return 0
         fi
 
+        ((attempt++))
         if [ $attempt -lt $MAX_ATTEMPTS ]; then
             echo "Waiting $DELAY seconds before next attempt..."
             sleep $DELAY
         fi
-        ((attempt++))
     done
     echo "Failed to get IPv4 address after $MAX_ATTEMPTS attempts"
     return 1
@@ -83,11 +83,11 @@ try_get_ipv6() {
             return 0
         fi
 
+        ((attempt++))
         if [ $attempt -lt $MAX_ATTEMPTS ]; then
             echo "Waiting $DELAY seconds before next attempt..."
             sleep $DELAY
         fi
-        ((attempt++))
     done
     echo "Failed to get IPv6 address after $MAX_ATTEMPTS attempts"
     return 1
@@ -106,14 +106,10 @@ update_config() {
     if [ "${IPv4}" = "true" ] && [ "${IPv6}" = "true" ]; then
         if [ "$prioritizeIPv6" = "false" ]; then
             echo "node-ip: ${IPv4_ADDRESS},${IPv6_ADDRESS}" >> "$CONFIG_FILE"
-            echo "Added IPv4,IPv6 addresses to config (IPv4 prioritized)"
+            echo "Added IPv4 and IPv6 addresses to config (IPv4 prioritized)"
         else
             echo "node-ip: ${IPv6_ADDRESS},${IPv4_ADDRESS}" >> "$CONFIG_FILE"
-            echo "Added IPv6,IPv4 addresses to config (IPv6 prioritized)"
-#            if [ "$IS_SERVER" = "true" ]; then
-#              echo "kube-apiserver-arg:" >> "$CONFIG_FILE"
-#              echo "  - \"advertise-address=${IPv6_ADDRESS}\"" >> "$CONFIG_FILE"
-#            fi
+            echo "Added IPv6 and IPv4 addresses to config (IPv6 prioritized)"
         fi
     elif [ "${IPv4}" = "true" ]; then
         echo "node-ip: ${IPv4_ADDRESS}" >> "$CONFIG_FILE"
@@ -121,10 +117,6 @@ update_config() {
     elif [ "${IPv6}" = "true" ]; then
         echo "node-ip: ${IPv6_ADDRESS}" >> "$CONFIG_FILE"
         echo "Added IPv6 address to config"
-#        if [ "$IS_SERVER" = "true" ]; then
-#          echo "kube-apiserver-arg:" >> "$CONFIG_FILE"
-#          echo "  - \"advertise-address=${IPv6_ADDRESS}\"" >> "$CONFIG_FILE"
-#        fi
     fi
 }
 

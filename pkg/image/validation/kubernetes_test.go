@@ -15,7 +15,7 @@ import (
 
 var validNetwork = image.Network{
 	APIHost: "host.com",
-	APIVIP:  "192.168.1.1",
+	APIVIP4: "192.168.100.1",
 }
 
 func TestValidateKubernetes(t *testing.T) {
@@ -80,7 +80,8 @@ func TestValidateKubernetes(t *testing.T) {
 				Version: "v1.30.3",
 				Network: image.Network{
 					APIHost: "host.com",
-					APIVIP:  "127.0.0.1",
+					APIVIP4: "127.0.0.1",
+					APIVIP6: "ff02::1",
 				},
 				Nodes: []image.Node{
 					{
@@ -120,6 +121,7 @@ func TestValidateKubernetes(t *testing.T) {
 				"Helm repository 'name' field for \"apache-repo\" must match the 'repositoryName' field in at least one defined Helm chart.",
 				"Helm chart 'repositoryName' \"another-apache-repo\" for Helm chart \"\" does not match the name of any defined repository.",
 				"Invalid non-unicast cluster API address (127.0.0.1) for field 'apiVIP'.",
+				"Invalid non-unicast cluster API address (ff02::1) for field 'apiVIP6'.",
 			},
 		},
 	}
@@ -1096,58 +1098,190 @@ func TestValidateNetwork(t *testing.T) {
 				"The 'apiVIP' field is required in the 'network' section for multi node clusters.",
 			},
 		},
-		`valid ipv4`: {
+		`valid IPv4`: {
 			K8s: image.Kubernetes{
 				Network: image.Network{
-					APIVIP: "192.168.1.1",
+					APIVIP4: "192.168.1.1",
 				},
 			},
 		},
-		`valid ipv6`: {
+		`invalid IPv4`: {
 			K8s: image.Kubernetes{
 				Network: image.Network{
-					APIVIP: "fd12:3456:789a::21",
-				},
-			},
-		},
-		`invalid ipv4`: {
-			K8s: image.Kubernetes{
-				Network: image.Network{
-					APIVIP: "500.168.1.1",
+					APIVIP4: "500.168.1.1",
 				},
 			},
 			ExpectedFailedMessages: []string{
 				"Invalid address value \"500.168.1.1\" for field 'apiVIP'.",
 			},
 		},
-		`non-unicast ipv4`: {
+		`valid IPv6`: {
 			K8s: image.Kubernetes{
 				Network: image.Network{
-					APIVIP: "127.0.0.1",
+					APIVIP6: "fd12:3456:789a::21",
+				},
+			},
+		},
+		`invalid IPv6`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIVIP6: "xxxx:3456:789a::21",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid address value \"xxxx:3456:789a::21\" for field 'apiVIP6'.",
+			},
+		},
+		`valid dualstack`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIVIP4: "192.168.1.1",
+					APIVIP6: "fd12:3456:789a::21",
+				},
+			},
+		},
+		`invalid dualstack IPv4 non unicast`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIVIP4: "127.0.0.1",
+					APIVIP6: "fd12:3456:789a::21",
 				},
 			},
 			ExpectedFailedMessages: []string{
 				"Invalid non-unicast cluster API address (127.0.0.1) for field 'apiVIP'.",
 			},
 		},
-		`invalid ipv6`: {
+		`invalid dualstack IPv6 non unicast`: {
 			K8s: image.Kubernetes{
 				Network: image.Network{
-					APIVIP: "xxxx:3456:789a::21",
+					APIVIP4: "192.168.1.1",
+					APIVIP6: "ff02::1",
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Invalid address value \"xxxx:3456:789a::21\" for field 'apiVIP'.",
+				"Invalid non-unicast cluster API address (ff02::1) for field 'apiVIP6'.",
 			},
 		},
-		`non-unicast ipv6`: {
+		`invalid dualstack both non unicast`: {
 			K8s: image.Kubernetes{
 				Network: image.Network{
-					APIVIP: "ff02::1",
+					APIVIP4: "127.0.0.1",
+					APIVIP6: "ff02::1",
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Invalid non-unicast cluster API address (ff02::1) for field 'apiVIP'.",
+				"Invalid non-unicast cluster API address (127.0.0.1) for field 'apiVIP'.",
+				"Invalid non-unicast cluster API address (ff02::1) for field 'apiVIP6'.",
+			},
+		},
+		`invalid dualstack IPv4 not valid`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIVIP4: "500.168.1.1",
+					APIVIP6: "fd12:3456:789a::21",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid address value \"500.168.1.1\" for field 'apiVIP'.",
+			},
+		},
+		`invalid dualstack IPv6 not valid`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIVIP4: "192.168.1.1",
+					APIVIP6: "xxxx:3456:789a::21",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid address value \"xxxx:3456:789a::21\" for field 'apiVIP6'.",
+			},
+		},
+		`undefined v4 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP4: "0.0.0.0",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (0.0.0.0) for field 'apiVIP'.",
+			},
+		},
+		`undefined v6 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP6: "::",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (::) for field 'apiVIP6'.",
+			},
+		},
+		`loopback v4 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP4: "127.0.0.1",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (127.0.0.1) for field 'apiVIP'.",
+			},
+		},
+		`loopback v6 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP6: "::1",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (::1) for field 'apiVIP6'.",
+			},
+		},
+		`multicast v4 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP4: "224.224.224.224",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (224.224.224.224) for field 'apiVIP'.",
+			},
+		},
+		`multicast v6 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP6: "FF01::1",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (FF01::1) for field 'apiVIP6'.",
+			},
+		},
+		`link-local v4 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP4: "169.254.1.1",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (169.254.1.1) for field 'apiVIP'.",
+			},
+		},
+		`link-local v6 VIP`: {
+			K8s: image.Kubernetes{
+				Network: image.Network{
+					APIHost: "host.com",
+					APIVIP6: "FE80::1",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Invalid non-unicast cluster API address (FE80::1) for field 'apiVIP6'.",
 			},
 		},
 	}

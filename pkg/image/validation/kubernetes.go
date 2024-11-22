@@ -3,6 +3,8 @@ package validation
 import (
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v3"
+	"net/netip"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -14,10 +16,13 @@ import (
 )
 
 const (
-	k8sComponent = "Kubernetes"
-	httpScheme   = "http"
-	httpsScheme  = "https"
-	ociScheme    = "oci"
+	k8sComponent     = "Kubernetes"
+	httpScheme       = "http"
+	httpsScheme      = "https"
+	ociScheme        = "oci"
+	k8sDir           = "kubernetes"
+	k8sConfigDir     = "config"
+	serverConfigFile = "server.yaml"
 )
 
 var validNodeTypes = []string{image.KubernetesNodeTypeServer, image.KubernetesNodeTypeAgent}
@@ -114,6 +119,7 @@ func validateNodes(k8s *image.Kubernetes) []FailedValidation {
 
 func validateNetwork(k8s *image.Kubernetes) []FailedValidation {
 	var failures []FailedValidation
+	var err error
 
 	if k8s.Network.APIVIP4 == "" && k8s.Network.APIVIP6 == "" {
 		if len(k8s.Nodes) > 1 {
@@ -125,32 +131,131 @@ func validateNetwork(k8s *image.Kubernetes) []FailedValidation {
 		return failures
 	}
 
-	//parsedIP, err := netip.ParseAddr(k8s.Network.APIVIP4)
-	//if err != nil {
-	//	failures = append(failures, FailedValidation{
-	//		UserMessage: fmt.Sprintf("Invalid address value %q for field 'apiVIP'.", k8s.Network.APIVIP4),
-	//		Error:       err,
-	//	})
-	//
-	//	return failures
-	//}
+	var ip4 netip.Addr
+	if k8s.Network.APIVIP4 != "" {
+		ip4, err = netip.ParseAddr(k8s.Network.APIVIP4)
+		if err != nil {
+			failures = append(failures, FailedValidation{
+				UserMessage: fmt.Sprintf("Invalid address value %q for field 'apiVIP'.", k8s.Network.APIVIP4),
+				Error:       err,
+			})
 
-	//if !parsedIP.Is4() && !parsedIP.Is6() {
-	//	failures = append(failures, FailedValidation{
-	//		UserMessage: "Only IPv4 and IPv6 addresses are valid values for field 'apiVIP'.",
-	//	})
-	//
-	//	return failures
-	//}
-	//
-	//if !parsedIP.IsGlobalUnicast() {
-	//	msg := fmt.Sprintf("Invalid non-unicast cluster API address (%s) for field 'apiVIP'.", k8s.Network.APIVIP4)
-	//	failures = append(failures, FailedValidation{
-	//		UserMessage: msg,
-	//	})
-	//}
+			return failures
+		}
+	}
+
+	var ip6 netip.Addr
+	if k8s.Network.APIVIP6 != "" {
+		ip6, err = netip.ParseAddr(k8s.Network.APIVIP6)
+		if err != nil {
+			failures = append(failures, FailedValidation{
+				UserMessage: fmt.Sprintf("Invalid address value %q for field 'apiVIP6'.", k8s.Network.APIVIP6),
+				Error:       err,
+			})
+
+			return failures
+		}
+	}
+
+	if k8s.Network.APIVIP4 != "" && !ip4.Is4() {
+		failures = append(failures, FailedValidation{
+			UserMessage: "Only IPv4 addresses are valid for field 'apiVIP'.",
+		})
+	}
+
+	if k8s.Network.APIVIP6 != "" && !ip6.Is6() {
+		failures = append(failures, FailedValidation{
+			UserMessage: "Only a IPv6 addresses are valid for field 'apiVIP6'.",
+		})
+	}
+
+	if k8s.Network.APIVIP4 != "" && !ip4.IsGlobalUnicast() {
+		msg := fmt.Sprintf("Invalid non-unicast cluster API address (%s) for field 'apiVIP'.", k8s.Network.APIVIP4)
+		failures = append(failures, FailedValidation{
+			UserMessage: msg,
+		})
+	}
+
+	if k8s.Network.APIVIP6 != "" && !ip6.IsGlobalUnicast() {
+		msg := fmt.Sprintf("Invalid non-unicast cluster API address (%s) for field 'apiVIP6'.", k8s.Network.APIVIP6)
+		failures = append(failures, FailedValidation{
+			UserMessage: msg,
+		})
+	}
 
 	return failures
+}
+
+func validateConfig(k8s *image.Kubernetes, ctx *image.Context) []FailedValidation {
+	var failures []FailedValidation
+
+	if k8s.Network.APIVIP4 == "" && k8s.Network.APIVIP6 == "" {
+		return failures
+	}
+
+	serverConfigPath := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir, serverConfigFile)
+	configFile, err := os.ReadFile(serverConfigPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			failures = append(failures, FailedValidation{
+				UserMessage: fmt.Sprintf("Kubernetes server config could not be found at '%s,' dualstack configuration requires a defined cluster-cidr and service-cidr.", serverConfigPath),
+			})
+		} else {
+			failures = append(failures, FailedValidation{
+				UserMessage: "Kubernetes server config could not be read",
+				Error:       err,
+			})
+		}
+	}
+
+	serverConfig := map[string]any{}
+	if err = yaml.Unmarshal(configFile, &serverConfig); err != nil {
+		failures = append(failures, FailedValidation{
+			UserMessage: "Parsing kubernetes server config file",
+			Error:       err,
+		})
+
+		return failures
+	}
+
+	if clusterCIDR, ok := serverConfig["cluster-cidr"].(string); ok {
+		if len(cidrs) == 2 {
+			err = checkCIDR(clusterCIDR)
+		} else {
+			failures = append(failures, FailedValidation{
+				UserMessage: "Kubernetes server config cluster-cidr should have both IPv4 and IPv6 configured",
+			})
+		}
+	} else {
+		failures = append(failures, FailedValidation{
+			UserMessage: "Kubernetes server config must contain cluster-cidr when configuring dualstack",
+		})
+	}
+
+	return failures
+}
+
+func checkCIDR(cidr string) error {
+	cidrs := strings.Split(cidr, ",")
+	firstCIDR, err := netip.ParseAddr(cidrs[0])
+	if err != nil {
+		return fmt.Errorf("parsing first CIDR %w", err)
+	}
+
+	secondCIDR, err := netip.ParseAddr(cidrs[1])
+	if err != nil {
+		return fmt.Errorf("parsing second CIDR %w", err)
+	}
+
+	if firstCIDR.Is4() && secondCIDR.Is4() {
+		return fmt.Errorf("both CIDRs cannot be IPv4, one must be IPv6")
+	}
+
+	if firstCIDR.Is6() && secondCIDR.Is6() {
+		return fmt.Errorf("both CIDRs cannot be IPv6, one must be IPv6")
+	}
+
+	return nil
 }
 
 func validateManifestURLs(k8s *image.Kubernetes) []FailedValidation {

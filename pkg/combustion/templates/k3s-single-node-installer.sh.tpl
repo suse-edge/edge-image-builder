@@ -74,7 +74,6 @@ mkdir -p /etc/rancher/k3s/
 cp {{ .configFilePath }}/{{ .configFile }} /etc/rancher/k3s/config.yaml
 
 {{- if .apiVIP6 }}
-chmod +x {{ .setNodeIPScript }}
 sh {{ .setNodeIPScript }}
 {{- end }}
 

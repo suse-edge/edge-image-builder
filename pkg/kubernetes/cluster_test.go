@@ -1,7 +1,9 @@
 package kubernetes
 
 import (
+	"fmt"
 	"net/netip"
+	"path/filepath"
 	"testing"
 
 	"github.com/google/uuid"
@@ -15,7 +17,7 @@ func TestNewCluster_SingleNodeRKE2_MissingConfig(t *testing.T) {
 		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
-			APIVIP:  "192.168.122.50",
+			APIVIP4: "192.168.122.50",
 		},
 	}
 
@@ -40,7 +42,7 @@ func TestNewCluster_SingleNodeK3s_MissingConfig(t *testing.T) {
 		Version: "v1.30.3+k3s1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
-			APIVIP:  "192.168.122.50",
+			APIVIP4: "192.168.122.50",
 		},
 	}
 
@@ -64,17 +66,64 @@ func TestNewCluster_SingleNode_ExistingConfig(t *testing.T) {
 	kubernetes := &image.Kubernetes{
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
-			APIVIP:  "192.168.122.50",
+			APIVIP4: "192.168.122.50",
 		},
 	}
 
-	cluster, err := NewCluster(kubernetes, "testdata")
+	cluster, err := NewCluster(kubernetes, filepath.Join("testdata", "default"))
 	require.NoError(t, err)
 
 	require.NotNil(t, cluster.ServerConfig)
 	assert.Equal(t, "calico", cluster.ServerConfig["cni"])
 	assert.Equal(t, "totally-not-generated-one", cluster.ServerConfig["token"])
-	assert.Equal(t, []string{"192.168.122.50", "api.suse.edge.com"}, cluster.ServerConfig["tls-san"])
+	assert.ElementsMatch(t, []string{"192.168.122.50", "api.suse.edge.com"}, cluster.ServerConfig["tls-san"])
+	assert.Equal(t, true, cluster.ServerConfig["selinux"])
+	assert.Nil(t, cluster.ServerConfig["server"])
+
+	assert.Empty(t, cluster.InitialiserName)
+	assert.Nil(t, cluster.InitialiserConfig)
+	assert.Nil(t, cluster.AgentConfig)
+}
+
+func TestNewCluster_SingleNode_ExistingConfigIPv6(t *testing.T) {
+	kubernetes := &image.Kubernetes{
+		Network: image.Network{
+			APIHost: "api.suse.edge.com",
+			APIVIP6: "fd12:3456:789a::21",
+		},
+	}
+
+	cluster, err := NewCluster(kubernetes, filepath.Join("testdata", "default"))
+	require.NoError(t, err)
+
+	require.NotNil(t, cluster.ServerConfig)
+	assert.Equal(t, "calico", cluster.ServerConfig["cni"])
+	assert.Equal(t, "totally-not-generated-one", cluster.ServerConfig["token"])
+	assert.ElementsMatch(t, []string{"fd12:3456:789a::21", "api.suse.edge.com"}, cluster.ServerConfig["tls-san"])
+	assert.Equal(t, true, cluster.ServerConfig["selinux"])
+	assert.Nil(t, cluster.ServerConfig["server"])
+
+	assert.Empty(t, cluster.InitialiserName)
+	assert.Nil(t, cluster.InitialiserConfig)
+	assert.Nil(t, cluster.AgentConfig)
+}
+
+func TestNewCluster_SingleNode_ExistingConfigDualstack(t *testing.T) {
+	kubernetes := &image.Kubernetes{
+		Network: image.Network{
+			APIHost: "api.suse.edge.com",
+			APIVIP4: "192.168.122.50",
+			APIVIP6: "fd12:3456:789a::21",
+		},
+	}
+
+	cluster, err := NewCluster(kubernetes, filepath.Join("testdata", "dualstack-prio-ipv4"))
+	require.NoError(t, err)
+
+	require.NotNil(t, cluster.ServerConfig)
+	assert.Equal(t, "calico", cluster.ServerConfig["cni"])
+	assert.Equal(t, "totally-not-generated-one", cluster.ServerConfig["token"])
+	assert.ElementsMatch(t, []string{"fd12:3456:789a::21", "api.suse.edge.com", "192.168.122.50"}, cluster.ServerConfig["tls-san"])
 	assert.Equal(t, true, cluster.ServerConfig["selinux"])
 	assert.Nil(t, cluster.ServerConfig["server"])
 
@@ -88,7 +137,7 @@ func TestNewCluster_MultiNodeRKE2_MissingConfig(t *testing.T) {
 		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
-			APIVIP:  "192.168.122.50",
+			APIVIP4: "192.168.122.50",
 		},
 		Nodes: []image.Node{
 			{
@@ -138,7 +187,7 @@ func TestNewCluster_MultiNodeRKE2_ExistingConfig(t *testing.T) {
 		Version: "v1.30.3+rke2r1",
 		Network: image.Network{
 			APIHost: "api.suse.edge.com",
-			APIVIP:  "192.168.122.50",
+			APIVIP4: "192.168.122.50",
 		},
 		Nodes: []image.Node{
 			{
@@ -152,7 +201,7 @@ func TestNewCluster_MultiNodeRKE2_ExistingConfig(t *testing.T) {
 		},
 	}
 
-	cluster, err := NewCluster(kubernetes, "testdata")
+	cluster, err := NewCluster(kubernetes, filepath.Join("testdata", "default"))
 	require.NoError(t, err)
 
 	assert.Equal(t, "node1.suse.com", cluster.InitialiserName)
@@ -170,6 +219,156 @@ func TestNewCluster_MultiNodeRKE2_ExistingConfig(t *testing.T) {
 	assert.Equal(t, []string{"192.168.122.50", "api.suse.edge.com"}, cluster.ServerConfig["tls-san"])
 	assert.Equal(t, "totally-not-generated-one", cluster.ServerConfig["token"])
 	assert.Equal(t, "https://192.168.122.50:9345", cluster.ServerConfig["server"])
+	assert.Equal(t, true, cluster.ServerConfig["selinux"])
+	assert.Nil(t, cluster.ServerConfig["debug"])
+
+	require.NotNil(t, cluster.AgentConfig)
+	assert.Equal(t, "calico", cluster.AgentConfig["cni"])
+	assert.Equal(t, "totally-not-generated-one", cluster.AgentConfig["token"])
+	assert.Equal(t, "https://192.168.122.50:9345", cluster.AgentConfig["server"])
+	assert.Equal(t, true, cluster.AgentConfig["debug"])
+	assert.Equal(t, true, cluster.AgentConfig["selinux"])
+	assert.Nil(t, cluster.AgentConfig["tls-san"])
+}
+
+func TestNewCluster_MultiNodeRKE2_ExistingConfigIPv6(t *testing.T) {
+	kubernetes := &image.Kubernetes{
+		Version: "v1.30.3+rke2r1",
+		Network: image.Network{
+			APIHost: "api.suse.edge.com",
+			APIVIP6: "fd12:3456:789a::21",
+		},
+		Nodes: []image.Node{
+			{
+				Hostname: "node1.suse.com",
+				Type:     "server",
+			},
+			{
+				Hostname: "node2.suse.com",
+				Type:     "agent",
+			},
+		},
+	}
+
+	cluster, err := NewCluster(kubernetes, filepath.Join("testdata", "default"))
+	require.NoError(t, err)
+
+	assert.Equal(t, "node1.suse.com", cluster.InitialiserName)
+
+	require.NotNil(t, cluster.InitialiserConfig)
+	assert.Equal(t, "calico", cluster.InitialiserConfig["cni"])
+	assert.Equal(t, []string{"fd12:3456:789a::21", "api.suse.edge.com"}, cluster.InitialiserConfig["tls-san"])
+	assert.Equal(t, "totally-not-generated-one", cluster.InitialiserConfig["token"])
+	assert.Nil(t, cluster.InitialiserConfig["server"])
+	assert.Equal(t, true, cluster.InitialiserConfig["selinux"])
+	assert.Nil(t, cluster.InitialiserConfig["debug"])
+
+	require.NotNil(t, cluster.ServerConfig)
+	assert.Equal(t, "calico", cluster.ServerConfig["cni"])
+	assert.Equal(t, []string{"fd12:3456:789a::21", "api.suse.edge.com"}, cluster.ServerConfig["tls-san"])
+	assert.Equal(t, "totally-not-generated-one", cluster.ServerConfig["token"])
+	assert.Equal(t, "https://[fd12:3456:789a::21]:9345", cluster.ServerConfig["server"])
+	assert.Equal(t, true, cluster.ServerConfig["selinux"])
+	assert.Nil(t, cluster.ServerConfig["debug"])
+
+	require.NotNil(t, cluster.AgentConfig)
+	assert.Equal(t, "calico", cluster.AgentConfig["cni"])
+	assert.Equal(t, "totally-not-generated-one", cluster.AgentConfig["token"])
+	assert.Equal(t, "https://[fd12:3456:789a::21]:9345", cluster.AgentConfig["server"])
+	assert.Equal(t, true, cluster.AgentConfig["debug"])
+	assert.Equal(t, true, cluster.AgentConfig["selinux"])
+	assert.Nil(t, cluster.AgentConfig["tls-san"])
+}
+
+func TestNewCluster_MultiNodeRKE2_ExistingConfigDualstackPrioritizeIPv6(t *testing.T) {
+	kubernetes := &image.Kubernetes{
+		Version: "v1.30.3+rke2r1",
+		Network: image.Network{
+			APIHost: "api.suse.edge.com",
+			APIVIP4: "192.168.122.50",
+			APIVIP6: "fd12:3456:789a::21",
+		},
+		Nodes: []image.Node{
+			{
+				Hostname: "node1.suse.com",
+				Type:     "server",
+			},
+			{
+				Hostname: "node2.suse.com",
+				Type:     "agent",
+			},
+		},
+	}
+
+	cluster, err := NewCluster(kubernetes, filepath.Join("testdata", "dualstack-prio-ipv6"))
+	require.NoError(t, err)
+
+	assert.Equal(t, "node1.suse.com", cluster.InitialiserName)
+
+	require.NotNil(t, cluster.InitialiserConfig)
+	assert.Equal(t, "calico", cluster.InitialiserConfig["cni"])
+	assert.ElementsMatch(t, []string{"192.168.122.50", "fd12:3456:789a::21", "api.suse.edge.com"}, cluster.InitialiserConfig["tls-san"])
+	assert.Equal(t, "totally-not-generated-one", cluster.InitialiserConfig["token"])
+	assert.Nil(t, cluster.InitialiserConfig["server"])
+	assert.Equal(t, true, cluster.InitialiserConfig["selinux"])
+	assert.Nil(t, cluster.InitialiserConfig["debug"])
+
+	require.NotNil(t, cluster.ServerConfig)
+	assert.Equal(t, "calico", cluster.ServerConfig["cni"])
+	assert.ElementsMatch(t, []string{"192.168.122.50", "fd12:3456:789a::21", "api.suse.edge.com"}, cluster.ServerConfig["tls-san"])
+	assert.Equal(t, "totally-not-generated-one", cluster.ServerConfig["token"])
+	assert.Equal(t, "https://[fd12:3456:789a::21]:9345", cluster.ServerConfig["server"])
+	assert.Equal(t, true, cluster.ServerConfig["selinux"])
+	assert.Nil(t, cluster.ServerConfig["debug"])
+
+	require.NotNil(t, cluster.AgentConfig)
+	assert.Equal(t, "calico", cluster.AgentConfig["cni"])
+	assert.Equal(t, "totally-not-generated-one", cluster.AgentConfig["token"])
+	assert.Equal(t, "https://[fd12:3456:789a::21]:9345", cluster.AgentConfig["server"])
+	assert.Equal(t, true, cluster.AgentConfig["debug"])
+	assert.Equal(t, true, cluster.AgentConfig["selinux"])
+	assert.Nil(t, cluster.AgentConfig["tls-san"])
+}
+
+func TestNewCluster_MultiNodeRKE2_ExistingConfigDualstackPrioritizeIPv4(t *testing.T) {
+	kubernetes := &image.Kubernetes{
+		Version: "v1.30.3+rke2r1",
+		Network: image.Network{
+			APIHost: "api.suse.edge.com",
+			APIVIP4: "192.168.122.50",
+			APIVIP6: "fd12:3456:789a::21",
+		},
+		Nodes: []image.Node{
+			{
+				Hostname: "node1.suse.com",
+				Type:     "server",
+			},
+			{
+				Hostname: "node2.suse.com",
+				Type:     "agent",
+			},
+		},
+	}
+
+	cluster, err := NewCluster(kubernetes, filepath.Join("testdata", "dualstack-prio-ipv4"))
+	require.NoError(t, err)
+
+	assert.Equal(t, "node1.suse.com", cluster.InitialiserName)
+
+	require.NotNil(t, cluster.InitialiserConfig)
+	assert.Equal(t, "calico", cluster.InitialiserConfig["cni"])
+	assert.ElementsMatch(t, []string{"192.168.122.50", "fd12:3456:789a::21", "api.suse.edge.com"}, cluster.InitialiserConfig["tls-san"])
+	assert.Equal(t, "totally-not-generated-one", cluster.InitialiserConfig["token"])
+	assert.Nil(t, cluster.InitialiserConfig["server"])
+	assert.Equal(t, true, cluster.InitialiserConfig["selinux"])
+	assert.Nil(t, cluster.InitialiserConfig["debug"])
+
+	require.NotNil(t, cluster.ServerConfig)
+	assert.Equal(t, "calico", cluster.ServerConfig["cni"])
+	assert.ElementsMatch(t, []string{"192.168.122.50", "fd12:3456:789a::21", "api.suse.edge.com"}, cluster.ServerConfig["tls-san"])
+	assert.Equal(t, "totally-not-generated-one", cluster.ServerConfig["token"])
+	assert.Equal(t, "https://192.168.122.50:9345", cluster.ServerConfig["server"])
+	fmt.Println(cluster.ServerConfig["server"])
 	assert.Equal(t, true, cluster.ServerConfig["selinux"])
 	assert.Nil(t, cluster.ServerConfig["debug"])
 
@@ -277,19 +476,28 @@ func TestIdentifyInitialiserNode(t *testing.T) {
 func TestSetClusterAPIAddress(t *testing.T) {
 	config := map[string]any{}
 
-	setClusterAPIAddress(config, nil, 9345)
+	setClusterAPIAddress(config, nil, nil, 9345, false)
 	assert.NotContains(t, config, "server")
 
 	ip4, err := netip.ParseAddr("192.168.122.50")
 	assert.NoError(t, err)
 
-	setClusterAPIAddress(config, &ip4, 9345)
-	assert.Equal(t, "https://192.168.122.50:9345", config["server"])
-
 	ip6, err := netip.ParseAddr("fd12:3456:789a::21")
 	assert.NoError(t, err)
 
-	setClusterAPIAddress(config, &ip6, 9345)
+	setClusterAPIAddress(config, &ip4, nil, 9345, false)
+	assert.Equal(t, "https://192.168.122.50:9345", config["server"])
+
+	setClusterAPIAddress(config, &ip4, &ip6, 9345, false)
+	assert.Equal(t, "https://192.168.122.50:9345", config["server"])
+
+	setClusterAPIAddress(config, &ip4, &ip6, 9345, true)
+	assert.Equal(t, "https://[fd12:3456:789a::21]:9345", config["server"])
+
+	setClusterAPIAddress(config, nil, &ip6, 9345, true)
+	assert.Equal(t, "https://[fd12:3456:789a::21]:9345", config["server"])
+
+	setClusterAPIAddress(config, &ip4, &ip6, 9345, true)
 	assert.Equal(t, "https://[fd12:3456:789a::21]:9345", config["server"])
 }
 

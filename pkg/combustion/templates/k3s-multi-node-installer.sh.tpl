@@ -102,7 +102,6 @@ cp $CONFIGFILE /etc/rancher/k3s/config.yaml
 
 if [ "$NODETYPE" = "server" ]; then
 {{- if .apiVIP6 }}
-chmod +x {{ .setNodeIPScript }}
 sh {{ .setNodeIPScript }}
 {{- end }}
 fi

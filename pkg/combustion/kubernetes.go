@@ -3,7 +3,6 @@ package combustion
 import (
 	_ "embed"
 	"fmt"
-	"net/netip"
 	"os"
 	"path/filepath"
 	"strings"
@@ -169,12 +168,12 @@ func (c *Combustion) configureK3S(ctx *image.Context, cluster *kubernetes.Cluste
 
 	singleNode := len(ctx.ImageDefinition.Kubernetes.Nodes) < 2
 	if singleNode {
-		if ctx.ImageDefinition.Kubernetes.Network.APIVIP4 == "" || ctx.ImageDefinition.Kubernetes.Network.APIVIP6 == "" {
-			zap.S().Info("Virtual IP address for k3s cluster is not provided and will not be configured")
+		if ctx.ImageDefinition.Kubernetes.Network.APIVIP4 == "" && ctx.ImageDefinition.Kubernetes.Network.APIVIP6 == "" {
+			zap.S().Info("Virtual IP address(es) for k3s cluster is not provided and will not be configured")
 		} else {
-			log.Audit("WARNING: A Virtual IP address for the k3s cluster has been provided. " +
+			log.Audit("WARNING: Virtual IP address(es) for the k3s cluster provided. " +
 				"An external IP address for the Ingress Controller (Traefik) must be manually configured.")
-			zap.S().Warn("Virtual IP address for k3s cluster is requested and will invalidate Traefik configuration")
+			zap.S().Warn("Virtual IP address(es) for k3s cluster requested and will invalidate Traefik configuration")
 		}
 
 		templateValues["configFile"] = k8sServerConfigFile
@@ -183,7 +182,7 @@ func (c *Combustion) configureK3S(ctx *image.Context, cluster *kubernetes.Cluste
 	}
 
 	log.Audit("WARNING: An external IP address for the Ingress Controller (Traefik) must be manually configured in multi-node clusters.")
-	zap.S().Warn("Virtual IP address for k3s cluster is necessary for multi node clusters and will invalidate Traefik configuration")
+	zap.S().Warn("Virtual IP address(es) for k3s cluster necessary for multi node clusters and will invalidate Traefik configuration")
 
 	templateValues["nodes"] = ctx.ImageDefinition.Kubernetes.Nodes
 	templateValues["initialiser"] = cluster.InitialiserName
@@ -266,8 +265,8 @@ func (c *Combustion) configureRKE2(ctx *image.Context, cluster *kubernetes.Clust
 
 	singleNode := len(ctx.ImageDefinition.Kubernetes.Nodes) < 2
 	if singleNode {
-		if ctx.ImageDefinition.Kubernetes.Network.APIVIP4 == "" || ctx.ImageDefinition.Kubernetes.Network.APIVIP6 == "" {
-			zap.S().Info("Virtual IP address for RKE2 cluster is not provided and will not be configured")
+		if ctx.ImageDefinition.Kubernetes.Network.APIVIP4 == "" && ctx.ImageDefinition.Kubernetes.Network.APIVIP6 == "" {
+			zap.S().Info("Virtual IP address(es) for RKE2 cluster is not provided and will not be configured")
 		}
 
 		templateValues["configFile"] = k8sServerConfigFile
@@ -329,36 +328,21 @@ func (c *Combustion) downloadRKE2Artefacts(ctx *image.Context, cluster *kubernet
 }
 
 func kubernetesVIPManifest(k *image.Kubernetes) (string, error) {
-	var err error
-
-	var ip4 netip.Addr
-	if k.Network.APIVIP4 != "" {
-		ip4, err = netip.ParseAddr(k.Network.APIVIP4)
-		if err != nil {
-			return "", fmt.Errorf("parsing kubernetes apiVIP address: %w", err)
-		}
-	}
-
-	var ip6 netip.Addr
-	if k.Network.APIVIP6 != "" {
-		ip6, err = netip.ParseAddr(k.Network.APIVIP6)
-		if err != nil {
-			return "", fmt.Errorf("parsing kubernetes apiVIP address: %w", err)
-		}
+	onlyIPv6 := false
+	if k.Network.APIVIP4 == "" && k.Network.APIVIP6 != "" {
+		onlyIPv6 = true
 	}
 
 	manifest := struct {
 		APIAddress4 string
 		APIAddress6 string
-		IsIPV4      bool
-		IsIPV6      bool
 		RKE2        bool
+		OnlyIPv6    bool
 	}{
 		APIAddress4: k.Network.APIVIP4,
 		APIAddress6: k.Network.APIVIP6,
-		IsIPV4:      ip4.Is4(),
-		IsIPV6:      ip6.Is6(),
 		RKE2:        strings.Contains(k.Version, image.KubernetesDistroRKE2),
+		OnlyIPv6:    onlyIPv6,
 	}
 
 	return template.Parse("k8s-vip", k8sVIPManifest, &manifest)
@@ -383,7 +367,7 @@ func createNodeIPScript(ctx *image.Context, serverConfig map[string]any) error {
 	}{
 		IPv4Enabled:    isIPv4Enabled,
 		IPv6Enabled:    true,
-		PrioritizeIPv6: isIPv6Priority(serverConfig),
+		PrioritizeIPv6: kubernetes.IsIPv6Priority(serverConfig),
 		RKE2:           strings.Contains(ctx.ImageDefinition.Kubernetes.Version, image.KubernetesDistroRKE2),
 	}
 
@@ -522,15 +506,4 @@ func HelmCertsPath(ctx *image.Context) string {
 
 func kubernetesArtefactsPath(ctx *image.Context) string {
 	return filepath.Join(ctx.ArtefactsDir, k8sDir)
-}
-
-func isIPv6Priority(serverConfig map[string]any) bool {
-	if clusterCIDR, ok := serverConfig["cluster-cidr"].(string); ok {
-		cidrs := strings.Split(clusterCIDR, ",")
-		if len(cidrs) > 0 {
-			return strings.Contains(cidrs[0], ":")
-		}
-	}
-
-	return false
 }
