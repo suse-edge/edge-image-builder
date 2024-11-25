@@ -10,7 +10,7 @@ require (
 	github.com/containers/podman/v4 v4.9.5
 	github.com/google/uuid v1.6.0
 	github.com/schollz/progressbar/v3 v3.17.1
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli/v2 v2.27.5
 	go.uber.org/zap v1.27.0
 	golang.org/x/sync v0.9.0
