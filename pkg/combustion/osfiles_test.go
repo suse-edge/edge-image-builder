@@ -48,7 +48,9 @@ func TestConfigureOSFiles(t *testing.T) {
 	expectedCombustionScript := filepath.Join(ctx.CombustionDir, osFilesScriptName)
 	contents, err := os.ReadFile(expectedCombustionScript)
 	require.NoError(t, err)
+	assert.Contains(t, string(contents), "mount /var")
 	assert.Contains(t, string(contents), "cp -R")
+	assert.Contains(t, string(contents), "umount /var")
 
 	// -- Files
 	expectedFile := filepath.Join(ctx.CombustionDir, osFilesConfigDir, "etc", "ssh", "test-config-file")

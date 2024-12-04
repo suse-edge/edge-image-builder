@@ -124,6 +124,7 @@ type RawConfiguration struct {
 
 type Packages struct {
 	NoGPGCheck      bool      `yaml:"noGPGCheck"`
+	EnableExtras    bool      `yaml:"enableExtras"`
 	PKGList         []string  `yaml:"packageList"`
 	AdditionalRepos []AddRepo `yaml:"additionalRepos"`
 	RegCode         string    `yaml:"sccRegistrationCode"`

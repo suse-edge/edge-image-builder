@@ -10,9 +10,13 @@ set -euo pipefail
 #  LocalGPGList - list of local GPG keys that will be imported in the resolver image
 #  NoGPGCheck   - when set to true skips the GPG validation for all third-party repositories and local RPMs
 #  Arch         - sets the architecture of the rpm packages to pull
+#  EnableExtras - registers the SL-Micro-Extras repo for use in resolution
 
 {{ if ne .RegCode "" }}
 suseconnect -r {{ .RegCode }}
+{{ if $.EnableExtras -}}
+suseconnect -p SL-Micro-Extras/6.0/{{ .Arch }}
+{{ end -}}
 zypper ref
 trap "suseconnect -d" EXIT
 {{ end -}}
@@ -37,6 +41,8 @@ rpm --import {{ .LocalGPGList }}
 {{ if and .LocalRPMList (not .NoGPGCheck) }}
 rpm -Kv {{ .LocalRPMList }}
 {{ end -}}
+
+mkdir -p {{.CacheDir}}
 
 zypper \
   --pkg-cache-dir {{.CacheDir}} \
