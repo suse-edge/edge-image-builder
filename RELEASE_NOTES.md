@@ -4,12 +4,13 @@
 
 ## General
 
-* Added 'apiVIP6' in Kubernetes field for IPv6 addresses
 * Implemented IPv6 Single and Dual-Stack handling for Kubernetes
 
 ## API
 
 ### Image Definition Changes
+
+* Added 'apiVIP6' in Kubernetes field for IPv6 addresses
 
 ### Image Configuration Directory Changes
 

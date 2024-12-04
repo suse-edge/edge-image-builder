@@ -59,7 +59,7 @@ try_get_ipv4() {
         echo "Attempt $attempt to get IPv4 address..."
         IPv4_ADDRESS=$(get_default_ipv4_address)
         if [ -n "$IPv4_ADDRESS" ]; then
-            echo "Successfully got IPv4 address: $IPv4_ADDRESS"
+            echo "Identified default IPv4 address: $IPv4_ADDRESS"
             return 0
         fi
 
@@ -79,7 +79,7 @@ try_get_ipv6() {
         echo "Attempt $attempt to get IPv6 address..."
         IPv6_ADDRESS=$(get_default_ipv6_address)
         if [ -n "$IPv6_ADDRESS" ]; then
-            echo "Successfully got IPv6 address: $IPv6_ADDRESS"
+            echo "Identified default IPv6 address:$IPv6_ADDRESS"
             return 0
         fi
 
@@ -103,7 +103,7 @@ if [ "${IPv6}" = "true" ]; then
 fi
 
 update_config() {
-    if [ "${IPv4}" = "true" ] && [ "${IPv6}" = "true" ]; then
+    if [ -n "${IPv4_ADDRESS}" ] && [ -n "${IPv6_ADDRESS}" ]; then
         if [ "$prioritizeIPv6" = "false" ]; then
             echo "node-ip: ${IPv4_ADDRESS},${IPv6_ADDRESS}" >> "$CONFIG_FILE"
             echo "Added IPv4 and IPv6 addresses to config (IPv4 prioritized)"
@@ -111,10 +111,10 @@ update_config() {
             echo "node-ip: ${IPv6_ADDRESS},${IPv4_ADDRESS}" >> "$CONFIG_FILE"
             echo "Added IPv6 and IPv4 addresses to config (IPv6 prioritized)"
         fi
-    elif [ "${IPv4}" = "true" ]; then
+    elif [ -n "${IPv4_ADDRESS}" ]; then
         echo "node-ip: ${IPv4_ADDRESS}" >> "$CONFIG_FILE"
         echo "Added IPv4 address to config"
-    elif [ "${IPv6}" = "true" ]; then
+    elif [ -n "${IPv6_ADDRESS}" ]; then
         echo "node-ip: ${IPv6_ADDRESS}" >> "$CONFIG_FILE"
         echo "Added IPv6 address to config"
     fi

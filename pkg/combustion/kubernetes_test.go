@@ -479,7 +479,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sClusterIPv4(t *testing.T) {
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, K8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -611,7 +611,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sClusterIPv6(t *testing.T) {
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, K8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -746,7 +746,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sClusterDualstackPrioIPv4(t *t
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, K8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -882,7 +882,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sClusterDualstackPrioIPv6(t *t
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, K8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -1224,7 +1224,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2ClusterIPv4(t *testing.T) {
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, K8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -1349,7 +1349,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2ClusterIPv6(t *testing.T) {
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, K8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -1477,7 +1477,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2ClusterDualstackPrioIPv4(t *
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, K8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -1606,7 +1606,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2ClusterDualstackPrioIPv6(t *
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, K8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -1770,7 +1770,7 @@ values: content`, "oci://registry-1.docker.io/bitnamicharts"),
 
 	assert.Equal(t, "$ARTEFACTS_DIR/kubernetes/manifests", manifestsPath)
 
-	manifestPath := filepath.Join(ctx.ArtefactsDir, k8sDir, k8sManifestsDir, "sample-crd.yaml")
+	manifestPath := filepath.Join(ctx.ArtefactsDir, K8sDir, k8sManifestsDir, "sample-crd.yaml")
 
 	b, err := os.ReadFile(manifestPath)
 	require.NoError(t, err)
@@ -1781,7 +1781,7 @@ values: content`, "oci://registry-1.docker.io/bitnamicharts"),
 	assert.Contains(t, contents, "name: my-nginx")
 	assert.Contains(t, contents, "image: nginx:1.14.2")
 
-	chartPath := filepath.Join(ctx.ArtefactsDir, k8sDir, k8sManifestsDir, "apache.yaml")
+	chartPath := filepath.Join(ctx.ArtefactsDir, K8sDir, k8sManifestsDir, "apache.yaml")
 	chartContent := `apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:
@@ -1885,7 +1885,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	assert.Equal(t, []any{"192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
 
 	// Manifest assertions
-	manifest := filepath.Join(ctx.ArtefactsDir, k8sDir, k8sManifestsDir, "sample-crd.yaml")
+	manifest := filepath.Join(ctx.ArtefactsDir, K8sDir, k8sManifestsDir, "sample-crd.yaml")
 	info, err = os.Stat(manifest)
 	require.NoError(t, err)
 	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
@@ -1930,7 +1930,7 @@ func TestKubernetesVIPManifestValidIPV6(t *testing.T) {
 
 	assert.Contains(t, manifest, "- fd12:3456:789a::21/128")
 	assert.Contains(t, manifest, "- name: k8s-api")
-	assert.Contains(t, manifest, "ipFamilies:\n      - IPv6")
+	assert.Contains(t, manifest, "ipFamilies:\n    - IPv6")
 	assert.Contains(t, manifest, "ipFamilyPolicy: SingleStack")
 	assert.NotContains(t, manifest, "rke2")
 }
@@ -1952,4 +1952,114 @@ func TestKubernetesVIPManifestDualstack(t *testing.T) {
 	assert.Contains(t, manifest, "- name: k8s-api")
 	assert.NotContains(t, manifest, "ipFamilies:\n      - IPv6")
 	assert.NotContains(t, manifest, "ipFamilyPolicy: SingleStack")
+}
+
+func TestCreateNodeIPScriptDualstackIPv6PrioK3s(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
+		Version: "v1.30.3+k3s1",
+		Network: image.Network{
+			APIVIP4: "192.168.1.1",
+			APIVIP6: "fd12:3456:789a::21",
+		},
+	}
+
+	serverConfig := map[string]any{
+		"cluster-cidr": "fd12:3456:789b::/48,10.42.0.0/16",
+		"service-cidr": "fd12:3456:789c::/112,10.43.0.0/16",
+	}
+
+	err := createNodeIPScript(ctx, serverConfig)
+	require.NoError(t, err)
+
+	nodeIPScript := filepath.Join(ctx.CombustionDir, setNodeIPScript)
+	b, err := os.ReadFile(nodeIPScript)
+	require.NoError(t, err)
+
+	contents := string(b)
+
+	assert.Contains(t, contents, "IPv4=true")
+	assert.Contains(t, contents, "IPv6=true")
+	assert.Contains(t, contents, "prioritizeIPv6=true")
+	assert.Contains(t, contents, "CONFIG_FILE=\"/etc/rancher/k3s/config.yaml\"")
+}
+
+func TestCreateNodeIPScriptDualstackIPv4PrioRke2(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
+		Version: "v1.30.3+rke2r1",
+		Network: image.Network{
+			APIVIP4: "192.168.1.1",
+			APIVIP6: "fd12:3456:789a::21",
+		},
+	}
+
+	serverConfig := map[string]any{
+		"cluster-cidr": "10.42.0.0/16,fd12:3456:789b::/48",
+		"service-cidr": "10.43.0.0/16,fd12:3456:789c::/112",
+	}
+
+	err := createNodeIPScript(ctx, serverConfig)
+	require.NoError(t, err)
+
+	nodeIPScript := filepath.Join(ctx.CombustionDir, setNodeIPScript)
+	b, err := os.ReadFile(nodeIPScript)
+	require.NoError(t, err)
+
+	contents := string(b)
+
+	assert.Contains(t, contents, "IPv4=true")
+	assert.Contains(t, contents, "IPv6=true")
+	assert.Contains(t, contents, "prioritizeIPv6=false")
+	assert.Contains(t, contents, "CONFIG_FILE=\"/etc/rancher/rke2/config.yaml\"")
+}
+
+func TestCreateNodeIPScriptIPv4Only(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
+		Version: "v1.30.3+rke2r1",
+		Network: image.Network{
+			APIVIP4: "192.168.1.1",
+		},
+	}
+
+	serverConfig := map[string]any{}
+
+	err := createNodeIPScript(ctx, serverConfig)
+	require.Nil(t, err)
+}
+
+func TestCreateNodeIPScriptIPv6Only(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
+		Version: "v1.30.3+rke2r1",
+		Network: image.Network{
+			APIVIP6: "fd12:3456:789a::21",
+		},
+	}
+
+	serverConfig := map[string]any{
+		"cluster-cidr": "fd12:3456:789b::/48",
+		"service-cidr": "fd12:3456:789c::/112",
+	}
+
+	err := createNodeIPScript(ctx, serverConfig)
+	require.NoError(t, err)
+
+	nodeIPScript := filepath.Join(ctx.CombustionDir, setNodeIPScript)
+	b, err := os.ReadFile(nodeIPScript)
+	require.NoError(t, err)
+
+	contents := string(b)
+
+	assert.Contains(t, contents, "IPv6=true")
+	assert.Contains(t, contents, "CONFIG_FILE=\"/etc/rancher/rke2/config.yaml\"")
 }
