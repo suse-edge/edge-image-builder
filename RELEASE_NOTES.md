@@ -9,6 +9,7 @@
 ### Image Definition Changes
 
 * Added the `enableExtras` flag to enable the SUSE Linux Extras repository during RPM resolution.
+* Added support for custom registration server (like RMT/SUMA) via `sccRegistrationUrl`.
 
 ### Image Configuration Directory Changes
 

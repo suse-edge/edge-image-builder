@@ -128,6 +128,7 @@ type Packages struct {
 	PKGList         []string  `yaml:"packageList"`
 	AdditionalRepos []AddRepo `yaml:"additionalRepos"`
 	RegCode         string    `yaml:"sccRegistrationCode"`
+	RegUrl          string    `yaml:"sccRegistrationUrl"`
 }
 
 type AddRepo struct {

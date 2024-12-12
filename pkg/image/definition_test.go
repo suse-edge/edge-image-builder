@@ -117,6 +117,7 @@ func TestParse(t *testing.T) {
 	}
 	assert.Equal(t, expectedAddRepos, pkgConfig.AdditionalRepos)
 	assert.Equal(t, "INTERNAL-USE-ONLY-foo-bar", pkgConfig.RegCode)
+	assert.Equal(t, "https://registration-server.like-rmt-suma.here/", pkgConfig.RegUrl)
 
 	// Operating System -> IsoConfiguration
 	installDevice := definition.OperatingSystem.IsoConfiguration.InstallDevice

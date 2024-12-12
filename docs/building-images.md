@@ -114,6 +114,7 @@ operatingSystem:
       - url: https://example2.com
         unsigned: true
     sccRegistrationCode: scc-reg-code
+    sccRegistrationUrl: https://registration-server.like-rmt-suma.here/
 ```
 
 ### Type-specific Configuration
@@ -200,6 +201,10 @@ see the [Installing packages](./installing-packages.md) guide.
     * `unsigned` - This must be set to `true` if the repository is unsigned. 
   * `sccRegistrationCode` - Specifies the SUSE Customer Center registration code in plain text, which is used to
   connect to SUSE's internal RPM repositories.
+  * `sccRegistrationUrl` - Specifies a registration server like RMT or SUMA, which is used to connect download SUSE's internal RPM repositories. Defaults to `https://scc.suse.com`.
+
+> **_NOTE:_** When using `sccRegistrationUrl` over `https` it's important that the `eib` recognizes the CA of the `registrationUrl`.
+> This is common on RMT setups. See the [RMT docs on configuring clients](https://documentation.suse.com/sles/15-SP6/html/SLES-all/cha-rmt-client.html).
 
 ## Kubernetes
 
