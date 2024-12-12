@@ -30,7 +30,7 @@ const (
 	helmCertsDir  = "certs"
 
 	k8sInitServerConfigFile = "init_server.yaml"
-	K8sServerConfigFile     = "server.yaml"
+	k8sServerConfigFile     = "server.yaml"
 	k8sAgentConfigFile      = "agent.yaml"
 
 	k8sInstallScript = "20-k8s-install.sh"
@@ -164,6 +164,7 @@ func (c *Combustion) configureK3S(ctx *image.Context, cluster *kubernetes.Cluste
 		"configFilePath":  prependArtefactPath(K8sDir),
 		"registryMirrors": prependArtefactPath(filepath.Join(K8sDir, registryMirrorsFileName)),
 		"setNodeIPScript": setNodeIPScript,
+		"getNodeIP":       kubernetes.GetNodeIP(cluster.ServerConfig),
 	}
 
 	singleNode := len(ctx.ImageDefinition.Kubernetes.Nodes) < 2
@@ -176,7 +177,7 @@ func (c *Combustion) configureK3S(ctx *image.Context, cluster *kubernetes.Cluste
 			zap.S().Warn("Virtual IP address(es) for k3s cluster requested and will invalidate Traefik configuration")
 		}
 
-		templateValues["configFile"] = K8sServerConfigFile
+		templateValues["configFile"] = k8sServerConfigFile
 
 		return storeKubernetesInstaller(ctx, "single-node-k3s", k3sSingleNodeInstaller, templateValues)
 	}
@@ -261,6 +262,7 @@ func (c *Combustion) configureRKE2(ctx *image.Context, cluster *kubernetes.Clust
 		"configFilePath":  prependArtefactPath(K8sDir),
 		"registryMirrors": prependArtefactPath(filepath.Join(K8sDir, registryMirrorsFileName)),
 		"setNodeIPScript": setNodeIPScript,
+		"getNodeIP":       kubernetes.GetNodeIP(cluster.ServerConfig),
 	}
 
 	singleNode := len(ctx.ImageDefinition.Kubernetes.Nodes) < 2
@@ -269,7 +271,7 @@ func (c *Combustion) configureRKE2(ctx *image.Context, cluster *kubernetes.Clust
 			zap.S().Info("Virtual IP address(es) for RKE2 cluster not provided and will not be configured")
 		}
 
-		templateValues["configFile"] = K8sServerConfigFile
+		templateValues["configFile"] = k8sServerConfigFile
 
 		return storeKubernetesInstaller(ctx, "single-node-rke2", rke2SingleNodeInstaller, templateValues)
 	}
@@ -332,12 +334,10 @@ func kubernetesVIPManifest(k *image.Kubernetes) (string, error) {
 		APIAddress4 string
 		APIAddress6 string
 		RKE2        bool
-		OnlyIPv6    bool
 	}{
 		APIAddress4: k.Network.APIVIP4,
 		APIAddress6: k.Network.APIVIP6,
 		RKE2:        strings.Contains(k.Version, image.KubernetesDistroRKE2),
-		OnlyIPv6:    k.Network.APIVIP4 == "" && k.Network.APIVIP6 != "",
 	}
 
 	return template.Parse("k8s-vip", k8sVIPManifest, &manifest)
@@ -356,12 +356,10 @@ func createNodeIPScript(ctx *image.Context, serverConfig map[string]any) error {
 
 	manifest := struct {
 		IPv4Enabled    bool
-		IPv6Enabled    bool
 		PrioritizeIPv6 bool
 		RKE2           bool
 	}{
 		IPv4Enabled:    isIPv4Enabled,
-		IPv6Enabled:    true,
 		PrioritizeIPv6: kubernetes.IsIPv6Priority(serverConfig),
 		RKE2:           strings.Contains(ctx.ImageDefinition.Kubernetes.Version, image.KubernetesDistroRKE2),
 	}
@@ -380,7 +378,7 @@ func createNodeIPScript(ctx *image.Context, serverConfig map[string]any) error {
 }
 
 func storeKubernetesClusterConfig(cluster *kubernetes.Cluster, destPath string) error {
-	serverConfig := filepath.Join(destPath, K8sServerConfigFile)
+	serverConfig := filepath.Join(destPath, k8sServerConfigFile)
 	if err := storeKubernetesConfig(cluster.ServerConfig, serverConfig); err != nil {
 		return fmt.Errorf("storing server config file: %w", err)
 	}
@@ -480,7 +478,7 @@ func (c *Combustion) configureManifests(ctx *image.Context) (string, error) {
 }
 
 func KubernetesConfigPath(ctx *image.Context) string {
-	return filepath.Join(ctx.ImageConfigDir, K8sDir, K8sConfigDir, K8sServerConfigFile)
+	return filepath.Join(ctx.ImageConfigDir, K8sDir, K8sConfigDir, k8sServerConfigFile)
 }
 
 func localKubernetesManifestsPath() string {

@@ -43,7 +43,7 @@ DELAY=5
 IPv4_ADDRESS=""
 IPv6_ADDRESS=""
 IPv4={{ .IPv4Enabled }}
-IPv6={{ .IPv6Enabled }}
+IPv6=true
 prioritizeIPv6={{ .PrioritizeIPv6 }}
 
 {{- if .RKE2 }}
@@ -109,25 +109,16 @@ update_config() {
             echo "Added IPv4 and IPv6 addresses to config (IPv4 prioritized)"
         else
             echo "node-ip: ${IPv6_ADDRESS},${IPv4_ADDRESS}" >> "$CONFIG_FILE"
-            echo "Added IPv6 and IPv4 addresses to config (IPv6 prioritized)"
+            echo "Added IPv6 and IPv4 addresses ${IPv6_ADDRESS},${IPv4_ADDRESS} to config (IPv6 prioritized)"
         fi
     elif [ -n "${IPv4_ADDRESS}" ]; then
         echo "node-ip: ${IPv4_ADDRESS}" >> "$CONFIG_FILE"
-        echo "Added IPv4 address to config"
+        echo "Added IPv4 ${IPv4_ADDRESS} address to config"
     elif [ -n "${IPv6_ADDRESS}" ]; then
         echo "node-ip: ${IPv6_ADDRESS}" >> "$CONFIG_FILE"
-        echo "Added IPv6 address to config"
+        echo "Added IPv6 ${IPv6_ADDRESS} address to config"
     fi
 }
-
-echo "----------------------------------------"
-echo "Results:"
-if [ "${IPv4}" = "true" ]; then
-    echo "IPv4 Address: ${IPv4_ADDRESS:-Not found}"
-fi
-if [ "${IPv6}" = "true" ]; then
-    echo "IPv6 Address: ${IPv6_ADDRESS:-Not found}"
-fi
 
 if { [ "${IPv4}" = "true" ] && [ -n "$IPv4_ADDRESS" ]; } || \
    { [ "${IPv6}" = "true" ] && [ -n "$IPv6_ADDRESS" ]; }; then

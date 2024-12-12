@@ -474,9 +474,8 @@ defined by the Kubernetes cluster being installed.
     * `certs` - Contains certificate files/bundles for TLS verification. Untrusted HTTPS-enabled Helm repositories and
     registries must be provided with a certificate file/bundle or require `skipTLSVerify` to be true.
 
-> **_NOTE:_** For dual-stack clusters, a Kubernetes `server.yaml` file is required and it must contain
-> a dual-stack `service-cidr` and `cluster-cidr` according the [K3s](https://docs.k3s.io/networking/basic-network-options#dual-stack-ipv4--ipv6-networking) and [RKE2 documentation](https://docs.rke2.io/networking/basic_network_options#dual-stack-configuration).
-
+> **_NOTE:_** For dual-stack clusters, a Kubernetes `server.yaml` file is required and it must contain a
+> valid dual-stack `service-cidr` and `cluster-cidr` values according to the official [K3s](https://docs.k3s.io/networking/basic-network-options#dual-stack-ipv4--ipv6-networking) and [RKE2](https://docs.rke2.io/networking/basic_network_options#dual-stack-configuration) documentation.
 ## Elemental
 
 Automatic Elemental registration may be configured for the image. The Elemental registration configuration file,

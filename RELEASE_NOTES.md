@@ -4,13 +4,13 @@
 
 ## General
 
-* Implemented IPv6 Single and Dual-Stack handling for Kubernetes
+* Added single-stack IPv6 and dual-stack networking support for Kubernetes
 
 ## API
 
 ### Image Definition Changes
 
-* Added 'apiVIP6' in Kubernetes field for IPv6 addresses
+* Added `kubernetes.network.apiVIP6` field to enable cluster LoadBalancer based on IPv6 address
 * Added the `enableExtras` flag to enable the SUSE Linux Extras repository during RPM resolution.
 
 ### Image Configuration Directory Changes

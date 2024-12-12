@@ -1,7 +1,6 @@
 package kubernetes
 
 import (
-	"fmt"
 	"net/netip"
 	"path/filepath"
 	"testing"
@@ -368,7 +367,6 @@ func TestNewCluster_MultiNodeRKE2_ExistingConfigDualstackPrioritizeIPv4(t *testi
 	assert.ElementsMatch(t, []string{"192.168.122.50", "fd12:3456:789a::21", "api.suse.edge.com"}, cluster.ServerConfig["tls-san"])
 	assert.Equal(t, "totally-not-generated-one", cluster.ServerConfig["token"])
 	assert.Equal(t, "https://192.168.122.50:9345", cluster.ServerConfig["server"])
-	fmt.Println(cluster.ServerConfig["server"])
 	assert.Equal(t, true, cluster.ServerConfig["selinux"])
 	assert.Nil(t, cluster.ServerConfig["debug"])
 
@@ -475,9 +473,6 @@ func TestIdentifyInitialiserNode(t *testing.T) {
 
 func TestSetClusterAPIAddress(t *testing.T) {
 	config := map[string]any{}
-
-	setClusterAPIAddress(config, nil, nil, 9345, false)
-	assert.NotContains(t, config, "server")
 
 	ip4, err := netip.ParseAddr("192.168.122.50")
 	assert.NoError(t, err)

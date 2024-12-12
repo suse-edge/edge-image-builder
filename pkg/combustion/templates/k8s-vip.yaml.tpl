@@ -42,8 +42,7 @@ spec:
   ipFamilies:
     - IPv4
     - IPv6
-  {{- end }}
-  {{- if .OnlyIPv6 }}
+  {{- else if .APIAddress6 }}
   ipFamilyPolicy: SingleStack
   ipFamilies:
     - IPv6

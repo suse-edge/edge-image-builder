@@ -55,6 +55,11 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 		return &Cluster{ServerConfig: serverConfig}, nil
 	}
 
+	initialiser := identifyInitialiserNode(kubernetes)
+	if initialiser == "" {
+		return nil, fmt.Errorf("failed to determine cluster initialiser")
+	}
+
 	var ip4 *netip.Addr
 	if kubernetes.Network.APIVIP4 != "" {
 		ip4Holder, ipErr := netip.ParseAddr(kubernetes.Network.APIVIP4)
@@ -98,11 +103,6 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 	delete(initialiserConfig, serverKey)
 	if strings.Contains(kubernetes.Version, image.KubernetesDistroK3S) {
 		initialiserConfig[clusterInitKey] = true
-	}
-
-	initialiser := identifyInitialiserNode(kubernetes)
-	if initialiser == "" {
-		return nil, fmt.Errorf("failed to determine cluster initialiser")
 	}
 
 	return &Cluster{
@@ -194,7 +194,9 @@ func setMultiNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string]
 	}
 
 	setClusterToken(config)
-	appendClusterTLSSAN(config, kubernetes.Network.APIVIP4)
+	if kubernetes.Network.APIVIP4 != "" {
+		appendClusterTLSSAN(config, kubernetes.Network.APIVIP4)
+	}
 
 	if kubernetes.Network.APIVIP6 != "" {
 		appendClusterTLSSAN(config, kubernetes.Network.APIVIP6)
@@ -232,8 +234,7 @@ func setClusterCNI(config map[string]any) {
 
 func setClusterAPIAddress(config map[string]any, ip4 *netip.Addr, ip6 *netip.Addr, port uint16, prioritizeIPv6 bool) {
 	if ip4 == nil && ip6 == nil {
-		zap.S().Warn("Attempted to set an empty cluster API address")
-		return
+		panic("Attempted to set an empty cluster API address")
 	}
 
 	switch {
@@ -334,10 +335,16 @@ func IsIPv6Priority(serverConfig map[string]any) bool {
 	if clusterCIDR, ok := serverConfig["cluster-cidr"].(string); ok {
 		cidrs := strings.Split(clusterCIDR, ",")
 		if len(cidrs) > 0 {
-			fmt.Println(strings.Contains(cidrs[0], ":"))
 			return strings.Contains(cidrs[0], "::")
 		}
 	}
 
 	return false
+}
+
+func GetNodeIP(serverConfig map[string]any) bool {
+	if _, ok := serverConfig["node-ip"].(string); ok {
+		return false
+	}
+	return true
 }

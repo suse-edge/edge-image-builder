@@ -103,7 +103,7 @@ mkdir -p /etc/rancher/rke2/
 cp $CONFIGFILE /etc/rancher/rke2/config.yaml
 
 if [ "$NODETYPE" = "server" ]; then
-{{- if .apiVIP6 }}
+{{- if and .apiVIP6 .getNodeIP}}
 sh {{ .setNodeIPScript }}
 {{- end }}
 fi

@@ -122,9 +122,9 @@ func TestValidateKubernetes(t *testing.T) {
 				"Helm chart 'name' field must be defined.",
 				"Helm repository 'name' field for \"apache-repo\" must match the 'repositoryName' field in at least one defined Helm chart.",
 				"Helm chart 'repositoryName' \"another-apache-repo\" for Helm chart \"\" does not match the name of any defined repository.",
-				"Invalid non-unicast cluster API address (127.0.0.1) for field 'apiVIP'.",
-				"Invalid non-unicast cluster API address (ff02::1) for field 'apiVIP6'.",
-				fmt.Sprintf("Kubernetes server config could not be found at '%s,' dualstack configuration requires a defined cluster-cidr and service-cidr.", filepath.Join(configDir, "kubernetes", "config", "server.yaml")),
+				"Non-unicast cluster API address (127.0.0.1) for field 'apiVIP' is invalid.",
+				"Non-unicast cluster API address (127.0.0.1) for field 'apiVIP' is invalid.",
+				fmt.Sprintf("Kubernetes server config could not be found at '%s,' dual-stack configuration requires a valid cluster-cidr and service-cidr.", filepath.Join(configDir, "kubernetes", "config", "server.yaml")),
 			},
 		},
 	}
@@ -1098,7 +1098,7 @@ func TestValidateNetwork(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"The 'apiVIP' field is required in the 'network' section for multi node clusters.",
+				"At least one of the (`apiVIP`, `apiVIP6`) fields is required in the 'network' section for multi node clusters.",
 			},
 		},
 		`valid IPv4`: {
@@ -1151,7 +1151,7 @@ func TestValidateNetwork(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Invalid non-unicast cluster API address (127.0.0.1) for field 'apiVIP'.",
+				"Non-unicast cluster API address (127.0.0.1) for field 'apiVIP' is invalid.",
 			},
 		},
 		`invalid dualstack IPv6 non unicast`: {
@@ -1162,7 +1162,7 @@ func TestValidateNetwork(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Invalid non-unicast cluster API address (ff02::1) for field 'apiVIP6'.",
+				"Non-unicast cluster API address (ff02::1) for field 'apiVIP6' is invalid.",
 			},
 		},
 		`invalid dualstack both non unicast`: {
@@ -1173,8 +1173,8 @@ func TestValidateNetwork(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Invalid non-unicast cluster API address (127.0.0.1) for field 'apiVIP'.",
-				"Invalid non-unicast cluster API address (ff02::1) for field 'apiVIP6'.",
+				"Non-unicast cluster API address (127.0.0.1) for field 'apiVIP' is invalid.",
+				"Non-unicast cluster API address (ff02::1) for field 'apiVIP6' is invalid.",
 			},
 		},
 		`invalid dualstack IPv4 not valid`: {
@@ -1207,7 +1207,7 @@ func TestValidateNetwork(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Invalid non-unicast cluster API address (0.0.0.0) for field 'apiVIP'.",
+				"Non-unicast cluster API address (0.0.0.0) for field 'apiVIP' is invalid.",
 			},
 		},
 		`undefined v6 VIP`: {
@@ -1218,7 +1218,7 @@ func TestValidateNetwork(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Invalid non-unicast cluster API address (::) for field 'apiVIP6'.",
+				"Non-unicast cluster API address (::) for field 'apiVIP6' is invalid.",
 			},
 		},
 		`loopback v4 VIP`: {
@@ -1229,7 +1229,7 @@ func TestValidateNetwork(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Invalid non-unicast cluster API address (127.0.0.1) for field 'apiVIP'.",
+				"Non-unicast cluster API address (127.0.0.1) for field 'apiVIP' is invalid.",
 			},
 		},
 		`loopback v6 VIP`: {
@@ -1240,7 +1240,7 @@ func TestValidateNetwork(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Invalid non-unicast cluster API address (::1) for field 'apiVIP6'.",
+				"Non-unicast cluster API address (::1) for field 'apiVIP6' is invalid.",
 			},
 		},
 		`multicast v4 VIP`: {
@@ -1251,7 +1251,7 @@ func TestValidateNetwork(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Invalid non-unicast cluster API address (224.224.224.224) for field 'apiVIP'.",
+				"Non-unicast cluster API address (224.224.224.224) for field 'apiVIP' is invalid.",
 			},
 		},
 		`multicast v6 VIP`: {
@@ -1262,7 +1262,7 @@ func TestValidateNetwork(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Invalid non-unicast cluster API address (FF01::1) for field 'apiVIP6'.",
+				"Non-unicast cluster API address (FF01::1) for field 'apiVIP6' is invalid.",
 			},
 		},
 		`link-local v4 VIP`: {
@@ -1273,7 +1273,7 @@ func TestValidateNetwork(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Invalid non-unicast cluster API address (169.254.1.1) for field 'apiVIP'.",
+				"Non-unicast cluster API address (169.254.1.1) for field 'apiVIP' is invalid.",
 			},
 		},
 		`link-local v6 VIP`: {
@@ -1284,7 +1284,7 @@ func TestValidateNetwork(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Invalid non-unicast cluster API address (FE80::1) for field 'apiVIP6'.",
+				"Non-unicast cluster API address (FE80::1) for field 'apiVIP6' is invalid.",
 			},
 		},
 	}
@@ -1334,9 +1334,8 @@ func TestValidateConfigValidIPv6Prio(t *testing.T) {
 
 	configFile := filepath.Join(serverConfigDir, "server.yaml")
 	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
-	fmt.Println(configFile)
 
-	failures := validateConfig(&k8s, configDir)
+	failures := validateDualStackConfig(&k8s, configFile)
 
 	assert.Len(t, failures, 0)
 }
@@ -1367,9 +1366,8 @@ func TestValidateConfigValidIPv4Prio(t *testing.T) {
 
 	configFile := filepath.Join(serverConfigDir, "server.yaml")
 	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
-	fmt.Println(configFile)
 
-	failures := validateConfig(&k8s, configDir)
+	failures := validateDualStackConfig(&k8s, configFile)
 
 	assert.Len(t, failures, 0)
 }
@@ -1400,9 +1398,8 @@ func TestValidateConfigInvalidBothIPv4(t *testing.T) {
 
 	configFile := filepath.Join(serverConfigDir, "server.yaml")
 	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
-	fmt.Println(configFile)
 
-	failures := validateConfig(&k8s, configDir)
+	failures := validateDualStackConfig(&k8s, configFile)
 
 	assert.Len(t, failures, 2)
 
@@ -1411,8 +1408,8 @@ func TestValidateConfigInvalidBothIPv4(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr not properly configured both CIDRs cannot be IPv4, one must be IPv6")
-	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr not properly configured both CIDRs cannot be IPv4, one must be IPv6")
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr values '10.42.0.0/16' and 10.44.0.0/16 cannot both be IPv4, one must be IPv6")
+	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr values '10.43.0.0/16' and 10.45.0.0/16 cannot both be IPv4, one must be IPv6")
 }
 
 func TestValidateConfigInvalidBothIPv6(t *testing.T) {
@@ -1441,9 +1438,8 @@ func TestValidateConfigInvalidBothIPv6(t *testing.T) {
 
 	configFile := filepath.Join(serverConfigDir, "server.yaml")
 	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
-	fmt.Println(configFile)
 
-	failures := validateConfig(&k8s, configDir)
+	failures := validateDualStackConfig(&k8s, configFile)
 
 	assert.Len(t, failures, 2)
 
@@ -1452,8 +1448,8 @@ func TestValidateConfigInvalidBothIPv6(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr not properly configured both CIDRs cannot be IPv6, one must be IPv4")
-	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr not properly configured both CIDRs cannot be IPv6, one must be IPv4")
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr values 'fd12:3456:789d::/48' and fd12:3456:789b::/48 cannot both be IPv6, one must be IPv4")
+	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr values 'fd12:3456:789e::/112' and fd12:3456:789c::/112 cannot both be IPv6, one must be IPv4")
 }
 
 func TestValidateConfigInvalidServerConfigNotConfigured(t *testing.T) {
@@ -1462,7 +1458,7 @@ func TestValidateConfigInvalidServerConfigNotConfigured(t *testing.T) {
 		APIVIP6: "fd12:3456:789a::21",
 	}}
 
-	failures := validateConfig(&k8s, "")
+	failures := validateDualStackConfig(&k8s, "fake-path")
 
 	assert.Len(t, failures, 1)
 
@@ -1471,13 +1467,13 @@ func TestValidateConfigInvalidServerConfigNotConfigured(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config could not be found at 'kubernetes/config/server.yaml,' dualstack configuration requires a defined cluster-cidr and service-cidr.")
+	assert.Contains(t, foundMessages, "Kubernetes server config could not be found at 'fake-path,' dual-stack configuration requires a valid cluster-cidr and service-cidr.")
 }
 
 func TestValidateConfigValidAPIVIPNotConfigured(t *testing.T) {
 	k8s := image.Kubernetes{}
 
-	failures := validateConfig(&k8s, "")
+	failures := validateDualStackConfig(&k8s, "")
 	assert.Len(t, failures, 0)
 }
 
@@ -1487,28 +1483,11 @@ func TestValidateConfigInvalidClusterCIDRNotConfigured(t *testing.T) {
 		APIVIP6: "fd12:3456:789a::21",
 	}}
 
-	configDir, err := os.MkdirTemp("", "eib-config-")
-	require.NoError(t, err)
-
-	defer func() {
-		assert.NoError(t, os.RemoveAll(configDir))
-	}()
-
-	serverConfigDir := filepath.Join(configDir, "kubernetes", "config")
-	require.NoError(t, os.MkdirAll(serverConfigDir, os.ModePerm))
-
 	serverConfig := map[string]any{
 		"service-cidr": "10.43.0.0/16,fd12:3456:789c::/112",
 	}
 
-	b, err := yaml.Marshal(serverConfig)
-	require.NoError(t, err)
-
-	configFile := filepath.Join(serverConfigDir, "server.yaml")
-	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
-	fmt.Println(configFile)
-
-	failures := validateConfig(&k8s, configDir)
+	failures := validateCIDRConfig(&k8s, serverConfig)
 
 	assert.Len(t, failures, 1)
 
@@ -1517,7 +1496,7 @@ func TestValidateConfigInvalidClusterCIDRNotConfigured(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config must contain cluster-cidr when configuring dualstack")
+	assert.Contains(t, foundMessages, "Kubernetes server config must contain a valid cluster-cidr when configuring dual-stack")
 }
 
 func TestValidateConfigInvalidServiceCIDRNotConfigured(t *testing.T) {
@@ -1526,28 +1505,11 @@ func TestValidateConfigInvalidServiceCIDRNotConfigured(t *testing.T) {
 		APIVIP6: "fd12:3456:789a::21",
 	}}
 
-	configDir, err := os.MkdirTemp("", "eib-config-")
-	require.NoError(t, err)
-
-	defer func() {
-		assert.NoError(t, os.RemoveAll(configDir))
-	}()
-
-	serverConfigDir := filepath.Join(configDir, "kubernetes", "config")
-	require.NoError(t, os.MkdirAll(serverConfigDir, os.ModePerm))
-
 	serverConfig := map[string]any{
 		"cluster-cidr": "fd12:3456:789b::/48,10.42.0.0/16",
 	}
 
-	b, err := yaml.Marshal(serverConfig)
-	require.NoError(t, err)
-
-	configFile := filepath.Join(serverConfigDir, "server.yaml")
-	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
-	fmt.Println(configFile)
-
-	failures := validateConfig(&k8s, configDir)
+	failures := validateCIDRConfig(&k8s, serverConfig)
 
 	assert.Len(t, failures, 1)
 
@@ -1556,7 +1518,7 @@ func TestValidateConfigInvalidServiceCIDRNotConfigured(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config must contain service-cidr when configuring dualstack")
+	assert.Contains(t, foundMessages, "Kubernetes server config must contain a valid service-cidr when configuring dual-stack")
 }
 
 func TestValidateConfigInvalidIPv4(t *testing.T) {
@@ -1564,30 +1526,12 @@ func TestValidateConfigInvalidIPv4(t *testing.T) {
 		APIVIP4: "192.168.1.1",
 		APIVIP6: "fd12:3456:789a::21",
 	}}
-
-	configDir, err := os.MkdirTemp("", "eib-config-")
-	require.NoError(t, err)
-
-	defer func() {
-		assert.NoError(t, os.RemoveAll(configDir))
-	}()
-
-	serverConfigDir := filepath.Join(configDir, "kubernetes", "config")
-	require.NoError(t, os.MkdirAll(serverConfigDir, os.ModePerm))
-
 	serverConfig := map[string]any{
 		"cluster-cidr": "500.42.0.0/16,fd12:3456:789b::/48",
 		"service-cidr": "500.43.0.0/16,fd12:3456:789c::/112",
 	}
 
-	b, err := yaml.Marshal(serverConfig)
-	require.NoError(t, err)
-
-	configFile := filepath.Join(serverConfigDir, "server.yaml")
-	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
-	fmt.Println(configFile)
-
-	failures := validateConfig(&k8s, configDir)
+	failures := validateCIDRConfig(&k8s, serverConfig)
 
 	assert.Len(t, failures, 2)
 
@@ -1596,8 +1540,8 @@ func TestValidateConfigInvalidIPv4(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr not properly configured parsing first CIDR value netip.ParsePrefix(\"500.42.0.0/16\"): ParseAddr(\"500.42.0.0\"): IPv4 field has value >255")
-	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr not properly configured parsing first CIDR value netip.ParsePrefix(\"500.43.0.0/16\"): ParseAddr(\"500.43.0.0\"): IPv4 field has value >255")
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr value '500.42.0.0/16' could not be parsed")
+	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr value '500.43.0.0/16' could not be parsed")
 }
 
 func TestValidateConfigInvalidIPv6(t *testing.T) {
@@ -1606,29 +1550,12 @@ func TestValidateConfigInvalidIPv6(t *testing.T) {
 		APIVIP6: "fd12:3456:789a::21",
 	}}
 
-	configDir, err := os.MkdirTemp("", "eib-config-")
-	require.NoError(t, err)
-
-	defer func() {
-		assert.NoError(t, os.RemoveAll(configDir))
-	}()
-
-	serverConfigDir := filepath.Join(configDir, "kubernetes", "config")
-	require.NoError(t, os.MkdirAll(serverConfigDir, os.ModePerm))
-
 	serverConfig := map[string]any{
 		"cluster-cidr": "10.42.0.0/16,xxxx:3456:789b::/48",
 		"service-cidr": "10.43.0.0/16,xxxx:3456:789c::/112",
 	}
 
-	b, err := yaml.Marshal(serverConfig)
-	require.NoError(t, err)
-
-	configFile := filepath.Join(serverConfigDir, "server.yaml")
-	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
-	fmt.Println(configFile)
-
-	failures := validateConfig(&k8s, configDir)
+	failures := validateCIDRConfig(&k8s, serverConfig)
 
 	assert.Len(t, failures, 2)
 
@@ -1637,8 +1564,8 @@ func TestValidateConfigInvalidIPv6(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr not properly configured parsing second CIDR value netip.ParsePrefix(\"xxxx:3456:789b::/48\"): ParseAddr(\"xxxx:3456:789b::\"): each colon-separated field must have at least one digit (at \"xxxx:3456:789b::\")")
-	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr not properly configured parsing second CIDR value netip.ParsePrefix(\"xxxx:3456:789c::/112\"): ParseAddr(\"xxxx:3456:789c::\"): each colon-separated field must have at least one digit (at \"xxxx:3456:789c::\")")
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr value 'xxxx:3456:789b::/48' could not be parsed")
+	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr value 'xxxx:3456:789c::/112' could not be parsed")
 }
 
 func TestValidateConfigInvalidIPv6Prefix(t *testing.T) {
@@ -1647,29 +1574,12 @@ func TestValidateConfigInvalidIPv6Prefix(t *testing.T) {
 		APIVIP6: "fd12:3456:789a::21",
 	}}
 
-	configDir, err := os.MkdirTemp("", "eib-config-")
-	require.NoError(t, err)
-
-	defer func() {
-		assert.NoError(t, os.RemoveAll(configDir))
-	}()
-
-	serverConfigDir := filepath.Join(configDir, "kubernetes", "config")
-	require.NoError(t, os.MkdirAll(serverConfigDir, os.ModePerm))
-
 	serverConfig := map[string]any{
 		"cluster-cidr": "10.42.0.0/16,fd12:3456:789a::/480",
 		"service-cidr": "10.43.0.0/16,fd12:3456:789a::/1122",
 	}
 
-	b, err := yaml.Marshal(serverConfig)
-	require.NoError(t, err)
-
-	configFile := filepath.Join(serverConfigDir, "server.yaml")
-	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
-	fmt.Println(configFile)
-
-	failures := validateConfig(&k8s, configDir)
+	failures := validateCIDRConfig(&k8s, serverConfig)
 
 	assert.Len(t, failures, 2)
 
@@ -1678,8 +1588,8 @@ func TestValidateConfigInvalidIPv6Prefix(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr not properly configured parsing second CIDR value netip.ParsePrefix(\"fd12:3456:789a::/480\"): prefix length out of range")
-	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr not properly configured parsing second CIDR value netip.ParsePrefix(\"fd12:3456:789a::/1122\"): prefix length out of range")
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr value 'fd12:3456:789a::/480' could not be parsed")
+	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr value 'fd12:3456:789a::/1122' could not be parsed")
 }
 
 func TestValidateConfigInvalidIPv4Prefix(t *testing.T) {
@@ -1688,29 +1598,12 @@ func TestValidateConfigInvalidIPv4Prefix(t *testing.T) {
 		APIVIP6: "fd12:3456:789a::21",
 	}}
 
-	configDir, err := os.MkdirTemp("", "eib-config-")
-	require.NoError(t, err)
-
-	defer func() {
-		assert.NoError(t, os.RemoveAll(configDir))
-	}()
-
-	serverConfigDir := filepath.Join(configDir, "kubernetes", "config")
-	require.NoError(t, os.MkdirAll(serverConfigDir, os.ModePerm))
-
 	serverConfig := map[string]any{
 		"cluster-cidr": "10.42.0.0/50,fd12:3456:789a::/48",
 		"service-cidr": "10.43.0.0/50,fd12:3456:789a::/112",
 	}
 
-	b, err := yaml.Marshal(serverConfig)
-	require.NoError(t, err)
-
-	configFile := filepath.Join(serverConfigDir, "server.yaml")
-	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
-	fmt.Println(configFile)
-
-	failures := validateConfig(&k8s, configDir)
+	failures := validateCIDRConfig(&k8s, serverConfig)
 
 	assert.Len(t, failures, 2)
 
@@ -1719,8 +1612,8 @@ func TestValidateConfigInvalidIPv4Prefix(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr not properly configured parsing first CIDR value netip.ParsePrefix(\"10.42.0.0/50\"): prefix length out of range")
-	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr not properly configured parsing first CIDR value netip.ParsePrefix(\"10.43.0.0/50\"): prefix length out of range")
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr value '10.42.0.0/50' could not be parsed")
+	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr value '10.43.0.0/50' could not be parsed")
 }
 
 func TestValidateConfigInvalidIPv4NonUnicast(t *testing.T) {
@@ -1729,29 +1622,12 @@ func TestValidateConfigInvalidIPv4NonUnicast(t *testing.T) {
 		APIVIP6: "fd12:3456:789a::21",
 	}}
 
-	configDir, err := os.MkdirTemp("", "eib-config-")
-	require.NoError(t, err)
-
-	defer func() {
-		assert.NoError(t, os.RemoveAll(configDir))
-	}()
-
-	serverConfigDir := filepath.Join(configDir, "kubernetes", "config")
-	require.NoError(t, os.MkdirAll(serverConfigDir, os.ModePerm))
-
 	serverConfig := map[string]any{
 		"cluster-cidr": "127.0.0.1/16,fd12:3456:789a::/48",
 		"service-cidr": "127.0.0.1/16,fd12:3456:789a::/112",
 	}
 
-	b, err := yaml.Marshal(serverConfig)
-	require.NoError(t, err)
-
-	configFile := filepath.Join(serverConfigDir, "server.yaml")
-	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
-	fmt.Println(configFile)
-
-	failures := validateConfig(&k8s, configDir)
+	failures := validateCIDRConfig(&k8s, serverConfig)
 
 	assert.Len(t, failures, 2)
 
@@ -1760,8 +1636,8 @@ func TestValidateConfigInvalidIPv4NonUnicast(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr not properly configured first CIDR must be a valid unicast address")
-	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr not properly configured first CIDR must be a valid unicast address")
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr value '127.0.0.1/16' must be a valid unicast address with a prefix")
+	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr value '127.0.0.1/16' must be a valid unicast address with a prefix")
 }
 
 func TestValidateConfigInvalidIPv6NonUnicast(t *testing.T) {
@@ -1770,29 +1646,12 @@ func TestValidateConfigInvalidIPv6NonUnicast(t *testing.T) {
 		APIVIP6: "fd12:3456:789a::21",
 	}}
 
-	configDir, err := os.MkdirTemp("", "eib-config-")
-	require.NoError(t, err)
-
-	defer func() {
-		assert.NoError(t, os.RemoveAll(configDir))
-	}()
-
-	serverConfigDir := filepath.Join(configDir, "kubernetes", "config")
-	require.NoError(t, os.MkdirAll(serverConfigDir, os.ModePerm))
-
 	serverConfig := map[string]any{
 		"cluster-cidr": "10.42.0.0/16,FF01::/48",
 		"service-cidr": "10.43.0.0/16,FF01::/112",
 	}
 
-	b, err := yaml.Marshal(serverConfig)
-	require.NoError(t, err)
-
-	configFile := filepath.Join(serverConfigDir, "server.yaml")
-	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
-	fmt.Println(configFile)
-
-	failures := validateConfig(&k8s, configDir)
+	failures := validateCIDRConfig(&k8s, serverConfig)
 
 	assert.Len(t, failures, 2)
 
@@ -1801,6 +1660,226 @@ func TestValidateConfigInvalidIPv6NonUnicast(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr not properly configured first CIDR must be a valid unicast address")
-	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr not properly configured first CIDR must be a valid unicast address")
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr value 'FF01::/48' must be a valid unicast address with a prefix")
+	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr value 'FF01::/112' must be a valid unicast address with a prefix")
+}
+
+func TestValidateNodeIPValid(t *testing.T) {
+	k8s := image.Kubernetes{Network: image.Network{
+		APIVIP4: "192.168.1.1",
+		APIVIP6: "fd12:3456:789a::21",
+	}}
+
+	serverConfig := map[string]any{
+		"cluster-cidr": "10.42.0.0/16,FF01::/48",
+		"service-cidr": "10.43.0.0/16,FF01::/112",
+	}
+
+	failures := validateCIDRConfig(&k8s, serverConfig)
+
+	assert.Len(t, failures, 2)
+
+	var foundMessages []string
+	for _, foundValidation := range failures {
+		foundMessages = append(foundMessages, foundValidation.UserMessage)
+	}
+
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr value 'FF01::/48' must be a valid unicast address with a prefix")
+	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr value 'FF01::/112' must be a valid unicast address with a prefix")
+}
+
+func TestValidateConfigMismatchedPrio(t *testing.T) {
+	k8s := image.Kubernetes{}
+
+	serverConfig := map[string]any{
+		"cluster-cidr": "10.42.0.0/16,fd12:3456:789b::/48",
+		"service-cidr": "fd12:3456:789c::/112,10.43.0.0/16",
+	}
+
+	failures := validateCIDRConfig(&k8s, serverConfig)
+
+	assert.Len(t, failures, 1)
+
+	var foundMessages []string
+	for _, foundValidation := range failures {
+		foundMessages = append(foundMessages, foundValidation.UserMessage)
+	}
+
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr cannot prioritize IPv4 while service-cidr prioritizes IPv6, both must have the same priority")
+}
+
+func TestValidateConfigSingleCIDRIPv6(t *testing.T) {
+	k8s := image.Kubernetes{}
+
+	serverConfig := map[string]any{
+		"cluster-cidr": "fd12:3456:789b::/48",
+		"service-cidr": "fd12:3456:789c::/112",
+	}
+
+	failures := validateCIDRConfig(&k8s, serverConfig)
+
+	assert.Len(t, failures, 0)
+}
+
+func TestValidateConfigSingleCIDRIPv4(t *testing.T) {
+	k8s := image.Kubernetes{Network: image.Network{
+		APIVIP4: "192.168.1.1",
+	}}
+
+	serverConfig := map[string]any{
+		"cluster-cidr": "10.42.0.0/16",
+		"service-cidr": "10.43.0.0/16",
+	}
+
+	failures := validateCIDRConfig(&k8s, serverConfig)
+
+	assert.Len(t, failures, 0)
+}
+
+func TestValidateNodeIPValidSingleIPv4(t *testing.T) {
+	k8s := image.Kubernetes{}
+
+	serverConfig := map[string]any{
+		"node-ip": "10.42.0.0",
+	}
+
+	failures := validateNodeIP(&k8s, serverConfig)
+
+	assert.Len(t, failures, 0)
+}
+
+func TestValidateNodeIPValidSingleIPv6(t *testing.T) {
+	k8s := image.Kubernetes{Network: image.Network{}}
+
+	serverConfig := map[string]any{
+		"node-ip": "fd12:3456:789a::21",
+	}
+
+	failures := validateNodeIP(&k8s, serverConfig)
+
+	assert.Len(t, failures, 0)
+}
+
+func TestValidateNodeIPMultipleNodesValid(t *testing.T) {
+	k8s := image.Kubernetes{Nodes: []image.Node{
+		{
+			Hostname: "agent1",
+			Type:     image.KubernetesNodeTypeAgent,
+		},
+		{
+			Hostname: "agent2",
+			Type:     image.KubernetesNodeTypeAgent,
+		},
+		{
+			Hostname:    "server",
+			Type:        image.KubernetesNodeTypeServer,
+			Initialiser: true,
+		},
+	}}
+
+	serverConfig := map[string]any{
+		"node-ip": "10.42.0.0",
+	}
+
+	failures := validateNodeIP(&k8s, serverConfig)
+
+	assert.Len(t, failures, 0)
+}
+
+func TestValidateNodeIPMultipleServersInvalid(t *testing.T) {
+	k8s := image.Kubernetes{Nodes: []image.Node{
+		{
+			Hostname: "server1",
+			Type:     image.KubernetesNodeTypeServer,
+		},
+		{
+			Hostname:    "server2",
+			Type:        image.KubernetesNodeTypeServer,
+			Initialiser: true,
+		},
+	}}
+
+	serverConfig := map[string]any{
+		"node-ip": "10.42.0.0",
+	}
+
+	failures := validateNodeIP(&k8s, serverConfig)
+
+	assert.Len(t, failures, 1)
+
+	var foundMessages []string
+	for _, foundValidation := range failures {
+		foundMessages = append(foundMessages, foundValidation.UserMessage)
+	}
+
+	assert.Contains(t, foundMessages, "Kubernetes server config node-ip can not be specified when there is more than one Kubernetes server node")
+}
+
+func TestValidateNodeIPBothSameFamilyInvalid(t *testing.T) {
+	k8s := image.Kubernetes{}
+
+	serverConfig := map[string]any{
+		"node-ip": "10.42.0.0,10.43.0.0",
+	}
+
+	failures := validateNodeIP(&k8s, serverConfig)
+
+	assert.Len(t, failures, 1)
+
+	var foundMessages []string
+	for _, foundValidation := range failures {
+		foundMessages = append(foundMessages, foundValidation.UserMessage)
+	}
+
+	assert.Contains(t, foundMessages, "Kubernetes server config node-ip 10.42.0.0 and 10.43.0.0 cannot both be of the same IP address family, one must be IPv4, and the other IPv6")
+}
+
+func TestValidateNodeIPDualstackValid(t *testing.T) {
+	k8s := image.Kubernetes{}
+
+	serverConfig := map[string]any{
+		"node-ip": "10.42.0.0,fd12:3456:789a::21",
+	}
+
+	failures := validateNodeIP(&k8s, serverConfig)
+
+	assert.Len(t, failures, 0)
+}
+
+func TestValidateNodeIPNonunicastIPv4Invalid(t *testing.T) {
+	k8s := image.Kubernetes{}
+
+	serverConfig := map[string]any{
+		"node-ip": "127.0.0.1,fd12:3456:789a::21",
+	}
+
+	failures := validateNodeIP(&k8s, serverConfig)
+
+	assert.Len(t, failures, 1)
+
+	var foundMessages []string
+	for _, foundValidation := range failures {
+		foundMessages = append(foundMessages, foundValidation.UserMessage)
+	}
+
+	assert.Contains(t, foundMessages, "Kubernetes server config node-ip 127.0.0.1 must be a valid unicast IP")
+}
+
+func TestValidateNodeIPIPv6Invalid(t *testing.T) {
+	k8s := image.Kubernetes{}
+
+	serverConfig := map[string]any{
+		"node-ip": "xxxx:3456:789a::21",
+	}
+
+	failures := validateNodeIP(&k8s, serverConfig)
+
+	assert.Len(t, failures, 1)
+
+	var foundMessages []string
+	for _, foundValidation := range failures {
+		foundMessages = append(foundMessages, foundValidation.UserMessage)
+	}
+
+	assert.Contains(t, foundMessages, "Kubernetes server config node-ip value 'xxxx:3456:789a::21' could not be parsed")
 }
