@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"strings"
@@ -54,7 +55,31 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 		return &Cluster{ServerConfig: serverConfig}, nil
 	}
 
-	setMultiNodeConfigDefaults(kubernetes, serverConfig)
+	initialiser := identifyInitialiserNode(kubernetes)
+	if initialiser == "" {
+		return nil, fmt.Errorf("failed to determine cluster initialiser")
+	}
+
+	var ip4 *netip.Addr
+	if kubernetes.Network.APIVIP4 != "" {
+		ip4Holder, ipErr := netip.ParseAddr(kubernetes.Network.APIVIP4)
+		if ipErr != nil {
+			return nil, fmt.Errorf("parsing kubernetes ipv4 address: %w", ipErr)
+		}
+		ip4 = &ip4Holder
+	}
+
+	var ip6 *netip.Addr
+	if kubernetes.Network.APIVIP6 != "" {
+		ip6Holder, ipErr := netip.ParseAddr(kubernetes.Network.APIVIP6)
+		if ipErr != nil {
+			return nil, fmt.Errorf("parsing kubernetes ipv6 address: %w", ipErr)
+		}
+		ip6 = &ip6Holder
+	}
+
+	prioritizeIPv6 := IsIPv6Priority(serverConfig)
+	setMultiNodeConfigDefaults(kubernetes, serverConfig, ip4, ip6, prioritizeIPv6)
 
 	agentConfigPath := filepath.Join(configPath, agentConfigFile)
 	agentConfig, err := ParseKubernetesConfig(agentConfigPath)
@@ -78,11 +103,6 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 	delete(initialiserConfig, serverKey)
 	if strings.Contains(kubernetes.Version, image.KubernetesDistroK3S) {
 		initialiserConfig[clusterInitKey] = true
-	}
-
-	initialiser := identifyInitialiserNode(kubernetes)
-	if initialiser == "" {
-		return nil, fmt.Errorf("failed to determine cluster initialiser")
 	}
 
 	return &Cluster{
@@ -137,35 +157,51 @@ func setSingleNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string
 	if strings.Contains(kubernetes.Version, image.KubernetesDistroRKE2) {
 		setClusterCNI(config)
 	}
-	if kubernetes.Network.APIVIP != "" {
-		appendClusterTLSSAN(config, kubernetes.Network.APIVIP)
+	if kubernetes.Network.APIVIP4 != "" {
+		appendClusterTLSSAN(config, kubernetes.Network.APIVIP4)
 
 		if strings.Contains(kubernetes.Version, image.KubernetesDistroK3S) {
 			appendDisabledServices(config, "servicelb")
 		}
 	}
+
+	if kubernetes.Network.APIVIP6 != "" {
+		appendClusterTLSSAN(config, kubernetes.Network.APIVIP6)
+
+		if strings.Contains(kubernetes.Version, image.KubernetesDistroK3S) && kubernetes.Network.APIVIP4 == "" {
+			appendDisabledServices(config, "servicelb")
+		}
+	}
+
 	if kubernetes.Network.APIHost != "" {
 		appendClusterTLSSAN(config, kubernetes.Network.APIHost)
 	}
 	delete(config, serverKey)
 }
 
-func setMultiNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string]any) {
+func setMultiNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string]any, ip4 *netip.Addr, ip6 *netip.Addr, prioritizeIPv6 bool) {
 	const (
 		k3sServerPort  = 6443
 		rke2ServerPort = 9345
 	)
 
 	if strings.Contains(kubernetes.Version, image.KubernetesDistroRKE2) {
-		setClusterAPIAddress(config, kubernetes.Network.APIVIP, rke2ServerPort)
+		setClusterAPIAddress(config, ip4, ip6, rke2ServerPort, prioritizeIPv6)
 		setClusterCNI(config)
 	} else {
-		setClusterAPIAddress(config, kubernetes.Network.APIVIP, k3sServerPort)
+		setClusterAPIAddress(config, ip4, ip6, k3sServerPort, prioritizeIPv6)
 		appendDisabledServices(config, "servicelb")
 	}
 
 	setClusterToken(config)
-	appendClusterTLSSAN(config, kubernetes.Network.APIVIP)
+	if kubernetes.Network.APIVIP4 != "" {
+		appendClusterTLSSAN(config, kubernetes.Network.APIVIP4)
+	}
+
+	if kubernetes.Network.APIVIP6 != "" {
+		appendClusterTLSSAN(config, kubernetes.Network.APIVIP6)
+	}
+
 	setSELinux(config)
 	if kubernetes.Network.APIHost != "" {
 		appendClusterTLSSAN(config, kubernetes.Network.APIHost)
@@ -196,13 +232,19 @@ func setClusterCNI(config map[string]any) {
 	config[cniKey] = cniDefaultValue
 }
 
-func setClusterAPIAddress(config map[string]any, apiAddress string, port int) {
-	if apiAddress == "" {
-		zap.S().Warn("Attempted to set an empty cluster API address")
-		return
+func setClusterAPIAddress(config map[string]any, ip4 *netip.Addr, ip6 *netip.Addr, port uint16, prioritizeIPv6 bool) {
+	if ip4 == nil && ip6 == nil {
+		panic("Attempted to set an empty cluster API address")
 	}
 
-	config[serverKey] = fmt.Sprintf("https://%s:%d", apiAddress, port)
+	switch {
+	case ip6 != nil && prioritizeIPv6:
+		config[serverKey] = fmt.Sprintf("https://%s", netip.AddrPortFrom(*ip6, port).String())
+	case ip6 != nil && ip4 == nil:
+		config[serverKey] = fmt.Sprintf("https://%s", netip.AddrPortFrom(*ip6, port).String())
+	default:
+		config[serverKey] = fmt.Sprintf("https://%s", netip.AddrPortFrom(*ip4, port).String())
+	}
 }
 
 func setSELinux(config map[string]any) {
@@ -287,4 +329,22 @@ func ServersCount(nodes []image.Node) int {
 	}
 
 	return servers
+}
+
+func IsIPv6Priority(serverConfig map[string]any) bool {
+	if clusterCIDR, ok := serverConfig["cluster-cidr"].(string); ok {
+		cidrs := strings.Split(clusterCIDR, ",")
+		if len(cidrs) > 0 {
+			return strings.Contains(cidrs[0], "::")
+		}
+	}
+
+	return false
+}
+
+func GetNodeIP(serverConfig map[string]any) bool {
+	if _, ok := serverConfig["node-ip"].(string); ok {
+		return false
+	}
+	return true
 }

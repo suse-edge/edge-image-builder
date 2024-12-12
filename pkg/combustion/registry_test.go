@@ -153,7 +153,7 @@ func TestWriteRegistryMirrorsValid(t *testing.T) {
 	// Verify
 	require.NoError(t, err)
 
-	manifestFileName := filepath.Join(ctx.ArtefactsDir, k8sDir, registryMirrorsFileName)
+	manifestFileName := filepath.Join(ctx.ArtefactsDir, K8sDir, registryMirrorsFileName)
 
 	foundBytes, err := os.ReadFile(manifestFileName)
 	require.NoError(t, err)
