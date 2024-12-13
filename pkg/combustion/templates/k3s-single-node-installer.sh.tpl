@@ -73,7 +73,7 @@ echo "{{ .apiVIP6 }} {{ .apiHost }}" >> /etc/hosts
 mkdir -p /etc/rancher/k3s/
 cp {{ .configFilePath }}/{{ .configFile }} /etc/rancher/k3s/config.yaml
 
-{{- if and .apiVIP6 .getNodeIP}}
+{{- if .setNodeIPScript }}
 sh {{ .setNodeIPScript }}
 {{- end }}
 

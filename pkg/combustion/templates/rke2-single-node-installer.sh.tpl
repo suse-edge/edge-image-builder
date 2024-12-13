@@ -75,7 +75,7 @@ echo "{{ .apiVIP6 }} {{ .apiHost }}" >> /etc/hosts
 mkdir -p /etc/rancher/rke2/
 cp {{ .configFilePath }}/{{ .configFile }} /etc/rancher/rke2/config.yaml
 
-{{- if and .apiVIP6 .getNodeIP}}
+{{- if .setNodeIPScript }}
 sh {{ .setNodeIPScript }}
 {{- end }}
 

@@ -1335,7 +1335,7 @@ func TestValidateConfigValidIPv6Prio(t *testing.T) {
 	configFile := filepath.Join(serverConfigDir, "server.yaml")
 	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
 
-	failures := validateDualStackConfig(&k8s, configFile)
+	failures := validateNetworkingConfig(&k8s, configFile)
 
 	assert.Len(t, failures, 0)
 }
@@ -1367,7 +1367,7 @@ func TestValidateConfigValidIPv4Prio(t *testing.T) {
 	configFile := filepath.Join(serverConfigDir, "server.yaml")
 	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
 
-	failures := validateDualStackConfig(&k8s, configFile)
+	failures := validateNetworkingConfig(&k8s, configFile)
 
 	assert.Len(t, failures, 0)
 }
@@ -1399,7 +1399,7 @@ func TestValidateConfigInvalidBothIPv4(t *testing.T) {
 	configFile := filepath.Join(serverConfigDir, "server.yaml")
 	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
 
-	failures := validateDualStackConfig(&k8s, configFile)
+	failures := validateNetworkingConfig(&k8s, configFile)
 
 	assert.Len(t, failures, 2)
 
@@ -1439,7 +1439,7 @@ func TestValidateConfigInvalidBothIPv6(t *testing.T) {
 	configFile := filepath.Join(serverConfigDir, "server.yaml")
 	require.NoError(t, os.WriteFile(configFile, []byte(b), 0o600))
 
-	failures := validateDualStackConfig(&k8s, configFile)
+	failures := validateNetworkingConfig(&k8s, configFile)
 
 	assert.Len(t, failures, 2)
 
@@ -1458,7 +1458,7 @@ func TestValidateConfigInvalidServerConfigNotConfigured(t *testing.T) {
 		APIVIP6: "fd12:3456:789a::21",
 	}}
 
-	failures := validateDualStackConfig(&k8s, "fake-path")
+	failures := validateNetworkingConfig(&k8s, "fake-path")
 
 	assert.Len(t, failures, 1)
 
@@ -1473,7 +1473,7 @@ func TestValidateConfigInvalidServerConfigNotConfigured(t *testing.T) {
 func TestValidateConfigValidAPIVIPNotConfigured(t *testing.T) {
 	k8s := image.Kubernetes{}
 
-	failures := validateDualStackConfig(&k8s, "")
+	failures := validateNetworkingConfig(&k8s, "")
 	assert.Len(t, failures, 0)
 }
 
@@ -1636,8 +1636,8 @@ func TestValidateConfigInvalidIPv4NonUnicast(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr value '127.0.0.1/16' must be a valid unicast address with a prefix")
-	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr value '127.0.0.1/16' must be a valid unicast address with a prefix")
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr value '127.0.0.1/16' must be a valid unicast address")
+	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr value '127.0.0.1/16' must be a valid unicast address")
 }
 
 func TestValidateConfigInvalidIPv6NonUnicast(t *testing.T) {
@@ -1660,8 +1660,8 @@ func TestValidateConfigInvalidIPv6NonUnicast(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr value 'FF01::/48' must be a valid unicast address with a prefix")
-	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr value 'FF01::/112' must be a valid unicast address with a prefix")
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr value 'FF01::/48' must be a valid unicast address")
+	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr value 'FF01::/112' must be a valid unicast address")
 }
 
 func TestValidateNodeIPValid(t *testing.T) {
@@ -1684,8 +1684,8 @@ func TestValidateNodeIPValid(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr value 'FF01::/48' must be a valid unicast address with a prefix")
-	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr value 'FF01::/112' must be a valid unicast address with a prefix")
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr value 'FF01::/48' must be a valid unicast address")
+	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr value 'FF01::/112' must be a valid unicast address")
 }
 
 func TestValidateConfigMismatchedPrio(t *testing.T) {
@@ -1705,7 +1705,7 @@ func TestValidateConfigMismatchedPrio(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr cannot prioritize IPv4 while service-cidr prioritizes IPv6, both must have the same priority")
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr cannot prioritize one address family while service-cidr prioritizes another address family, both must have the same priority")
 }
 
 func TestValidateConfigSingleCIDRIPv6(t *testing.T) {
@@ -1862,7 +1862,7 @@ func TestValidateNodeIPNonunicastIPv4Invalid(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config node-ip 127.0.0.1 must be a valid unicast IP")
+	assert.Contains(t, foundMessages, "Kubernetes server config node-ip value '127.0.0.1' must be a valid unicast address")
 }
 
 func TestValidateNodeIPIPv6Invalid(t *testing.T) {

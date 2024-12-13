@@ -106,7 +106,7 @@ update_config() {
     if [ -n "${IPv4_ADDRESS}" ] && [ -n "${IPv6_ADDRESS}" ]; then
         if [ "$prioritizeIPv6" = "false" ]; then
             echo "node-ip: ${IPv4_ADDRESS},${IPv6_ADDRESS}" >> "$CONFIG_FILE"
-            echo "Added IPv4 and IPv6 addresses to config (IPv4 prioritized)"
+            echo "Added IPv4 and IPv6 addresses ${IPv4_ADDRESS},${IPv6_ADDRESS} to config (IPv4 prioritized)"
         else
             echo "node-ip: ${IPv6_ADDRESS},${IPv4_ADDRESS}" >> "$CONFIG_FILE"
             echo "Added IPv6 and IPv4 addresses ${IPv6_ADDRESS},${IPv4_ADDRESS} to config (IPv6 prioritized)"

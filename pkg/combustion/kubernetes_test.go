@@ -479,7 +479,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sClusterIPv4(t *testing.T) {
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, K8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -611,7 +611,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sClusterIPv6(t *testing.T) {
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, K8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -746,7 +746,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sClusterDualstackPrioIPv4(t *t
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, K8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -882,7 +882,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sClusterDualstackPrioIPv6(t *t
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, K8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -1088,7 +1088,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2ClusterDualstackPrioIPv6With
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, K8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -1218,7 +1218,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2ClusterDualstackPrioIPv6With
 	b, err := yaml.Marshal(serverConfig)
 	require.NoError(t, err)
 
-	configDir := filepath.Join(ctx.ImageConfigDir, K8sDir, K8sConfigDir)
+	configDir := filepath.Join(ctx.ImageConfigDir, k8sDir, k8sConfigDir)
 	require.NoError(t, os.MkdirAll(configDir, os.ModePerm))
 	require.NoError(t, os.WriteFile(filepath.Join(configDir, "server.yaml"), b, os.ModePerm))
 
@@ -1382,7 +1382,7 @@ values: content`, "oci://registry-1.docker.io/bitnamicharts"),
 
 	assert.Equal(t, "$ARTEFACTS_DIR/kubernetes/manifests", manifestsPath)
 
-	manifestPath := filepath.Join(ctx.ArtefactsDir, K8sDir, k8sManifestsDir, "sample-crd.yaml")
+	manifestPath := filepath.Join(ctx.ArtefactsDir, k8sDir, k8sManifestsDir, "sample-crd.yaml")
 
 	b, err := os.ReadFile(manifestPath)
 	require.NoError(t, err)
@@ -1393,7 +1393,7 @@ values: content`, "oci://registry-1.docker.io/bitnamicharts"),
 	assert.Contains(t, contents, "name: my-nginx")
 	assert.Contains(t, contents, "image: nginx:1.14.2")
 
-	chartPath := filepath.Join(ctx.ArtefactsDir, K8sDir, k8sManifestsDir, "apache.yaml")
+	chartPath := filepath.Join(ctx.ArtefactsDir, k8sDir, k8sManifestsDir, "apache.yaml")
 	chartContent := `apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:
@@ -1497,7 +1497,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	assert.Equal(t, []any{"192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
 
 	// Manifest assertions
-	manifest := filepath.Join(ctx.ArtefactsDir, K8sDir, k8sManifestsDir, "sample-crd.yaml")
+	manifest := filepath.Join(ctx.ArtefactsDir, k8sDir, k8sManifestsDir, "sample-crd.yaml")
 	info, err = os.Stat(manifest)
 	require.NoError(t, err)
 	assert.Equal(t, fileio.NonExecutablePerms, info.Mode())
@@ -1583,11 +1583,12 @@ func TestCreateNodeIPScriptDualstackIPv6PrioK3s(t *testing.T) {
 		"service-cidr": "fd12:3456:789c::/112,10.43.0.0/16",
 	}
 
-	err := createNodeIPScript(ctx, serverConfig)
+	nodeIPScript, err := createNodeIPScript(ctx, serverConfig)
 	require.NoError(t, err)
+	assert.Contains(t, nodeIPScript, "set-node-ip.sh")
 
-	nodeIPScript := filepath.Join(ctx.CombustionDir, setNodeIPScript)
-	b, err := os.ReadFile(nodeIPScript)
+	nodeIPScriptPath := filepath.Join(ctx.CombustionDir, setNodeIPScript)
+	b, err := os.ReadFile(nodeIPScriptPath)
 	require.NoError(t, err)
 
 	contents := string(b)
@@ -1615,11 +1616,12 @@ func TestCreateNodeIPScriptDualstackIPv4PrioRke2(t *testing.T) {
 		"service-cidr": "10.43.0.0/16,fd12:3456:789c::/112",
 	}
 
-	err := createNodeIPScript(ctx, serverConfig)
+	nodeIPScript, err := createNodeIPScript(ctx, serverConfig)
 	require.NoError(t, err)
+	assert.Contains(t, nodeIPScript, "set-node-ip.sh")
 
-	nodeIPScript := filepath.Join(ctx.CombustionDir, setNodeIPScript)
-	b, err := os.ReadFile(nodeIPScript)
+	nodeIPScriptPath := filepath.Join(ctx.CombustionDir, setNodeIPScript)
+	b, err := os.ReadFile(nodeIPScriptPath)
 	require.NoError(t, err)
 
 	contents := string(b)
@@ -1643,8 +1645,9 @@ func TestCreateNodeIPScriptIPv4Only(t *testing.T) {
 
 	serverConfig := map[string]any{}
 
-	err := createNodeIPScript(ctx, serverConfig)
-	require.Nil(t, err)
+	nodeIPScript, err := createNodeIPScript(ctx, serverConfig)
+	require.NoError(t, err)
+	assert.Contains(t, nodeIPScript, "")
 }
 
 func TestCreateNodeIPScriptIPv6Only(t *testing.T) {
@@ -1663,15 +1666,36 @@ func TestCreateNodeIPScriptIPv6Only(t *testing.T) {
 		"service-cidr": "fd12:3456:789c::/112",
 	}
 
-	err := createNodeIPScript(ctx, serverConfig)
+	nodeIPScript, err := createNodeIPScript(ctx, serverConfig)
 	require.NoError(t, err)
+	assert.Contains(t, nodeIPScript, "set-node-ip.sh")
 
-	nodeIPScript := filepath.Join(ctx.CombustionDir, setNodeIPScript)
-	b, err := os.ReadFile(nodeIPScript)
+	nodeIPScriptPath := filepath.Join(ctx.CombustionDir, setNodeIPScript)
+	b, err := os.ReadFile(nodeIPScriptPath)
 	require.NoError(t, err)
 
 	contents := string(b)
 
 	assert.Contains(t, contents, "IPv6=true")
 	assert.Contains(t, contents, "CONFIG_FILE=\"/etc/rancher/rke2/config.yaml\"")
+}
+
+func TestCreateNodeIPScriptNodeIPSpecified(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition.Kubernetes = image.Kubernetes{
+		Version: "v1.30.3+rke2r1",
+		Network: image.Network{
+			APIVIP4: "192.168.1.1",
+		},
+	}
+
+	serverConfig := map[string]any{
+		"node-ip": "192.168.100.100",
+	}
+
+	nodeIPScript, err := createNodeIPScript(ctx, serverConfig)
+	require.NoError(t, err)
+	assert.Contains(t, nodeIPScript, "")
 }
