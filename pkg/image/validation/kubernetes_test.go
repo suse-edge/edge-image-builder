@@ -124,7 +124,7 @@ func TestValidateKubernetes(t *testing.T) {
 				"Helm chart 'repositoryName' \"another-apache-repo\" for Helm chart \"\" does not match the name of any defined repository.",
 				"Non-unicast cluster API address (127.0.0.1) for field 'apiVIP' is invalid.",
 				"Non-unicast cluster API address (127.0.0.1) for field 'apiVIP' is invalid.",
-				fmt.Sprintf("Kubernetes server config could not be found at '%s,' dual-stack configuration requires a valid cluster-cidr and service-cidr.", filepath.Join(configDir, "kubernetes", "config", "server.yaml")),
+				fmt.Sprintf("Kubernetes server config could not be found at '%s'; dual-stack configuration requires a valid cluster-cidr and service-cidr.", filepath.Join(configDir, "kubernetes", "config", "server.yaml")),
 			},
 		},
 	}
@@ -1408,8 +1408,8 @@ func TestValidateConfigInvalidBothIPv4(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr values '10.42.0.0/16' and 10.44.0.0/16 cannot both be IPv4, one must be IPv6")
-	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr values '10.43.0.0/16' and 10.45.0.0/16 cannot both be IPv4, one must be IPv6")
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr cannot contain addresses of the same IP address family; one must be IPv4, and the other IPv6")
+	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr cannot contain addresses of the same IP address family; one must be IPv4, and the other IPv6")
 }
 
 func TestValidateConfigInvalidBothIPv6(t *testing.T) {
@@ -1448,8 +1448,8 @@ func TestValidateConfigInvalidBothIPv6(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr values 'fd12:3456:789d::/48' and fd12:3456:789b::/48 cannot both be IPv6, one must be IPv4")
-	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr values 'fd12:3456:789e::/112' and fd12:3456:789c::/112 cannot both be IPv6, one must be IPv4")
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr cannot contain addresses of the same IP address family; one must be IPv4, and the other IPv6")
+	assert.Contains(t, foundMessages, "Kubernetes server config service-cidr cannot contain addresses of the same IP address family; one must be IPv4, and the other IPv6")
 }
 
 func TestValidateConfigInvalidServerConfigNotConfigured(t *testing.T) {
@@ -1467,7 +1467,7 @@ func TestValidateConfigInvalidServerConfigNotConfigured(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config could not be found at 'fake-path,' dual-stack configuration requires a valid cluster-cidr and service-cidr.")
+	assert.Contains(t, foundMessages, "Kubernetes server config could not be found at 'fake-path'; dual-stack configuration requires a valid cluster-cidr and service-cidr.")
 }
 
 func TestValidateConfigValidAPIVIPNotConfigured(t *testing.T) {
@@ -1705,7 +1705,7 @@ func TestValidateConfigMismatchedPrio(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr cannot prioritize one address family while service-cidr prioritizes another address family, both must have the same priority")
+	assert.Contains(t, foundMessages, "Kubernetes server config cluster-cidr cannot prioritize one address family while service-cidr prioritizes another; both must have the same priority")
 }
 
 func TestValidateConfigSingleCIDRIPv6(t *testing.T) {
@@ -1831,7 +1831,7 @@ func TestValidateNodeIPBothSameFamilyInvalid(t *testing.T) {
 		foundMessages = append(foundMessages, foundValidation.UserMessage)
 	}
 
-	assert.Contains(t, foundMessages, "Kubernetes server config node-ip 10.42.0.0 and 10.43.0.0 cannot both be of the same IP address family, one must be IPv4, and the other IPv6")
+	assert.Contains(t, foundMessages, "Kubernetes server config node-ip cannot contain addresses of the same IP address family; one must be IPv4, and the other IPv6")
 }
 
 func TestValidateNodeIPDualstackValid(t *testing.T) {

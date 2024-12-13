@@ -349,7 +349,9 @@ func kubernetesVIPManifest(k *image.Kubernetes) (string, error) {
 
 func createNodeIPScript(ctx *image.Context, serverConfig map[string]any) (string, error) {
 	// Setting the Node IP only matters if we're doing dual-stack or single-stack IPv6
-	if ctx.ImageDefinition.Kubernetes.Network.APIVIP6 == "" || !kubernetes.GetNodeIP(serverConfig) {
+	if ctx.ImageDefinition.Kubernetes.Network.APIVIP6 == "" {
+		return "", nil
+	} else if kubernetes.IsNodeIPSet(serverConfig) {
 		return "", nil
 	}
 

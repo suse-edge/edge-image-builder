@@ -342,9 +342,7 @@ func IsIPv6Priority(serverConfig map[string]any) bool {
 	return false
 }
 
-func GetNodeIP(serverConfig map[string]any) bool {
-	if _, ok := serverConfig["node-ip"].(string); ok {
-		return false
-	}
-	return true
+func IsNodeIPSet(serverConfig map[string]any) bool {
+	_, ok := serverConfig["node-ip"].(string)
+	return ok
 }
