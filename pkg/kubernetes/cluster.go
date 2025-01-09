@@ -60,22 +60,20 @@ func NewCluster(kubernetes *image.Kubernetes, configPath string) (*Cluster, erro
 		return nil, fmt.Errorf("failed to determine cluster initialiser")
 	}
 
-	var ip4 *netip.Addr
+	var ip4 netip.Addr
 	if kubernetes.Network.APIVIP4 != "" {
-		ip4Holder, ipErr := netip.ParseAddr(kubernetes.Network.APIVIP4)
-		if ipErr != nil {
-			return nil, fmt.Errorf("parsing kubernetes ipv4 address: %w", ipErr)
+		ip4, err = netip.ParseAddr(kubernetes.Network.APIVIP4)
+		if err != nil {
+			return nil, fmt.Errorf("parsing kubernetes ipv4 address: %w", err)
 		}
-		ip4 = &ip4Holder
 	}
 
-	var ip6 *netip.Addr
+	var ip6 netip.Addr
 	if kubernetes.Network.APIVIP6 != "" {
-		ip6Holder, ipErr := netip.ParseAddr(kubernetes.Network.APIVIP6)
-		if ipErr != nil {
-			return nil, fmt.Errorf("parsing kubernetes ipv6 address: %w", ipErr)
+		ip6, err = netip.ParseAddr(kubernetes.Network.APIVIP6)
+		if err != nil {
+			return nil, fmt.Errorf("parsing kubernetes ipv6 address: %w", err)
 		}
-		ip6 = &ip6Holder
 	}
 
 	prioritizeIPv6 := IsIPv6Priority(serverConfig)
@@ -179,7 +177,7 @@ func setSingleNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string
 	delete(config, serverKey)
 }
 
-func setMultiNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string]any, ip4 *netip.Addr, ip6 *netip.Addr, prioritizeIPv6 bool) {
+func setMultiNodeConfigDefaults(kubernetes *image.Kubernetes, config map[string]any, ip4 netip.Addr, ip6 netip.Addr, prioritizeIPv6 bool) {
 	const (
 		k3sServerPort  = 6443
 		rke2ServerPort = 9345
@@ -232,19 +230,16 @@ func setClusterCNI(config map[string]any) {
 	config[cniKey] = cniDefaultValue
 }
 
-func setClusterAPIAddress(config map[string]any, ip4 *netip.Addr, ip6 *netip.Addr, port uint16, prioritizeIPv6 bool) {
-	if ip4 == nil && ip6 == nil {
-		panic("Attempted to set an empty cluster API address")
+func setClusterAPIAddress(config map[string]any, ip4 netip.Addr, ip6 netip.Addr, port uint16, prioritizeIPv6 bool) {
+	if !ip4.IsValid() && !ip6.IsValid() {
+		panic("Attempted to set an empty invalid API address")
 	}
 
-	switch {
-	case ip6 != nil && prioritizeIPv6:
-		config[serverKey] = fmt.Sprintf("https://%s", netip.AddrPortFrom(*ip6, port).String())
-	case ip6 != nil && ip4 == nil:
-		config[serverKey] = fmt.Sprintf("https://%s", netip.AddrPortFrom(*ip6, port).String())
-	default:
-		config[serverKey] = fmt.Sprintf("https://%s", netip.AddrPortFrom(*ip4, port).String())
+	if ip6.IsValid() && (prioritizeIPv6 || !ip4.IsValid()) {
+		config[serverKey] = fmt.Sprintf("https://%s", netip.AddrPortFrom(ip6, port).String())
+		return
 	}
+	config[serverKey] = fmt.Sprintf("https://%s", netip.AddrPortFrom(ip4, port).String())
 }
 
 func setSELinux(config map[string]any) {

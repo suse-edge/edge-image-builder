@@ -480,19 +480,21 @@ func TestSetClusterAPIAddress(t *testing.T) {
 	ip6, err := netip.ParseAddr("fd12:3456:789a::21")
 	assert.NoError(t, err)
 
-	setClusterAPIAddress(config, &ip4, nil, 9345, false)
+	var emptyIP netip.Addr
+
+	setClusterAPIAddress(config, ip4, emptyIP, 9345, false)
 	assert.Equal(t, "https://192.168.122.50:9345", config["server"])
 
-	setClusterAPIAddress(config, &ip4, &ip6, 9345, false)
+	setClusterAPIAddress(config, ip4, ip6, 9345, false)
 	assert.Equal(t, "https://192.168.122.50:9345", config["server"])
 
-	setClusterAPIAddress(config, &ip4, &ip6, 9345, true)
+	setClusterAPIAddress(config, ip4, ip6, 9345, true)
 	assert.Equal(t, "https://[fd12:3456:789a::21]:9345", config["server"])
 
-	setClusterAPIAddress(config, nil, &ip6, 9345, true)
+	setClusterAPIAddress(config, emptyIP, ip6, 9345, true)
 	assert.Equal(t, "https://[fd12:3456:789a::21]:9345", config["server"])
 
-	setClusterAPIAddress(config, &ip4, &ip6, 9345, true)
+	setClusterAPIAddress(config, ip4, ip6, 9345, true)
 	assert.Equal(t, "https://[fd12:3456:789a::21]:9345", config["server"])
 }
 

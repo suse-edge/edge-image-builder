@@ -9,9 +9,10 @@ import (
 const (
 	version10 = "1.0"
 	version11 = "1.1"
+	version12 = "1.2"
 )
 
-var SupportedSchemaVersions = []string{version10, version11}
+var SupportedSchemaVersions = []string{version10, version11, version12}
 
 var version string
 

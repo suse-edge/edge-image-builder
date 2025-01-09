@@ -33,5 +33,11 @@ func validateVersion(ctx *image.Context) []FailedValidation {
 		})
 	}
 
+	if definition.APIVersion != "1.2" && definition.Kubernetes.Network.APIVIP6 != "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: "IPv6 support for the Kubernetes API VIP is only available in EIB version >= 1.2",
+		})
+	}
+
 	return failures
 }

@@ -21,7 +21,7 @@ func TestParse(t *testing.T) {
 	require.NoError(t, err)
 
 	// - Definition
-	assert.Equal(t, "1.1", definition.APIVersion)
+	assert.Equal(t, "1.2", definition.APIVersion)
 	assert.EqualValues(t, "x86_64", definition.Image.Arch)
 	assert.Equal(t, "iso", definition.Image.ImageType)
 
