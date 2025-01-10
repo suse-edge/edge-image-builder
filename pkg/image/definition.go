@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	TypeISO = "iso"
-	TypeRAW = "raw"
+	TypeISO        = "iso"
+	TypeRAW        = "raw"
+	TypeCombustion = "combustion"
 
 	ArchTypeX86 Arch = "x86_64"
 	ArchTypeARM Arch = "aarch64"
@@ -249,6 +250,7 @@ func ParseDefinition(data []byte) (*Definition, error) {
 	if err := decoder.Decode(&definition); err != nil {
 		return nil, fmt.Errorf("could not parse the image definition: %w", err)
 	}
+
 	definition.Image.ImageType = strings.ToLower(definition.Image.ImageType)
 
 	if !version.IsSchemaVersionSupported(definition.APIVersion) {

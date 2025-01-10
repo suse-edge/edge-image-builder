@@ -46,9 +46,15 @@ func (b *Builder) Build() error {
 			log.Audit("Error building RAW image.")
 			return err
 		}
+	case image.TypeCombustion:
+		log.Audit("Building Combustion archive...")
+		if err := b.buildCombustion(); err != nil {
+			log.Audit("Error building Combustion archive.")
+			return err
+		}
 	default:
-		return fmt.Errorf("invalid imageType value specified, must be either \"%s\" or \"%s\"",
-			image.TypeISO, image.TypeRAW)
+		return fmt.Errorf("invalid imageType value specified, must be either \"%s\", \"%s\", or \"%s\"",
+			image.TypeISO, image.TypeRAW, image.TypeCombustion)
 	}
 
 	log.Auditf("Build complete, the image can be found at: %s",
