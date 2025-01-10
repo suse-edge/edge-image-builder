@@ -91,6 +91,7 @@ func (c *Combustion) configureKubernetes(ctx *image.Context) ([]string, error) {
 
 	artefactsPath := kubernetesArtefactsPath(ctx)
 	if err = os.MkdirAll(artefactsPath, os.ModePerm); err != nil {
+		log.AuditComponentFailed(k8sComponentName)
 		return nil, fmt.Errorf("creating kubernetes artefacts path: %w", err)
 	}
 

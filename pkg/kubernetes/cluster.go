@@ -232,7 +232,7 @@ func setClusterCNI(config map[string]any) {
 
 func setClusterAPIAddress(config map[string]any, ip4 netip.Addr, ip6 netip.Addr, port uint16, prioritizeIPv6 bool) {
 	if !ip4.IsValid() && !ip6.IsValid() {
-		panic("Attempted to set an empty invalid API address")
+		panic("Attempted to set an invalid cluster API address")
 	}
 
 	if ip6.IsValid() && (prioritizeIPv6 || !ip4.IsValid()) {
