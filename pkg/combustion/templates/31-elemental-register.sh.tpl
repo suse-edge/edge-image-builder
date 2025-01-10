@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
+mkdir -p /etc/rancher/elemental/agent
 mkdir -p /etc/elemental
 cp ./{{ .ConfigFile }} /etc/elemental/config.yaml
 
@@ -75,12 +76,12 @@ mkdir -p /opt/edge/
 cat <<- \EOF > /opt/edge/elemental_node_cleanup.sh
 #!/usr/bin/env bash
 # SUSE Edge Elemental Node Reset Script
-# Copyright 2024 SUSE Software Solutions
+# Copyright 2025 SUSE Software Solutions
 
 # This script attempts to cleanup a node that has been deployed via Edge Image
 # Builder with the integrations for Elemental registration; in other words,
-# vanilla SLE Micro 5.5, *not* SLE Micro for Rancher (also known as Elemental
-# Teal), that has used the "--no-toolkit" registration option.
+# vanilla SUSE Linux Micro, *not* SLE Micro for Rancher (also known as
+# Elemental Teal), that has used the "--no-toolkit" registration option.
 #
 # The default behaviour in Rancher/Elemental is that in the event that a
 # cluster is deleted in Rancher, the Kubernetes cluster running on a node (or
