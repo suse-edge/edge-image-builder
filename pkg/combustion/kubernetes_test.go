@@ -1213,7 +1213,7 @@ func TestConfigureKubernetes_Successful_MultiNode_RKE2_Dualstack_PrioIPv6_WithDu
 		},
 		"cluster-cidr": "fd12:3456:789b::/48,10.42.0.0/16",
 		"service-cidr": "fd12:3456:789c::/112,10.43.0.0/16",
-		"node-ip":      "192.168.122.101,fd12:3456:789a::21",
+		"node-ip":      "fd12:3456:789a::21,192.168.122.101",
 	}
 
 	b, err := yaml.Marshal(serverConfig)
@@ -1569,9 +1569,10 @@ func TestKubernetesVIPManifestDualstack(t *testing.T) {
 	assert.NotContains(t, manifest, "ipFamilies:\n      - IPv6")
 	assert.NotContains(t, manifest, "ipFamilyPolicy: SingleStack")
 	assert.Contains(t, manifest, "ipFamilyPolicy: RequireDualStack")
+	assert.Contains(t, manifest, "ipFamilies:\n    - IPv4\n    - IPv6\n")
 }
 
-func TestCreateNodeIPScript_Dualstack_IPv6_PrioK3s(t *testing.T) {
+func TestCreateNodeIPScript_Dualstack_K3s_PrioIPv6(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -1603,7 +1604,7 @@ func TestCreateNodeIPScript_Dualstack_IPv6_PrioK3s(t *testing.T) {
 	assert.Contains(t, contents, "CONFIG_FILE=\"/etc/rancher/k3s/config.yaml\"")
 }
 
-func TestCreateNodeIPScript_Dualstack_IPv4_PrioRke2(t *testing.T) {
+func TestCreateNodeIPScript_Dualstack_Rke2_PrioIPv4(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -1679,6 +1680,8 @@ func TestCreateNodeIPScript_IPv6Only(t *testing.T) {
 
 	contents := string(b)
 	assert.Contains(t, contents, "CONFIG_FILE=\"/etc/rancher/rke2/config.yaml\"")
+	assert.Contains(t, contents, "IPv4=false")
+	assert.Contains(t, contents, "prioritizeIPv6=true")
 }
 
 func TestCreateNodeIPScript_NodeIPSpecified(t *testing.T) {
