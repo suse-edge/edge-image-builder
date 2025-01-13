@@ -21,7 +21,7 @@ func TestParse(t *testing.T) {
 	require.NoError(t, err)
 
 	// - Definition
-	assert.Equal(t, "1.1", definition.APIVersion)
+	assert.Equal(t, "1.2", definition.APIVersion)
 	assert.EqualValues(t, "x86_64", definition.Image.Arch)
 	assert.Equal(t, "iso", definition.Image.ImageType)
 
@@ -163,7 +163,8 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "v1.30.3+rke2r1", kubernetes.Version)
 
 	// Network
-	assert.Equal(t, "192.168.122.100", kubernetes.Network.APIVIP)
+	assert.Equal(t, "192.168.122.100", kubernetes.Network.APIVIP4)
+	assert.Equal(t, "fd12:3456:789a::21", kubernetes.Network.APIVIP6)
 	assert.Equal(t, "api.cluster01.hosted.on.edge.suse.com", kubernetes.Network.APIHost)
 
 	// Nodes

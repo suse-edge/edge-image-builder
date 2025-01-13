@@ -218,6 +218,7 @@ kubernetes:
   version: v1.30.3+rke2r1
   network:
     apiVIP: 192.168.122.100
+    apiVIP6: fd12:3456:789a::21
     apiHost: api.cluster01.hosted.on.edge.suse.com
   nodes:
     - hostname: node1.suse.com
@@ -264,8 +265,12 @@ kubernetes:
 * `version` - Required; Specifies the version of a particular K3s or RKE2 release (e.g.`v1.30.3+k3s1` or `v1.30.3+rke2r1`)
 * `network` - Required for multi-node clusters, optional for single-node clusters; Defines the network configuration 
 for bootstrapping a cluster.
-  * `apiVIP` - Required for multi-node clusters, optional for single-node clusters; Specifies the IP address which
-  will serve as the cluster LoadBalancer, backed by MetalLB.
+  * `apiVIP` - Required for multi-node clusters if not using `apiVIP6`, optional for single-node clusters, can be 
+  specified alongside `apiVIP6` for dual-stack support; Specifies the IPv4 address which will serve as the cluster 
+  LoadBalancer, backed by MetalLB.
+  * `apiVIP6` - Required for multi-node clusters if not using `apiVIP`, optional for single-node clusters, can be
+    specified alongside `apiVIP` for dual-stack support; Specifies the IPv6 address which will serve as the cluster
+    LoadBalancer, backed by MetalLB.
   * `apiHost` - Optional; Specifies the domain address for accessing the cluster.
 * `nodes` - Required for multi-node clusters; Defines a list of all nodes that form the cluster.
   * `hostname` - Required; Indicates the fully qualified domain name (FQDN) to identify the particular node on which
@@ -469,6 +474,8 @@ defined by the Kubernetes cluster being installed.
     * `certs` - Contains certificate files/bundles for TLS verification. Untrusted HTTPS-enabled Helm repositories and
     registries must be provided with a certificate file/bundle or require `skipTLSVerify` to be true.
 
+> **_NOTE:_** For dual-stack clusters, a Kubernetes `server.yaml` file is required and it must contain a
+> valid dual-stack `service-cidr` and `cluster-cidr` values according to the official [K3s](https://docs.k3s.io/networking/basic-network-options#dual-stack-ipv4--ipv6-networking) and [RKE2](https://docs.rke2.io/networking/basic_network_options#dual-stack-configuration) documentation.
 ## Elemental
 
 Automatic Elemental registration may be configured for the image. The Elemental registration configuration file,

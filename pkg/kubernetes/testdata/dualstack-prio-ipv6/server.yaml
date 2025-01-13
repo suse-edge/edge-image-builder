@@ -1,0 +1,5 @@
+cni: calico
+token: totally-not-generated-one
+selinux: true
+cluster-cidr: fd12:3456:789b::/48,10.42.0.0/16
+service-cidr: fd12:3456:789c::/112,10.43.0.0/16
