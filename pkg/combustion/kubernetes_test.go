@@ -213,7 +213,7 @@ func TestConfigureKubernetes_ArtefactDownloaderErrorRKE2(t *testing.T) {
 	assert.Nil(t, scripts)
 }
 
-func TestConfigureKubernetes_SuccessfulSingleNodeK3sClusterIPv4(t *testing.T) {
+func TestConfigureKubernetes_Successful_SingleNode_K3s_IPv4(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -286,7 +286,7 @@ func TestConfigureKubernetes_SuccessfulSingleNodeK3sClusterIPv4(t *testing.T) {
 	assert.Equal(t, []any{"servicelb"}, configContents["disable"])
 }
 
-func TestConfigureKubernetes_SuccessfulSingleNodeK3sClusterIPv6(t *testing.T) {
+func TestConfigureKubernetes_Successful_SingleNode_K3s_IPv6(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -359,7 +359,7 @@ func TestConfigureKubernetes_SuccessfulSingleNodeK3sClusterIPv6(t *testing.T) {
 	assert.Equal(t, []any{"servicelb"}, configContents["disable"])
 }
 
-func TestConfigureKubernetes_SuccessfulSingleNodeK3sClusterDualstackPrioIPv4(t *testing.T) {
+func TestConfigureKubernetes_Successful_SingleNode_K3s_Dualstack_PrioIPv4(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -404,6 +404,7 @@ func TestConfigureKubernetes_SuccessfulSingleNodeK3sClusterDualstackPrioIPv4(t *
 	contents := string(b)
 	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/images/* /var/lib/rancher/k3s/agent/images/")
 	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/server.yaml /etc/rancher/k3s/config.yaml")
+	assert.Contains(t, contents, "echo \"192.168.122.100 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
 	assert.Contains(t, contents, "echo \"fd12:3456:789a::21 api.cluster01.hosted.on.edge.suse.com\" >> /etc/hosts")
 	assert.Contains(t, contents, "export INSTALL_K3S_SKIP_DOWNLOAD=true")
 	assert.Contains(t, contents, "export INSTALL_K3S_SKIP_START=true")
@@ -433,7 +434,7 @@ func TestConfigureKubernetes_SuccessfulSingleNodeK3sClusterDualstackPrioIPv4(t *
 	assert.Equal(t, []any{"servicelb"}, configContents["disable"])
 }
 
-func TestConfigureKubernetes_SuccessfulMultiNodeK3sClusterIPv4(t *testing.T) {
+func TestConfigureKubernetes_Successful_MultiNode_K3s_IPv4(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -565,7 +566,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sClusterIPv4(t *testing.T) {
 	assert.Nil(t, configContents["cluster-init"])
 }
 
-func TestConfigureKubernetes_SuccessfulMultiNodeK3sClusterIPv6(t *testing.T) {
+func TestConfigureKubernetes_Successful_MultiNode_K3s_IPv6(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -697,7 +698,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sClusterIPv6(t *testing.T) {
 	assert.Nil(t, configContents["cluster-init"])
 }
 
-func TestConfigureKubernetes_SuccessfulMultiNodeK3sClusterDualstackPrioIPv4(t *testing.T) {
+func TestConfigureKubernetes_Successful_MultiNode_K3s_Dualstack_PrioIPv4(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -833,7 +834,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sClusterDualstackPrioIPv4(t *t
 	assert.Nil(t, configContents["cluster-init"])
 }
 
-func TestConfigureKubernetes_SuccessfulMultiNodeK3sClusterDualstackPrioIPv6(t *testing.T) {
+func TestConfigureKubernetes_Successful_MultiNode_K3s_Dualstack_PrioIPv6(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -969,7 +970,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeK3sClusterDualstackPrioIPv6(t *t
 	assert.Nil(t, configContents["cluster-init"])
 }
 
-func TestConfigureKubernetes_SuccessfulSingleNodeRKE2ClusterIPv4(t *testing.T) {
+func TestConfigureKubernetes_Successful_SingleNode_RKE2_IPv4(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -1038,7 +1039,7 @@ func TestConfigureKubernetes_SuccessfulSingleNodeRKE2ClusterIPv4(t *testing.T) {
 	assert.Equal(t, []any{"192.168.122.100", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
 }
 
-func TestConfigureKubernetes_SuccessfulMultiNodeRKE2ClusterDualstackPrioIPv6WithSingleNodeIP(t *testing.T) {
+func TestConfigureKubernetes_Successful_MultiNode_RKE2_Dualstack_PrioIPv6_WithSingleNodeIP(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -1080,8 +1081,8 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2ClusterDualstackPrioIPv6With
 		"tls-san": []string{
 			"k8s-host.com",
 		},
-		"cluster-cidr": "10.42.0.0/16,fd12:3456:789b::/48",
-		"service-cidr": "10.43.0.0/16,fd12:3456:789c::/112",
+		"cluster-cidr": "fd12:3456:789b::/48,10.42.0.0/16",
+		"service-cidr": "fd12:3456:789c::/112,10.43.0.0/16",
 		"node-ip":      "fd12:3456:789a::21",
 	}
 
@@ -1136,7 +1137,7 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2ClusterDualstackPrioIPv6With
 
 	assert.Equal(t, "canal", configContents["cni"])
 	assert.Equal(t, "123", configContents["token"])
-	assert.Equal(t, "https://192.168.122.100:9345", configContents["server"])
+	assert.Equal(t, "https://[fd12:3456:789a::21]:9345", configContents["server"])
 	assert.ElementsMatch(t, []any{"k8s-host.com", "192.168.122.100", "fd12:3456:789a::21", "api.cluster01.hosted.on.edge.suse.com"}, configContents["tls-san"])
 
 	// Initialising server config file assertions
@@ -1164,11 +1165,11 @@ func TestConfigureKubernetes_SuccessfulMultiNodeRKE2ClusterDualstackPrioIPv6With
 
 	assert.Equal(t, "canal", configContents["cni"])
 	assert.Equal(t, "123", configContents["token"])
-	assert.Equal(t, "https://192.168.122.100:9345", configContents["server"])
+	assert.Equal(t, "https://[fd12:3456:789a::21]:9345", configContents["server"])
 	assert.Nil(t, configContents["tls-san"])
 }
 
-func TestConfigureKubernetes_SuccessfulMultiNodeRKE2ClusterDualstackPrioIPv6WithDualstackNodeIP(t *testing.T) {
+func TestConfigureKubernetes_Successful_MultiNode_RKE2_Dualstack_PrioIPv6_WithDualstackNodeIP(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -1417,7 +1418,7 @@ spec:
 	assert.Equal(t, chartContent, string(b))
 }
 
-func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
+func TestConfigureKubernetes_Successful_RKE2Server_WithManifests(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -1476,6 +1477,7 @@ func TestConfigureKubernetes_SuccessfulRKE2ServerWithManifests(t *testing.T) {
 	assert.Contains(t, contents, "mkdir -p /opt/eib-k8s/manifests")
 	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/manifests/* /opt/eib-k8s/manifests/")
 	assert.Contains(t, contents, "cp $ARTEFACTS_DIR/kubernetes/registries.yaml /etc/rancher/rke2/registries.yaml")
+	assert.NotContains(t, contents, "sh set-node-ip.sh")
 
 	// Config file assertions
 	configPath := filepath.Join(ctx.ArtefactsDir, "kubernetes", "server.yaml")
@@ -1527,6 +1529,7 @@ func TestKubernetesVIPManifestValidIPV4(t *testing.T) {
 	assert.Contains(t, manifest, "- name: rke2-api")
 	assert.NotContains(t, manifest, "ipFamilies:\n      - IPv6")
 	assert.NotContains(t, manifest, "ipFamilyPolicy: SingleStack")
+	assert.NotContains(t, manifest, "ipFamilyPolicy: RequireDualStack")
 }
 
 func TestKubernetesVIPManifestValidIPV6(t *testing.T) {
@@ -1544,6 +1547,7 @@ func TestKubernetesVIPManifestValidIPV6(t *testing.T) {
 	assert.Contains(t, manifest, "- name: k8s-api")
 	assert.Contains(t, manifest, "ipFamilies:\n    - IPv6")
 	assert.Contains(t, manifest, "ipFamilyPolicy: SingleStack")
+	assert.NotContains(t, manifest, "ipFamilyPolicy: RequireDualStack")
 	assert.NotContains(t, manifest, "rke2")
 }
 
@@ -1564,9 +1568,10 @@ func TestKubernetesVIPManifestDualstack(t *testing.T) {
 	assert.Contains(t, manifest, "- name: k8s-api")
 	assert.NotContains(t, manifest, "ipFamilies:\n      - IPv6")
 	assert.NotContains(t, manifest, "ipFamilyPolicy: SingleStack")
+	assert.Contains(t, manifest, "ipFamilyPolicy: RequireDualStack")
 }
 
-func TestCreateNodeIPScriptDualstackIPv6PrioK3s(t *testing.T) {
+func TestCreateNodeIPScript_Dualstack_IPv6_PrioK3s(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -1585,7 +1590,7 @@ func TestCreateNodeIPScriptDualstackIPv6PrioK3s(t *testing.T) {
 
 	nodeIPScript, err := createNodeIPScript(ctx, serverConfig)
 	require.NoError(t, err)
-	assert.Contains(t, nodeIPScript, "set-node-ip.sh")
+	assert.Equal(t, "set-node-ip.sh", nodeIPScript)
 
 	nodeIPScriptPath := filepath.Join(ctx.CombustionDir, setNodeIPScript)
 	b, err := os.ReadFile(nodeIPScriptPath)
@@ -1594,12 +1599,11 @@ func TestCreateNodeIPScriptDualstackIPv6PrioK3s(t *testing.T) {
 	contents := string(b)
 
 	assert.Contains(t, contents, "IPv4=true")
-	assert.Contains(t, contents, "IPv6=true")
 	assert.Contains(t, contents, "prioritizeIPv6=true")
 	assert.Contains(t, contents, "CONFIG_FILE=\"/etc/rancher/k3s/config.yaml\"")
 }
 
-func TestCreateNodeIPScriptDualstackIPv4PrioRke2(t *testing.T) {
+func TestCreateNodeIPScript_Dualstack_IPv4_PrioRke2(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -1618,7 +1622,7 @@ func TestCreateNodeIPScriptDualstackIPv4PrioRke2(t *testing.T) {
 
 	nodeIPScript, err := createNodeIPScript(ctx, serverConfig)
 	require.NoError(t, err)
-	assert.Contains(t, nodeIPScript, "set-node-ip.sh")
+	assert.Equal(t, "set-node-ip.sh", nodeIPScript)
 
 	nodeIPScriptPath := filepath.Join(ctx.CombustionDir, setNodeIPScript)
 	b, err := os.ReadFile(nodeIPScriptPath)
@@ -1627,12 +1631,11 @@ func TestCreateNodeIPScriptDualstackIPv4PrioRke2(t *testing.T) {
 	contents := string(b)
 
 	assert.Contains(t, contents, "IPv4=true")
-	assert.Contains(t, contents, "IPv6=true")
 	assert.Contains(t, contents, "prioritizeIPv6=false")
 	assert.Contains(t, contents, "CONFIG_FILE=\"/etc/rancher/rke2/config.yaml\"")
 }
 
-func TestCreateNodeIPScriptIPv4Only(t *testing.T) {
+func TestCreateNodeIPScript_IPv4Only(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -1647,10 +1650,10 @@ func TestCreateNodeIPScriptIPv4Only(t *testing.T) {
 
 	nodeIPScript, err := createNodeIPScript(ctx, serverConfig)
 	require.NoError(t, err)
-	assert.Contains(t, nodeIPScript, "")
+	assert.Empty(t, nodeIPScript)
 }
 
-func TestCreateNodeIPScriptIPv6Only(t *testing.T) {
+func TestCreateNodeIPScript_IPv6Only(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -1668,19 +1671,17 @@ func TestCreateNodeIPScriptIPv6Only(t *testing.T) {
 
 	nodeIPScript, err := createNodeIPScript(ctx, serverConfig)
 	require.NoError(t, err)
-	assert.Contains(t, nodeIPScript, "set-node-ip.sh")
+	assert.Equal(t, "set-node-ip.sh", nodeIPScript)
 
 	nodeIPScriptPath := filepath.Join(ctx.CombustionDir, setNodeIPScript)
 	b, err := os.ReadFile(nodeIPScriptPath)
 	require.NoError(t, err)
 
 	contents := string(b)
-
-	assert.Contains(t, contents, "IPv6=true")
 	assert.Contains(t, contents, "CONFIG_FILE=\"/etc/rancher/rke2/config.yaml\"")
 }
 
-func TestCreateNodeIPScriptNodeIPSpecified(t *testing.T) {
+func TestCreateNodeIPScript_NodeIPSpecified(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
@@ -1697,5 +1698,5 @@ func TestCreateNodeIPScriptNodeIPSpecified(t *testing.T) {
 
 	nodeIPScript, err := createNodeIPScript(ctx, serverConfig)
 	require.NoError(t, err)
-	assert.Contains(t, nodeIPScript, "")
+	assert.Empty(t, nodeIPScript)
 }
