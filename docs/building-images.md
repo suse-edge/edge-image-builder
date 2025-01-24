@@ -5,6 +5,10 @@ Three things are necessary to build an image using EIB:
 1. A definition file that describes the image to build
 1. A directory that contains the base SLE Micro image to modify, along with any other custom files that
    will be included in the built image
+1. At least 4GB of RAM for image builds that require RPM resolution
+
+> **_NOTE:_** By default on OSX, the Podman machine has only 2GB of RAM. You must manually increase the Podman machine 
+> resources for RPM resolution or to increase build speed. Example: ```podman machine set --cpus 8 --memory 4096```
 
 # SUSE Linux Enterprise Micro Images
 
