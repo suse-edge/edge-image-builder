@@ -31,6 +31,11 @@ func Run(ctx *image.Context, rootBuildDir string) error {
 		return fmt.Errorf("configuring kubernetes selinux policy: %w", err)
 	}
 
+	if suma := ctx.ImageDefinition.OperatingSystem.Suma; suma.Host != "" {
+		log.AuditInfo("SUSE Manager is configured.")
+		log.AuditInfof("Manually add these packages: %v", combustion.SumaPackages)
+	}
+
 	appendElementalRPMs(ctx)
 	appendFips(ctx)
 	appendHelm(ctx)
@@ -61,9 +66,7 @@ func appendKubernetesSELinuxRPMs(ctx *image.Context) error {
 		return nil
 	}
 
-	log.AuditInfo("SELinux is enabled in the Kubernetes configuration. " +
-		"The necessary RPM packages will be downloaded.")
-
+	log.AuditInfo("SELinux is enabled in the Kubernetes configuration.")
 	selinuxPackage, err := kubernetes.SELinuxPackage(ctx.ImageDefinition.Kubernetes.Version, ctx.ArtifactSources)
 	if err != nil {
 		return fmt.Errorf("identifying selinux package: %w", err)
@@ -107,7 +110,7 @@ func appendElementalRPMs(ctx *image.Context) {
 	if !slices.ContainsFunc(rpmDirEntries, func(entry os.DirEntry) bool {
 		return strings.Contains(entry.Name(), combustion.ElementalPackages[0])
 	}) {
-		log.AuditInfo("Elemental registration is configured. The necessary RPM packages will be downloaded.")
+		log.AuditInfo("Elemental registration is configured.")
 		appendRPMs(ctx, nil, combustion.ElementalPackages...)
 	}
 }
@@ -115,13 +118,20 @@ func appendElementalRPMs(ctx *image.Context) {
 func appendFips(ctx *image.Context) {
 	fips := ctx.ImageDefinition.OperatingSystem.EnableFips
 	if fips {
-		log.AuditInfo("FIPS mode is configured. The necessary RPM packages will be downloaded.")
+		log.AuditInfo("FIPS mode is configured.")
 		appendRPMs(ctx, nil, combustion.FipsPackages...)
 		appendKernelArgs(ctx, combustion.FipsKernelArgs...)
 	}
 }
 
 func appendRPMs(ctx *image.Context, repos []image.AddRepo, packages ...string) {
+	if ctx.ImageDefinition.Image.BaseImage == "" {
+		log.AuditInfof("Manually add these packages: %v", packages)
+		return
+	} else {
+		log.AuditInfo("The necessary RPM packages will be downloaded automatically.")
+	}
+
 	repositories := ctx.ImageDefinition.OperatingSystem.Packages.AdditionalRepos
 	repositories = append(repositories, repos...)
 
@@ -140,6 +150,10 @@ func appendHelm(ctx *image.Context) {
 }
 
 func appendKernelArgs(ctx *image.Context, kernelArgs ...string) {
+	if ctx.ImageDefinition.Image.ImageType == image.TypeCombustion {
+		log.AuditInfof("Manually add these kernel args: %v", kernelArgs)
+		return
+	}
 	kernelArgList := ctx.ImageDefinition.OperatingSystem.KernelArgs
 	kernelArgList = append(kernelArgList, kernelArgs...)
 	ctx.ImageDefinition.OperatingSystem.KernelArgs = kernelArgList
@@ -164,7 +178,11 @@ func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion
 		}
 
 		imgPath := filepath.Join(ctx.ImageConfigDir, "base-images", ctx.ImageDefinition.Image.BaseImage)
-		imgType := ctx.ImageDefinition.Image.ImageType
+		var imgType string = ctx.ImageDefinition.Image.ImageType
+		// If we are building a combustion archive and provide an ISO use the ISO path
+		if ctx.ImageDefinition.Image.ImageType == image.TypeCombustion {
+			imgType = image.TypeISO
+		}
 		baseBuilder := resolver.NewTarballBuilder(ctx.BuildDir, imgPath, imgType, string(ctx.ImageDefinition.Image.Arch), p)
 
 		combustionHandler.RPMResolver = resolver.New(ctx.BuildDir, p, baseBuilder, "", string(ctx.ImageDefinition.Image.Arch))
