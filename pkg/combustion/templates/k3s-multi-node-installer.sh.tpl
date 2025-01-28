@@ -100,11 +100,11 @@ echo "{{ .apiVIP6 }} {{ .apiHost }}" >> /etc/hosts
 mkdir -p /etc/rancher/k3s/
 cp $CONFIGFILE /etc/rancher/k3s/config.yaml
 
-if [ "$NODETYPE" = "server" ]; then
 {{- if .setNodeIPScript }}
+if [ "$NODETYPE" = "server" ]; then
 sh {{ .setNodeIPScript }}
-{{- end }}
 fi
+{{- end }}
 
 if [ -f {{ .registryMirrors }} ]; then
 cp {{ .registryMirrors }} /etc/rancher/k3s/registries.yaml

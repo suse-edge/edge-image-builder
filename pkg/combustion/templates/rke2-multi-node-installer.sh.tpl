@@ -102,11 +102,11 @@ echo "{{ .apiVIP6 }} {{ .apiHost }}" >> /etc/hosts
 mkdir -p /etc/rancher/rke2/
 cp $CONFIGFILE /etc/rancher/rke2/config.yaml
 
-if [ "$NODETYPE" = "server" ]; then
 {{- if .setNodeIPScript }}
+if [ "$NODETYPE" = "server" ]; then
 sh {{ .setNodeIPScript }}
-{{- end }}
 fi
+{{- end }}
 
 if [ -f {{ .registryMirrors }} ]; then
 cp {{ .registryMirrors }} /etc/rancher/rke2/registries.yaml
