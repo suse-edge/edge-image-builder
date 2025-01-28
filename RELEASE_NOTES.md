@@ -21,7 +21,6 @@
 * [#593](https://github.com/suse-edge/edge-image-builder/issues/593) - OS files script should mount /var
 * [#594](https://github.com/suse-edge/edge-image-builder/issues/594) - Package installation breaks package resolution if packages are already installed on root OS
 * [#632](https://github.com/suse-edge/edge-image-builder/issues/632) - Create the required Elemental Agent directory structure during Combustion
-* [#645](https://github.com/suse-edge/edge-image-builder/issues/645) - Kubernetes installation fails for multi-node rke2 cluster
 
 ---
 
