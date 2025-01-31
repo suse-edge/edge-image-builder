@@ -12,6 +12,8 @@ set -euo pipefail
 #  Arch         - sets the architecture of the rpm packages to pull
 #  EnableExtras - registers the SL-Micro-Extras repo for use in resolution
 
+update-ca-certificates -v
+
 {{ if ne .RegCode "" }}
 suseconnect -r {{ .RegCode }}
 {{ if $.EnableExtras -}}
