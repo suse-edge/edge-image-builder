@@ -118,8 +118,8 @@ in order to run each definition.
 | Base Image   | `base-images/SL-Micro.aarch64-6.0-Base-SelfInstall-GM.install.iso` |
 | Output Image | `out/rancher-2node-aarch64-6.0.iso`                                |
 
-* A multi node configuration that runs Rancher Prime. 1st node functions as server node, 2nd node functions as agent node. This can be used to spin up only 1 node too.
-* This definition is used to run VMs on Apple Silicon Mac, by defaulting installation device to `/dev/vda`. 
-* 1st node uses 192.168.64.1 ip and 2nd node uses 192.168.64.2 ip. Update the MAC address in `network/node1.suse.com.yaml` and `network/node2.suse.com.yaml` accordingly so the interface can pick up the intended ip. The cluster uses 192.168.64.11 VIP and you may want to update the IPs for your subnet configuration.
-* Update `sccRegistrationCode` with a proper code for SLE Micro 6.0.
+* A multi node configuration that runs Rancher Prime. First node functions as server node, Second node functions as agent node. This can be used to spin up only one node too.
+* This definition is used to run VMs on Apple Silicon Mac, and defaulting the installation device to `/dev/vda`. 
+* 1st node uses 192.168.64.1 IP address and 2nd node uses 192.168.64.2 IP address. Update the MAC address in `network/node1.suse.com.yaml` and `network/node2.suse.com.yaml` accordingly so the interface can pick up the intended IP address. The cluster uses 192.168.64.11 VIP and you may want to update the IP addresses for your subnet configuration.
+* Update `sccRegistrationCode` with a valid SUSE registration code for SUSE Linux Micro 6.0.
 * Configures the `root` password to be `eib`.
