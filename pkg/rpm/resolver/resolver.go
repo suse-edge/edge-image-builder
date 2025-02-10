@@ -182,6 +182,7 @@ func (r *Resolver) prepareLocalRPMs(localRPMConfig *image.LocalRPMConfig) error 
 func (r *Resolver) writeRPMResolutionScript(localRPMConfig *image.LocalRPMConfig, packages *image.Packages) error {
 	values := struct {
 		RegCode      string
+		RegUrl       string
 		AddRepo      []image.AddRepo
 		CacheDir     string
 		PKGList      string
@@ -192,6 +193,7 @@ func (r *Resolver) writeRPMResolutionScript(localRPMConfig *image.LocalRPMConfig
 		EnableExtras bool
 	}{
 		RegCode:      packages.RegCode,
+		RegUrl:       packages.RegUrl,
 		AddRepo:      packages.AdditionalRepos,
 		CacheDir:     r.generateResolverImgRPMRepoPath(),
 		NoGPGCheck:   packages.NoGPGCheck,
