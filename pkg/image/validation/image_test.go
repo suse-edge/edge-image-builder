@@ -39,13 +39,34 @@ func TestValidateImage(t *testing.T) {
 				},
 			},
 		},
-		`missing all fields`: {
+		`complete valid combustion definition`: {
 			ImageDefinition: image.Definition{
-				Image: image.Image{},
+				Image: image.Image{
+					ImageType: image.TypeCombustion,
+					Arch:      image.ArchTypeX86,
+				},
+			},
+		},
+		`missing fields when using ISO`: {
+			ImageDefinition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeISO,
+					Arch:      image.ArchTypeX86,
+				},
 			},
 			ExpectedFailedMessages: []string{
-				"The 'imageType' field is required in the 'image' section.",
-				"The 'arch' field is required in the 'image' section.",
+				"The 'outputImageName' field is required in the 'image' section.",
+				"The 'baseImage' field is required in the 'image' section.",
+			},
+		},
+		`missing fields when using RAW`: {
+			ImageDefinition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+					Arch:      image.ArchTypeX86,
+				},
+			},
+			ExpectedFailedMessages: []string{
 				"The 'outputImageName' field is required in the 'image' section.",
 				"The 'baseImage' field is required in the 'image' section.",
 			},
@@ -60,7 +81,7 @@ func TestValidateImage(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"The 'imageType' field must be one of: iso, raw",
+				"The 'imageType' field must be one of: iso, raw, combustion",
 				"The 'arch' field must be one of: aarch64, x86_64",
 			},
 		},

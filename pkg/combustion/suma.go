@@ -17,8 +17,12 @@ const (
 	sumaScriptName    = "30-suma-registration.sh"
 )
 
-//go:embed templates/30-suma-register.sh.tpl
-var sumaScript string
+var (
+	//go:embed templates/30-suma-register.sh.tpl
+	sumaScript string
+
+	SumaPackages = []string{"venv-salt-minion"}
+)
 
 func configureSuma(ctx *image.Context) ([]string, error) {
 	suma := ctx.ImageDefinition.OperatingSystem.Suma

@@ -74,6 +74,11 @@ func validateElementalDir(elementalConfigDir string) []FailedValidation {
 func validateElementalConfiguration(ctx *image.Context) []FailedValidation {
 	var failures []FailedValidation
 
+	// Future work: This needs a proper flag in the definition to skip the elemental rpm resolution (e.g. already in image, packaged later by Kiwi, etc.)
+	if ctx.ImageDefinition.Image.BaseImage == "" {
+		return failures
+	}
+
 	rpmDirEntries, err := os.ReadDir(combustion.RPMsPath(ctx))
 	if err != nil && !os.IsNotExist(err) {
 		failures = append(failures, FailedValidation{
