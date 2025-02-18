@@ -92,9 +92,11 @@ Sources
 ```
 https://rpm.rancher.io/k3s/stable/common/slemicro/noarch
 https://rpm.rancher.io/rke2/stable/common/slemicro/noarch
+https://rpm.rancher.io/
 ```
 Artifacts
 ```
+public.key
 rke2-selinux
 k3s-selinux
 ```
