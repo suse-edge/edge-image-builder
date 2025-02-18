@@ -45,7 +45,11 @@ func TestValidateElemental(t *testing.T) {
 			},
 		},
 		`invalid, no registration code no side-loaded rpms`: {
-			ImageDefinition: &image.Definition{},
+			ImageDefinition: &image.Definition{
+				Image: image.Image{
+					BaseImage: "SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso",
+				},
+			},
 			ExpectedFailedMessages: []string{
 				"Operating system package registration code field must be defined when using Elemental or the " +
 					"[elemental-register elemental-system-agent] RPMs must be manually side-loaded",
@@ -229,8 +233,13 @@ func TestValidateElementalConfigurationManualRPMsMissingAgent(t *testing.T) {
 	}()
 
 	ctx := &image.Context{
-		ImageConfigDir:  configDir,
-		ImageDefinition: &image.Definition{},
+		ImageConfigDir: configDir,
+		ImageDefinition: &image.Definition{
+			Image: image.Image{
+				ImageType: image.TypeCombustion,
+				BaseImage: "SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso",
+			},
+		},
 	}
 
 	elementalDir := filepath.Join(configDir, "elemental")
@@ -260,8 +269,13 @@ func TestValidateElementalConfigurationManualRPMsMissingRegister(t *testing.T) {
 	}()
 
 	ctx := &image.Context{
-		ImageConfigDir:  configDir,
-		ImageDefinition: &image.Definition{},
+		ImageConfigDir: configDir,
+		ImageDefinition: &image.Definition{
+			Image: image.Image{
+				ImageType: image.TypeCombustion,
+				BaseImage: "SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso",
+			},
+		},
 	}
 
 	elementalDir := filepath.Join(configDir, "elemental")
