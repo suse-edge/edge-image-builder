@@ -5,6 +5,7 @@
 ## General
 
 * Added single-stack IPv6 and dual-stack networking support for Kubernetes
+* SUSEConnect now properly activates the SL Micro "Extras" module
 
 ## API
 

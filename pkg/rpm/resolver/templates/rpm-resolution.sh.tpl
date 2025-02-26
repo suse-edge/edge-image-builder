@@ -15,7 +15,8 @@ set -euo pipefail
 {{ if ne .RegCode "" }}
 suseconnect -r {{ .RegCode }}
 {{ if $.EnableExtras -}}
-suseconnect -p SL-Micro-Extras/6.0/{{ .Arch }}
+VERSION=$(awk '/VERSION=/' /etc/os-release | cut -d'"' -f2)
+suseconnect -p SL-Micro-Extras/$VERSION/{{ .Arch }}
 {{ end -}}
 zypper ref
 trap "suseconnect -d" EXIT
