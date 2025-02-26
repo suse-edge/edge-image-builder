@@ -5,6 +5,7 @@
 ## General
 
 * Added single-stack IPv6 and dual-stack networking support for Kubernetes
+* Extras URL now automatically sets the SL Micro version
 
 ## API
 
