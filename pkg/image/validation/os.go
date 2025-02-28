@@ -24,6 +24,7 @@ func validateOperatingSystem(ctx *image.Context) []FailedValidation {
 	failures = append(failures, validateSuma(&def.OperatingSystem)...)
 	failures = append(failures, validatePackages(&def.OperatingSystem)...)
 	failures = append(failures, validateTimeSync(&def.OperatingSystem)...)
+	failures = append(failures, validateFIPS(&def.OperatingSystem)...)
 	failures = append(failures, validateIsoConfig(def)...)
 	failures = append(failures, validateRawConfig(def)...)
 
@@ -285,6 +286,25 @@ func validateTimeSync(os *image.OperatingSystem) []FailedValidation {
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
+	}
+
+	return failures
+}
+
+func validateFIPS(os *image.OperatingSystem) []FailedValidation {
+	var failures []FailedValidation
+
+	if !os.EnableFips {
+		return nil
+	}
+
+	if os.EnableFips {
+		if os.Packages.RegCode == "" && len(os.Packages.AdditionalRepos) == 0 {
+			msg := "To enable FIPS you must either provide an SCC registration code or link an additional repository that contains the `patterns-base-fips` package."
+			failures = append(failures, FailedValidation{
+				UserMessage: msg,
+			})
+		}
 	}
 
 	return failures
