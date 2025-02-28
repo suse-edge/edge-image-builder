@@ -786,28 +786,28 @@ func TestValidateFIPS(t *testing.T) {
 	}{
 		`not included`: {
 			OperatingSystem: image.OperatingSystem{
-				EnableFips: false,
+				EnableFIPS: false,
 			},
 		},
-		`fips enabled no SCC code or additional repo`: {
+		`FIPS enabled no SCC code or additional repo`: {
 			OperatingSystem: image.OperatingSystem{
-				EnableFips: true,
+				EnableFIPS: true,
 			},
 			ExpectedFailedMessages: []string{
 				"To enable FIPS you must either provide an SCC registration code or link an additional repository that contains the `patterns-base-fips` package.",
 			},
 		},
-		`fips enabled with SCC code`: {
+		`FIPS enabled with SCC code`: {
 			OperatingSystem: image.OperatingSystem{
-				EnableFips: true,
+				EnableFIPS: true,
 				Packages: image.Packages{
 					RegCode: "scc-code",
 				},
 			},
 		},
-		`fips enabled with additional repos`: {
+		`FIPS enabled with additional repos`: {
 			OperatingSystem: image.OperatingSystem{
-				EnableFips: true,
+				EnableFIPS: true,
 				Packages: image.Packages{
 					AdditionalRepos: []image.AddRepo{
 						{

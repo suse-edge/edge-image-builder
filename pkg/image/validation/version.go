@@ -27,7 +27,7 @@ func validateVersion(ctx *image.Context) []FailedValidation {
 		})
 	}
 
-	if definition.APIVersion == "1.0" && definition.OperatingSystem.EnableFips {
+	if definition.APIVersion == "1.0" && definition.OperatingSystem.EnableFIPS {
 		failures = append(failures, FailedValidation{
 			UserMessage: "Automated FIPS configuration is not supported in EIB version 1.0, please use EIB version >= 1.1",
 		})

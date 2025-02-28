@@ -48,7 +48,7 @@ func validateKernelArgs(os *image.OperatingSystem) []FailedValidation {
 				})
 			}
 
-			if (key == "fips" && value == "1") && !os.EnableFips {
+			if (key == "fips" && value == "1") && !os.EnableFIPS {
 				failures = append(failures, FailedValidation{
 					UserMessage: "FIPS mode has been specified via kernel arguments, please use the 'enableFIPS: true' option instead.",
 				})
@@ -294,17 +294,15 @@ func validateTimeSync(os *image.OperatingSystem) []FailedValidation {
 func validateFIPS(os *image.OperatingSystem) []FailedValidation {
 	var failures []FailedValidation
 
-	if !os.EnableFips {
+	if !os.EnableFIPS {
 		return nil
 	}
 
-	if os.EnableFips {
-		if os.Packages.RegCode == "" && len(os.Packages.AdditionalRepos) == 0 {
-			msg := "To enable FIPS you must either provide an SCC registration code or link an additional repository that contains the `patterns-base-fips` package."
-			failures = append(failures, FailedValidation{
-				UserMessage: msg,
-			})
-		}
+	if os.Packages.RegCode == "" && len(os.Packages.AdditionalRepos) == 0 {
+		msg := "To enable FIPS you must either provide an SCC registration code or link an additional repository that contains the `patterns-base-fips` package."
+		failures = append(failures, FailedValidation{
+			UserMessage: msg,
+		})
 	}
 
 	return failures
