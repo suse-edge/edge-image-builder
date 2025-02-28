@@ -32,7 +32,7 @@ func Run(ctx *image.Context, rootBuildDir string) error {
 	}
 
 	appendElementalRPMs(ctx)
-	appendFips(ctx)
+	appendFIPS(ctx)
 	appendHelm(ctx)
 
 	c, err := buildCombustion(ctx, rootBuildDir)
@@ -112,19 +112,19 @@ func appendElementalRPMs(ctx *image.Context) {
 	}
 }
 
-func appendFips(ctx *image.Context) {
-	fips := ctx.ImageDefinition.OperatingSystem.EnableFips
+func appendFIPS(ctx *image.Context) {
+	fips := ctx.ImageDefinition.OperatingSystem.EnableFIPS
 	if fips {
 		log.AuditInfo("FIPS mode is configured. The necessary RPM packages will be downloaded.")
 
 		packages := ctx.ImageDefinition.OperatingSystem.Packages
 		if packages.RegCode == "" && len(packages.AdditionalRepos) > 0 {
-			log.Audit("WARNING: FIPs enabled with no SUSE registration code provided. Package resolution may fail if additional repositories do not contain the `patterns-base-fips` package.")
-			zap.S().Warn("Detected FIPs for installation with no sccRegistrationCode provided")
+			log.Audit("WARNING: FIPS enabled with no SUSE registration code provided. Package resolution may fail if additional repositories do not contain the `patterns-base-fips` package.")
+			zap.S().Warn("Detected FIPS for installation with no sccRegistrationCode provided")
 		}
 
-		appendRPMs(ctx, nil, combustion.FipsPackages...)
-		appendKernelArgs(ctx, combustion.FipsKernelArgs...)
+		appendRPMs(ctx, nil, combustion.FIPSPackages...)
+		appendKernelArgs(ctx, combustion.FIPSKernelArgs...)
 	}
 }
 

@@ -11,7 +11,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
-func TestConfigureFips_NoConf(t *testing.T) {
+func TestConfigureFIPS_NoConf(t *testing.T) {
 	// Setup
 	var ctx image.Context
 
@@ -20,26 +20,26 @@ func TestConfigureFips_NoConf(t *testing.T) {
 	}
 
 	// Test
-	scripts, err := configureFips(&ctx)
+	scripts, err := configureFIPS(&ctx)
 
 	// Verify
 	require.NoError(t, err)
 	assert.Nil(t, scripts)
 }
 
-func TestConfigureFips_Enabled(t *testing.T) {
+func TestConfigureFIPS_Enabled(t *testing.T) {
 	// Setup
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
 	ctx.ImageDefinition = &image.Definition{
 		OperatingSystem: image.OperatingSystem{
-			EnableFips: true,
+			EnableFIPS: true,
 		},
 	}
 
 	// Test
-	scripts, err := configureFips(ctx)
+	scripts, err := configureFIPS(ctx)
 
 	// Verify
 	require.NoError(t, err)
