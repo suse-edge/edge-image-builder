@@ -1,40 +1,66 @@
 #!/bin/bash
 
 get_default_ipv4_address() {
-    local default_route=$(ip -4 route show default | sort -k7n | head -n1)
+    local default_route=$(ip -4 route show default | awk '{
+        for(i=1;i<=NF;i++) {
+            if($i=="metric") {
+                print $0, "METRICVAL=" $(i+1)
+                exit
+            }
+        }
+    }' | sort -t= -k2,2n | head -n1)
+
     if [ -z "$default_route" ]; then
         echo "No default IPv4 route found" >&2
         return 1
     fi
 
-    local interface=$(echo "$default_route" | awk '{print $5}')
+    local interface=$(echo "$default_route" | awk '{
+        for(i=1;i<=NF;i++) {
+            if($i=="dev") {
+                print $(i+1)
+                exit
+            }
+        }
+    }')
 
     local ip_address=$(ip -4 addr show dev "$interface" | grep -w inet | head -n1 | awk '{print $2}' | cut -d'/' -f1)
-
     if [ -z "$ip_address" ]; then
         echo "No IPv4 address found for interface $interface" >&2
         return 1
     fi
-
     echo "$ip_address"
 }
 
 get_default_ipv6_address() {
-    local default_route=$(ip -6 route show default | sort -k7n | head -n1)
+    local default_route=$(ip -6 route show default | awk '{
+        for(i=1;i<=NF;i++) {
+            if($i=="metric") {
+                print $0, "METRICVAL=" $(i+1)
+                exit
+            }
+        }
+    }' | sort -t= -k2,2n | head -n1)
+
     if [ -z "$default_route" ]; then
         echo "No default IPv6 route found" >&2
         return 1
     fi
 
-    local interface=$(echo "$default_route" | awk '{print $5}')
+    local interface=$(echo "$default_route" | awk '{
+        for(i=1;i<=NF;i++) {
+            if($i=="dev") {
+                print $(i+1)
+                exit
+            }
+        }
+    }')
 
     local ip_address=$(ip -6 addr show dev "$interface" | grep -w inet6 | grep -v fe80 | grep 'scope global' | head -n1 | awk '{print $2}' | cut -d'/' -f1)
-
     if [ -z "$ip_address" ]; then
         echo "No IPv6 address found for interface $interface" >&2
         return 1
     fi
-
     echo "$ip_address"
 }
 
