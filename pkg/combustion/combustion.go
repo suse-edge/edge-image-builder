@@ -130,7 +130,7 @@ func (c *Combustion) Configure(ctx *image.Context) error {
 		},
 		{
 			name:     fipsComponentName,
-			runnable: configureFips,
+			runnable: configureFIPS,
 		},
 		{
 			name:     elementalComponentName,

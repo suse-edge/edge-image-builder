@@ -39,7 +39,7 @@ func TestValidateVersion(t *testing.T) {
 			ImageDefinition: image.Definition{
 				APIVersion: "1.0",
 				OperatingSystem: image.OperatingSystem{
-					EnableFips: true,
+					EnableFIPS: true,
 				},
 			},
 			ExpectedFailedMessages: []string{
