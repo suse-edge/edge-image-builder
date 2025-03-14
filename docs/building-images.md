@@ -371,6 +371,12 @@ embeddedArtifactRegistry:
 * `images` - Defines a list of container images to download and host on the node.
   * `name` - Required; Specifies the name, with a tag or digest, of a container image to be pulled and stored.
 
+> **_NOTE_**: The operation of loading container images into the registry requires copying the uncompressed image into
+> `/tmp`, which, during combustion, has a capacity of half of the system's memory. This means that if you have 9GB of
+> RAM and one of the container images is 5GB uncompressed, the registry will fail to load the image
+> citing a `no space left on device` error. The current solution is to ensure that your system has more RAM than double 
+> the size of your largest container image.
+
 # Image Configuration Directory
 
 The Image Configuration Directory contains all the files necessary for EIB to build an image.
