@@ -9,11 +9,13 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/schollz/progressbar/v3"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
+	"github.com/suse-edge/edge-image-builder/pkg/podman"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
 )
@@ -207,8 +209,13 @@ func registryArtefactsPath(ctx *image.Context) string {
 }
 
 func populateRegistry(ctx *image.Context, images []string) error {
+	p, err := podman.New(ctx.BuildDir)
+	if err != nil {
+		zap.S().Warnf("Setting up Podman instance: %v", err)
+	}
+
 	imageCacheDir := filepath.Join(ctx.CacheDir, "images")
-	if err := os.MkdirAll(imageCacheDir, os.ModePerm); err != nil {
+	if err = os.MkdirAll(imageCacheDir, os.ModePerm); err != nil {
 		return fmt.Errorf("creating container image cache dir: %w", err)
 	}
 
@@ -234,6 +241,18 @@ func populateRegistry(ctx *image.Context, images []string) error {
 	for _, img := range images {
 		convertedImage := strings.ReplaceAll(img, "/", "_")
 		convertedImageName := fmt.Sprintf("%s-%s", convertedImage, registryTarSuffix)
+		if strings.Contains(img, ":latest") {
+			var digest string
+			digest, err = p.Inspect(img, arch)
+			if err != nil {
+				zap.S().Warnf("Failed getting digest for %s: %s", img, err)
+
+				// In the case where we're not able to find a digest, we'll use a timestamp to prevent staleness
+				digest = fmt.Sprintf("%d", time.Now().Unix())
+			}
+
+			convertedImageName = fmt.Sprintf("%s-%s-%s", convertedImage, digest, registryTarSuffix)
+		}
 
 		imageCacheLocation := filepath.Join(imageCacheDir, convertedImageName)
 		imageTarDest := filepath.Join(registryArtefactsPath(ctx), convertedImageName)
