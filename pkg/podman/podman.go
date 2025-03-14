@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/containers/podman/v4/pkg/bindings/manifests"
+
 	"github.com/containers/buildah/define"
 	"github.com/containers/podman/v4/pkg/bindings"
 	"github.com/containers/podman/v4/pkg/bindings/containers"
@@ -142,6 +144,36 @@ func (p *Podman) Copy(id, src, dest string) error {
 	}
 
 	return nil
+}
+
+// Inspect returns the sha256 digest for a given container image on a specific architecture
+func (p *Podman) Inspect(img string, arch string) (string, error) {
+	zap.S().Infof("Inspecting %s for linux/%s", img, arch)
+
+	options := new(manifests.InspectOptions)
+	m, err := manifests.Inspect(p.context, img, options)
+	if err != nil {
+		return "", fmt.Errorf("error inspecting manifest %s: %w", img, err)
+	}
+
+	for i := range m.Manifests {
+		if m.Manifests[i].Platform.OS == "linux" && m.Manifests[i].Platform.Architecture == arch {
+			foundDigest := m.Manifests[i].Digest.String()
+
+			// This is done to remove "sha:" from the digest
+			digest := foundDigest
+			if strings.Contains(foundDigest, ":") {
+				parts := strings.Split(foundDigest, ":")
+				if len(parts) == 2 {
+					digest = parts[1]
+				}
+			}
+
+			return digest, nil
+		}
+	}
+
+	return "", nil
 }
 
 func untar(arch io.Reader, dest string) error {
