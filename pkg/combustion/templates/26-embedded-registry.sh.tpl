@@ -14,7 +14,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/hauler
-ExecStartPre=/bin/sh -c '/opt/hauler/hauler store load *-{{ .RegistryTarSuffix }}'
+ExecStartPre=/bin/sh -c '/opt/hauler/hauler store load *-{{ .RegistryTarSuffix }} --tempdir /opt/hauler'
 ExecStart=/opt/hauler/hauler store serve registry -p {{ .RegistryPort }}
 Restart=on-failure
 
