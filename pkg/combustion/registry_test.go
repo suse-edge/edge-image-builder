@@ -30,7 +30,7 @@ func TestWriteRegistryScript(t *testing.T) {
 	assert.Contains(t, found, "cp $ARTEFACTS_DIR/registry/hauler /opt/hauler/hauler")
 	assert.Contains(t, found, "cp $ARTEFACTS_DIR/registry/*-registry.tar.zst /opt/hauler/")
 	assert.Contains(t, found, "systemctl enable eib-embedded-registry.service")
-	assert.Contains(t, found, "ExecStartPre=/bin/sh -c '/opt/hauler/hauler store load *-registry.tar.zst'")
+	assert.Contains(t, found, "ExecStartPre=/bin/bash -c \"for file in /opt/hauler/*-registry.tar.zst; do [ -f \\\"\\$file\\\" ] && /opt/hauler/hauler store load -f \\\"\\$file\\\" --tempdir /opt/hauler; done\"\n")
 	assert.Contains(t, found, "ExecStart=/opt/hauler/hauler store serve registry -p 6545")
 }
 
