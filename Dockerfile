@@ -30,6 +30,7 @@ FROM opensuse/leap:15.6
 # 7. SUSE registry certificates
 RUN zypper addrepo https://download.opensuse.org/repositories/isv:SUSE:Edge:EdgeImageBuilder/Leap-15.6/isv:SUSE:Edge:EdgeImageBuilder.repo && \
     zypper addrepo https://download.opensuse.org/repositories/SUSE:CA/15.6/SUSE:CA.repo && \
+    zypper addrepo https://download.opensuse.org/repositories/isv:/SUSE:/Edge:/Factory:/Staging:/PR-92/standard/isv:SUSE:Edge:Factory:Staging:PR-92.repo && \
     zypper --gpg-auto-import-keys refresh && \
     zypper install -y \
     xorriso squashfs  \
