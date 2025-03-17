@@ -1,5 +1,5 @@
 # ----- EIB Builder Image -----
-FROM registry.suse.com/bci/golang:1.22-1.36.1
+FROM registry.suse.com/bci/golang:1.24.1-1.34.18
 
 # Dependency uses by line
 # 1. Podman Go library
