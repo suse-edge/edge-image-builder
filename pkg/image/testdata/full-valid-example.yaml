@@ -76,6 +76,7 @@ operatingSystem:
       - url: https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/
         unsigned: true
     sccRegistrationCode: INTERNAL-USE-ONLY-foo-bar
+    sccRegistrationUrl: https://registration-server.like-rmt-smt.here/
 embeddedArtifactRegistry:
   images:
     - name: hello-world:latest
