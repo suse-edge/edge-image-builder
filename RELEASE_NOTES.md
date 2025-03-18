@@ -6,6 +6,7 @@
 
 * Added single-stack IPv6 and dual-stack networking support for Kubernetes
 * SUSEConnect now properly activates the SL Micro "Extras" module
+* Improved Embedded Artifact Registry handling to no longer be memory bound
 
 ## API
 
