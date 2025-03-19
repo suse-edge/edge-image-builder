@@ -120,6 +120,7 @@ func (d DiskSize) ToMB() int64 {
 
 type RawConfiguration struct {
 	DiskSize DiskSize `yaml:"diskSize"`
+	LUKSKey  string   `yaml:"luksKey"`
 }
 
 type Packages struct {

@@ -233,7 +233,7 @@ func validatePackages(os *image.OperatingSystem) []FailedValidation {
 func validateIsoConfig(def *image.Definition) []FailedValidation {
 	var failures []FailedValidation
 
-	if def.Image.ImageType != image.TypeISO && def.OperatingSystem.IsoConfiguration.InstallDevice != "" {
+	if !strings.EqualFold(def.Image.ImageType, image.TypeISO) && def.OperatingSystem.IsoConfiguration.InstallDevice != "" {
 		msg := fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
@@ -246,11 +246,20 @@ func validateIsoConfig(def *image.Definition) []FailedValidation {
 func validateRawConfig(def *image.Definition) []FailedValidation {
 	var failures []FailedValidation
 
+	if strings.EqualFold(def.Image.ImageType, image.TypeISO) && def.OperatingSystem.RawConfiguration.LUKSKey != "" {
+		msg := fmt.Sprintf("The `luksKey` field should only be defined for '%s' encrypted images.", image.TypeRAW)
+		failures = append(failures, FailedValidation{
+			UserMessage: msg,
+		})
+
+		return failures
+	}
+
 	if def.OperatingSystem.RawConfiguration.DiskSize == "" {
 		return nil
 	}
 
-	if def.Image.ImageType != image.TypeRAW {
+	if !strings.EqualFold(def.Image.ImageType, image.TypeRAW) {
 		msg := fmt.Sprintf("The 'rawConfiguration/diskSize' field can only be used when 'imageType' is '%s'.", image.TypeRAW)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,

@@ -7,6 +7,7 @@
 * Added single-stack IPv6 and dual-stack networking support for Kubernetes
 * SUSEConnect now properly activates the SL Micro "Extras" module
 * Improved Validation for `operatingSystem.enableFIPS` flag
+* Added the ability to build RAW Encrypted Images
 * Improved Embedded Artifact Registry handling to no longer be memory bound
 * Dependency upgrades
   * Go module version is now upgraded from `1.22` to `1.24`  
@@ -19,6 +20,7 @@
 
 * Added `kubernetes.network.apiVIP6` field to enable cluster LoadBalancer based on IPv6 address
 * Added the `operatingSystem.enableExtras` flag to enable the SUSE Linux Extras repository during RPM resolution.
+* Added the `operatingSystem.rawConfiguration.luksKey` field to specify the LINUX UNIFIED KEY SETUP for modifying RAW Encrypted images
 
 ### Image Configuration Directory Changes
 

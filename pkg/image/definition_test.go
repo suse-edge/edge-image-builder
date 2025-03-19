@@ -118,9 +118,16 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, expectedAddRepos, pkgConfig.AdditionalRepos)
 	assert.Equal(t, "INTERNAL-USE-ONLY-foo-bar", pkgConfig.RegCode)
 
-	// Operating System -> IsoConfiguration
+	// Operating System -> isoConfiguration
 	installDevice := definition.OperatingSystem.IsoConfiguration.InstallDevice
 	assert.Equal(t, "/dev/sda", installDevice)
+
+	// Operating System -> rawConfiguration
+	diskSize := definition.OperatingSystem.RawConfiguration.DiskSize
+	assert.Equal(t, DiskSize("32G"), diskSize)
+
+	LUKSKey := definition.OperatingSystem.RawConfiguration.LUKSKey
+	assert.Equal(t, "1234", LUKSKey)
 
 	// Operating System -> Time
 	time := definition.OperatingSystem.Time

@@ -9,6 +9,7 @@ operatingSystem:
     installDevice: /dev/sda
   rawConfiguration:
     diskSize: 32G
+    luksKey: 1234
   time:
     timezone: Europe/London
     ntp:

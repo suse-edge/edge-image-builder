@@ -700,6 +700,33 @@ func TestValidateRawConfiguration(t *testing.T) {
 				"The 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
 			},
 		},
+		`luks key defined`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						LUKSKey: "1234",
+					},
+				},
+			},
+		},
+		`luks key defined with image type ISO`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeISO,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						LUKSKey: "1234",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				fmt.Sprintf("The `luksKey` field should only be defined for '%s' encrypted images.", image.TypeRAW),
+			},
+		},
 	}
 
 	for name, test := range tests {
