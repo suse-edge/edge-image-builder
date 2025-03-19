@@ -6,8 +6,8 @@
 
 * Added single-stack IPv6 and dual-stack networking support for Kubernetes
 * SUSEConnect now properly activates the SL Micro "Extras" module
-* Add the ability to build RAW Encrypted Images
 * Improved Embedded Artifact Registry handling to no longer be memory bound
+* Add the ability to build RAW Encrypted Images
 
 ## API
 
