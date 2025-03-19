@@ -700,7 +700,7 @@ func TestValidateRawConfiguration(t *testing.T) {
 				"The 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
 			},
 		},
-		`luks key defined`: {
+		`luksKey defined image type RAW`: {
 			Definition: image.Definition{
 				Image: image.Image{
 					ImageType: image.TypeRAW,
@@ -712,7 +712,7 @@ func TestValidateRawConfiguration(t *testing.T) {
 				},
 			},
 		},
-		`luks key defined with image type ISO`: {
+		`luksKey defined with image type ISO`: {
 			Definition: image.Definition{
 				Image: image.Image{
 					ImageType: image.TypeISO,
@@ -724,7 +724,52 @@ func TestValidateRawConfiguration(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				fmt.Sprintf("The `luksKey` field should only be defined for '%s' encrypted images.", image.TypeRAW),
+				fmt.Sprintf("The 'luksKey' field should only be defined for '%s' encrypted images.", image.TypeRAW),
+			},
+		},
+		`luksKey defined with expandEncryptedPartition true image type RAW`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						LUKSKey:                  "1234",
+						ExpandEncryptedPartition: true,
+					},
+				},
+			},
+		},
+		`luksKey not defined with expandEncryptedPartition true image type RAW`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						ExpandEncryptedPartition: true,
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"The 'expandEncryptedPartition' field cannot be 'true' when 'luksKey' is not defined.",
+			},
+		},
+		`expandEncryptedPartition true image type ISO`: {
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeISO,
+				},
+				OperatingSystem: image.OperatingSystem{
+					RawConfiguration: image.RawConfiguration{
+						ExpandEncryptedPartition: true,
+						LUKSKey:                  "1234",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"The 'luksKey' field should only be defined for 'raw' encrypted images.",
+				"The 'expandEncryptedPartition' field is not not valid for 'iso' images.",
 			},
 		},
 	}

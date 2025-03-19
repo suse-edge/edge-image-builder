@@ -15,7 +15,8 @@
 
 * Added `kubernetes.network.apiVIP6` field to enable cluster LoadBalancer based on IPv6 address
 * Added the `enableExtras` flag to enable the SUSE Linux Extras repository during RPM resolution.
-* Added the `luksKey` field to specify the LINUX UNIFIED KEY SETUP for modifying RAW Encrypted images
+* Added the `luksKey` field for specifying the LINUX UNIFIED KEY SETUP for modifying RAW encrypted images
+* Added the `expandEncryptedPartition` field for enabling the automatic expansion of the encrypted root partition
 
 ### Image Configuration Directory Changes
 

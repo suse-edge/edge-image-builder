@@ -139,13 +139,11 @@ Depending on the type of image being customized, one of the following optional s
   directly to a disk) as the system will automatically expand at boot time to fill the size of the block device.
   This is optional, but highly recommended. Specify as an integer with either "M" (Megabyte), "G" (Gigabyte),
   or "T" (Terabyte) as a suffix (e.g. "32G").
-  * `luksKey` - Required for encrypted images; The given LUKS key for an encrypted raw image which is necessary for EIB to
-  * be able to perform the necessary modifications.
-
-> **_NOTE_**: When a `luksKey` is provided, EIB will automatically expand the root partition to be its maximum size.
-> E.g. if you set the `diskSize` to `25GB` for an encrypted raw image and also provide a `luksKey`, during the build
-> process EIB will expand the LUKS partition to `25GB`. This means you do not need to perform any commands or run any
-> scripts during combustion/boot to ensure your LUKS partition is using the available space.
+  * `luksKey` - Required for encrypted images; the given LUKS key for an encrypted raw image which is necessary for EIB
+  * to be able to complete the build process.
+  * `expandEncryptedPartition` - Optional; disabled by default, when enabled, automatically expands the encrypted
+  * partition to its maximum size. E.g. if `diskSize` is `25G` and this field is `true`, EIB will expand the
+  * encrypted partition to `25G` during the build process.
 
 ### General
 

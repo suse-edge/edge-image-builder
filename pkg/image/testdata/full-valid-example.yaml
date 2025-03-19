@@ -10,6 +10,7 @@ operatingSystem:
   rawConfiguration:
     diskSize: 32G
     luksKey: 1234
+    expandEncryptedPartition: true
   time:
     timezone: Europe/London
     ntp:
