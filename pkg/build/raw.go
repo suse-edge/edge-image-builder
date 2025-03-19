@@ -97,25 +97,36 @@ func (b *Builder) writeModifyScript(imageFilename string, includeCombustion, ren
 		return fmt.Errorf("generating the GRUB configuration commands: %w", err)
 	}
 
+	expandEncryptedPartition := b.context.ImageDefinition.OperatingSystem.RawConfiguration.ExpandEncryptedPartition
+
+	LUKSKey := b.context.ImageDefinition.OperatingSystem.RawConfiguration.LUKSKey
+	if LUKSKey != "" {
+		LUKSKey = fmt.Sprintf("--key all:key:%s", LUKSKey)
+	}
+
 	// Assemble the template values
 	values := struct {
-		ImagePath           string
-		CombustionDir       string
-		ArtefactsDir        string
-		ConfigureGRUB       string
-		ConfigureCombustion bool
-		RenameFilesystem    bool
-		DiskSize            string
-		Arch                string
+		ImagePath                string
+		CombustionDir            string
+		ArtefactsDir             string
+		ConfigureGRUB            string
+		ConfigureCombustion      bool
+		RenameFilesystem         bool
+		DiskSize                 string
+		Arch                     string
+		LUKSKey                  string
+		ExpandEncryptedPartition bool
 	}{
-		ImagePath:           imageFilename,
-		CombustionDir:       b.context.CombustionDir,
-		ArtefactsDir:        b.context.ArtefactsDir,
-		ConfigureGRUB:       grubConfiguration,
-		ConfigureCombustion: includeCombustion,
-		RenameFilesystem:    renameFilesystem,
-		DiskSize:            string(b.context.ImageDefinition.OperatingSystem.RawConfiguration.DiskSize),
-		Arch:                string(b.context.ImageDefinition.Image.Arch),
+		ImagePath:                imageFilename,
+		CombustionDir:            b.context.CombustionDir,
+		ArtefactsDir:             b.context.ArtefactsDir,
+		ConfigureGRUB:            grubConfiguration,
+		ConfigureCombustion:      includeCombustion,
+		RenameFilesystem:         renameFilesystem,
+		DiskSize:                 string(b.context.ImageDefinition.OperatingSystem.RawConfiguration.DiskSize),
+		Arch:                     string(b.context.ImageDefinition.Image.Arch),
+		LUKSKey:                  LUKSKey,
+		ExpandEncryptedPartition: expandEncryptedPartition,
 	}
 
 	data, err := template.Parse(modifyScriptName, modifyRawImageTemplate, &values)

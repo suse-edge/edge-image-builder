@@ -7,6 +7,7 @@
 * Added single-stack IPv6 and dual-stack networking support for Kubernetes
 * SUSEConnect now properly activates the SL Micro "Extras" module
 * Improved Embedded Artifact Registry handling to no longer be memory bound
+* Add the ability to build RAW Encrypted Images
 
 ## API
 
@@ -14,6 +15,8 @@
 
 * Added `kubernetes.network.apiVIP6` field to enable cluster LoadBalancer based on IPv6 address
 * Added the `enableExtras` flag to enable the SUSE Linux Extras repository during RPM resolution.
+* Added the `luksKey` field for specifying the LINUX UNIFIED KEY SETUP for modifying RAW encrypted images
+* Added the `expandEncryptedPartition` field for enabling the automatic expansion of the encrypted root partition
 
 ### Image Configuration Directory Changes
 
@@ -23,6 +26,7 @@
 * [#593](https://github.com/suse-edge/edge-image-builder/issues/593) - OS files script should mount /var
 * [#594](https://github.com/suse-edge/edge-image-builder/issues/594) - Package installation breaks package resolution if packages are already installed on root OS
 * [#632](https://github.com/suse-edge/edge-image-builder/issues/632) - Create the required Elemental Agent directory structure during Combustion
+* [#438](https://github.com/suse-edge/edge-image-builder/issues/438) - Encrypted file system support
 
 ---
 
