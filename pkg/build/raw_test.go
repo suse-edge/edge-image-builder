@@ -78,7 +78,9 @@ func TestWriteModifyScript(t *testing.T) {
 				"truncate -s 64G",
 				"virt-resize --expand $ROOT_PART",
 			},
-			expectedMissing: []string{},
+			expectedMissing: []string{
+				"btrfs filesystem resize max /",
+			},
 		},
 		{
 			name:              "ISO Image Usage",
@@ -90,6 +92,7 @@ func TestWriteModifyScript(t *testing.T) {
 			expectedMissing: []string{
 				fmt.Sprintf("copy-in %s", builder.context.CombustionDir),
 				"btrfs filesystem label / INSTALL",
+				"btrfs filesystem resize max /",
 			},
 		},
 	}
@@ -116,6 +119,52 @@ func TestWriteModifyScript(t *testing.T) {
 				assert.NotContains(t, foundContents, dontFindMe)
 			}
 		})
+	}
+}
+
+func TestWriteModifyScriptLUKS(t *testing.T) {
+	// Setup
+	ctx, teardown := setupContext(t)
+	defer teardown()
+	luksKey := "1234"
+	ctx.ImageDefinition = &image.Definition{
+		Image: image.Image{
+			OutputImageName: "output-image",
+		},
+		OperatingSystem: image.OperatingSystem{
+			KernelArgs: []string{"alpha", "beta"},
+			RawConfiguration: image.RawConfiguration{
+				DiskSize: "64G",
+				LUKSKey:  luksKey,
+			},
+		},
+	}
+	builder := Builder{context: ctx}
+	outputImageFilename := builder.generateOutputImageFilename()
+	expectedContains := []string{
+		fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s --key all:key:%s", outputImageFilename, luksKey),
+		fmt.Sprintf("copy-in %s", builder.context.CombustionDir),
+		"btrfs filesystem label / INSTALL",
+		"truncate -s 64G",
+		"virt-resize --expand $ROOT_PART",
+		"btrfs filesystem resize max /",
+	}
+
+	// Test
+	err := builder.writeModifyScript(outputImageFilename, true, true)
+	require.NoError(t, err)
+
+	expectedFilename := filepath.Join(ctx.BuildDir, modifyScriptName)
+	foundBytes, err := os.ReadFile(expectedFilename)
+	require.NoError(t, err)
+
+	stats, err := os.Stat(expectedFilename)
+	require.NoError(t, err)
+	assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
+	foundContents := string(foundBytes)
+
+	for _, findMe := range expectedContains {
+		assert.Contains(t, foundContents, findMe)
 	}
 }
 

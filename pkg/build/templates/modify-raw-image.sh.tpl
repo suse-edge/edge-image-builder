@@ -26,7 +26,7 @@ fi
 
 # Test the block size of the base image and adapt to suit either 512/4096 byte images
 BLOCKSIZE=512
-if ! guestfish -i --blocksize=$BLOCKSIZE -a {{.ImagePath}} echo "[INFO] 512 byte sector check successful."; then
+if ! guestfish -i --blocksize=$BLOCKSIZE -a {{.ImagePath}} {{ .LUKSKey }} echo "[INFO] 512 byte sector check successful."; then
         echo "[WARN] Failed to access image with 512 byte sector size, trying 4096 bytes."
         BLOCKSIZE=4096
 fi
@@ -42,9 +42,13 @@ cp {{.ImagePath}}.expanded {{.ImagePath}}
 rm -f {{.ImagePath}}.expanded
 {{ end }}
 
-guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a {{.ImagePath}} -i <<'EOF'
+guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a {{.ImagePath}} {{ .LUKSKey }} -i <<'EOF'
   # Enables write access to the read only filesystem
   sh "btrfs property set / ro false"
+
+  {{ if .LUKSKey }}
+  sh "btrfs filesystem resize max /"
+  {{ end }}
 
   {{ if ne .ConfigureGRUB "" }}
   {{ .ConfigureGRUB }}

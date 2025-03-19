@@ -97,6 +97,11 @@ func (b *Builder) writeModifyScript(imageFilename string, includeCombustion, ren
 		return fmt.Errorf("generating the GRUB configuration commands: %w", err)
 	}
 
+	LUKSKey := b.context.ImageDefinition.OperatingSystem.RawConfiguration.LUKSKey
+	if LUKSKey != "" {
+		LUKSKey = fmt.Sprintf("--key all:key:%s", LUKSKey)
+	}
+
 	// Assemble the template values
 	values := struct {
 		ImagePath           string
@@ -107,6 +112,7 @@ func (b *Builder) writeModifyScript(imageFilename string, includeCombustion, ren
 		RenameFilesystem    bool
 		DiskSize            string
 		Arch                string
+		LUKSKey             string
 	}{
 		ImagePath:           imageFilename,
 		CombustionDir:       b.context.CombustionDir,
@@ -116,6 +122,7 @@ func (b *Builder) writeModifyScript(imageFilename string, includeCombustion, ren
 		RenameFilesystem:    renameFilesystem,
 		DiskSize:            string(b.context.ImageDefinition.OperatingSystem.RawConfiguration.DiskSize),
 		Arch:                string(b.context.ImageDefinition.Image.Arch),
+		LUKSKey:             LUKSKey,
 	}
 
 	data, err := template.Parse(modifyScriptName, modifyRawImageTemplate, &values)
