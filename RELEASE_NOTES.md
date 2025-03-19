@@ -7,6 +7,8 @@
 * Added single-stack IPv6 and dual-stack networking support for Kubernetes
 * SUSEConnect now properly activates the SL Micro "Extras" module
 * Improved Embedded Artifact Registry handling to no longer be memory bound
+* Dependency upgrades
+  * Updated metallb from `0.14.9` to `0.1.0+up0.14.9`
 
 ## API
 

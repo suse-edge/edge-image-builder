@@ -1,7 +1,7 @@
 metallb:
   chart: metallb
   repository: https://suse-edge.github.io/charts
-  version: 0.14.9
+  version: 0.1.0+up0.14.9
 endpoint-copier-operator:
   chart: endpoint-copier-operator
   repository: https://suse-edge.github.io/charts
