@@ -46,7 +46,7 @@ guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a {{.ImagePath}} {{ .LUKSKey
   # Enables write access to the read only filesystem
   sh "btrfs property set / ro false"
 
-  {{ if .LUKSKey }}
+  {{ if .ExpandEncryptedPartition }}
   sh "btrfs filesystem resize max /"
   {{ end }}
 

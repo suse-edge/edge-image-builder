@@ -10,7 +10,7 @@
 * Added the ability to build RAW Encrypted Images
 * Improved Embedded Artifact Registry handling to no longer be memory bound
 * Dependency upgrades
-  * Go module version is now upgraded from `1.22` to `1.24`  
+  * Go module version is now upgraded from `1.22` to `1.24`
   * Updated MetalLB from `0.14.9` to `0.1.0+up0.14.9`
   * Embedded registry is now utilizing Hauler v1.2.1 (upgraded from v1.0.7)
 
@@ -20,7 +20,8 @@
 
 * Added `kubernetes.network.apiVIP6` field to enable cluster LoadBalancer based on IPv6 address
 * Added the `operatingSystem.enableExtras` flag to enable the SUSE Linux Extras repository during RPM resolution.
-* Added the `operatingSystem.rawConfiguration.luksKey` field to specify the LINUX UNIFIED KEY SETUP for modifying RAW Encrypted images
+* Added the `operatingSystem.rawConfiguration.luksKey` field for specifying the LINUX UNIFIED KEY SETUP for modifying RAW Encrypted images
+* Added the `operatingSystem.rawConfiguration.expandEncryptedPartition` field to specify if the LUKS encrypted partition should be expanded during build time
 
 ### Image Configuration Directory Changes
 

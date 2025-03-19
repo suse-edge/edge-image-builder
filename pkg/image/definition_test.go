@@ -129,6 +129,9 @@ func TestParse(t *testing.T) {
 	LUKSKey := definition.OperatingSystem.RawConfiguration.LUKSKey
 	assert.Equal(t, "1234", LUKSKey)
 
+	expand := definition.OperatingSystem.RawConfiguration.ExpandEncryptedPartition
+	assert.Equal(t, true, expand)
+
 	// Operating System -> Time
 	time := definition.OperatingSystem.Time
 	assert.Equal(t, "Europe/London", time.Timezone)
