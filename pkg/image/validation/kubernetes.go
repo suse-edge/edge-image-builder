@@ -10,6 +10,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/suse-edge/edge-image-builder/pkg/log"
+
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
@@ -420,11 +422,7 @@ func validateHelm(k8s *image.Kubernetes, valuesDir, certsDir string) []FailedVal
 		helmRepositoryNames = append(helmRepositoryNames, repo.Name)
 	}
 
-	if failure := validateHelmChartDuplicates(k8s.Helm.Charts); failure != "" {
-		failures = append(failures, FailedValidation{
-			UserMessage: failure,
-		})
-	}
+	warnOfHelmChartDuplicates(k8s.Helm.Charts)
 
 	seenHelmRepos := make(map[string]bool)
 	for i := range k8s.Helm.Charts {
@@ -663,18 +661,22 @@ func validateHelmChartValues(chartName, valuesFile, valuesDir string) []FailedVa
 	return failures
 }
 
-func validateHelmChartDuplicates(charts []image.HelmChart) string {
-	seenHelmCharts := make(map[string]bool)
+func warnOfHelmChartDuplicates(charts []image.HelmChart) {
+	duplicateHelmCharts := make(map[string]bool)
 
+	seenHelmCharts := make(map[string]bool)
 	for i := range charts {
 		if _, exists := seenHelmCharts[charts[i].Name]; exists {
-			return fmt.Sprintf("The 'helmCharts' field contains duplicate entries: %s", charts[i].Name)
+			duplicateHelmCharts[charts[i].Name] = true
 		}
 
 		seenHelmCharts[charts[i].Name] = true
 	}
 
-	return ""
+	for k := range duplicateHelmCharts {
+		log.Auditf("WARNING: The Helm chart '%s' has been defined multiple times. While this is a valid "+
+			"configuration, please ensure this is intentional.", k)
+	}
 }
 
 func validateAdditionalArtifacts(ctx *image.Context) []FailedValidation {

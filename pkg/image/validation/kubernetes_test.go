@@ -614,9 +614,6 @@ func TestValidateHelmCharts(t *testing.T) {
 					},
 				},
 			},
-			ExpectedFailedMessages: []string{
-				"The 'helmCharts' field contains duplicate entries: apache",
-			},
 		},
 		`helm chart invalid values file`: {
 			K8s: image.Kubernetes{
