@@ -85,6 +85,7 @@ operatingSystem:
     - name: group2
   users:
   - username: user1
+    createHomeDir: true
     encryptedPassword: 123
     sshKeys:
       - user1Key1
@@ -98,6 +99,7 @@ operatingSystem:
     secondaryGroups:
       - group3
   - username: user3
+    createHomeDir: true
     sshKeys:
       - user3Key
   systemd:
