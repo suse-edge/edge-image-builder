@@ -32,6 +32,11 @@ type HelmCRD struct {
 }
 
 func NewHelmCRD(chart *image.HelmChart, chartContent, valuesContent, repositoryURL string) *HelmCRD {
+	name := strings.TrimSuffix(chart.Name, "-chart")
+	if chart.ReleaseName != "" {
+		name = chart.ReleaseName
+	}
+
 	return &HelmCRD{
 		APIVersion: helmChartAPIVersion,
 		Kind:       helmChartKind,
@@ -42,7 +47,7 @@ func NewHelmCRD(chart *image.HelmChart, chartContent, valuesContent, repositoryU
 		}{
 			// Some OCI registries (incl. oci://registry.suse.com/edge) use a `-chart` suffix
 			// in the names of the charts which may conflict with .Release.Name references.
-			Name:      strings.TrimSuffix(chart.Name, "-chart"),
+			Name:      name,
 			Namespace: chart.InstallationNamespace,
 			Annotations: map[string]string{
 				"edge.suse.com/source":         helmChartSource,

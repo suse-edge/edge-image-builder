@@ -9,6 +9,7 @@
 * Improved Validation for `operatingSystem.enableFIPS` flag
 * Added the ability to build RAW Encrypted Images
 * Improved Embedded Artifact Registry handling to no longer be memory bound
+* Improved Helm chart handling to allow deploying multiple Helm charts with the same chart name
 * Dependency upgrades
   * Go module version is now upgraded from `1.22` to `1.24`
   * Updated MetalLB from `0.14.9` to `0.1.0+up0.14.9`
@@ -22,6 +23,7 @@
 * Added the `operatingSystem.enableExtras` flag to enable the SUSE Linux Extras repository during RPM resolution.
 * Added the `operatingSystem.rawConfiguration.luksKey` field for specifying the LINUX UNIFIED KEY SETUP for modifying RAW Encrypted images
 * Added the `operatingSystem.rawConfiguration.expandEncryptedPartition` field to specify if the LUKS encrypted partition should be expanded during build time
+* Added the `kubernetes.helm.charts.releaseName` field to allow for deploying multiple instances of the same Helm chart.
 
 ### Image Configuration Directory Changes
 
@@ -32,6 +34,7 @@
 * [#594](https://github.com/suse-edge/edge-image-builder/issues/594) - Package installation breaks package resolution if packages are already installed on root OS
 * [#632](https://github.com/suse-edge/edge-image-builder/issues/632) - Create the required Elemental Agent directory structure during Combustion
 * [#625](https://github.com/suse-edge/edge-image-builder/issues/625) - Cache is stale for images tagged `:latest`
+* [#632](https://github.com/suse-edge/edge-image-builder/issues/606) - Allow for duplicate Helm chart names
 
 ---
 
