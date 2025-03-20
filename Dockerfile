@@ -28,7 +28,7 @@ FROM opensuse/leap:15.6
 # 5. Embedded artefact registry
 # 6. Network configuration
 # 7. SUSE registry certificates
-RUN zypper addrepo https://download.opensuse.org/repositories/isv:/SUSE:/Edge:/Factory:/Devel/standard/isv:SUSE:Edge:Factory:Devel.repo && \
+RUN zypper addrepo https://download.opensuse.org/repositories/isv:/SUSE:/Edge:/Factory/standard/isv:SUSE:Edge:Factory.repo && \
     zypper addrepo https://download.opensuse.org/repositories/SUSE:CA/15.6/SUSE:CA.repo && \
     zypper --gpg-auto-import-keys refresh && \
     zypper install -y \
