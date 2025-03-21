@@ -12,6 +12,9 @@ import (
 func (r *Registry) HelmCharts() ([]*HelmCRD, error) {
 	var crds []*HelmCRD
 
+	// For multiple Helm charts with the same name, we append a count to their names to avoid conflicts.
+	r.makeChartNamesUnique()
+
 	for _, chart := range r.helmCharts {
 		data, err := os.ReadFile(chart.localPath)
 		if err != nil {
@@ -73,4 +76,25 @@ func (r *Registry) getChartContainerImages(chart *image.HelmChart, chartPath, va
 	}
 
 	return images, nil
+}
+
+func (r *Registry) makeChartNamesUnique() {
+	charts := r.helmCharts
+
+	nameCount := make(map[string]int)
+	for _, chart := range charts {
+		nameCount[chart.Name]++
+	}
+
+	processedNameCount := make(map[string]int)
+	for i, chart := range charts {
+		originalName := chart.Name
+
+		if nameCount[originalName] > 1 {
+			processedNameCount[originalName]++
+			suffix := processedNameCount[originalName]
+
+			charts[i].Name = fmt.Sprintf("%s-%d", originalName, suffix)
+		}
+	}
 }
