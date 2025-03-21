@@ -16,6 +16,8 @@
 
 * Added `kubernetes.network.apiVIP6` field to enable cluster LoadBalancer based on IPv6 address
 * Added the `enableExtras` flag to enable the SUSE Linux Extras repository during RPM resolution.
+* Dependency upgrades
+  * Embedded registry is now utilizing Hauler v1.2.1 (upgraded from v1.0.7)
 
 ### Image Configuration Directory Changes
 
