@@ -24,6 +24,7 @@ func validateOperatingSystem(ctx *image.Context) []FailedValidation {
 	failures = append(failures, validateSuma(&def.OperatingSystem)...)
 	failures = append(failures, validatePackages(&def.OperatingSystem)...)
 	failures = append(failures, validateTimeSync(&def.OperatingSystem)...)
+	failures = append(failures, validateFIPS(&def.OperatingSystem)...)
 	failures = append(failures, validateIsoConfig(def)...)
 	failures = append(failures, validateRawConfig(def)...)
 
@@ -47,7 +48,7 @@ func validateKernelArgs(os *image.OperatingSystem) []FailedValidation {
 				})
 			}
 
-			if (key == "fips" && value == "1") && !os.EnableFips {
+			if (key == "fips" && value == "1") && !os.EnableFIPS {
 				failures = append(failures, FailedValidation{
 					UserMessage: "FIPS mode has been specified via kernel arguments, please use the 'enableFIPS: true' option instead.",
 				})
@@ -282,6 +283,23 @@ func validateTimeSync(os *image.OperatingSystem) []FailedValidation {
 
 	if len(os.Time.NtpConfiguration.Pools) == 0 && len(os.Time.NtpConfiguration.Servers) == 0 {
 		msg := "If you're wanting to wait for NTP synchronization at boot, please ensure that you provide at least one NTP time source."
+		failures = append(failures, FailedValidation{
+			UserMessage: msg,
+		})
+	}
+
+	return failures
+}
+
+func validateFIPS(os *image.OperatingSystem) []FailedValidation {
+	var failures []FailedValidation
+
+	if !os.EnableFIPS {
+		return nil
+	}
+
+	if os.Packages.RegCode == "" && len(os.Packages.AdditionalRepos) == 0 {
+		msg := "To enable FIPS you must either provide an SCC registration code or link an additional repository that contains the `patterns-base-fips` package."
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})

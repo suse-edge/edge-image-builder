@@ -19,18 +19,18 @@ const (
 var (
 	//go:embed templates/15-fips-setup.sh
 	fipsScript     string
-	FipsPackages   = []string{"patterns-base-fips"}
-	FipsKernelArgs = []string{"fips=1"}
+	FIPSPackages   = []string{"patterns-base-fips"}
+	FIPSKernelArgs = []string{"fips=1"}
 )
 
-func configureFips(ctx *image.Context) ([]string, error) {
-	fips := ctx.ImageDefinition.OperatingSystem.EnableFips
+func configureFIPS(ctx *image.Context) ([]string, error) {
+	fips := ctx.ImageDefinition.OperatingSystem.EnableFIPS
 	if !fips {
 		log.AuditComponentSkipped(fipsComponentName)
 		return nil, nil
 	}
 
-	if err := writeFipsCombustionScript(ctx); err != nil {
+	if err := writeFIPSCombustionScript(ctx); err != nil {
 		log.AuditComponentFailed(fipsComponentName)
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func configureFips(ctx *image.Context) ([]string, error) {
 	return []string{fipsScriptName}, nil
 }
 
-func writeFipsCombustionScript(ctx *image.Context) error {
+func writeFIPSCombustionScript(ctx *image.Context) error {
 	fipsScriptFilename := filepath.Join(ctx.CombustionDir, fipsScriptName)
 
 	if err := os.WriteFile(fipsScriptFilename, []byte(fipsScript), fileio.ExecutablePerms); err != nil {
