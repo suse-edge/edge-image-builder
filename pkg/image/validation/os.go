@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"net/url"
 	"slices"
 	"strings"
 
@@ -220,6 +221,16 @@ func validatePackages(os *image.OperatingSystem) []FailedValidation {
 		if duplicates := findDuplicates(repoURLs); len(duplicates) > 0 {
 			duplicateValues := strings.Join(duplicates, ", ")
 			msg := fmt.Sprintf("The 'additionalRepos' field contains duplicate repos: %s", duplicateValues)
+			failures = append(failures, FailedValidation{
+				UserMessage: msg,
+			})
+		}
+	}
+
+	if os.Packages.RegUrl != "" {
+		_, err := url.Parse(os.Packages.RegUrl)
+		if err != nil {
+			msg := fmt.Sprintf("The 'sccRegistrationUrl' is not a valid url: %s", err)
 			failures = append(failures, FailedValidation{
 				UserMessage: msg,
 			})

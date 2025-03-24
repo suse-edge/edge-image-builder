@@ -3,6 +3,7 @@ set -euo pipefail
 
 #  Template Fields
 #  RegCode      - scc.suse.com registration code
+#  RegUrl       - registration server url
 #  AddRepo      - additional third-party repositories that will be used in the resolution process
 #  CacheDir     - zypper cache directory where all rpm dependencies will be downloaded to
 #  PKGList      - list of packages for which to do the dependency resolution
@@ -13,7 +14,7 @@ set -euo pipefail
 #  EnableExtras - registers the SL-Micro-Extras repo for use in resolution
 
 {{ if ne .RegCode "" }}
-suseconnect -r {{ .RegCode }}
+suseconnect -r {{ .RegCode }} {{- with .RegUrl }} --url "{{ . }}" {{- end }}
 {{ if $.EnableExtras -}}
 VERSION=$(awk '/VERSION=/' /etc/os-release | cut -d'"' -f2)
 suseconnect -p SL-Micro-Extras/$VERSION/{{ .Arch }}
