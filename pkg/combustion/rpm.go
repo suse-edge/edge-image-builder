@@ -85,6 +85,11 @@ func (c *Combustion) configureRPMs(ctx *image.Context) ([]string, error) {
 func SkipRPMComponent(ctx *image.Context) bool {
 	pkg := ctx.ImageDefinition.OperatingSystem.Packages
 
+	// If we are building a combustion for Kiwi skip the RPMs
+	if ctx.ImageDefinition.Image.ImageType == image.TypeCombustion && ctx.ImageDefinition.Image.BaseImage == "" {
+		return true
+	}
+
 	if isComponentConfigured(ctx, rpmDir) {
 		// isComponentConfigured will indicate if the directory exists, but not
 		// if there are RPMs in there. If there aren't any, it is still possible to

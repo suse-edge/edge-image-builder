@@ -73,6 +73,7 @@ func TestSkipRPMComponent_InvalidDefinition(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			ctx.ImageDefinition.Image.BaseImage = "SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso"
 			ctx.ImageDefinition.OperatingSystem.Packages = test.packages
 			assert.True(t, SkipRPMComponent(ctx))
 		})
@@ -84,6 +85,7 @@ func TestSkipRPMComponent_PopulatedPackageList(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
+	ctx.ImageDefinition.Image.BaseImage = "SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso"
 	ctx.ImageDefinition.OperatingSystem.Packages = image.Packages{
 		PKGList: []string{"pkg1", "pkg2"},
 	}
@@ -104,6 +106,14 @@ func TestSkipRPMComponent_EmptyRPMDir(t *testing.T) {
 	assert.True(t, SkipRPMComponent(ctx))
 }
 
+// This is the default case for exporting the plain combustion
+func TestSkipRPMComponent_NoImageProvided(t *testing.T) {
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	assert.True(t, SkipRPMComponent(ctx))
+}
+
 func TestSkipRPMComponent_FullConfig(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
@@ -114,6 +124,7 @@ func TestSkipRPMComponent_FullConfig(t *testing.T) {
 		require.NoError(t, os.RemoveAll(rpmDir))
 	}()
 
+	ctx.ImageDefinition.Image.BaseImage = "SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso"
 	ctx.ImageDefinition.OperatingSystem.Packages = image.Packages{
 		PKGList: []string{"pkg1", "pkg2"},
 		AdditionalRepos: []image.AddRepo{
@@ -144,6 +155,7 @@ func TestConfigureRPMs_ResolutionFailures(t *testing.T) {
 	defer teardown()
 
 	// do not skip RPM component
+	ctx.ImageDefinition.Image.BaseImage = "SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso"
 	ctx.ImageDefinition.OperatingSystem.Packages = image.Packages{
 		PKGList: []string{"foo", "bar"},
 		AdditionalRepos: []image.AddRepo{
@@ -266,6 +278,7 @@ func TestConfigureRPMs_GPGFailures(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			ctx.ImageDefinition.Image.BaseImage = "SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso"
 			ctx.ImageDefinition.OperatingSystem.Packages = test.pkgs
 
 			gpgDir := filepath.Join(rpmDir, gpgDir)
@@ -292,6 +305,7 @@ func TestConfigureRPMs_SuccessfulConfig(t *testing.T) {
 	ctx, teardown := setupContext(t)
 	defer teardown()
 
+	ctx.ImageDefinition.Image.BaseImage = "SL-Micro.x86_64-6.0-Default-SelfInstall-GM2.install.iso"
 	ctx.ImageDefinition.OperatingSystem.Packages = image.Packages{
 		PKGList: []string{"foo", "bar"},
 		AdditionalRepos: []image.AddRepo{
