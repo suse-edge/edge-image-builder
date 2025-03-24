@@ -157,12 +157,21 @@ func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion
 		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
 	}
 
-	if !combustion.SkipRPMComponent(ctx) {
-		p, err := podman.New(ctx.BuildDir)
+	var p *podman.Podman
+	if !combustion.SkipRPMComponent(ctx) || combustion.IsEmbeddedArtifactRegistryConfigured(ctx) {
+		var err error
+		p, err = podman.New(ctx.BuildDir)
 		if err != nil {
 			return nil, fmt.Errorf("setting up Podman instance: %w", err)
 		}
+	}
 
+	imageDigester := &combustion.ImageDigester{
+		Podman: p,
+	}
+	combustionHandler.ImageDigester = imageDigester
+
+	if !combustion.SkipRPMComponent(ctx) {
 		imgPath := filepath.Join(ctx.ImageConfigDir, "base-images", ctx.ImageDefinition.Image.BaseImage)
 		imgType := ctx.ImageDefinition.Image.ImageType
 		baseBuilder := resolver.NewTarballBuilder(ctx.BuildDir, imgPath, imgType, string(ctx.ImageDefinition.Image.Arch), p)

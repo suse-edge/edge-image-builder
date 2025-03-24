@@ -15,7 +15,6 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
-	"github.com/suse-edge/edge-image-builder/pkg/podman"
 	"github.com/suse-edge/edge-image-builder/pkg/template"
 	"go.uber.org/zap"
 )
@@ -186,7 +185,7 @@ func (c *Combustion) configureEmbeddedArtifactRegistry(ctx *image.Context, conta
 		return "", fmt.Errorf("creating registry dir: %w", err)
 	}
 
-	if err := populateRegistry(ctx, containerImages); err != nil {
+	if err := c.populateRegistry(ctx, containerImages); err != nil {
 		return "", fmt.Errorf("populating registry: %w", err)
 	}
 
@@ -208,14 +207,9 @@ func registryArtefactsPath(ctx *image.Context) string {
 	return filepath.Join(ctx.ArtefactsDir, registryDir)
 }
 
-func populateRegistry(ctx *image.Context, images []string) error {
-	p, err := podman.New(ctx.BuildDir)
-	if err != nil {
-		zap.S().Warnf("Setting up Podman instance: %v", err)
-	}
-
+func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error {
 	imageCacheDir := filepath.Join(ctx.CacheDir, "images")
-	if err = os.MkdirAll(imageCacheDir, os.ModePerm); err != nil {
+	if err := os.MkdirAll(imageCacheDir, os.ModePerm); err != nil {
 		return fmt.Errorf("creating container image cache dir: %w", err)
 	}
 
@@ -243,8 +237,8 @@ func populateRegistry(ctx *image.Context, images []string) error {
 		convertedImageName := fmt.Sprintf("%s-%s", convertedImage, registryTarSuffix)
 		if strings.Contains(img, ":latest") {
 			var digest string
-			digest, err = p.Inspect(img, arch)
-			if err != nil {
+			digest, err = c.ImageDigester.Inspect(img, arch)
+			if err != nil || digest == "" {
 				zap.S().Warnf("Failed getting digest for %s: %s", img, err)
 
 				// In the case where we're not able to find a digest, we'll use a timestamp to prevent staleness

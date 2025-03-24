@@ -149,7 +149,6 @@ func (p *Podman) Copy(id, src, dest string) error {
 // Inspect returns the sha256 digest for a given container image on a specific architecture
 func (p *Podman) Inspect(img string, arch string) (string, error) {
 	zap.S().Infof("Inspecting %s for linux/%s", img, arch)
-
 	options := new(manifests.InspectOptions)
 	m, err := manifests.Inspect(p.context, img, options)
 	if err != nil {
@@ -157,18 +156,13 @@ func (p *Podman) Inspect(img string, arch string) (string, error) {
 	}
 
 	for i := range m.Manifests {
-		if m.Manifests[i].Platform.OS == "linux" && m.Manifests[i].Platform.Architecture == arch {
-			foundDigest := m.Manifests[i].Digest.String()
-
-			// This is done to remove "sha:" from the digest
-			digest := foundDigest
-			if strings.Contains(foundDigest, ":") {
-				parts := strings.Split(foundDigest, ":")
-				if len(parts) == 2 {
-					digest = parts[1]
-				}
+		manifest := &m.Manifests[i]
+		if manifest.Platform.OS == "linux" && manifest.Platform.Architecture == arch {
+			digest := manifest.Digest.String()
+			// This is done to remove "sha256:" from the digest
+			if parts := strings.Split(digest, "sha256:"); len(parts) == 2 {
+				digest = parts[1]
 			}
-
 			return digest, nil
 		}
 	}
