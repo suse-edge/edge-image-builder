@@ -99,10 +99,7 @@ func (b *Builder) writeModifyScript(imageFilename string, includeCombustion, ren
 
 	expandEncryptedPartition := b.context.ImageDefinition.OperatingSystem.RawConfiguration.ExpandEncryptedPartition
 
-	LUKSKey := b.context.ImageDefinition.OperatingSystem.RawConfiguration.LUKSKey
-	if LUKSKey != "" {
-		LUKSKey = fmt.Sprintf("--key all:key:%s", LUKSKey)
-	}
+	luksKey := b.context.ImageDefinition.OperatingSystem.RawConfiguration.LUKSKey
 
 	// Assemble the template values
 	values := struct {
@@ -125,7 +122,7 @@ func (b *Builder) writeModifyScript(imageFilename string, includeCombustion, ren
 		RenameFilesystem:         renameFilesystem,
 		DiskSize:                 string(b.context.ImageDefinition.OperatingSystem.RawConfiguration.DiskSize),
 		Arch:                     string(b.context.ImageDefinition.Image.Arch),
-		LUKSKey:                  LUKSKey,
+		LUKSKey:                  luksKey,
 		ExpandEncryptedPartition: expandEncryptedPartition,
 	}
 

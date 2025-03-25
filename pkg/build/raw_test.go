@@ -143,7 +143,8 @@ func TestWriteModifyScriptLUKS(t *testing.T) {
 	outputImageFilename := builder.generateOutputImageFilename()
 
 	expectedContains := []string{
-		fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s --key all:key:%s", outputImageFilename, luksKey),
+		fmt.Sprintf("LUKSFLAG=\"--key all:key:%s\"", luksKey),
+		fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s $LUKSFLAG", outputImageFilename),
 		fmt.Sprintf("copy-in %s", builder.context.CombustionDir),
 		"btrfs filesystem label / INSTALL",
 		"truncate -s 64G",
@@ -196,7 +197,8 @@ func TestWriteModifyScriptLUKSExpand(t *testing.T) {
 	builder := Builder{context: ctx}
 	outputImageFilename := builder.generateOutputImageFilename()
 	expectedContains := []string{
-		fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s --key all:key:%s", outputImageFilename, luksKey),
+		fmt.Sprintf("LUKSFLAG=\"--key all:key:%s\"", luksKey),
+		fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s $LUKSFLAG", outputImageFilename),
 		fmt.Sprintf("copy-in %s", builder.context.CombustionDir),
 		"btrfs filesystem label / INSTALL",
 		"truncate -s 64G",

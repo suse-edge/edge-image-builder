@@ -178,7 +178,8 @@ func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion
 		if !combustion.SkipRPMComponent(ctx) {
 			imgPath := filepath.Join(ctx.ImageConfigDir, "base-images", ctx.ImageDefinition.Image.BaseImage)
 			imgType := ctx.ImageDefinition.Image.ImageType
-			baseBuilder := resolver.NewTarballBuilder(ctx.BuildDir, imgPath, imgType, string(ctx.ImageDefinition.Image.Arch), p)
+			luksKey := ctx.ImageDefinition.OperatingSystem.RawConfiguration.LUKSKey
+			baseBuilder := resolver.NewTarballBuilder(ctx.BuildDir, imgPath, imgType, string(ctx.ImageDefinition.Image.Arch), luksKey, p)
 
 			combustionHandler.RPMResolver = resolver.New(ctx.BuildDir, p, baseBuilder, "", string(ctx.ImageDefinition.Image.Arch))
 			combustionHandler.RPMRepoCreator = rpm.NewRepoCreator(ctx.BuildDir)

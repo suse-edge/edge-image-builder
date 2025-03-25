@@ -36,16 +36,19 @@ type TarballImageBuilder struct {
 	imgType string
 	// architecture of the image that will be built
 	arch string
+	// luksKey use for modifying encrypted raw images
+	luksKey string
 	// imgImporter used to import the tarball archive as a container image
 	imgImporter ImageImporter
 }
 
-func NewTarballBuilder(workDir, imgPath, imgType, arch string, importer ImageImporter) *TarballImageBuilder {
+func NewTarballBuilder(workDir, imgPath, imgType, arch, luksKey string, importer ImageImporter) *TarballImageBuilder {
 	return &TarballImageBuilder{
 		dir:         workDir,
 		imgPath:     imgPath,
 		imgType:     imgType,
 		arch:        arch,
+		luksKey:     luksKey,
 		imgImporter: importer,
 	}
 }
@@ -98,12 +101,14 @@ func (t *TarballImageBuilder) writeTarballImageScript() error {
 		ArchiveName string
 		ImgType     string
 		Arch        string
+		LUKSKey     string
 	}{
 		WorkDir:     t.getTarballImgDir(),
 		ImgPath:     t.getBaseISOCopyPath(),
 		ArchiveName: tarballName,
 		ImgType:     t.imgType,
 		Arch:        t.arch,
+		LUKSKey:     t.luksKey,
 	}
 
 	data, err := template.Parse(prepareTarballScriptName, prepareTraballTemplate, &values)
