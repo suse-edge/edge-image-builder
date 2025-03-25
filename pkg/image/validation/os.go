@@ -246,18 +246,20 @@ func validateIsoConfig(def *image.Definition) []FailedValidation {
 func validateRawConfig(def *image.Definition) []FailedValidation {
 	var failures []FailedValidation
 
-	if strings.EqualFold(def.Image.ImageType, image.TypeISO) && def.OperatingSystem.RawConfiguration.LUKSKey != "" {
-		msg := fmt.Sprintf("The 'luksKey' field should only be defined for '%s' encrypted images.", image.TypeRAW)
-		failures = append(failures, FailedValidation{
-			UserMessage: msg,
-		})
-	}
+	if strings.EqualFold(def.Image.ImageType, image.TypeISO) {
+		if def.OperatingSystem.RawConfiguration.LUKSKey != "" {
+			msg := fmt.Sprintf("The 'luksKey' field should only be defined for '%s' encrypted images.", image.TypeRAW)
+			failures = append(failures, FailedValidation{
+				UserMessage: msg,
+			})
+		}
 
-	if strings.EqualFold(def.Image.ImageType, image.TypeISO) && def.OperatingSystem.RawConfiguration.ExpandEncryptedPartition {
-		msg := fmt.Sprintf("The 'expandEncryptedPartition' field is not not valid for '%s' images.", image.TypeISO)
-		failures = append(failures, FailedValidation{
-			UserMessage: msg,
-		})
+		if def.OperatingSystem.RawConfiguration.ExpandEncryptedPartition {
+			msg := fmt.Sprintf("The 'expandEncryptedPartition' field is not not valid for '%s' images.", image.TypeISO)
+			failures = append(failures, FailedValidation{
+				UserMessage: msg,
+			})
+		}
 	}
 
 	if def.OperatingSystem.RawConfiguration.LUKSKey == "" && def.OperatingSystem.RawConfiguration.ExpandEncryptedPartition {
