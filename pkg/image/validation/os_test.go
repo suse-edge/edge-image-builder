@@ -778,3 +778,61 @@ func TestValidateTimeSync(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateFIPS(t *testing.T) {
+	tests := map[string]struct {
+		OperatingSystem        image.OperatingSystem
+		ExpectedFailedMessages []string
+	}{
+		`not included`: {
+			OperatingSystem: image.OperatingSystem{
+				EnableFIPS: false,
+			},
+		},
+		`FIPS enabled no SCC code or additional repo`: {
+			OperatingSystem: image.OperatingSystem{
+				EnableFIPS: true,
+			},
+			ExpectedFailedMessages: []string{
+				"To enable FIPS you must either provide an SCC registration code or link an additional repository that contains the `patterns-base-fips` package.",
+			},
+		},
+		`FIPS enabled with SCC code`: {
+			OperatingSystem: image.OperatingSystem{
+				EnableFIPS: true,
+				Packages: image.Packages{
+					RegCode: "scc-code",
+				},
+			},
+		},
+		`FIPS enabled with additional repos`: {
+			OperatingSystem: image.OperatingSystem{
+				EnableFIPS: true,
+				Packages: image.Packages{
+					AdditionalRepos: []image.AddRepo{
+						{
+							URL: "https://additional-repo.suse",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			os := test.OperatingSystem
+			failures := validateFIPS(&os)
+			assert.Len(t, failures, len(test.ExpectedFailedMessages))
+
+			var foundMessages []string
+			for _, foundValidation := range failures {
+				foundMessages = append(foundMessages, foundValidation.UserMessage)
+			}
+
+			for _, expectedMessage := range test.ExpectedFailedMessages {
+				assert.Contains(t, foundMessages, expectedMessage)
+			}
+		})
+	}
+}
