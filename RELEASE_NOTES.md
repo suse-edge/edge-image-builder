@@ -6,17 +6,20 @@
 
 * Added single-stack IPv6 and dual-stack networking support for Kubernetes
 * SUSEConnect now properly activates the SL Micro "Extras" module
+* Improved Validation for `operatingSystem.enableFIPS` flag
 * Improved Embedded Artifact Registry handling to no longer be memory bound
 * Improved Helm chart handling to allow deploying multiple Helm charts with the same chart name
 * Dependency upgrades
-  * Updated metallb from `0.14.9` to `0.1.0+up0.14.9`
+  * Go module version is now upgraded from `1.22` to `1.24`  
+  * Updated MetalLB from `0.14.9` to `0.1.0+up0.14.9`
+  * Embedded registry is now utilizing Hauler v1.2.1 (upgraded from v1.0.7)
 
 ## API
 
 ### Image Definition Changes
 
 * Added `kubernetes.network.apiVIP6` field to enable cluster LoadBalancer based on IPv6 address
-* Added the `enableExtras` flag to enable the SUSE Linux Extras repository during RPM resolution.
+* Added the `operatingSystem.enableExtras` flag to enable the SUSE Linux Extras repository during RPM resolution.
 * Added the `kubernetes.helm.charts.releaseName` field to allow for deploying multiple instances of the same Helm chart.
 
 ### Image Configuration Directory Changes

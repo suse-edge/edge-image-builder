@@ -76,7 +76,7 @@ type OperatingSystem struct {
 	Time             Time                   `yaml:"time"`
 	Proxy            Proxy                  `yaml:"proxy"`
 	Keymap           string                 `yaml:"keymap"`
-	EnableFips       bool                   `yaml:"enableFIPS"`
+	EnableFIPS       bool                   `yaml:"enableFIPS"`
 }
 
 type IsoConfiguration struct {
