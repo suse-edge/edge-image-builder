@@ -32,7 +32,6 @@ type Podman interface {
 	Build(context, name string) error
 	Create(img string) (string, error)
 	Copy(id, src, dest string) error
-	Inspect(img, arc string) (string, error)
 }
 
 type BaseResolverImageBuilder interface {

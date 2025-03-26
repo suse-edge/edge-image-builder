@@ -237,7 +237,7 @@ func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error
 		convertedImageName := fmt.Sprintf("%s-%s", convertedImage, registryTarSuffix)
 		if strings.Contains(img, ":latest") {
 			var digest string
-			digest, err = c.ImageDigester.Inspect(img, arch)
+			digest, err = c.ImageDigester.ImageDigest(img, arch)
 			if err != nil || digest == "" {
 				zap.S().Warnf("Failed getting digest for %s: %s", img, err)
 

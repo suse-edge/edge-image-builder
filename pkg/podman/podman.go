@@ -10,12 +10,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/containers/podman/v4/pkg/bindings/manifests"
-
 	"github.com/containers/buildah/define"
+	"github.com/containers/image/v5/manifest"
 	"github.com/containers/podman/v4/pkg/bindings"
 	"github.com/containers/podman/v4/pkg/bindings/containers"
 	"github.com/containers/podman/v4/pkg/bindings/images"
+	"github.com/containers/podman/v4/pkg/bindings/manifests"
 	"github.com/containers/podman/v4/pkg/domain/entities"
 	"github.com/containers/podman/v4/pkg/specgen"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
@@ -146,28 +146,12 @@ func (p *Podman) Copy(id, src, dest string) error {
 	return nil
 }
 
-// Inspect returns the sha256 digest for a given container image on a specific architecture
-func (p *Podman) Inspect(img string, arch string) (string, error) {
+// Inspect retrieves the full information for a particular container image.
+func (p *Podman) Inspect(img string, arch string) (*manifest.Schema2List, error) {
 	zap.S().Infof("Inspecting %s for linux/%s", img, arch)
+
 	options := new(manifests.InspectOptions)
-	m, err := manifests.Inspect(p.context, img, options)
-	if err != nil {
-		return "", fmt.Errorf("error inspecting manifest %s: %w", img, err)
-	}
-
-	for i := range m.Manifests {
-		manifest := &m.Manifests[i]
-		if manifest.Platform.OS == "linux" && manifest.Platform.Architecture == arch {
-			digest := manifest.Digest.String()
-			// This is done to remove "sha256:" from the digest
-			if parts := strings.Split(digest, "sha256:"); len(parts) == 2 {
-				digest = parts[1]
-			}
-			return digest, nil
-		}
-	}
-
-	return "", nil
+	return manifests.Inspect(p.context, img, options)
 }
 
 func untar(arch io.Reader, dest string) error {

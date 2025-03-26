@@ -13,6 +13,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/cache"
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
+	"github.com/suse-edge/edge-image-builder/pkg/container"
 	"github.com/suse-edge/edge-image-builder/pkg/helm"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
@@ -166,10 +167,9 @@ func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion
 		}
 	}
 
-	imageDigester := &combustion.ImageDigester{
-		Podman: p,
+	combustionHandler.ImageDigester = &container.ImageDigester{
+		ImageInspector: p,
 	}
-	combustionHandler.ImageDigester = imageDigester
 
 	if !combustion.SkipRPMComponent(ctx) {
 		imgPath := filepath.Join(ctx.ImageConfigDir, "base-images", ctx.ImageDefinition.Image.BaseImage)

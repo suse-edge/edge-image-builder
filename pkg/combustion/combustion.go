@@ -8,8 +8,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/suse-edge/edge-image-builder/pkg/podman"
-
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
@@ -57,11 +55,7 @@ type embeddedRegistry interface {
 }
 
 type imageDigester interface {
-	Inspect(img string, arch string) (string, error)
-}
-
-type ImageDigester struct {
-	Podman *podman.Podman
+	ImageDigest(img string, arch string) (string, error)
 }
 
 type Combustion struct {
@@ -239,8 +233,4 @@ func logComponentStatus(component string, err error) {
 
 func prependArtefactPath(path string) string {
 	return filepath.Join("$ARTEFACTS_DIR", path)
-}
-
-func (d *ImageDigester) Inspect(img string, arch string) (string, error) {
-	return d.Podman.Inspect(img, arch)
 }
