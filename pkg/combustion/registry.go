@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/schollz/progressbar/v3"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
@@ -233,6 +232,7 @@ func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error
 	arch := ctx.ImageDefinition.Image.Arch.Short()
 
 	for _, img := range images {
+		cacheImage := true
 		convertedImage := strings.ReplaceAll(img, "/", "_")
 		convertedImageName := fmt.Sprintf("%s-%s", convertedImage, registryTarSuffix)
 		if strings.Contains(img, ":latest") {
@@ -240,12 +240,10 @@ func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error
 			digest, err = c.ImageDigester.ImageDigest(img, arch)
 			if err != nil || digest == "" {
 				zap.S().Warnf("Failed getting digest for %s: %s", img, err)
-
-				// In the case where we're not able to find a digest, we'll use a timestamp to prevent staleness
-				digest = fmt.Sprintf("%d", time.Now().Unix())
+				cacheImage = false
+			} else {
+				convertedImageName = fmt.Sprintf("%s-%s-%s", convertedImage, digest, registryTarSuffix)
 			}
-
-			convertedImageName = fmt.Sprintf("%s-%s-%s", convertedImage, digest, registryTarSuffix)
 		}
 
 		imageCacheLocation := filepath.Join(imageCacheDir, convertedImageName)
@@ -264,8 +262,10 @@ func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error
 				return fmt.Errorf("generating registry store tarball: %w", err)
 			}
 
-			if err = fileio.CopyFile(imageTarDest, imageCacheLocation, fileio.NonExecutablePerms); err != nil {
-				return fmt.Errorf("copying container image to cache: %w", err)
+			if cacheImage {
+				if err = fileio.CopyFile(imageTarDest, imageCacheLocation, fileio.NonExecutablePerms); err != nil {
+					return fmt.Errorf("copying container image to cache: %w", err)
+				}
 			}
 		}
 		if err = bar.Add(1); err != nil {

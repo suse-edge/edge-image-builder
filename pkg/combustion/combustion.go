@@ -55,7 +55,7 @@ type embeddedRegistry interface {
 }
 
 type imageDigester interface {
-	ImageDigest(img string, arch string) (string, error)
+	ImageDigest(img, arch string) (string, error)
 }
 
 type Combustion struct {
