@@ -10,6 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/suse-edge/edge-image-builder/pkg/podman"
+	"github.com/suse-edge/edge-image-builder/pkg/rpm"
+	"github.com/suse-edge/edge-image-builder/pkg/rpm/resolver"
+
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/cache"
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
@@ -19,10 +23,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/suse-edge/edge-image-builder/pkg/network"
-	"github.com/suse-edge/edge-image-builder/pkg/podman"
 	"github.com/suse-edge/edge-image-builder/pkg/registry"
-	"github.com/suse-edge/edge-image-builder/pkg/rpm"
-	"github.com/suse-edge/edge-image-builder/pkg/rpm/resolver"
 	"go.uber.org/zap"
 )
 
@@ -178,7 +179,8 @@ func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion
 		if !combustion.SkipRPMComponent(ctx) {
 			imgPath := filepath.Join(ctx.ImageConfigDir, "base-images", ctx.ImageDefinition.Image.BaseImage)
 			imgType := ctx.ImageDefinition.Image.ImageType
-			baseBuilder := resolver.NewTarballBuilder(ctx.BuildDir, imgPath, imgType, string(ctx.ImageDefinition.Image.Arch), p)
+			luksKey := ctx.ImageDefinition.OperatingSystem.RawConfiguration.LUKSKey
+			baseBuilder := resolver.NewTarballBuilder(ctx.BuildDir, imgPath, imgType, string(ctx.ImageDefinition.Image.Arch), luksKey, p)
 
 			combustionHandler.RPMResolver = resolver.New(ctx.BuildDir, p, baseBuilder, "", string(ctx.ImageDefinition.Image.Arch))
 			combustionHandler.RPMRepoCreator = rpm.NewRepoCreator(ctx.BuildDir)
