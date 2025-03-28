@@ -255,11 +255,20 @@ func validateRawConfig(def *image.Definition) []FailedValidation {
 		}
 
 		if def.OperatingSystem.RawConfiguration.ExpandEncryptedPartition {
-			msg := fmt.Sprintf("The 'expandEncryptedPartition' field is not not valid for '%s' images.", image.TypeISO)
+			msg := fmt.Sprintf("The 'expandEncryptedPartition' field can only be defined for '%s' encrypted images.", image.TypeRAW)
 			failures = append(failures, FailedValidation{
 				UserMessage: msg,
 			})
 		}
+
+		if def.OperatingSystem.RawConfiguration.DiskSize != "" {
+			msg := fmt.Sprintf("The 'diskSize' field can only be defined for '%s' images.", image.TypeRAW)
+			failures = append(failures, FailedValidation{
+				UserMessage: msg,
+			})
+		}
+
+		return failures
 	}
 
 	if def.OperatingSystem.RawConfiguration.LUKSKey == "" && def.OperatingSystem.RawConfiguration.ExpandEncryptedPartition {
@@ -269,30 +278,8 @@ func validateRawConfig(def *image.Definition) []FailedValidation {
 		})
 	}
 
-	if len(failures) > 0 {
-		return failures
-	}
-
-	if def.OperatingSystem.RawConfiguration.DiskSize == "" {
-		return nil
-	}
-
-	if !strings.EqualFold(def.Image.ImageType, image.TypeRAW) {
-		msg := fmt.Sprintf("The 'rawConfiguration/diskSize' field can only be used when 'imageType' is '%s'.", image.TypeRAW)
-		failures = append(failures, FailedValidation{
-			UserMessage: msg,
-		})
-	}
-
-	if def.OperatingSystem.IsoConfiguration.InstallDevice != "" {
-		msg := "You cannot simultaneously configure rawConfiguration and isoConfiguration, regardless of image type."
-		failures = append(failures, FailedValidation{
-			UserMessage: msg,
-		})
-	}
-
-	if !def.OperatingSystem.RawConfiguration.DiskSize.IsValid() {
-		msg := "The 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'."
+	if def.OperatingSystem.RawConfiguration.DiskSize != "" && !def.OperatingSystem.RawConfiguration.DiskSize.IsValid() {
+		msg := "The 'diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'."
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})

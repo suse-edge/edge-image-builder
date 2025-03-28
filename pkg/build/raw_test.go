@@ -46,24 +46,53 @@ func TestWriteModifyScript(t *testing.T) {
 	// Setup
 	ctx, teardown := setupContext(t)
 	defer teardown()
+
 	ctx.ImageDefinition = &image.Definition{
 		Image: image.Image{
 			OutputImageName: "output-image",
 		},
-		OperatingSystem: image.OperatingSystem{
-			KernelArgs: []string{"alpha", "beta"},
-			RawConfiguration: image.RawConfiguration{
-				DiskSize: "64G",
-			},
-		},
 	}
+
 	builder := Builder{context: ctx}
 	outputImageFilename := builder.generateOutputImageFilename()
+
+	raw := image.OperatingSystem{
+		KernelArgs: []string{"alpha", "beta"},
+		RawConfiguration: image.RawConfiguration{
+			DiskSize: "64G",
+		},
+	}
+
+	iso := image.OperatingSystem{
+		KernelArgs: []string{"alpha", "beta"},
+		IsoConfiguration: image.IsoConfiguration{
+			InstallDevice: "/dev/sda",
+		},
+	}
+
+	luksKey := "1234"
+	encryptedRaw := image.OperatingSystem{
+		KernelArgs: []string{"alpha", "beta"},
+		RawConfiguration: image.RawConfiguration{
+			LUKSKey:  luksKey,
+			DiskSize: "64G",
+		},
+	}
+
+	encryptedRawExpand := image.OperatingSystem{
+		KernelArgs: []string{"alpha", "beta"},
+		RawConfiguration: image.RawConfiguration{
+			LUKSKey:                  luksKey,
+			ExpandEncryptedPartition: true,
+			DiskSize:                 "64G",
+		},
+	}
 
 	tests := []struct {
 		name              string
 		includeCombustion bool
 		renameFilesystem  bool
+		operatingSystem   *image.OperatingSystem
 		expectedContains  []string
 		expectedMissing   []string
 	}{
@@ -71,6 +100,7 @@ func TestWriteModifyScript(t *testing.T) {
 			name:              "RAW Image Usage",
 			includeCombustion: true,
 			renameFilesystem:  true,
+			operatingSystem:   &raw,
 			expectedContains: []string{
 				fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s", outputImageFilename),
 				fmt.Sprintf("copy-in %s", builder.context.CombustionDir),
@@ -86,6 +116,7 @@ func TestWriteModifyScript(t *testing.T) {
 			name:              "ISO Image Usage",
 			includeCombustion: false,
 			renameFilesystem:  false,
+			operatingSystem:   &iso,
 			expectedContains: []string{
 				fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s", outputImageFilename),
 			},
@@ -95,11 +126,44 @@ func TestWriteModifyScript(t *testing.T) {
 				"btrfs filesystem resize max /",
 			},
 		},
+		{
+			name:              "Encrypted RAW Image Usage",
+			includeCombustion: true,
+			renameFilesystem:  true,
+			operatingSystem:   &encryptedRaw,
+			expectedContains: []string{
+				fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s $LUKSFLAG", outputImageFilename),
+				fmt.Sprintf("copy-in %s", builder.context.CombustionDir),
+				"btrfs filesystem label / INSTALL",
+				"truncate -s 64G",
+				"virt-resize --expand $ROOT_PART",
+				fmt.Sprintf("LUKSFLAG=\"--key all:key:%s\"", luksKey),
+			},
+			expectedMissing: []string{
+				"btrfs filesystem resize max /",
+			},
+		},
+		{
+			name:              "Encrypted RAW Image Usage With Expansion",
+			includeCombustion: true,
+			renameFilesystem:  true,
+			operatingSystem:   &encryptedRawExpand,
+			expectedContains: []string{
+				fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s $LUKSFLAG", outputImageFilename),
+				fmt.Sprintf("copy-in %s", builder.context.CombustionDir),
+				"btrfs filesystem label / INSTALL",
+				"truncate -s 64G",
+				"virt-resize --expand $ROOT_PART",
+				fmt.Sprintf("LUKSFLAG=\"--key all:key:%s\"", luksKey),
+				"btrfs filesystem resize max /",
+			},
+		},
 	}
 
 	// Test
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			ctx.ImageDefinition.OperatingSystem = *test.operatingSystem
 			err := builder.writeModifyScript(outputImageFilename, test.includeCombustion, test.renameFilesystem)
 			require.NoError(t, err)
 
@@ -119,108 +183,6 @@ func TestWriteModifyScript(t *testing.T) {
 				assert.NotContains(t, foundContents, dontFindMe)
 			}
 		})
-	}
-}
-
-func TestWriteModifyScriptLUKS(t *testing.T) {
-	// Setup
-	ctx, teardown := setupContext(t)
-	defer teardown()
-	luksKey := "1234"
-	ctx.ImageDefinition = &image.Definition{
-		Image: image.Image{
-			OutputImageName: "output-image",
-		},
-		OperatingSystem: image.OperatingSystem{
-			KernelArgs: []string{"alpha", "beta"},
-			RawConfiguration: image.RawConfiguration{
-				DiskSize: "64G",
-				LUKSKey:  luksKey,
-			},
-		},
-	}
-	builder := Builder{context: ctx}
-	outputImageFilename := builder.generateOutputImageFilename()
-
-	expectedContains := []string{
-		fmt.Sprintf("LUKSFLAG=\"--key all:key:%s\"", luksKey),
-		fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s $LUKSFLAG", outputImageFilename),
-		fmt.Sprintf("copy-in %s", builder.context.CombustionDir),
-		"btrfs filesystem label / INSTALL",
-		"truncate -s 64G",
-		"virt-resize --expand $ROOT_PART",
-	}
-
-	expectedMissing := []string{
-		"btrfs filesystem resize max /",
-	}
-
-	// Test
-	err := builder.writeModifyScript(outputImageFilename, true, true)
-	require.NoError(t, err)
-
-	expectedFilename := filepath.Join(ctx.BuildDir, modifyScriptName)
-	foundBytes, err := os.ReadFile(expectedFilename)
-	require.NoError(t, err)
-
-	stats, err := os.Stat(expectedFilename)
-	require.NoError(t, err)
-	assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
-	foundContents := string(foundBytes)
-
-	for _, findMe := range expectedContains {
-		assert.Contains(t, foundContents, findMe)
-	}
-	for _, dontFindMe := range expectedMissing {
-		assert.NotContains(t, foundContents, dontFindMe)
-	}
-}
-
-func TestWriteModifyScriptLUKSExpand(t *testing.T) {
-	// Setup
-	ctx, teardown := setupContext(t)
-	defer teardown()
-	luksKey := "1234"
-	ctx.ImageDefinition = &image.Definition{
-		Image: image.Image{
-			OutputImageName: "output-image",
-		},
-		OperatingSystem: image.OperatingSystem{
-			KernelArgs: []string{"alpha", "beta"},
-			RawConfiguration: image.RawConfiguration{
-				DiskSize:                 "64G",
-				LUKSKey:                  luksKey,
-				ExpandEncryptedPartition: true,
-			},
-		},
-	}
-	builder := Builder{context: ctx}
-	outputImageFilename := builder.generateOutputImageFilename()
-	expectedContains := []string{
-		fmt.Sprintf("LUKSFLAG=\"--key all:key:%s\"", luksKey),
-		fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s $LUKSFLAG", outputImageFilename),
-		fmt.Sprintf("copy-in %s", builder.context.CombustionDir),
-		"btrfs filesystem label / INSTALL",
-		"truncate -s 64G",
-		"virt-resize --expand $ROOT_PART",
-		"btrfs filesystem resize max /",
-	}
-
-	// Test
-	err := builder.writeModifyScript(outputImageFilename, true, true)
-	require.NoError(t, err)
-
-	expectedFilename := filepath.Join(ctx.BuildDir, modifyScriptName)
-	foundBytes, err := os.ReadFile(expectedFilename)
-	require.NoError(t, err)
-
-	stats, err := os.Stat(expectedFilename)
-	require.NoError(t, err)
-	assert.Equal(t, fileio.ExecutablePerms, stats.Mode())
-	foundContents := string(foundBytes)
-
-	for _, findMe := range expectedContains {
-		assert.Contains(t, foundContents, findMe)
 	}
 }
 

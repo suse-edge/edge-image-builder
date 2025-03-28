@@ -104,8 +104,7 @@ func TestValidateOperatingSystem(t *testing.T) {
 				"User 'danny' must have either a password or at least one SSH key.",
 				"The 'host' field is required for the 'suma' section.",
 				fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
-				"The 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
-				"You cannot simultaneously configure rawConfiguration and isoConfiguration, regardless of image type.",
+				"The 'diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
 			},
 		},
 	}
@@ -637,7 +636,7 @@ func TestValidateRawConfiguration(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"The 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
+				"The 'diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
 			},
 		},
 		`diskSize invalid as zero`: {
@@ -652,7 +651,7 @@ func TestValidateRawConfiguration(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"The 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
+				"The 'diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
 			},
 		},
 		`diskSize invalid as lowercase character`: {
@@ -667,7 +666,7 @@ func TestValidateRawConfiguration(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"The 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
+				"The 'diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
 			},
 		},
 		`diskSize invalid as negative number`: {
@@ -682,7 +681,7 @@ func TestValidateRawConfiguration(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"The 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
+				"The 'diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
 			},
 		},
 		`diskSize invalid as no number provided`: {
@@ -697,7 +696,7 @@ func TestValidateRawConfiguration(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"The 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
+				"The 'diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
 			},
 		},
 		`luksKey defined image type RAW`: {
@@ -769,7 +768,7 @@ func TestValidateRawConfiguration(t *testing.T) {
 			},
 			ExpectedFailedMessages: []string{
 				"The 'luksKey' field should only be defined for 'raw' encrypted images.",
-				"The 'expandEncryptedPartition' field is not not valid for 'iso' images.",
+				"The 'expandEncryptedPartition' field can only be defined for 'raw' encrypted images.",
 			},
 		},
 	}

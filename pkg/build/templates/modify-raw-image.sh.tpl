@@ -12,7 +12,7 @@ set -euo pipefail
 #                            on why this is needed)
 #  Arch                      - The architecture of the image to be built
 #  LUKSKey                   - The key necessary for modifying encrypted raw images
-#  ExpandEncryptedPartition  - Optionally enables expanding the encrypted partition before boot
+#  ExpandEncryptedPartition  - If true, expands the encrypted partition during the build process
 #
 # Guestfish Command Documentation: https://libguestfs.org/guestfish.1.html
 
