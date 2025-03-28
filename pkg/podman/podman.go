@@ -147,8 +147,8 @@ func (p *Podman) Copy(id, src, dest string) error {
 }
 
 // Inspect retrieves the full information for a particular container image.
-func (p *Podman) Inspect(img string, arch string) (*manifest.Schema2List, error) {
-	zap.S().Infof("Inspecting %s for linux/%s", img, arch)
+func (p *Podman) Inspect(img string) (*manifest.Schema2List, error) {
+	zap.S().Infof("Inspecting %s", img)
 
 	options := new(manifests.InspectOptions)
 	return manifests.Inspect(p.context, img, options)

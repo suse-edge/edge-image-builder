@@ -10,12 +10,12 @@ import (
 )
 
 type mockImageInspector struct {
-	inspect func(image, arch string) (*manifest.Schema2List, error)
+	inspect func(image string) (*manifest.Schema2List, error)
 }
 
-func (m mockImageInspector) Inspect(img, arch string) (*manifest.Schema2List, error) {
+func (m mockImageInspector) Inspect(img string) (*manifest.Schema2List, error) {
 	if m.inspect != nil {
-		return m.inspect(img, arch)
+		return m.inspect(img)
 	}
 
 	panic("not implemented")
@@ -65,7 +65,7 @@ func TestImageDigestValid(t *testing.T) {
 
 	d := ImageDigester{
 		ImageInspector: mockImageInspector{
-			inspect: func(image, arch string) (*manifest.Schema2List, error) {
+			inspect: func(image string) (*manifest.Schema2List, error) {
 				return helloWorldManifest, nil
 			},
 		},
@@ -81,7 +81,7 @@ func TestImageDigestNoSchemaFound(t *testing.T) {
 
 	d := ImageDigester{
 		ImageInspector: mockImageInspector{
-			inspect: func(image, arch string) (*manifest.Schema2List, error) {
+			inspect: func(image string) (*manifest.Schema2List, error) {
 				return helloWorldManifest, nil
 			},
 		},
@@ -95,7 +95,7 @@ func TestImageDigestNoSchemaFound(t *testing.T) {
 func TestImageDigestError(t *testing.T) {
 	d := ImageDigester{
 		ImageInspector: mockImageInspector{
-			inspect: func(image, arch string) (*manifest.Schema2List, error) {
+			inspect: func(image string) (*manifest.Schema2List, error) {
 				return nil, fmt.Errorf("image not found")
 			},
 		},

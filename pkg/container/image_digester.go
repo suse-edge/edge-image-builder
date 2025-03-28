@@ -8,7 +8,7 @@ import (
 )
 
 type imageInspector interface {
-	Inspect(image, arch string) (*manifest.Schema2List, error)
+	Inspect(image string) (*manifest.Schema2List, error)
 }
 
 type ImageDigester struct {
@@ -16,7 +16,7 @@ type ImageDigester struct {
 }
 
 func (d *ImageDigester) ImageDigest(img string, arch string) (string, error) {
-	schemas, err := d.ImageInspector.Inspect(img, arch)
+	schemas, err := d.ImageInspector.Inspect(img)
 	if err != nil {
 		return "", fmt.Errorf("inspecting image: %w", err)
 	}
