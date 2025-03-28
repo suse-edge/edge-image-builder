@@ -31,15 +31,10 @@ func TestImageDigestValid(t *testing.T) {
 					MediaType: "application/vnd.docker.distribution.manifest.v2+json",
 					Size:      1156,
 					Digest:    "sha256:3dfc05677ed97fdf620a3af556d6fe44ec3747262cbf1b4c0c20eed284fd7290",
-					URLs:      []string{},
 				},
 				Platform: manifest.Schema2PlatformSpec{
 					Architecture: "amd64",
 					OS:           "linux",
-					OSVersion:    "",
-					OSFeatures:   []string{},
-					Variant:      "",
-					Features:     []string{},
 				},
 			},
 			{
@@ -47,15 +42,10 @@ func TestImageDigestValid(t *testing.T) {
 					MediaType: "application/vnd.docker.distribution.manifest.v2+json",
 					Size:      1156,
 					Digest:    "sha256:7c831ce05c671702726fc2951fe85048b0b9559f4105b80363424aa935bff2d1",
-					URLs:      []string{},
 				},
 				Platform: manifest.Schema2PlatformSpec{
 					Architecture: "arm64",
 					OS:           "linux",
-					OSVersion:    "",
-					OSFeatures:   []string{},
-					Variant:      "",
-					Features:     []string{},
 				},
 			},
 		},
@@ -77,12 +67,10 @@ func TestImageDigestValid(t *testing.T) {
 }
 
 func TestImageDigestNoSchemaFound(t *testing.T) {
-	helloWorldManifest := &manifest.Schema2List{}
-
 	d := ImageDigester{
 		ImageInspector: mockImageInspector{
 			inspect: func(image string) (*manifest.Schema2List, error) {
-				return helloWorldManifest, nil
+				return &manifest.Schema2List{}, nil
 			},
 		},
 	}
@@ -102,6 +90,6 @@ func TestImageDigestError(t *testing.T) {
 	}
 
 	digest, err := d.ImageDigest("hello-world:latest", "amd64")
-	require.ErrorContains(t, err, "image not found")
+	require.EqualError(t, err, "inspecting image: image not found")
 	assert.Empty(t, digest)
 }
