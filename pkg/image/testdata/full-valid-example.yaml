@@ -80,6 +80,17 @@ embeddedArtifactRegistry:
   images:
     - name: hello-world:latest
     - name: ghcr.io/fluxcd/flux-cli@sha256:02aa820c3a9c57d67208afcfc4bce9661658c17d15940aea369da259d2b976dd
+  registries:
+    - url: docker.io
+      credentials:
+        - username: user
+          password: pass
+        - username: user2
+          password: pass2
+    - url: registry.suse.com
+      credentials:
+        - username: suse-user
+          password: suse-pass
 kubernetes:
   version: v1.30.3+rke2r1
   network:
