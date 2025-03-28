@@ -32,5 +32,5 @@ func (d *ImageDigester) ImageDigest(img string, arch string) (string, error) {
 		}
 	}
 
-	return "", nil
+	return "", fmt.Errorf("image is not built for linux/%s", arch)
 }

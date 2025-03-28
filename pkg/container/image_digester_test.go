@@ -76,7 +76,7 @@ func TestImageDigestNoSchemaFound(t *testing.T) {
 	}
 
 	digest, err := d.ImageDigest("hello-world:latest", "amd64")
-	require.NoError(t, err)
+	require.EqualError(t, err, "image is not built for linux/amd64")
 	assert.Empty(t, digest)
 }
 

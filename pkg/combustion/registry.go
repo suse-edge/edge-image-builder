@@ -238,7 +238,7 @@ func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error
 		if strings.Contains(img, ":latest") {
 			var digest string
 			digest, err = c.ImageDigester.ImageDigest(img, arch)
-			if err != nil || digest == "" {
+			if err != nil {
 				zap.S().Warnf("Failed getting digest for %s: %s", img, err)
 				cacheImage = false
 			} else {
