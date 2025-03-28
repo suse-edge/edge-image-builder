@@ -11,6 +11,7 @@
 * Improved Embedded Artifact Registry handling to no longer be memory bound
 * Updated Embedded Artifact Registry documentation
 * Improved Helm chart handling to allow deploying multiple Helm charts with the same chart name
+* Added support for getting container images from authenticated container registries
 * Dependency upgrades
   * Go module version is now upgraded from `1.22` to `1.24`
   * Updated MetalLB from `0.14.9` to `0.1.0+up0.14.9`
@@ -25,6 +26,7 @@
 * Added the `operatingSystem.rawConfiguration.luksKey` field for specifying the LINUX UNIFIED KEY SETUP for modifying RAW Encrypted images
 * Added the `operatingSystem.rawConfiguration.expandEncryptedPartition` field to specify if the LUKS encrypted partition should be expanded during build time
 * Added the `kubernetes.helm.charts.releaseName` field to allow for deploying multiple instances of the same Helm chart.
+* Added the `embeddedArtifactRegistries.registries` field to allow providing credentials for authenticated registries
 
 ### Image Configuration Directory Changes
 
