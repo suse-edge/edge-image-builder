@@ -11,9 +11,11 @@ import (
 	"strings"
 
 	"github.com/containers/buildah/define"
+	"github.com/containers/image/v5/manifest"
 	"github.com/containers/podman/v4/pkg/bindings"
 	"github.com/containers/podman/v4/pkg/bindings/containers"
 	"github.com/containers/podman/v4/pkg/bindings/images"
+	"github.com/containers/podman/v4/pkg/bindings/manifests"
 	"github.com/containers/podman/v4/pkg/domain/entities"
 	"github.com/containers/podman/v4/pkg/specgen"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
@@ -142,6 +144,14 @@ func (p *Podman) Copy(id, src, dest string) error {
 	}
 
 	return nil
+}
+
+// Inspect retrieves the full information for a particular container image.
+func (p *Podman) Inspect(img string) (*manifest.Schema2List, error) {
+	zap.S().Infof("Inspecting %s", img)
+
+	options := new(manifests.InspectOptions)
+	return manifests.Inspect(p.context, img, options)
 }
 
 func untar(arch io.Reader, dest string) error {

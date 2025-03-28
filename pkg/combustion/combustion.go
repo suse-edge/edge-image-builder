@@ -54,6 +54,10 @@ type embeddedRegistry interface {
 	HelmCharts() ([]*registry.HelmCRD, error)
 }
 
+type imageDigester interface {
+	ImageDigest(img, arch string) (string, error)
+}
+
 type Combustion struct {
 	NetworkConfigGenerator       networkConfigGenerator
 	NetworkConfiguratorInstaller networkConfiguratorInstaller
@@ -62,6 +66,7 @@ type Combustion struct {
 	RPMResolver                  rpmResolver
 	RPMRepoCreator               rpmRepoCreator
 	Registry                     embeddedRegistry
+	ImageDigester                imageDigester
 }
 
 // Configure iterates over all separate Combustion components and configures them independently.

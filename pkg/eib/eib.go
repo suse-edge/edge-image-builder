@@ -13,6 +13,7 @@ import (
 	"github.com/suse-edge/edge-image-builder/pkg/build"
 	"github.com/suse-edge/edge-image-builder/pkg/cache"
 	"github.com/suse-edge/edge-image-builder/pkg/combustion"
+	"github.com/suse-edge/edge-image-builder/pkg/container"
 	"github.com/suse-edge/edge-image-builder/pkg/helm"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/kubernetes"
@@ -164,29 +165,33 @@ func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion
 		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
 	}
 
-	if !combustion.SkipRPMComponent(ctx) {
+	if !combustion.SkipRPMComponent(ctx) || combustion.IsEmbeddedArtifactRegistryConfigured(ctx) {
 		p, err := podman.New(ctx.BuildDir)
 		if err != nil {
 			return nil, fmt.Errorf("setting up Podman instance: %w", err)
 		}
 
-		imgPath := filepath.Join(ctx.ImageConfigDir, "base-images", ctx.ImageDefinition.Image.BaseImage)
-		imgType := ctx.ImageDefinition.Image.ImageType
-		baseBuilder := resolver.NewTarballBuilder(ctx.BuildDir, imgPath, imgType, string(ctx.ImageDefinition.Image.Arch), p)
-
-		combustionHandler.RPMResolver = resolver.New(ctx.BuildDir, p, baseBuilder, "", string(ctx.ImageDefinition.Image.Arch))
-		combustionHandler.RPMRepoCreator = rpm.NewRepoCreator(ctx.BuildDir)
-	}
-
-	if combustion.IsEmbeddedArtifactRegistryConfigured(ctx) {
-		helmClient := helm.New(ctx.BuildDir, combustion.HelmCertsPath(ctx))
-
-		r, err := registry.New(ctx, combustion.KubernetesManifestsPath(ctx), helmClient, combustion.HelmValuesPath(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("initialising embedded artifact registry: %w", err)
+		combustionHandler.ImageDigester = &container.ImageDigester{
+			ImageInspector: p,
 		}
 
-		combustionHandler.Registry = r
+		if !combustion.SkipRPMComponent(ctx) {
+			imgPath := filepath.Join(ctx.ImageConfigDir, "base-images", ctx.ImageDefinition.Image.BaseImage)
+			imgType := ctx.ImageDefinition.Image.ImageType
+			baseBuilder := resolver.NewTarballBuilder(ctx.BuildDir, imgPath, imgType, string(ctx.ImageDefinition.Image.Arch), p)
+
+			combustionHandler.RPMResolver = resolver.New(ctx.BuildDir, p, baseBuilder, "", string(ctx.ImageDefinition.Image.Arch))
+			combustionHandler.RPMRepoCreator = rpm.NewRepoCreator(ctx.BuildDir)
+		}
+
+		if combustion.IsEmbeddedArtifactRegistryConfigured(ctx) {
+			helmClient := helm.New(ctx.BuildDir, combustion.HelmCertsPath(ctx))
+
+			combustionHandler.Registry, err = registry.New(ctx, combustion.KubernetesManifestsPath(ctx), helmClient, combustion.HelmValuesPath(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("initialising embedded artifact registry: %w", err)
+			}
+		}
 	}
 
 	if ctx.ImageDefinition.Kubernetes.Version != "" {

@@ -184,7 +184,7 @@ func (c *Combustion) configureEmbeddedArtifactRegistry(ctx *image.Context, conta
 		return "", fmt.Errorf("creating registry dir: %w", err)
 	}
 
-	if err := populateRegistry(ctx, containerImages); err != nil {
+	if err := c.populateRegistry(ctx, containerImages); err != nil {
 		return "", fmt.Errorf("populating registry: %w", err)
 	}
 
@@ -206,7 +206,7 @@ func registryArtefactsPath(ctx *image.Context) string {
 	return filepath.Join(ctx.ArtefactsDir, registryDir)
 }
 
-func populateRegistry(ctx *image.Context, images []string) error {
+func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error {
 	imageCacheDir := filepath.Join(ctx.CacheDir, "images")
 	if err := os.MkdirAll(imageCacheDir, os.ModePerm); err != nil {
 		return fmt.Errorf("creating container image cache dir: %w", err)
@@ -232,8 +232,19 @@ func populateRegistry(ctx *image.Context, images []string) error {
 	arch := ctx.ImageDefinition.Image.Arch.Short()
 
 	for _, img := range images {
+		cacheImage := true
 		convertedImage := strings.ReplaceAll(img, "/", "_")
 		convertedImageName := fmt.Sprintf("%s-%s", convertedImage, registryTarSuffix)
+		if strings.Contains(img, ":latest") {
+			var digest string
+			digest, err = c.ImageDigester.ImageDigest(img, arch)
+			if err != nil {
+				zap.S().Warnf("Failed getting digest for %s: %s", img, err)
+				cacheImage = false
+			} else {
+				convertedImageName = fmt.Sprintf("%s-%s-%s", convertedImage, digest, registryTarSuffix)
+			}
+		}
 
 		imageCacheLocation := filepath.Join(imageCacheDir, convertedImageName)
 		imageTarDest := filepath.Join(registryArtefactsPath(ctx), convertedImageName)
@@ -251,8 +262,10 @@ func populateRegistry(ctx *image.Context, images []string) error {
 				return fmt.Errorf("generating registry store tarball: %w", err)
 			}
 
-			if err = fileio.CopyFile(imageTarDest, imageCacheLocation, fileio.NonExecutablePerms); err != nil {
-				return fmt.Errorf("copying container image to cache: %w", err)
+			if cacheImage {
+				if err = fileio.CopyFile(imageTarDest, imageCacheLocation, fileio.NonExecutablePerms); err != nil {
+					return fmt.Errorf("copying container image to cache: %w", err)
+				}
 			}
 		}
 		if err = bar.Add(1); err != nil {
