@@ -370,8 +370,13 @@ The following describes the possible options for the embedded artifact registry 
 embeddedArtifactRegistry:
   images:
     - name: hello-world:latest
-    - name: ghcr.io/fluxcd/flux-cli@sha256:02aa820c3a9c57d67208afcfc4bce9661658c17d15940aea369da259d2b976dd
+    - name: nginx:stable@sha256:b03c8dfc241047d827e1e14d69533205b387d476d97ef7efce58605a6c3acb84
 ```
+
+> **_NOTE:_** When providing images tagged with a `sha256` digest, the digest must be the manifest digest for the 
+> platform you are pulling the image for (e.g. `linux/amd64`), not the index digest of the image. If the index digest
+> is provided and not the manifest digest, the image build will be successful but the embedded artifact registry 
+> systemd unit will fail to start at boot time.
 
 * `images` - Defines a list of container images to download and host on the node.
   * `name` - Required; Specifies the name, with a tag or digest, of a container image to be pulled and stored.
