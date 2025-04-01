@@ -233,7 +233,7 @@ func validatePackages(os *image.OperatingSystem) []FailedValidation {
 func validateIsoConfig(def *image.Definition) []FailedValidation {
 	var failures []FailedValidation
 
-	if def.Image.ImageType != image.TypeISO && def.OperatingSystem.IsoConfiguration.InstallDevice != "" {
+	if !strings.EqualFold(def.Image.ImageType, image.TypeISO) && def.OperatingSystem.IsoConfiguration.InstallDevice != "" {
 		msg := fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO)
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
@@ -246,26 +246,40 @@ func validateIsoConfig(def *image.Definition) []FailedValidation {
 func validateRawConfig(def *image.Definition) []FailedValidation {
 	var failures []FailedValidation
 
-	if def.OperatingSystem.RawConfiguration.DiskSize == "" {
-		return nil
+	if strings.EqualFold(def.Image.ImageType, image.TypeISO) {
+		if def.OperatingSystem.RawConfiguration.LUKSKey != "" {
+			msg := fmt.Sprintf("The 'luksKey' field should only be defined for '%s' encrypted images.", image.TypeRAW)
+			failures = append(failures, FailedValidation{
+				UserMessage: msg,
+			})
+		}
+
+		if def.OperatingSystem.RawConfiguration.ExpandEncryptedPartition {
+			msg := fmt.Sprintf("The 'expandEncryptedPartition' field can only be defined for '%s' encrypted images.", image.TypeRAW)
+			failures = append(failures, FailedValidation{
+				UserMessage: msg,
+			})
+		}
+
+		if def.OperatingSystem.RawConfiguration.DiskSize != "" {
+			msg := fmt.Sprintf("The 'diskSize' field can only be defined for '%s' images.", image.TypeRAW)
+			failures = append(failures, FailedValidation{
+				UserMessage: msg,
+			})
+		}
+
+		return failures
 	}
 
-	if def.Image.ImageType != image.TypeRAW {
-		msg := fmt.Sprintf("The 'rawConfiguration/diskSize' field can only be used when 'imageType' is '%s'.", image.TypeRAW)
+	if def.OperatingSystem.RawConfiguration.LUKSKey == "" && def.OperatingSystem.RawConfiguration.ExpandEncryptedPartition {
+		msg := "The 'expandEncryptedPartition' field cannot be 'true' when 'luksKey' is not defined."
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
 	}
 
-	if def.OperatingSystem.IsoConfiguration.InstallDevice != "" {
-		msg := "You cannot simultaneously configure rawConfiguration and isoConfiguration, regardless of image type."
-		failures = append(failures, FailedValidation{
-			UserMessage: msg,
-		})
-	}
-
-	if !def.OperatingSystem.RawConfiguration.DiskSize.IsValid() {
-		msg := "The 'rawConfiguration/diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'."
+	if def.OperatingSystem.RawConfiguration.DiskSize != "" && !def.OperatingSystem.RawConfiguration.DiskSize.IsValid() {
+		msg := "The 'diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'."
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})

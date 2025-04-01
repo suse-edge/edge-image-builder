@@ -2,14 +2,17 @@
 set -euo pipefail
 
 #  Template Fields
-#  ImagePath           - Full path to the image to modify
-#  CombustionDir       - Full path to the combustion directory
-#  ArtefactsDir        - Full path to the artefacts directory
-#  ConfigureGRUB       - Contains the guestfish command lines to run to manipulate GRUB configuration.
-#                        If there is no specific GRUB configuration to do, this will be an empty string.
-#  ConfigureCombustion - If true, the combustion and artefacts directories will be included in the raw image
-#  RenameFilesystem    - If true, the filesystem of the image will be renamed (see below for information
-#                        on why this is needed)
+#  ImagePath                 - Full path to the image to modify
+#  CombustionDir             - Full path to the combustion directory
+#  ArtefactsDir              - Full path to the artefacts directory
+#  ConfigureGRUB             - Contains the guestfish command lines to run to manipulate GRUB configuration.
+#                              If there is no specific GRUB configuration to do, this will be an empty string.
+#  ConfigureCombustion       - If true, the combustion and artefacts directories will be included in the raw image
+#  RenameFilesystem          - If true, the filesystem of the image will be renamed (see below for information
+#                            on why this is needed)
+#  Arch                      - The architecture of the image to be built
+#  LUKSKey                   - The key necessary for modifying encrypted raw images
+#  ExpandEncryptedPartition  - If true, expands the encrypted partition during the build process
 #
 # Guestfish Command Documentation: https://libguestfs.org/guestfish.1.html
 
@@ -24,9 +27,15 @@ if [[ {{ .Arch }} == "aarch64" ]]; then
 	ROOT_PART=/dev/sda2
 fi
 
+# Set the LUKS key flag for encrypted images
+LUKSFLAG=""
+{{ if .LUKSKey }}
+LUKSFLAG="--key all:key:{{ .LUKSKey }}"
+{{ end }}
+
 # Test the block size of the base image and adapt to suit either 512/4096 byte images
 BLOCKSIZE=512
-if ! guestfish -i --blocksize=$BLOCKSIZE -a {{.ImagePath}} echo "[INFO] 512 byte sector check successful."; then
+if ! guestfish -i --blocksize=$BLOCKSIZE -a {{.ImagePath}} $LUKSFLAG echo "[INFO] 512 byte sector check successful."; then
         echo "[WARN] Failed to access image with 512 byte sector size, trying 4096 bytes."
         BLOCKSIZE=4096
 fi
@@ -42,9 +51,13 @@ cp {{.ImagePath}}.expanded {{.ImagePath}}
 rm -f {{.ImagePath}}.expanded
 {{ end }}
 
-guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a {{.ImagePath}} -i <<'EOF'
+guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a {{.ImagePath}} $LUKSFLAG -i <<'EOF'
   # Enables write access to the read only filesystem
   sh "btrfs property set / ro false"
+
+  {{ if .ExpandEncryptedPartition }}
+  sh "btrfs filesystem resize max /"
+  {{ end }}
 
   {{ if ne .ConfigureGRUB "" }}
   {{ .ConfigureGRUB }}

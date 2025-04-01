@@ -46,24 +46,53 @@ func TestWriteModifyScript(t *testing.T) {
 	// Setup
 	ctx, teardown := setupContext(t)
 	defer teardown()
+
 	ctx.ImageDefinition = &image.Definition{
 		Image: image.Image{
 			OutputImageName: "output-image",
 		},
-		OperatingSystem: image.OperatingSystem{
-			KernelArgs: []string{"alpha", "beta"},
-			RawConfiguration: image.RawConfiguration{
-				DiskSize: "64G",
-			},
-		},
 	}
+
 	builder := Builder{context: ctx}
 	outputImageFilename := builder.generateOutputImageFilename()
+
+	raw := image.OperatingSystem{
+		KernelArgs: []string{"alpha", "beta"},
+		RawConfiguration: image.RawConfiguration{
+			DiskSize: "64G",
+		},
+	}
+
+	iso := image.OperatingSystem{
+		KernelArgs: []string{"alpha", "beta"},
+		IsoConfiguration: image.IsoConfiguration{
+			InstallDevice: "/dev/sda",
+		},
+	}
+
+	luksKey := "1234"
+	encryptedRaw := image.OperatingSystem{
+		KernelArgs: []string{"alpha", "beta"},
+		RawConfiguration: image.RawConfiguration{
+			LUKSKey:  luksKey,
+			DiskSize: "64G",
+		},
+	}
+
+	encryptedRawExpand := image.OperatingSystem{
+		KernelArgs: []string{"alpha", "beta"},
+		RawConfiguration: image.RawConfiguration{
+			LUKSKey:                  luksKey,
+			ExpandEncryptedPartition: true,
+			DiskSize:                 "64G",
+		},
+	}
 
 	tests := []struct {
 		name              string
 		includeCombustion bool
 		renameFilesystem  bool
+		operatingSystem   *image.OperatingSystem
 		expectedContains  []string
 		expectedMissing   []string
 	}{
@@ -71,6 +100,7 @@ func TestWriteModifyScript(t *testing.T) {
 			name:              "RAW Image Usage",
 			includeCombustion: true,
 			renameFilesystem:  true,
+			operatingSystem:   &raw,
 			expectedContains: []string{
 				fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s", outputImageFilename),
 				fmt.Sprintf("copy-in %s", builder.context.CombustionDir),
@@ -78,18 +108,54 @@ func TestWriteModifyScript(t *testing.T) {
 				"truncate -s 64G",
 				"virt-resize --expand $ROOT_PART",
 			},
-			expectedMissing: []string{},
+			expectedMissing: []string{
+				"btrfs filesystem resize max /",
+			},
 		},
 		{
 			name:              "ISO Image Usage",
 			includeCombustion: false,
 			renameFilesystem:  false,
+			operatingSystem:   &iso,
 			expectedContains: []string{
 				fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s", outputImageFilename),
 			},
 			expectedMissing: []string{
 				fmt.Sprintf("copy-in %s", builder.context.CombustionDir),
 				"btrfs filesystem label / INSTALL",
+				"btrfs filesystem resize max /",
+			},
+		},
+		{
+			name:              "Encrypted RAW Image Usage",
+			includeCombustion: true,
+			renameFilesystem:  true,
+			operatingSystem:   &encryptedRaw,
+			expectedContains: []string{
+				fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s $LUKSFLAG", outputImageFilename),
+				fmt.Sprintf("copy-in %s", builder.context.CombustionDir),
+				"btrfs filesystem label / INSTALL",
+				"truncate -s 64G",
+				"virt-resize --expand $ROOT_PART",
+				fmt.Sprintf("LUKSFLAG=\"--key all:key:%s\"", luksKey),
+			},
+			expectedMissing: []string{
+				"btrfs filesystem resize max /",
+			},
+		},
+		{
+			name:              "Encrypted RAW Image Usage With Expansion",
+			includeCombustion: true,
+			renameFilesystem:  true,
+			operatingSystem:   &encryptedRawExpand,
+			expectedContains: []string{
+				fmt.Sprintf("guestfish --blocksize=$BLOCKSIZE --format=raw --rw -a %s $LUKSFLAG", outputImageFilename),
+				fmt.Sprintf("copy-in %s", builder.context.CombustionDir),
+				"btrfs filesystem label / INSTALL",
+				"truncate -s 64G",
+				"virt-resize --expand $ROOT_PART",
+				fmt.Sprintf("LUKSFLAG=\"--key all:key:%s\"", luksKey),
+				"btrfs filesystem resize max /",
 			},
 		},
 	}
@@ -97,6 +163,7 @@ func TestWriteModifyScript(t *testing.T) {
 	// Test
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			ctx.ImageDefinition.OperatingSystem = *test.operatingSystem
 			err := builder.writeModifyScript(outputImageFilename, test.includeCombustion, test.renameFilesystem)
 			require.NoError(t, err)
 
