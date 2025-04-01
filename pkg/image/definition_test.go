@@ -169,10 +169,10 @@ func TestParse(t *testing.T) {
 	registries := definition.EmbeddedArtifactRegistry.Registries
 
 	assert.Equal(t, registries[0].URL, "docker.io")
-
 	assert.Equal(t, registries[0].Authentication.Username, "user")
 	assert.Equal(t, registries[0].Authentication.Password, "pass")
 
+	assert.Equal(t, registries[1].URL, "registry.suse.com")
 	assert.Equal(t, registries[1].Authentication.Username, "suse-user")
 	assert.Equal(t, registries[1].Authentication.Password, "suse-pass")
 
