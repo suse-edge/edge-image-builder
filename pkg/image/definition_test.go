@@ -166,6 +166,16 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, "hello-world:latest", embeddedArtifactRegistry.ContainerImages[0].Name)
 	assert.Equal(t, "ghcr.io/fluxcd/flux-cli@sha256:02aa820c3a9c57d67208afcfc4bce9661658c17d15940aea369da259d2b976dd", embeddedArtifactRegistry.ContainerImages[1].Name)
 
+	registries := definition.EmbeddedArtifactRegistry.Registries
+
+	assert.Equal(t, registries[0].URL, "docker.io")
+	assert.Equal(t, registries[0].Authentication.Username, "user")
+	assert.Equal(t, registries[0].Authentication.Password, "pass")
+
+	assert.Equal(t, registries[1].URL, "registry.suse.com")
+	assert.Equal(t, registries[1].Authentication.Username, "suse-user")
+	assert.Equal(t, registries[1].Authentication.Password, "suse-pass")
+
 	// Kubernetes
 	kubernetes := definition.Kubernetes
 

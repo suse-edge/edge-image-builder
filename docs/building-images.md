@@ -371,10 +371,20 @@ embeddedArtifactRegistry:
   images:
     - name: hello-world:latest
     - name: ghcr.io/fluxcd/flux-cli@sha256:02aa820c3a9c57d67208afcfc4bce9661658c17d15940aea369da259d2b976dd
+  registries:
+    - url: registry.suse.com
+      authentication:
+        username: user
+        password: pass
 ```
 
 * `images` - Defines a list of container images to download and host on the node.
   * `name` - Required; Specifies the name, with a tag or digest, of a container image to be pulled and stored.
+* `registries` - Defines a list of registries along with the credentials used to access them.
+  * `url` - Required for authenticated registries; Specifies the URL of an authenticated registry.
+  * `authentication` - Required for authenticated registries. 
+    * `username` - Required; Defines the username for accessing the specified registry.
+    * `password` - Required; Defines the password for accessing the specified registry.
 
 # Image Configuration Directory
 
