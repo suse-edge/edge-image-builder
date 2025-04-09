@@ -9,6 +9,7 @@
 * Improved Validation for `operatingSystem.enableFIPS` flag
 * Added the ability to build RAW Encrypted Images
 * Improved Embedded Artifact Registry handling to no longer be memory bound
+* Updated Embedded Artifact Registry documentation
 * Improved Helm chart handling to allow deploying multiple Helm charts with the same chart name
 * Dependency upgrades
   * Go module version is now upgraded from `1.22` to `1.24`
