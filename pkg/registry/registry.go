@@ -121,29 +121,29 @@ func storeHelmCharts(ctx *image.Context, helmClient helmClient) ([]*helmChart, e
 	chartRepositories := mapChartsToRepos(helm)
 
 	var charts []*helmChart
-	seenHelmCharts := make(map[string]string)
+	helmChartPaths := make(map[string]string)
 
 	for i := range helm.Charts {
 		chart := helm.Charts[i]
-		chartConfig := fmt.Sprintf("%s-%s-%s", chart.RepositoryName, chart.Name, chart.Version)
+		chartID := fmt.Sprintf("%s-%s-%s", chart.RepositoryName, chart.Name, chart.Version)
 
 		repository, ok := chartRepositories[helm.Charts[i].RepositoryName]
 		if !ok {
 			return nil, fmt.Errorf("repository not found for chart %s", helm.Charts[i].Name)
 		}
 
-		if _, exists := seenHelmCharts[chartConfig]; !exists {
+		if _, exists := helmChartPaths[chartID]; !exists {
 			localPath, err := downloadChart(helmClient, &helm.Charts[i], repository, helmDir)
 			if err != nil {
 				return nil, fmt.Errorf("downloading chart: %w", err)
 			}
 
-			seenHelmCharts[chartConfig] = localPath
+			helmChartPaths[chartID] = localPath
 		}
 
 		charts = append(charts, &helmChart{
 			HelmChart:     helm.Charts[i],
-			localPath:     seenHelmCharts[chartConfig],
+			localPath:     helmChartPaths[chartID],
 			repositoryURL: repository.URL,
 		})
 
