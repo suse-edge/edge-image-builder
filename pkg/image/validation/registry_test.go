@@ -24,14 +24,14 @@ func TestValidateEmbeddedArtifactRegistry(t *testing.T) {
 				},
 				Registries: []image.Registry{
 					{
-						URL: "docker.io",
+						URI: "docker.io",
 						Authentication: image.RegistryAuthentication{
 							Username: "user",
 							Password: "pass",
 						},
 					},
 					{
-						URL: "192.168.1.100:5000",
+						URI: "192.168.1.100:5000",
 						Authentication: image.RegistryAuthentication{
 							Username: "user2",
 							Password: "pass2",
@@ -151,43 +151,27 @@ func TestValidateRegistries(t *testing.T) {
 		ExpectedFailedMessages []string
 	}{
 		`no authentication`: {
-			Registry: image.EmbeddedArtifactRegistry{
-				ContainerImages: []image.ContainerImage{
-					{
-						Name: "hello-world:latest",
-					},
-				},
-			},
+			Registry: image.EmbeddedArtifactRegistry{},
 		},
-		`url no credentials`: {
+		`URI no credentials`: {
 			Registry: image.EmbeddedArtifactRegistry{
-				ContainerImages: []image.ContainerImage{
-					{
-						Name: "hello-world:latest",
-					},
-				},
 				Registries: []image.Registry{
 					{
-						URL:            "docker.io",
+						URI:            "docker.io",
 						Authentication: image.RegistryAuthentication{},
 					},
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"The 'username' field is required for each entry in 'embeddedArtifactRegistries.registries.credentials'.",
-				"The 'password' field is required for each entry in 'embeddedArtifactRegistries.registries.credentials'.",
+				"The 'username' field is required for each entry in 'embeddedArtifactRegistry.registries.credentials'.",
+				"The 'password' field is required for each entry in 'embeddedArtifactRegistry.registries.credentials'.",
 			},
 		},
 		`credentials missing username`: {
 			Registry: image.EmbeddedArtifactRegistry{
-				ContainerImages: []image.ContainerImage{
-					{
-						Name: "hello-world:latest",
-					},
-				},
 				Registries: []image.Registry{
 					{
-						URL: "docker.io",
+						URI: "docker.io",
 						Authentication: image.RegistryAuthentication{
 							Username: "",
 							Password: "pass",
@@ -196,19 +180,14 @@ func TestValidateRegistries(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"The 'username' field is required for each entry in 'embeddedArtifactRegistries.registries.credentials'.",
+				"The 'username' field is required for each entry in 'embeddedArtifactRegistry.registries.credentials'.",
 			},
 		},
 		`credentials missing password`: {
 			Registry: image.EmbeddedArtifactRegistry{
-				ContainerImages: []image.ContainerImage{
-					{
-						Name: "hello-world:latest",
-					},
-				},
 				Registries: []image.Registry{
 					{
-						URL: "docker.io",
+						URI: "docker.io",
 						Authentication: image.RegistryAuthentication{
 							Username: "user",
 							Password: "",
@@ -217,26 +196,21 @@ func TestValidateRegistries(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"The 'password' field is required for each entry in 'embeddedArtifactRegistries.registries.credentials'.",
+				"The 'password' field is required for each entry in 'embeddedArtifactRegistry.registries.credentials'.",
 			},
 		},
-		`credentials duplicate URL`: {
+		`credentials duplicate URI`: {
 			Registry: image.EmbeddedArtifactRegistry{
-				ContainerImages: []image.ContainerImage{
-					{
-						Name: "hello-world:latest",
-					},
-				},
 				Registries: []image.Registry{
 					{
-						URL: "docker.io",
+						URI: "docker.io",
 						Authentication: image.RegistryAuthentication{
 							Username: "user",
 							Password: "pass",
 						},
 					},
 					{
-						URL: "docker.io",
+						URI: "docker.io",
 						Authentication: image.RegistryAuthentication{
 							Username: "user2",
 							Password: "pass2",
@@ -245,26 +219,28 @@ func TestValidateRegistries(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Duplicate URL 'docker.io' found in the 'embeddedArtifactRegistries.registries.url' section.",
+				"Duplicate registry URI 'docker.io' found in the 'embeddedArtifactRegistry.registries' section.",
 			},
 		},
-		`invalid registry url`: {
+		`invalid registry URI`: {
 			Registry: image.EmbeddedArtifactRegistry{
-				ContainerImages: []image.ContainerImage{
-					{
-						Name: "hello-world:latest",
-					},
-				},
 				Registries: []image.Registry{
 					{
-						URL: "docker...io",
+						URI: "docker...io",
 						Authentication: image.RegistryAuthentication{
 							Username: "user",
 							Password: "pass",
 						},
 					},
 					{
-						URL: "/docker.io/images",
+						URI: "/docker.io/images",
+						Authentication: image.RegistryAuthentication{
+							Username: "user",
+							Password: "pass",
+						},
+					},
+					{
+						URI: "https://docker.io/images",
 						Authentication: image.RegistryAuthentication{
 							Username: "user",
 							Password: "pass",
@@ -273,8 +249,9 @@ func TestValidateRegistries(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"Embedded artifact registry URL 'docker...io' could not be parsed.",
-				"Embedded artifact registry URL '/docker.io/images' could not be parsed.",
+				"Embedded artifact registry URI 'docker...io' could not be parsed.",
+				"Embedded artifact registry URI '/docker.io/images' could not be parsed.",
+				"Embedded artifact registry URI 'https://docker.io/images' could not be parsed.",
 			},
 		},
 	}
