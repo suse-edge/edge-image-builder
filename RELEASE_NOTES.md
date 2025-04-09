@@ -23,7 +23,7 @@
 * Added the `operatingSystem.enableExtras` flag to enable the SUSE Linux Extras repository during RPM resolution.
 * Added the `operatingSystem.rawConfiguration.luksKey` field for specifying the LINUX UNIFIED KEY SETUP for modifying RAW Encrypted images
 * Added the `operatingSystem.rawConfiguration.expandEncryptedPartition` field to specify if the LUKS encrypted partition should be expanded during build time
-* Added the `embeddedArtifactRegistries.registries` field to allow providing credentials for authenticated registries
+* Added the `embeddedArtifactRegistry.registries` field to allow providing credentials for authenticated registries
 
 ### Image Configuration Directory Changes
 
