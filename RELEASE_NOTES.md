@@ -9,6 +9,7 @@
 * Improved Validation for `operatingSystem.enableFIPS` flag
 * Added the ability to build RAW Encrypted Images
 * Improved Embedded Artifact Registry handling to no longer be memory bound
+* Updated Embedded Artifact Registry documentation
 * Dependency upgrades
   * Go module version is now upgraded from `1.22` to `1.24`
   * Updated MetalLB from `0.14.9` to `0.1.0+up0.14.9`
