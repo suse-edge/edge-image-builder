@@ -14,10 +14,8 @@ const (
 func validateEmbeddedArtifactRegistry(ctx *image.Context) []FailedValidation {
 	var failures []FailedValidation
 
-	if len(ctx.ImageDefinition.EmbeddedArtifactRegistry.ContainerImages) > 0 {
-		failures = append(failures, validateContainerImages(&ctx.ImageDefinition.EmbeddedArtifactRegistry)...)
-		failures = append(failures, validateRegistries(&ctx.ImageDefinition.EmbeddedArtifactRegistry)...)
-	}
+	failures = append(failures, validateRegistries(&ctx.ImageDefinition.EmbeddedArtifactRegistry)...)
+	failures = append(failures, validateContainerImages(&ctx.ImageDefinition.EmbeddedArtifactRegistry)...)
 
 	return failures
 }
@@ -59,28 +57,30 @@ func validateURLs(ear *image.EmbeddedArtifactRegistry) []FailedValidation {
 
 	seenRegistryURLs := make(map[string]bool)
 	for _, registry := range ear.Registries {
-		if registry.URL == "" {
+		if registry.URI == "" {
 			failures = append(failures, FailedValidation{
-				UserMessage: "The 'url' field is required for each entry in 'embeddedArtifactRegistries.registries'.",
+				UserMessage: "The 'uri' field is required for each entry in 'embeddedArtifactRegistry.registries'.",
 			})
 		}
 
-		_, err := reference.Parse(registry.URL)
+		_, err := reference.Parse(registry.URI)
 		if err != nil {
 			failures = append(failures, FailedValidation{
-				UserMessage: fmt.Sprintf("Embedded artifact registry URL '%s' could not be parsed.", registry.URL),
+				UserMessage: fmt.Sprintf("Embedded artifact registry URI '%s' could not be parsed.", registry.URI),
 				Error:       err,
 			})
+
+			continue
 		}
 
-		if seenRegistryURLs[registry.URL] {
-			msg := fmt.Sprintf("Duplicate URL '%s' found in the 'embeddedArtifactRegistries.registries.url' section.", registry.URL)
+		if seenRegistryURLs[registry.URI] {
+			msg := fmt.Sprintf("Duplicate registry URI '%s' found in the 'embeddedArtifactRegistry.registries' section.", registry.URI)
 			failures = append(failures, FailedValidation{
 				UserMessage: msg,
 			})
 		}
 
-		seenRegistryURLs[registry.URL] = true
+		seenRegistryURLs[registry.URI] = true
 	}
 
 	return failures
@@ -92,13 +92,13 @@ func validateCredentials(ear *image.EmbeddedArtifactRegistry) []FailedValidation
 	for _, registry := range ear.Registries {
 		if registry.Authentication.Username == "" {
 			failures = append(failures, FailedValidation{
-				UserMessage: "The 'username' field is required for each entry in 'embeddedArtifactRegistries.registries.credentials'.",
+				UserMessage: "The 'username' field is required for each entry in 'embeddedArtifactRegistry.registries.credentials'.",
 			})
 		}
 
 		if registry.Authentication.Password == "" {
 			failures = append(failures, FailedValidation{
-				UserMessage: "The 'password' field is required for each entry in 'embeddedArtifactRegistries.registries.credentials'.",
+				UserMessage: "The 'password' field is required for each entry in 'embeddedArtifactRegistry.registries.credentials'.",
 			})
 		}
 	}

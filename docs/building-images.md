@@ -385,7 +385,8 @@ embeddedArtifactRegistry:
 
 * `images` - Defines a list of container images to download and host on the node.
   * `name` - Required; Specifies the name, with a tag or digest, of a container image to be pulled and stored.
-* `registries` - Defines a list of registries along with the credentials used to access them.
+* `registries` - Optional, only required for authenticated registries; Defines a list of registries along with the 
+* credentials used to access them.
   * `url` - Required for authenticated registries; Specifies the URL of an authenticated registry.
   * `authentication` - Required for authenticated registries. 
     * `username` - Required; Defines the username for accessing the specified registry.

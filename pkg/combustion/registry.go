@@ -93,7 +93,7 @@ func generateRegistryTar(imageTarDest string, outputWriter io.Writer) error {
 }
 
 func loginToRegistry(registry image.Registry, outputWriter io.Writer) error {
-	args := []string{"login", registry.URL, "--username", registry.Authentication.Username, "--password", registry.Authentication.Password}
+	args := []string{"login", registry.URI, "--username", registry.Authentication.Username, "--password", registry.Authentication.Password}
 
 	cmd := exec.Command(hauler, args...)
 	cmd.Stdout = outputWriter
@@ -238,7 +238,7 @@ func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error
 
 	for _, registry := range ctx.ImageDefinition.EmbeddedArtifactRegistry.Registries {
 		if err = loginToRegistry(registry, logFile); err != nil {
-			return fmt.Errorf("logging into registry '%s': %w", registry.URL, err)
+			return fmt.Errorf("logging into registry '%s': %w", registry.URI, err)
 		}
 	}
 
