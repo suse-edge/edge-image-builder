@@ -218,6 +218,7 @@ type Helm struct {
 
 type HelmChart struct {
 	Name                  string   `yaml:"name"`
+	ReleaseName           string   `yaml:"releaseName"`
 	RepositoryName        string   `yaml:"repositoryName"`
 	Version               string   `yaml:"version"`
 	TargetNamespace       string   `yaml:"targetNamespace"`

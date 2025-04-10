@@ -200,6 +200,7 @@ func TestParse(t *testing.T) {
 
 	// Helm Charts
 	assert.Equal(t, "apache", kubernetes.Helm.Charts[0].Name)
+	assert.Equal(t, "apache-server", kubernetes.Helm.Charts[0].ReleaseName)
 	assert.Equal(t, "bitnami", kubernetes.Helm.Charts[0].RepositoryName)
 	assert.Equal(t, "10.7.0", kubernetes.Helm.Charts[0].Version)
 	assert.Equal(t, "web", kubernetes.Helm.Charts[0].TargetNamespace)
