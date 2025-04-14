@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
+
+	"github.com/suse-edge/edge-image-builder/pkg/log"
 
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
@@ -18,9 +21,10 @@ func validateImage(ctx *image.Context) []FailedValidation {
 	def := ctx.ImageDefinition
 
 	validImageTypes := []string{image.TypeISO, image.TypeRAW}
-	validArchTypes := []string{string(image.ArchTypeARM), string(image.ArchTypeX86)}
 
 	var failures []FailedValidation
+
+	failures = append(failures, validateArch(def)...)
 
 	if def.Image.ImageType == "" {
 		failures = append(failures, FailedValidation{
@@ -28,17 +32,6 @@ func validateImage(ctx *image.Context) []FailedValidation {
 		})
 	} else if !slices.Contains(validImageTypes, def.Image.ImageType) {
 		msg := fmt.Sprintf("The 'imageType' field must be one of: %s", strings.Join(validImageTypes, ", "))
-		failures = append(failures, FailedValidation{
-			UserMessage: msg,
-		})
-	}
-
-	if def.Image.Arch == "" {
-		failures = append(failures, FailedValidation{
-			UserMessage: "The 'arch' field is required in the 'image' section.",
-		})
-	} else if !slices.Contains(validArchTypes, string(def.Image.Arch)) {
-		msg := fmt.Sprintf("The 'arch' field must be one of: %s", strings.Join(validArchTypes, ", "))
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
@@ -71,6 +64,33 @@ func validateImage(ctx *image.Context) []FailedValidation {
 				})
 			}
 		}
+	}
+
+	return failures
+}
+
+func validateArch(def *image.Definition) []FailedValidation {
+	var failures []FailedValidation
+
+	validArchTypes := []string{string(image.ArchTypeARM), string(image.ArchTypeX86)}
+	if def.Image.Arch == "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: "The 'arch' field is required in the 'image' section.",
+		})
+
+		return failures
+	} else if !slices.Contains(validArchTypes, string(def.Image.Arch)) {
+		msg := fmt.Sprintf("The 'arch' field must be one of: %s", strings.Join(validArchTypes, ", "))
+		failures = append(failures, FailedValidation{
+			UserMessage: msg,
+		})
+
+		return failures
+	}
+
+	if runtime.GOARCH != def.Image.Arch.Short() {
+		log.Auditf("Image build may fail as host architecture does not match the defined architecture of the "+
+			"output image.\nDetected: %s, Defined: %s", runtime.GOARCH, def.Image.Arch.Short())
 	}
 
 	return failures
