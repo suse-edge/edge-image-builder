@@ -440,6 +440,24 @@ func TestValidateHelmCharts(t *testing.T) {
 							InstallationNamespace: "kube-system",
 							Version:               "10.7.0",
 						},
+						{
+							Name:                  "apache",
+							ReleaseName:           "apache2",
+							RepositoryName:        "apache-repo",
+							TargetNamespace:       "web",
+							CreateNamespace:       true,
+							InstallationNamespace: "kube-system",
+							Version:               "10.7.0",
+						},
+						{
+							Name:                  "apache",
+							ReleaseName:           "apache3",
+							RepositoryName:        "apache-repo",
+							TargetNamespace:       "web2",
+							CreateNamespace:       true,
+							InstallationNamespace: "kube-system",
+							Version:               "10.7.0",
+						},
 					},
 					Repositories: []image.HelmRepository{
 						{
@@ -591,7 +609,7 @@ func TestValidateHelmCharts(t *testing.T) {
 				"Helm chart 'createNamespace' field for \"apache\" cannot be true without 'targetNamespace' being defined.",
 			},
 		},
-		`helm chart duplicate name`: {
+		`helm chart duplicate name no release name`: {
 			K8s: image.Kubernetes{
 				Helm: image.Helm{
 					Charts: []image.HelmChart{
@@ -615,7 +633,40 @@ func TestValidateHelmCharts(t *testing.T) {
 				},
 			},
 			ExpectedFailedMessages: []string{
-				"The 'helmCharts' field contains duplicate entries: apache",
+				"Helm charts with the same 'name' require a unique 'releaseName'. Duplicate found:\nName: 'apache', Release name: ''",
+			},
+		},
+		// This configuration would be valid for a regular chart deployment;
+		// however, since we use the Helm controller, a different target namespace is not sufficient. The release names must be different.
+		`helm chart duplicate name, same release name, different target namespaces`: {
+			K8s: image.Kubernetes{
+				Helm: image.Helm{
+					Charts: []image.HelmChart{
+						{
+							Name:            "apache",
+							ReleaseName:     "apache-deployment",
+							TargetNamespace: "web",
+							RepositoryName:  "apache-repo",
+							Version:         "10.7.0",
+						},
+						{
+							Name:            "apache",
+							ReleaseName:     "apache-deployment",
+							TargetNamespace: "web2",
+							RepositoryName:  "apache-repo",
+							Version:         "10.7.0",
+						},
+					},
+					Repositories: []image.HelmRepository{
+						{
+							Name: "apache-repo",
+							URL:  "oci://registry-1.docker.io/bitnamicharts",
+						},
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"Helm charts with the same 'name' require a unique 'releaseName'. Duplicate found:\nName: 'apache', Release name: 'apache-deployment'",
 			},
 		},
 		`helm chart invalid values file`: {

@@ -106,6 +106,7 @@ kubernetes:
   helm:
     charts:
       - name: apache
+        releaseName: apache-server
         repositoryName: bitnami
         version: 10.7.0
         targetNamespace: web

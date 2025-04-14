@@ -420,11 +420,7 @@ func validateHelm(k8s *image.Kubernetes, valuesDir, certsDir string) []FailedVal
 		helmRepositoryNames = append(helmRepositoryNames, repo.Name)
 	}
 
-	if failure := validateHelmChartDuplicates(k8s.Helm.Charts); failure != "" {
-		failures = append(failures, FailedValidation{
-			UserMessage: failure,
-		})
-	}
+	failures = append(failures, validateHelmChartDuplicates(k8s.Helm.Charts)...)
 
 	seenHelmRepos := make(map[string]bool)
 	for i := range k8s.Helm.Charts {
@@ -663,18 +659,29 @@ func validateHelmChartValues(chartName, valuesFile, valuesDir string) []FailedVa
 	return failures
 }
 
-func validateHelmChartDuplicates(charts []image.HelmChart) string {
-	seenHelmCharts := make(map[string]bool)
+func validateHelmChartDuplicates(charts []image.HelmChart) []FailedValidation {
+	var failures []FailedValidation
 
+	seenHelmCharts := make(map[string]bool)
 	for i := range charts {
-		if _, exists := seenHelmCharts[charts[i].Name]; exists {
-			return fmt.Sprintf("The 'helmCharts' field contains duplicate entries: %s", charts[i].Name)
+		chart := charts[i]
+
+		releaseName := chart.Name
+		if chart.ReleaseName != "" {
+			releaseName = chart.ReleaseName
 		}
 
-		seenHelmCharts[charts[i].Name] = true
+		if _, exists := seenHelmCharts[releaseName]; exists {
+			failures = append(failures, FailedValidation{
+				UserMessage: fmt.Sprintf("Helm charts with the same 'name' require a unique 'releaseName'. "+
+					"Duplicate found:\n"+"Name: '%s', Release name: '%s'", chart.Name, chart.ReleaseName),
+			})
+		}
+
+		seenHelmCharts[releaseName] = true
 	}
 
-	return ""
+	return failures
 }
 
 func validateAdditionalArtifacts(ctx *image.Context) []FailedValidation {
