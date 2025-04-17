@@ -1,21 +1,21 @@
 # Edge Image Builder Releases
 
-# Next
+# v1.2.0-rc0
 
 ## General
 
 * Added single-stack IPv6 and dual-stack networking support for Kubernetes
 * SUSEConnect now properly activates the SL Micro "Extras" module
-* Improved Validation for `operatingSystem.enableFIPS` flag
+* Improved validation for `operatingSystem.enableFIPS` flag
 * Added the ability to build RAW Encrypted Images
 * Improved Embedded Artifact Registry handling to no longer be memory bound
 * Updated Embedded Artifact Registry documentation
 * Improved Helm chart handling to allow deploying multiple Helm charts with the same chart name
 * Added warning when running cross-architecture builds
-* Added support for getting container images from authenticated container registries
+* Added support for authenticated container registries
 * Dependency upgrades
-  * Go module version is now upgraded from `1.22` to `1.24`
-  * Updated MetalLB from `0.14.9` to `0.1.0+up0.14.9`
+  * go.mod is now using Go 1.24 (upgraded from 1.22)
+  * Virtual IP addresses are now served by MetalLB 0.1.0+up0.14.9 (upgraded from 0.14.9)
   * Embedded registry is now utilizing Hauler v1.2.1 (upgraded from v1.0.7)
 
 ## API
@@ -23,11 +23,11 @@
 ### Image Definition Changes
 
 * Added `kubernetes.network.apiVIP6` field to enable cluster LoadBalancer based on IPv6 address
-* Added the `operatingSystem.enableExtras` flag to enable the SUSE Linux Extras repository during RPM resolution.
-* Added the `operatingSystem.rawConfiguration.luksKey` field for specifying the LINUX UNIFIED KEY SETUP for modifying RAW Encrypted images
-* Added the `operatingSystem.rawConfiguration.expandEncryptedPartition` field to specify if the LUKS encrypted partition should be expanded during build time
-* Added the `kubernetes.helm.charts.releaseName` field to allow for deploying multiple instances of the same Helm chart.
-* Added the `embeddedArtifactRegistry.registries` field to allow providing credentials for authenticated registries
+* Added `operatingSystem.enableExtras` flag to enable the SUSE Linux Extras repository during RPM resolution
+* Added `operatingSystem.rawConfiguration.luksKey` field for specifying the LINUX UNIFIED KEY SETUP for modifying RAW Encrypted images
+* Added `operatingSystem.rawConfiguration.expandEncryptedPartition` field to specify if the LUKS encrypted partition should be expanded during build time
+* Added `kubernetes.helm.charts.releaseName` field to allow for deploying multiple instances of the same Helm chart
+* Added `embeddedArtifactRegistry.registries` field to allow providing credentials for authenticated registries
 
 ### Image Configuration Directory Changes
 
@@ -35,7 +35,7 @@
 
 * [#591](https://github.com/suse-edge/edge-image-builder/issues/591) - Allow additional module registration during package resolution
 * [#593](https://github.com/suse-edge/edge-image-builder/issues/593) - OS files script should mount /var
-* [#594](https://github.com/suse-edge/edge-image-builder/issues/594) - Package installation breaks package resolution if packages are already installed on root OS
+* [#594](https://github.com/suse-edge/edge-image-builder/issues/594) - Package installation breaks package resolution if packages are already installed on the root OS
 * [#632](https://github.com/suse-edge/edge-image-builder/issues/632) - Create the required Elemental Agent directory structure during Combustion
 * [#625](https://github.com/suse-edge/edge-image-builder/issues/625) - Cache is stale for images tagged `:latest`
 * [#632](https://github.com/suse-edge/edge-image-builder/issues/606) - Allow for duplicate Helm chart names
