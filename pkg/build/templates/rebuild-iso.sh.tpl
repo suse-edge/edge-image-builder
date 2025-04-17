@@ -20,9 +20,28 @@ cd ${ISO_EXTRACT_DIR}
 
 # Regenerate the checksum, overwriting the existing one that was unsquashed
 RAW_IMAGE_FILE=`find ${RAW_EXTRACT_DIR} -name "*.raw"`
-CHECKSUM_FILE=`find ${RAW_EXTRACT_DIR} -name "*.md5"`
-BLK_CONF=$(awk '{print $2 " " $3;}' $CHECKSUM_FILE)
-echo "$(md5sum ${RAW_IMAGE_FILE} | awk '{print $1;}') $BLK_CONF" > ${CHECKSUM_FILE}
+
+MD5_CHECKSUM_FILE=`find "${RAW_EXTRACT_DIR}" -name "*.md5"`
+SHA256_CHECKSUM_FILE=`find "${RAW_EXTRACT_DIR}" -name "*.sha256"`
+
+if [[ -n "$SHA256_CHECKSUM_FILE" ]]; then
+  CHECKSUM_TYPE="sha256"
+  CHECKSUM_FILE="$SHA256_CHECKSUM_FILE"
+elif [[ -n "$MD5_CHECKSUM_FILE" ]]; then
+  CHECKSUM_TYPE="md5"
+  CHECKSUM_FILE="$MD5_CHECKSUM_FILE"
+else
+  echo "Error: No MD5 or SHA256 checksum file found in ${RAW_EXTRACT_DIR}" >&2
+  exit 1
+fi
+
+BLK_CONF=$(awk '{print $2 " " $3;}' "$CHECKSUM_FILE")
+
+if [[ "$CHECKSUM_TYPE" == "md5" ]]; then
+  echo "$(md5sum "${RAW_IMAGE_FILE}" | awk '{print $1;}') $BLK_CONF" > "$CHECKSUM_FILE"
+elif [[ "$CHECKSUM_TYPE" == "sha256" ]]; then
+  echo "$(sha256sum "${RAW_IMAGE_FILE}" | awk '{print $1;}') $BLK_CONF" > "$CHECKSUM_FILE"
+fi
 
 # Resquash the raw image
 SQUASH_IMAGE_FILE=`find ${ISO_EXTRACT_DIR} -name "*.squashfs"`
