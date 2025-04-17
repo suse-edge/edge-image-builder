@@ -82,6 +82,15 @@ embeddedArtifactRegistry:
   images:
     - name: hello-world:latest
     - name: nginx:stable@sha256:b03c8dfc241047d827e1e14d69533205b387d476d97ef7efce58605a6c3acb84
+  registries:
+    - uri: docker.io
+      authentication:
+        username: user
+        password: pass
+    - uri: registry.suse.com
+      authentication:
+        username: suse-user
+        password: suse-pass
 kubernetes:
   version: v1.30.3+rke2r1
   network:

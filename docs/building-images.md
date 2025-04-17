@@ -371,6 +371,11 @@ embeddedArtifactRegistry:
   images:
     - name: hello-world:latest
     - name: nginx:stable@sha256:b03c8dfc241047d827e1e14d69533205b387d476d97ef7efce58605a6c3acb84
+  registries:
+    - uri: registry.suse.com
+      authentication:
+        username: user
+        password: pass
 ```
 
 > **_NOTE:_** When providing images tagged with a `sha256` digest, the digest must be the manifest digest for the 
@@ -380,6 +385,12 @@ embeddedArtifactRegistry:
 
 * `images` - Defines a list of container images to download and host on the node.
   * `name` - Required; Specifies the name, with a tag or digest, of a container image to be pulled and stored.
+* `registries` - Optional, only required for authenticated registries; Defines a list of registries along with the 
+* credentials used to access them.
+  * `uri` - Required for authenticated registries; Specifies the URI of an authenticated registry.
+  * `authentication` - Required for authenticated registries. 
+    * `username` - Required; Defines the username for accessing the specified registry.
+    * `password` - Required; Defines the password for accessing the specified registry.
 
 # Image Configuration Directory
 

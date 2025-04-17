@@ -181,10 +181,21 @@ type Proxy struct {
 
 type EmbeddedArtifactRegistry struct {
 	ContainerImages []ContainerImage `yaml:"images"`
+	Registries      []Registry       `yaml:"registries"`
 }
 
 type ContainerImage struct {
 	Name string `yaml:"name"`
+}
+
+type Registry struct {
+	URI            string                 `yaml:"uri"`
+	Authentication RegistryAuthentication `yaml:"authentication"`
+}
+
+type RegistryAuthentication struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
 }
 
 type Kubernetes struct {

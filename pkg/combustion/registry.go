@@ -92,6 +92,16 @@ func generateRegistryTar(imageTarDest string, outputWriter io.Writer) error {
 	return nil
 }
 
+func loginToRegistry(registry image.Registry, outputWriter io.Writer) error {
+	args := []string{"login", registry.URI, "--username", registry.Authentication.Username, "--password", registry.Authentication.Password}
+
+	cmd := exec.Command(hauler, args...)
+	cmd.Stdout = outputWriter
+	cmd.Stderr = outputWriter
+
+	return cmd.Run()
+}
+
 func writeRegistryScript(ctx *image.Context) (string, error) {
 	values := struct {
 		RegistryPort      string
@@ -212,9 +222,6 @@ func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error
 		return fmt.Errorf("creating container image cache dir: %w", err)
 	}
 
-	bar := progressbar.Default(int64(len(images)), "Populating Embedded Artifact Registry...")
-	zap.S().Infof("Adding the following images to the embedded artifact registry:\n%s", images)
-
 	const registryLogFileName = "embedded-registry.log"
 	logFilename := filepath.Join(ctx.BuildDir, registryLogFileName)
 
@@ -228,6 +235,15 @@ func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error
 			zap.S().Warnf("Failed to close registry log file properly: %v", err)
 		}
 	}()
+
+	for _, registry := range ctx.ImageDefinition.EmbeddedArtifactRegistry.Registries {
+		if err = loginToRegistry(registry, logFile); err != nil {
+			return fmt.Errorf("logging into registry '%s': %w", registry.URI, err)
+		}
+	}
+
+	bar := progressbar.Default(int64(len(images)), "Populating Embedded Artifact Registry...")
+	zap.S().Infof("Adding the following images to the embedded artifact registry:\n%s", images)
 
 	arch := ctx.ImageDefinition.Image.Arch.Short()
 
