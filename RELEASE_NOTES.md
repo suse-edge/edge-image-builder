@@ -1,5 +1,11 @@
 # Edge Image Builder Releases
 
+# v1.1.1
+
+## Bug Fixes
+
+* [#699](https://github.com/suse-edge/edge-image-builder/issues/699) - SL Micro 6.0 images updated via KIWI fail to build due to a different checksum format
+
 # v1.1.0
 
 ## General
