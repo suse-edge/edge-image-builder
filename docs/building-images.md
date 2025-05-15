@@ -33,7 +33,7 @@ The following can be used as the minimum configuration required to create an ima
 required for each image definition.
 
 ```yaml
-apiVersion: 1.1
+apiVersion: 1.2
 image:
   imageType: iso
   arch: x86_64
