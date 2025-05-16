@@ -1,4 +1,4 @@
-apiVersion: 1.1
+apiVersion: 1.2
 image:
   arch: x86_64
   imageType: raw

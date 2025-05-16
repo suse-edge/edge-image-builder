@@ -30,6 +30,8 @@
 
 ### Image Definition Changes
 
+* The current version of the image definition has been incremented to `1.2` to include the changes below 
+  * Existing definitions using the `1.0` and `1.1` versions of the schema will continue to work with EIB
 * Added `kubernetes.network.apiVIP6` field to enable cluster LoadBalancer based on IPv6 address
 * Added `operatingSystem.enableExtras` flag to enable the SUSE Linux Extras repository during RPM resolution
 * Added `operatingSystem.rawConfiguration.luksKey` field for specifying the LINUX UNIFIED KEY SETUP for modifying RAW Encrypted images
@@ -85,6 +87,7 @@
 * The current version of the image definition has been incremented to `1.1` to include the changes below 
   * Existing definitions using the `1.0` version of the schema will continue to work with EIB
 * Introduced a dedicated FIPS mode option (`enableFIPS`) which will enable FIPS mode on the node
+* Adds an optional `apiVersions` field under Helm charts
 
 ### Image Configuration Directory Changes
 
