@@ -42,8 +42,9 @@ func validateVersion(ctx *image.Context) []FailedValidation {
 			})
 		}
 
-		for _, charts := range definition.Kubernetes.Helm.Charts {
-			if charts.ReleaseName != "" {
+		charts := definition.Kubernetes.Helm.Charts
+		for i := range charts {
+			if charts[i].ReleaseName != "" {
 				failures = append(failures, FailedValidation{
 					UserMessage: "Kubernetes field `helm.charts.releaseName` is only available in EIB version >= 1.2",
 				})
