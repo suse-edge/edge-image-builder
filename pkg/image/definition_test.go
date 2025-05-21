@@ -252,7 +252,7 @@ func TestParseBadConfig_InvalidFormat(t *testing.T) {
 
 func TestParseBadConfig_UnknownFields(t *testing.T) {
 	badConfig := `
-apiVersion: 1.1
+apiVersion: 1.2
 image:
   type: iso
 operatingSystem:

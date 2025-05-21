@@ -104,7 +104,8 @@ images that need to be available on the RTD image.
 
 Types of errors this log could produce:
 * Errors related to not being able to find a user-specified container image
-* Errors related to not being able to access a specified container image (e.g. Docker registry may sometimes block
+* Errors related to not being to access a container image (e.g. needing to provide credentials to access a registry)
+* Errors related to being blocked from pulling a container image (e.g. Docker registry may sometimes block
   you from pulling a container image if you pull it too many times)
 
 ## Helm
