@@ -1,6 +1,10 @@
 package validation
 
 import (
+	"fmt"
+	"reflect"
+	"strings"
+
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 )
 
@@ -8,75 +12,81 @@ const (
 	versionComponent = "Version"
 )
 
-// Note: This method of validating the EIB version in the image definition is only a temporary implementation
-// until a more robust solution can be found.
+type imageDefinitionField struct {
+	// Key of the value from the definition YAML file.
+	Key string
+	// Chain represents the nested field structure under the image.Definition type.
+	Chain []string
+}
+
+// Key is APIVersion where the fields are introduced.
+var definitionFields = map[string][]imageDefinitionField{
+	"1.1": {
+		{Key: "kubernetes.helm.charts.apiVersions", Chain: []string{"Kubernetes", "Helm", "Charts", "APIVersions"}},
+		{Key: "operatingSystem.enableFIPS", Chain: []string{"OperatingSystem", "EnableFIPS"}},
+	},
+	"1.2": {
+		{Key: "kubernetes.network.apiVIP6", Chain: []string{"Kubernetes", "Network", "APIVIP6"}},
+		{Key: "kubernetes.helm.charts.releaseName", Chain: []string{"Kubernetes", "Helm", "Charts", "ReleaseName"}},
+		{Key: "operatingSystem.rawConfiguration.luksKey", Chain: []string{"OperatingSystem", "RawConfiguration", "LUKSKey"}},
+		{Key: "operatingSystem.rawConfiguration.expandEncryptedPartition", Chain: []string{"OperatingSystem", "RawConfiguration", "ExpandEncryptedPartition"}},
+		{Key: "operatingSystem.packages.enableExtras", Chain: []string{"OperatingSystem", "Packages", "EnableExtras"}},
+		{Key: "embeddedArtifactRegistry.registries", Chain: []string{"EmbeddedArtifactRegistry", "Registries"}},
+	},
+}
+
 func validateVersion(ctx *image.Context) []FailedValidation {
 	var failures []FailedValidation
-	definition := *ctx.ImageDefinition
+	var rootValue = reflect.ValueOf(ctx.ImageDefinition)
 
-	var apiVersionsDefined bool
-	for i := range definition.Kubernetes.Helm.Charts {
-		if len(definition.Kubernetes.Helm.Charts[i].APIVersions) != 0 {
-			apiVersionsDefined = true
+	for apiVersion, fields := range definitionFields {
+		if strings.Compare(ctx.ImageDefinition.APIVersion, apiVersion) >= 0 {
+			continue
 		}
-	}
 
-	if definition.APIVersion == "1.0" {
-		if apiVersionsDefined {
-			failures = append(failures, FailedValidation{
-				UserMessage: "Kubernetes field `helm.charts.apiVersions` is only available in EIB version >= 1.1",
-			})
-
-			if definition.OperatingSystem.EnableFIPS {
+		for _, field := range fields {
+			if isValueNonZero(rootValue, field.Chain) {
 				failures = append(failures, FailedValidation{
-					UserMessage: "Operating system field `enableFIPS` is only available in EIB version >= 1.1",
+					UserMessage: fmt.Sprintf("Field `%s` is only available in API version >= %s", field.Key, apiVersion),
 				})
 			}
-		}
-	}
-
-	if definition.APIVersion != "1.2" {
-		if definition.Kubernetes.Network.APIVIP6 != "" {
-			failures = append(failures, FailedValidation{
-				UserMessage: "Kubernetes field `network.apiVIP6` is only available in EIB version >= 1.2",
-			})
-		}
-
-		charts := definition.Kubernetes.Helm.Charts
-		for i := range charts {
-			if charts[i].ReleaseName != "" {
-				failures = append(failures, FailedValidation{
-					UserMessage: "Kubernetes field `helm.charts.releaseName` is only available in EIB version >= 1.2",
-				})
-
-				break
-			}
-		}
-
-		if definition.OperatingSystem.RawConfiguration.LUKSKey != "" {
-			failures = append(failures, FailedValidation{
-				UserMessage: "Operating system field `rawConfiguration.luksKey` is only available in EIB version >= 1.2",
-			})
-		}
-
-		if definition.OperatingSystem.RawConfiguration.ExpandEncryptedPartition {
-			failures = append(failures, FailedValidation{
-				UserMessage: "Operating system field `rawConfiguration.expandEncryptedPartition` is only available in EIB version >= 1.2",
-			})
-		}
-
-		if definition.OperatingSystem.Packages.EnableExtras {
-			failures = append(failures, FailedValidation{
-				UserMessage: "Operating system field `packages.enableExtras` is only available in EIB version >= 1.2",
-			})
-		}
-
-		if len(definition.EmbeddedArtifactRegistry.Registries) != 0 {
-			failures = append(failures, FailedValidation{
-				UserMessage: "Embedded artifact registry field `registries` is only available in EIB version >= 1.2",
-			})
 		}
 	}
 
 	return failures
+}
+
+// Check whether a value in a chain of fields is non-zero.
+func isValueNonZero(value reflect.Value, fieldChain []string) bool {
+	for i, name := range fieldChain {
+		if value.Kind() == reflect.Ptr && !value.IsNil() {
+			value = value.Elem() // Dereference pointer if not nil
+		}
+
+		if value.Kind() != reflect.Struct {
+			return false // Path broken, or not a struct
+		}
+
+		value = value.FieldByName(name) // Move on to the next value
+		if !value.IsValid() {
+			return false // Field is not found at this level, meaning the path doesn't exist
+		}
+
+		if i == len(fieldChain)-1 {
+			return !value.IsZero() // Field chain exhausted, target field found
+		}
+
+		if value.Kind() == reflect.Slice {
+			// Recursively check the slice against the remaining field chain
+			for j := 0; j < value.Len(); j++ {
+				if isValueNonZero(value.Index(j), fieldChain[i+1:]) {
+					return true
+				}
+			}
+
+			return false
+		}
+	}
+
+	return false // Field chain exhausted, target field not found
 }
