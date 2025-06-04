@@ -247,6 +247,7 @@ kubernetes:
   helm:
     charts:
       - name: metallb
+        releaseName: metallb-deployment
         version: 0.14.3
         repositoryName: suse-edge
         valuesFile: metallb-values.yaml
@@ -297,6 +298,8 @@ for bootstrapping a cluster.
 at build time and included in the built image.
   * `charts` - Required; Defines a list of Helm charts and configuration for each Helm chart.
     * `name` - Required; This must match the name of the actual Helm chart.
+    * `releaseName` - Required if deploying multiple instances of the same Helm chart; Specifies the release name of the 
+    Helm chart deployment.
     * `repositoryName` - Required; Specifies which repository within the `repositories` section contains this
     Helm chart. This must match the `name` attribute on one of the repositories defined in the next section.
     * `version` - Required; The version of the Helm chart to be deployed.

@@ -1,14 +1,6 @@
 # Edge Image Builder Releases
 
-# v1.2.0-rc1
-
-## Bug Fixes
-
-* [#699](https://github.com/suse-edge/edge-image-builder/issues/699) - SL Micro 6.0/6.1 images updated via KIWI fail to build due to a different checksum format
-
----
-
-# v1.2.0-rc0
+# v1.2.0
 
 ## General
 
@@ -49,6 +41,7 @@
 * [#632](https://github.com/suse-edge/edge-image-builder/issues/632) - Create the required Elemental Agent directory structure during Combustion
 * [#625](https://github.com/suse-edge/edge-image-builder/issues/625) - Cache is stale for images tagged `:latest`
 * [#632](https://github.com/suse-edge/edge-image-builder/issues/606) - Allow for duplicate Helm chart names
+* [#699](https://github.com/suse-edge/edge-image-builder/issues/699) - SL Micro 6.0/6.1 images updated via KIWI fail to build due to a different checksum format
 
 ---
 
