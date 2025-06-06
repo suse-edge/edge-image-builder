@@ -1,5 +1,21 @@
 # Edge Image Builder Releases
 
+# Next
+
+## General
+
+* Improved validation and handling for the image definition API Version
+
+## API
+
+### Image Definition Changes
+
+### Image Configuration Directory Changes
+
+## Bug Fixes
+
+---
+
 # v1.2.0
 
 ## General
@@ -22,7 +38,7 @@
 
 ### Image Definition Changes
 
-* The current version of the image definition has been incremented to `1.2` to include the changes below
+* The current version of the image definition has been incremented to `1.2` to include the changes below 
   * Existing definitions using the `1.0` and `1.1` versions of the schema will continue to work with EIB
 * Added `kubernetes.network.apiVIP6` field to enable cluster LoadBalancer based on IPv6 address
 * Added `operatingSystem.enableExtras` flag to enable the SUSE Linux Extras repository during RPM resolution
@@ -80,7 +96,7 @@
 * The current version of the image definition has been incremented to `1.1` to include the changes below 
   * Existing definitions using the `1.0` version of the schema will continue to work with EIB
 * Introduced a dedicated FIPS mode option (`enableFIPS`) which will enable FIPS mode on the node
-* Adds an optional apiVersions field under Helm charts
+* Adds an optional `apiVersions` field under Helm charts
 
 ### Image Configuration Directory Changes
 
