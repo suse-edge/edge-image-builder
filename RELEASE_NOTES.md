@@ -1,18 +1,10 @@
 # Edge Image Builder Releases
 
-# Next
+# v1.2.1
 
 ## General
 
 * Improved validation and handling for the image definition API Version
-
-## API
-
-### Image Definition Changes
-
-### Image Configuration Directory Changes
-
-## Bug Fixes
 
 ---
 
