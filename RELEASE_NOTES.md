@@ -4,7 +4,7 @@
 
 ## General
 
-* Improved validation and handling for the image definition API Version
+* Added support for prime/upstream kubernetes artifacts using the `config/artifacts.yaml` file
 
 ## API
 
@@ -13,6 +13,14 @@
 ### Image Configuration Directory Changes
 
 ## Bug Fixes
+
+---
+
+# v1.2.1
+
+## General
+
+* Improved validation and handling for the image definition API Version
 
 ---
 
