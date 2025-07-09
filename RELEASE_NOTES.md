@@ -4,6 +4,8 @@
 
 ## General
 
+* Added support for prime/upstream kubernetes artifacts using the `config/artifacts.yaml` file
+
 ## API
 
 ### Image Definition Changes

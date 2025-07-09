@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -18,9 +19,6 @@ import (
 )
 
 const (
-	rke2ReleaseURL = "https://github.com/rancher/rke2/releases/download/%s/%s"
-	k3sReleaseURL  = "https://github.com/k3s-io/k3s/releases/download/%s/%s"
-
 	rke2Binary     = "rke2.linux-%s.tar.gz"
 	rke2CoreImages = "rke2-images-core.linux-%s.tar.zst"
 	rke2Checksums  = "sha256sum-%s.txt"
@@ -40,7 +38,9 @@ type cache interface {
 }
 
 type ArtefactDownloader struct {
-	Cache cache
+	Cache          cache
+	Rke2ReleaseURL string
+	K3sReleaseURL  string
 }
 
 func (d ArtefactDownloader) DownloadRKE2Artefacts(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
@@ -57,12 +57,12 @@ func (d ArtefactDownloader) DownloadRKE2Artefacts(arch image.Arch, version, cni 
 		return fmt.Errorf("gathering RKE2 image artefacts: %w", err)
 	}
 
-	if err = d.downloadArtefacts(artefacts, rke2ReleaseURL, version, imagesPath); err != nil {
+	if err = d.downloadArtefacts(artefacts, d.Rke2ReleaseURL, version, imagesPath); err != nil {
 		return fmt.Errorf("downloading RKE2 image artefacts: %w", err)
 	}
 
 	artefacts = rke2InstallerArtefacts(arch)
-	if err = d.downloadArtefacts(artefacts, rke2ReleaseURL, version, installPath); err != nil {
+	if err = d.downloadArtefacts(artefacts, d.Rke2ReleaseURL, version, installPath); err != nil {
 		return fmt.Errorf("downloading RKE2 install artefacts: %w", err)
 	}
 
@@ -112,12 +112,12 @@ func (d ArtefactDownloader) DownloadK3sArtefacts(arch image.Arch, version, insta
 	}
 
 	artefacts := k3sImageArtefacts(arch)
-	if err := d.downloadArtefacts(artefacts, k3sReleaseURL, version, imagesPath); err != nil {
+	if err := d.downloadArtefacts(artefacts, d.K3sReleaseURL, version, imagesPath); err != nil {
 		return fmt.Errorf("downloading k3s image artefacts: %w", err)
 	}
 
 	artefacts = k3sInstallerArtefacts(arch)
-	if err := d.downloadArtefacts(artefacts, k3sReleaseURL, version, installPath); err != nil {
+	if err := d.downloadArtefacts(artefacts, d.K3sReleaseURL, version, installPath); err != nil {
 		return fmt.Errorf("downloading k3s install artefacts: %w", err)
 	}
 
@@ -147,7 +147,7 @@ func k3sImageArtefacts(arch image.Arch) []string {
 
 func (d ArtefactDownloader) downloadArtefacts(artefacts []string, releaseURL, version, destinationPath string) error {
 	for _, artefact := range artefacts {
-		url := fmt.Sprintf(releaseURL, version, artefact)
+		url := fmt.Sprintf("%s/%s/%s", releaseURL, url.QueryEscape(version), url.QueryEscape(artefact))
 		path := filepath.Join(destinationPath, artefact)
 		cacheKey := cacheIdentifier(version, artefact)
 
