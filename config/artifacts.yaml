@@ -10,6 +10,8 @@ kubernetes:
   k3s:
     selinuxPackage: k3s-selinux-1.6-1.slemicro.noarch
     selinuxRepository: https://rpm.rancher.io/k3s/stable/common/slemicro/noarch
+    releaseURL: https://github.com/k3s-io/k3s/releases/download/
   rke2:
     selinuxPackage: rke2-selinux
     selinuxRepository: https://rpm.rancher.io/rke2/stable/common/slemicro/noarch
+    releaseURL: https://github.com/rancher/rke2/releases/download/

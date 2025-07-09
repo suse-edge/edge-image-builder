@@ -190,7 +190,9 @@ func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion
 
 		combustionHandler.KubernetesScriptDownloader = kubernetes.ScriptDownloader{}
 		combustionHandler.KubernetesArtefactDownloader = kubernetes.ArtefactDownloader{
-			Cache: c,
+			Cache:          c,
+			Rke2ReleaseURL: ctx.ArtifactSources.Kubernetes.Rke2.ReleaseURL,
+			K3sReleaseURL:  ctx.ArtifactSources.Kubernetes.K3s.ReleaseURL,
 		}
 	}
 
