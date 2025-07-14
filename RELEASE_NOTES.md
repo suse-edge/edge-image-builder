@@ -5,6 +5,7 @@
 ## General
 
 * Added support for prime/upstream kubernetes artifacts using the `config/artifacts.yaml` file
+* Added mounting for `/usr/local` for Operating System file handling
 
 ## API
 
