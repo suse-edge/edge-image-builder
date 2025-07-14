@@ -14,12 +14,12 @@ import (
 )
 
 type mockRPMResolver struct {
-	resolveFunc func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error)
+	resolveFunc func(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, certsPath, outputDir string) (rpmDir string, pkgList []string, err error)
 }
 
-func (m mockRPMResolver) Resolve(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDir string, pkgList []string, err error) {
+func (m mockRPMResolver) Resolve(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, certsPath, outputDir string) (rpmDir string, pkgList []string, err error) {
 	if m.resolveFunc != nil {
-		return m.resolveFunc(packages, localRPMConfig, outputDir)
+		return m.resolveFunc(packages, localRPMConfig, certsPath, outputDir)
 	}
 
 	panic("not implemented")
