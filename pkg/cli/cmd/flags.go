@@ -14,4 +14,10 @@ var (
 		Value:       "/eib",
 		Destination: &BuildArgs.ConfigDir,
 	}
+	OutputFlag = &cli.StringFlag{
+		Name:        "output-type",
+		Usage:       "The desired output type",
+		Required:    true,
+		Destination: &GenerateArgs.OutputType,
+	}
 )

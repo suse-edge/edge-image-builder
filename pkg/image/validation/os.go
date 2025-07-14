@@ -17,16 +17,19 @@ func validateOperatingSystem(ctx *image.Context) []FailedValidation {
 
 	var failures []FailedValidation
 
-	failures = append(failures, validateKernelArgs(&def.OperatingSystem)...)
 	failures = append(failures, validateSystemd(&def.OperatingSystem)...)
 	failures = append(failures, validateGroups(&def.OperatingSystem)...)
 	failures = append(failures, validateUsers(&def.OperatingSystem)...)
 	failures = append(failures, validateSuma(&def.OperatingSystem)...)
-	failures = append(failures, validatePackages(&def.OperatingSystem)...)
 	failures = append(failures, validateTimeSync(&def.OperatingSystem)...)
-	failures = append(failures, validateFIPS(&def.OperatingSystem)...)
-	failures = append(failures, validateIsoConfig(def)...)
-	failures = append(failures, validateRawConfig(def)...)
+
+	if def.Image.ImageType != image.TypeTar && def.Image.ImageType != image.TypeCombustionIso {
+		failures = append(failures, validateKernelArgs(&def.OperatingSystem)...)
+		failures = append(failures, validatePackages(&def.OperatingSystem)...)
+		failures = append(failures, validateFIPS(&def.OperatingSystem)...)
+		failures = append(failures, validateIsoConfig(def)...)
+		failures = append(failures, validateRawConfig(def)...)
+	}
 
 	return failures
 }

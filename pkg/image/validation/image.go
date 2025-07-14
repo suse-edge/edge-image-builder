@@ -24,6 +24,17 @@ func validateImage(ctx *image.Context) []FailedValidation {
 
 	var failures []FailedValidation
 
+	if def.Image.OutputImageName == "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: "The 'outputImageName' field is required in the 'image' section.",
+		})
+	}
+
+	// Omit checking everything else if type is tar or combustion-iso
+	if def.Image.ImageType == image.TypeTar || def.Image.ImageType == image.TypeCombustionIso {
+		return failures
+	}
+
 	failures = append(failures, validateArch(def)...)
 
 	if def.Image.ImageType == "" {
@@ -34,12 +45,6 @@ func validateImage(ctx *image.Context) []FailedValidation {
 		msg := fmt.Sprintf("The 'imageType' field must be one of: %s", strings.Join(validImageTypes, ", "))
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
-		})
-	}
-
-	if def.Image.OutputImageName == "" {
-		failures = append(failures, FailedValidation{
-			UserMessage: "The 'outputImageName' field is required in the 'image' section.",
 		})
 	}
 

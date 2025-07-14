@@ -47,6 +47,19 @@ func Run(ctx *image.Context, rootBuildDir string) error {
 	return builder.Build()
 }
 
+func Generate(ctx *image.Context, rootBuildDir string) error {
+	appendHelm(ctx)
+
+	c, err := generateCombustion(ctx, rootBuildDir)
+	if err != nil {
+		log.Audit("Bootstrapping dependency services failed.")
+		return fmt.Errorf("building combustion: %w", err)
+	}
+
+	builder := build.NewGenerator(ctx, c)
+	return builder.Generate()
+}
+
 func appendKubernetesSELinuxRPMs(ctx *image.Context) error {
 	if ctx.ImageDefinition.Kubernetes.Version == "" {
 		return nil
@@ -184,6 +197,53 @@ func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion
 
 			combustionHandler.RPMResolver = resolver.New(ctx.BuildDir, p, baseBuilder, "", string(ctx.ImageDefinition.Image.Arch))
 			combustionHandler.RPMRepoCreator = rpm.NewRepoCreator(ctx.BuildDir)
+		}
+
+		if combustion.IsEmbeddedArtifactRegistryConfigured(ctx) {
+			helmClient := helm.New(ctx.BuildDir, combustion.HelmCertsPath(ctx))
+
+			combustionHandler.Registry, err = registry.New(ctx, combustion.KubernetesManifestsPath(ctx), helmClient, combustion.HelmValuesPath(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("initialising embedded artifact registry: %w", err)
+			}
+		}
+	}
+
+	if ctx.ImageDefinition.Kubernetes.Version != "" {
+		c, err := cache.New(cacheDir)
+		if err != nil {
+			return nil, fmt.Errorf("initialising cache instance: %w", err)
+		}
+
+		combustionHandler.KubernetesScriptDownloader = kubernetes.ScriptDownloader{}
+		combustionHandler.KubernetesArtefactDownloader = kubernetes.ArtefactDownloader{
+			Cache: c,
+		}
+	}
+
+	return combustionHandler, nil
+}
+
+func generateCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion, error) {
+	cacheDir := filepath.Join(rootDir, "cache")
+	if err := os.MkdirAll(cacheDir, os.ModePerm); err != nil {
+		return nil, fmt.Errorf("creating a cache directory: %w", err)
+	}
+	ctx.CacheDir = cacheDir
+
+	combustionHandler := &combustion.Combustion{
+		NetworkConfigGenerator:       network.ConfigGenerator{},
+		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
+	}
+
+	if combustion.IsEmbeddedArtifactRegistryConfigured(ctx) {
+		p, err := podman.New(ctx.BuildDir)
+		if err != nil {
+			return nil, fmt.Errorf("setting up Podman instance: %w", err)
+		}
+
+		combustionHandler.ImageDigester = &container.ImageDigester{
+			ImageInspector: p,
 		}
 
 		if combustion.IsEmbeddedArtifactRegistryConfigured(ctx) {
