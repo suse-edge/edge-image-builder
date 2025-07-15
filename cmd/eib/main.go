@@ -13,6 +13,7 @@ func main() {
 	app := cmd.NewApp()
 	app.Commands = []*cli.Command{
 		cmd.NewBuildCommand(build.Run),
+		cmd.NewGenerateCommand(build.Generate),
 		cmd.NewValidateCommand(build.Validate),
 		cmd.NewVersionCommand(build.Version),
 	}

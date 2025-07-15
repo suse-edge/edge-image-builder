@@ -32,7 +32,10 @@ func validateElemental(ctx *image.Context) []FailedValidation {
 		return failures
 	}
 
-	failures = append(failures, validateElementalConfiguration(ctx)...)
+	if ctx.ImageDefinition.Image.ImageType != image.TypeCombustionIso && ctx.ImageDefinition.Image.ImageType != image.TypeTar {
+		failures = append(failures, validateElementalConfiguration(ctx)...)
+	}
+
 	failures = append(failures, validateElementalDir(elementalConfigDir)...)
 
 	return failures
