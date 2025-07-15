@@ -30,12 +30,12 @@ func validateImage(ctx *image.Context) []FailedValidation {
 		})
 	}
 
+	failures = append(failures, validateArch(def)...)
+
 	// Omit checking everything else if type is tar or combustion-iso
 	if def.Image.ImageType == image.TypeTar || def.Image.ImageType == image.TypeCombustionIso {
 		return failures
 	}
-
-	failures = append(failures, validateArch(def)...)
 
 	if def.Image.ImageType == "" {
 		failures = append(failures, FailedValidation{

@@ -11,25 +11,15 @@ import (
 )
 
 func Generate(_ *cli.Context) error {
-	log.Audit("Using Generate command, the following features are ignored:\n" +
-		"- Image Architecture" +
-		"- Image Base Image" +
-		"- Image Type" +
-		"- Operating System Packages" +
-		"- Operating System FIPS" +
-		"- Operating System Kernel Arguments" +
-		"- Operating System ISO/RAW modifications" +
-		"" +
-		"")
 	generateArgs := &cmd.GenerateArgs
 
-	rootBuildDir := generateArgs.RootBuildDir
+	rootBuildDir := generateArgs.GenerateRootBuildDir
 	if rootBuildDir == "" {
 		const defaultBuildDir = "_build"
 
-		rootBuildDir = filepath.Join(generateArgs.ConfigDir, defaultBuildDir)
+		rootBuildDir = filepath.Join(generateArgs.GenerateConfigDir, defaultBuildDir)
 		if err := os.MkdirAll(rootBuildDir, os.ModePerm); err != nil {
-			log.Auditf("The root build directory could not be set up under the configuration directory '%s'.", generateArgs.ConfigDir)
+			log.Auditf("The root build directory could not be set up under the configuration directory '%s'.", generateArgs.GenerateConfigDir)
 			return err
 		}
 	}
@@ -43,12 +33,12 @@ func Generate(_ *cli.Context) error {
 	// This needs to occur as early as possible so that the subsequent calls can use the log
 	log.ConfigureGlobalLogger(filepath.Join(buildDir, buildLogFilename))
 
-	if cmdErr := imageConfigDirExists(generateArgs.ConfigDir); cmdErr != nil {
+	if cmdErr := imageConfigDirExists(generateArgs.GenerateConfigDir); cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
 		os.Exit(1)
 	}
 
-	imageDefinition, cmdErr := parseImageDefinition(generateArgs.ConfigDir, generateArgs.DefinitionFile)
+	imageDefinition, cmdErr := parseImageDefinition(generateArgs.GenerateConfigDir, generateArgs.GenerateDefinitionFile)
 	if cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
 		os.Exit(1)
@@ -66,10 +56,10 @@ func Generate(_ *cli.Context) error {
 		zap.S().Fatalf("Parsing artifact sources failed: %v", err)
 	}
 
-	ctx := buildContext(buildDir, combustionDir, artefactsDir, generateArgs.ConfigDir, imageDefinition, artifactSources)
+	ctx := buildContext(buildDir, combustionDir, artefactsDir, generateArgs.GenerateConfigDir, imageDefinition, artifactSources)
 
 	// Set the image type for combustion - either tar or combustion-iso
-	ctx.ImageDefinition.Image.ImageType = generateArgs.OutputType
+	ctx.ImageDefinition.Image.ImageType = generateArgs.GenerateOutputType
 
 	if cmdErr = validateImageDefinition(ctx); cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)

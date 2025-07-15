@@ -8,10 +8,10 @@ import (
 )
 
 type GenerateFlags struct {
-	DefinitionFile string
-	ConfigDir      string
-	RootBuildDir   string
-	OutputType     string
+	GenerateDefinitionFile string
+	GenerateConfigDir      string
+	GenerateRootBuildDir   string
+	GenerateOutputType     string
 }
 
 var GenerateArgs GenerateFlags
@@ -33,13 +33,13 @@ func NewGenerateCommand(action func(*cli.Context) error) *cli.Command {
 		Action:    action,
 		Before:    validateGenerateFlags,
 		Flags: []cli.Flag{
-			DefinitionFileFlag,
-			ConfigDirFlag,
-			OutputFlag,
+			GenerateDefinitionFileFlag,
+			GenerateConfigDirFlag,
+			GenerateOutputFlag,
 			&cli.StringFlag{
 				Name:        "build-dir",
 				Usage:       "Full path to the directory to store build artifacts",
-				Destination: &GenerateArgs.RootBuildDir,
+				Destination: &GenerateArgs.GenerateRootBuildDir,
 			},
 		},
 	}

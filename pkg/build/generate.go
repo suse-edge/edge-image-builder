@@ -35,15 +35,15 @@ func (g *Generator) Generate() error {
 			log.Audit("Error generating combustion tarball.")
 			return err
 		}
-	//case image.TypeCombustionIso:
-	//	log.Audit("Generating combustion tarball...")
-	//	if err := g.buildRawImage(); err != nil {
-	//		log.Audit("Error generating combustion tarball.")
-	//		return err
-	//	}
+	case image.TypeCombustionIso:
+		log.Audit("Generating combustion iso...")
+		if err := g.GenerateCombustionISO(); err != nil {
+			log.Audit("Error generating combustion iso.")
+			return err
+		}
 	default:
 		return fmt.Errorf("invalid output type specified, must be either \"%s\" or \"%s\"",
-			image.TypeISO, image.TypeTar)
+			image.TypeCombustionIso, image.TypeTar)
 	}
 
 	log.Auditf("Build complete, the image can be found at: %s",

@@ -19,10 +19,6 @@ const (
 func validateElemental(ctx *image.Context) []FailedValidation {
 	var failures []FailedValidation
 
-	if ctx.ImageDefinition.Image.ImageType == image.TypeCombustionIso || ctx.ImageDefinition.Image.ImageType == image.TypeTar {
-		return failures
-	}
-
 	elementalConfigDir := filepath.Join(ctx.ImageConfigDir, "elemental")
 	if _, err := os.Stat(elementalConfigDir); err != nil {
 		if os.IsNotExist(err) {
@@ -36,7 +32,10 @@ func validateElemental(ctx *image.Context) []FailedValidation {
 		return failures
 	}
 
-	failures = append(failures, validateElementalConfiguration(ctx)...)
+	if ctx.ImageDefinition.Image.ImageType != image.TypeCombustionIso && ctx.ImageDefinition.Image.ImageType != image.TypeTar {
+		failures = append(failures, validateElementalConfiguration(ctx)...)
+	}
+
 	failures = append(failures, validateElementalDir(elementalConfigDir)...)
 
 	return failures
