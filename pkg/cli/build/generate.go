@@ -1,13 +1,14 @@
 package build
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/suse-edge/edge-image-builder/pkg/cli/cmd"
 	"github.com/suse-edge/edge-image-builder/pkg/eib"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
-	"os"
-	"path/filepath"
 )
 
 func Generate(_ *cli.Context) error {

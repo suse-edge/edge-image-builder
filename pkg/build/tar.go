@@ -25,7 +25,7 @@ func (g *Generator) generateTarball() error {
 func (g *Generator) createCompressedTarball(outputPath string, directories []string) error {
 	file, err := os.Create(outputPath)
 	if err != nil {
-		return fmt.Errorf("could not create tarball: %v", err)
+		return fmt.Errorf("could not create tarball: %w", err)
 	}
 	defer file.Close()
 
@@ -39,7 +39,7 @@ func (g *Generator) createCompressedTarball(outputPath string, directories []str
 		baseDir := filepath.Dir(dir)
 		err = addDirectoryToTar(tw, dir, baseDir)
 		if err != nil {
-			return fmt.Errorf("could not add '%s' directory to tarball: %v", dir, err)
+			return fmt.Errorf("could not add '%s' directory to tarball: %w", dir, err)
 		}
 	}
 	return nil

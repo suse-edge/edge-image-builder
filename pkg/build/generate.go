@@ -2,10 +2,11 @@ package build
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/image"
-	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"os"
 	"path/filepath"
+
+	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"github.com/suse-edge/edge-image-builder/pkg/log"
 )
 
 type Generator struct {
