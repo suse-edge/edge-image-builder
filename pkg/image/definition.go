@@ -13,8 +13,10 @@ import (
 )
 
 const (
-	TypeISO = "iso"
-	TypeRAW = "raw"
+	TypeISO           = "iso"
+	TypeRAW           = "raw"
+	TypeTar           = "tar"
+	TypeCombustionIso = "combustion-iso"
 
 	ArchTypeX86 Arch = "x86_64"
 	ArchTypeARM Arch = "aarch64"
