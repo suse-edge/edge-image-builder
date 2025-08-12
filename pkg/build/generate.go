@@ -2,11 +2,10 @@ package build
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
+	"os"
+	"path/filepath"
 )
 
 type Generator struct {
@@ -36,15 +35,15 @@ func (g *Generator) Generate() error {
 			log.Audit("Error generating combustion tarball.")
 			return err
 		}
-	case image.TypeCombustionIso:
+	case image.TypeISO:
 		log.Audit("Generating combustion iso...")
-		if err := g.GenerateCombustionISO(); err != nil {
+		if err := g.generateCombustionISO(); err != nil {
 			log.Audit("Error generating combustion iso.")
 			return err
 		}
 	default:
 		return fmt.Errorf("invalid output type specified, must be either \"%s\" or \"%s\"",
-			image.TypeCombustionIso, image.TypeTar)
+			image.TypeISO, image.TypeTar)
 	}
 
 	log.Auditf("Build complete, the image can be found at: %s",

@@ -14,15 +14,17 @@ func (g *Generator) generateTarball() error {
 		return fmt.Errorf("deleting existing tarball: %w", err)
 	}
 
+	return g.createCompressedTarball()
+}
+
+func (g *Generator) createCompressedTarball() error {
+	outputPath := g.generateOutputFilename()
+
 	directories := []string{
 		g.context.CombustionDir,
 		g.context.ArtefactsDir,
 	}
 
-	return g.createCompressedTarball(g.generateOutputFilename(), directories)
-}
-
-func (g *Generator) createCompressedTarball(outputPath string, directories []string) error {
 	file, err := os.Create(outputPath)
 	if err != nil {
 		return fmt.Errorf("could not create tarball: %w", err)
@@ -62,6 +64,14 @@ func addDirectoryToTar(tw *tar.Writer, basePath string, stripPrefix string) erro
 		}
 		header.Name = relPath
 
+		if info.Mode()&os.ModeSymlink != 0 {
+			target, err := os.Readlink(path)
+			if err != nil {
+				return fmt.Errorf("reading symbolic link for '%s': %w", path, err)
+			}
+			header.Linkname = target
+		}
+
 		if err = tw.WriteHeader(header); err != nil {
 			return fmt.Errorf("writing tar header for '%s': %w", path, err)
 		}
@@ -78,6 +88,7 @@ func addDirectoryToTar(tw *tar.Writer, basePath string, stripPrefix string) erro
 				return fmt.Errorf("copying file contents for '%s': %w", path, err)
 			}
 		}
+
 		return nil
 	})
 }

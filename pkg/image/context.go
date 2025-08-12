@@ -22,6 +22,8 @@ type Context struct {
 	ArtifactSources *ArtifactSources
 	// CacheDir contains all of the artifacts that are cached for the build process.
 	CacheDir string
+	// IsConfigDrive defines whether this is an image or config drive build
+	IsConfigDrive bool
 }
 
 type ArtifactSources struct {

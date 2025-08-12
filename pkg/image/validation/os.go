@@ -23,7 +23,7 @@ func validateOperatingSystem(ctx *image.Context) []FailedValidation {
 	failures = append(failures, validateSuma(&def.OperatingSystem)...)
 	failures = append(failures, validateTimeSync(&def.OperatingSystem)...)
 
-	if def.Image.ImageType != image.TypeTar && def.Image.ImageType != image.TypeCombustionIso {
+	if !ctx.IsConfigDrive {
 		failures = append(failures, validateKernelArgs(&def.OperatingSystem)...)
 		failures = append(failures, validatePackages(&def.OperatingSystem)...)
 		failures = append(failures, validateFIPS(&def.OperatingSystem)...)

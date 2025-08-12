@@ -85,7 +85,7 @@ func (c *Combustion) configureRPMs(ctx *image.Context) ([]string, error) {
 func SkipRPMComponent(ctx *image.Context) bool {
 	pkg := ctx.ImageDefinition.OperatingSystem.Packages
 
-	if ctx.ImageDefinition.Image.ImageType == image.TypeTar || ctx.ImageDefinition.Image.ImageType == image.TypeCombustionIso {
+	if ctx.IsConfigDrive {
 		return true
 	}
 

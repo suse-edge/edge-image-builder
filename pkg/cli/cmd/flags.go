@@ -25,10 +25,22 @@ var (
 		Value:       "/eib",
 		Destination: &GenerateArgs.GenerateConfigDir,
 	}
-	GenerateOutputFlag = &cli.StringFlag{
+	GenerateOutputTypeFlag = &cli.StringFlag{
 		Name:        "output-type",
 		Usage:       "The desired output type",
 		Required:    true,
 		Destination: &GenerateArgs.GenerateOutputType,
+	}
+	GenerateOutputFlag = &cli.StringFlag{
+		Name:        "output",
+		Usage:       "The name of the file to generate",
+		Required:    true,
+		Destination: &GenerateArgs.GenerateOutput,
+	}
+	GenerateOutputArch = &cli.StringFlag{
+		Name:        "arch",
+		Usage:       "The architecture of the generated artifacts",
+		Required:    true,
+		Destination: &GenerateArgs.GenerateArch,
 	}
 )

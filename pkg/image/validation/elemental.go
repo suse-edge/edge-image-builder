@@ -32,7 +32,7 @@ func validateElemental(ctx *image.Context) []FailedValidation {
 		return failures
 	}
 
-	if ctx.ImageDefinition.Image.ImageType != image.TypeCombustionIso && ctx.ImageDefinition.Image.ImageType != image.TypeTar {
+	if !ctx.IsConfigDrive {
 		failures = append(failures, validateElementalConfiguration(ctx)...)
 	}
 

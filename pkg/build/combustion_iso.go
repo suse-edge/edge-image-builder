@@ -3,89 +3,73 @@ package build
 import (
 	_ "embed"
 	"fmt"
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"go.uber.org/zap"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
-
-	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"github.com/suse-edge/edge-image-builder/pkg/template"
-	"go.uber.org/zap"
 )
 
 const (
 	combustionTmpDir        = "combustion-tmp"
-	combustionScriptName    = "create-combustion.sh"
 	combustionScriptLogFile = "combustion-build.log"
 )
 
-//go:embed templates/generate-combustion-iso.sh.tpl
-var combustionScriptTemplate string
-
-func (g *Generator) GenerateCombustionISO() error {
+func (g *Generator) generateCombustionISO() error {
 	if err := g.deleteExistingOutputFile(); err != nil {
 		return fmt.Errorf("deleting existing combustion image: %w", err)
 	}
 
-	if err := g.writeCombustionScript(combustionScriptTemplate, combustionScriptName); err != nil {
-		return fmt.Errorf("creating the Combustion extraction script: %w", err)
+	if err := g.createCombustionISO(); err != nil {
+		return fmt.Errorf("building combustion ISO: %w", err)
 	}
 
 	return nil
 }
 
-func (g *Generator) writeCombustionScript(templateContents, outputFilename string) error {
-	scriptName := filepath.Join(g.context.BuildDir, outputFilename)
-	combustionTmpPath := filepath.Join(g.context.BuildDir, combustionTmpDir)
-	arguments := struct {
-		OutputImageFilename string
-		CombustionDir       string
-		ArtefactsDir        string
-		CombustionTmpPath   string
-	}{
-		OutputImageFilename: g.generateOutputFilename(),
-		CombustionDir:       g.context.CombustionDir,
-		ArtefactsDir:        g.context.ArtefactsDir,
-		CombustionTmpPath:   combustionTmpPath,
+func (g *Generator) createCombustionISO() error {
+	combustionPath := filepath.Join(g.context.BuildDir, combustionTmpDir)
+	if err := os.MkdirAll(combustionPath, 0755); err != nil {
+		return fmt.Errorf("creating temp directory %s: %w", combustionPath, err)
 	}
 
-	contents, err := template.Parse("combustion-script", templateContents, arguments)
+	combustionDestPath := filepath.Join(combustionPath, filepath.Base(g.context.CombustionDir))
+	if err := fileio.CopyFiles(g.context.CombustionDir, combustionDestPath, "", true, nil); err != nil {
+		return fmt.Errorf("copying combustion directory: %w", err)
+	}
+
+	artefactsDestPath := filepath.Join(combustionPath, filepath.Base(g.context.ArtefactsDir))
+	if err := fileio.CopyFiles(g.context.ArtefactsDir, artefactsDestPath, "", true, nil); err != nil {
+		return fmt.Errorf("copying artefacts directory: %w", err)
+	}
+
+	logFilename := filepath.Join(g.context.BuildDir, combustionScriptLogFile)
+	logFile, err := os.OpenFile(logFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
 	if err != nil {
-		return fmt.Errorf("creating the combustion script from template: %w", err)
+		return fmt.Errorf("opening mkisofs log file: %w", err)
 	}
 
-	if err = os.WriteFile(scriptName, []byte(contents), fileio.ExecutablePerms); err != nil {
-		return fmt.Errorf("writing combustion script %s: %w", outputFilename, err)
-	}
-
-	cmd, combustionLog, err := g.generateCombustionCommand(combustionScriptLogFile, combustionScriptName)
-	if err != nil {
-		return fmt.Errorf("preparing to build the new combustion script: %w", err)
-	}
 	defer func() {
-		if err = combustionLog.Close(); err != nil {
-			zap.S().Warnf("failed to close ISO rebuild log file properly: %s", err)
+		if err := logFile.Close(); err != nil {
+			zap.S().Warnf("Failed to close mkisofs log file properly: %v", err)
 		}
 	}()
 
-	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("building the new combustion: %w", err)
+	if err := g.createISO(combustionPath, logFile); err != nil {
+		return fmt.Errorf("creating ISO: %w", err)
 	}
 
 	return nil
 }
 
-// Refactor this into a generic function
-func (g *Generator) generateCombustionCommand(logFilename, scriptName string) (*exec.Cmd, *os.File, error) {
-	fullLogFilename := filepath.Join(g.context.BuildDir, logFilename)
-	logFile, err := os.Create(fullLogFilename)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error opening combustion log file %s: %w", logFilename, err)
-	}
+func (g *Generator) createISO(sourcePath string, logFile io.Writer) error {
+	outputPath := g.generateOutputFilename()
 
-	scriptFilename := filepath.Join(g.context.BuildDir, scriptName)
-	cmd := exec.Command(scriptFilename)
+	cmd := exec.Command("mkisofs", "-J", "-o", outputPath, "-V", "COMBUSTION", sourcePath)
+
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 
-	return cmd, logFile, nil
+	return cmd.Run()
 }

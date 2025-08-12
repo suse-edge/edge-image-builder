@@ -24,17 +24,17 @@ func validateImage(ctx *image.Context) []FailedValidation {
 
 	var failures []FailedValidation
 
-	if def.Image.OutputImageName == "" {
-		failures = append(failures, FailedValidation{
-			UserMessage: "The 'outputImageName' field is required in the 'image' section.",
-		})
+	// Omit checking everything if it's a config drive build
+	if ctx.IsConfigDrive {
+		return failures
 	}
 
 	failures = append(failures, validateArch(def)...)
 
-	// Omit checking everything else if type is tar or combustion-iso
-	if def.Image.ImageType == image.TypeTar || def.Image.ImageType == image.TypeCombustionIso {
-		return failures
+	if def.Image.OutputImageName == "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: "The 'outputImageName' field is required in the 'image' section.",
+		})
 	}
 
 	if def.Image.ImageType == "" {

@@ -9,7 +9,7 @@ import (
 func NewValidateCommand(action func(*cli.Context) error) *cli.Command {
 	return &cli.Command{
 		Name:      "validate",
-		Usage:     "Validate image configuration",
+		Usage:     "Validate eib configuration",
 		UsageText: fmt.Sprintf("%s validate [OPTIONS]", appName),
 		Action:    action,
 		Flags: []cli.Flag{

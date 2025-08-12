@@ -1,8 +1,10 @@
 package build
 
 import (
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/suse-edge/edge-image-builder/pkg/cli/cmd"
 	"github.com/suse-edge/edge-image-builder/pkg/eib"
@@ -39,7 +41,7 @@ func Generate(_ *cli.Context) error {
 		os.Exit(1)
 	}
 
-	imageDefinition, cmdErr := parseImageDefinition(generateArgs.GenerateConfigDir, generateArgs.GenerateDefinitionFile)
+	configDriveDefinition, cmdErr := ParseDefinitionFile(generateArgs.GenerateConfigDir, generateArgs.GenerateDefinitionFile)
 	if cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
 		os.Exit(1)
@@ -57,14 +59,22 @@ func Generate(_ *cli.Context) error {
 		zap.S().Fatalf("Parsing artifact sources failed: %v", err)
 	}
 
-	ctx := buildContext(buildDir, combustionDir, artefactsDir, generateArgs.GenerateConfigDir, imageDefinition, artifactSources)
-
-	// Set the image type for combustion - either tar or combustion-iso
-	ctx.ImageDefinition.Image.ImageType = generateArgs.GenerateOutputType
+	ctx := buildContext(buildDir, combustionDir, artefactsDir, generateArgs.GenerateConfigDir, configDriveDefinition, artifactSources)
+	ctx.IsConfigDrive = true
 
 	if cmdErr = validateImageDefinition(ctx); cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
 		os.Exit(1)
+	}
+
+	// Set the necessary flags for combustion
+	ctx.ImageDefinition.Image.ImageType = generateArgs.GenerateOutputType
+	ctx.ImageDefinition.Image.OutputImageName = generateArgs.GenerateOutput
+
+	if strings.EqualFold(generateArgs.GenerateArch, string(image.ArchTypeARM)) {
+		ctx.ImageDefinition.Image.Arch = image.ArchTypeARM
+	} else if strings.EqualFold(generateArgs.GenerateArch, string(image.ArchTypeX86)) {
+		ctx.ImageDefinition.Image.Arch = image.ArchTypeX86
 	}
 
 	defer func() {
@@ -74,7 +84,7 @@ func Generate(_ *cli.Context) error {
 		}
 	}()
 
-	if err = eib.Generate(ctx, rootBuildDir); err != nil {
+	if err = eib.Run(ctx, rootBuildDir); err != nil {
 		log.Audit(checkBuildLogMessage)
 		zap.S().Fatalf("An error occurred building the image: %s", err)
 	}
