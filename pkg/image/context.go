@@ -1,5 +1,7 @@
 package image
 
+import "path/filepath"
+
 type LocalRPMConfig struct {
 	// RPMPath is the path to the directory holding RPMs that will be side-loaded
 	RPMPath string
@@ -47,4 +49,9 @@ type ArtifactSources struct {
 			SELinuxRepository string `yaml:"selinuxRepository"`
 		} `yaml:"rke2"`
 	} `yaml:"kubernetes"`
+}
+
+func (c *Context) OutputPath() string {
+	filename := filepath.Join(c.ImageConfigDir, c.ImageDefinition.Image.OutputImageName)
+	return filename
 }

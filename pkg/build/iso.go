@@ -29,7 +29,7 @@ var extractIsoTemplate string
 var rebuildIsoTemplate string
 
 func (b *Builder) buildIsoImage() error {
-	if err := b.deleteExistingOutputImage(); err != nil {
+	if err := deleteFile(b.context.OutputPath()); err != nil {
 		return fmt.Errorf("deleting existing ISO image: %w", err)
 	}
 
@@ -114,7 +114,7 @@ func (b *Builder) writeIsoScript(templateContents, outputFilename string) error 
 		IsoExtractDir:       isoExtractPath,
 		RawExtractDir:       rawExtractPath,
 		IsoSource:           b.generateBaseImageFilename(),
-		OutputImageFilename: b.generateOutputImageFilename(),
+		OutputImageFilename: b.context.OutputPath(),
 		CombustionDir:       b.context.CombustionDir,
 		ArtefactsDir:        b.context.ArtefactsDir,
 		InstallDevice:       b.context.ImageDefinition.OperatingSystem.IsoConfiguration.InstallDevice,

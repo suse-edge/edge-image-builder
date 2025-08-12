@@ -41,7 +41,7 @@ func Generate(_ *cli.Context) error {
 		os.Exit(1)
 	}
 
-	configDriveDefinition, cmdErr := ParseDefinitionFile(generateArgs.GenerateConfigDir, generateArgs.GenerateDefinitionFile)
+	configDriveDefinition, cmdErr := parseDefinitionFile(generateArgs.GenerateConfigDir, generateArgs.GenerateDefinitionFile)
 	if cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
 		os.Exit(1)

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
-	"os"
-	"path/filepath"
 )
 
 type Generator struct {
@@ -46,21 +44,7 @@ func (g *Generator) Generate() error {
 			image.TypeISO, image.TypeTar)
 	}
 
-	log.Auditf("Build complete, the image can be found at: %s",
+	log.Auditf("Config drive generation complete, it can be found at: %s",
 		g.context.ImageDefinition.Image.OutputImageName)
-	return nil
-}
-
-func (g *Generator) generateOutputFilename() string {
-	filename := filepath.Join(g.context.ImageConfigDir, g.context.ImageDefinition.Image.OutputImageName)
-	return filename
-}
-
-func (g *Generator) deleteExistingOutputFile() error {
-	outputFilename := g.generateOutputFilename()
-	err := os.Remove(outputFilename)
-	if err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("error deleting file %s: %w", outputFilename, err)
-	}
 	return nil
 }

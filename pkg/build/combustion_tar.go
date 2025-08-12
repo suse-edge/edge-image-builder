@@ -10,7 +10,7 @@ import (
 )
 
 func (g *Generator) generateTarball() error {
-	if err := g.deleteExistingOutputFile(); err != nil {
+	if err := deleteFile(g.context.OutputPath()); err != nil {
 		return fmt.Errorf("deleting existing tarball: %w", err)
 	}
 
@@ -18,7 +18,7 @@ func (g *Generator) generateTarball() error {
 }
 
 func (g *Generator) createCompressedTarball() error {
-	outputPath := g.generateOutputFilename()
+	outputPath := g.context.OutputPath()
 
 	directories := []string{
 		g.context.CombustionDir,

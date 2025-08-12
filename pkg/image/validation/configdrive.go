@@ -34,7 +34,7 @@ func validateImageSection(def *image.Definition) []FailedValidation {
 
 	if def.Image.ImageType != "" {
 		failures = append(failures, FailedValidation{
-			UserMessage: "The 'imageType' field is not valid for generating config drives. The name of the output type " +
+			UserMessage: "The 'imageType' field is not valid for generating config drives. The output type " +
 				"should be defined through the '--output-type' argument.",
 		})
 	}
@@ -57,8 +57,9 @@ func validateImageSection(def *image.Definition) []FailedValidation {
 
 func validateOperatingSystemSection(def *image.Definition) []FailedValidation {
 	var failures []FailedValidation
+	emptyRawConfig := image.RawConfiguration{}
 
-	if def.OperatingSystem.RawConfiguration.LUKSKey != "" || def.OperatingSystem.RawConfiguration.ExpandEncryptedPartition || def.OperatingSystem.RawConfiguration.DiskSize != "" {
+	if def.OperatingSystem.RawConfiguration != emptyRawConfig {
 		failures = append(failures, FailedValidation{
 			UserMessage: "The 'operatingSystem.rawConfiguration' field is not valid for generating config drives.",
 		})

@@ -105,7 +105,7 @@ func TestWriteIsoScript_Rebuild(t *testing.T) {
 	expectedIsoPath := builder.generateBaseImageFilename()
 	assert.Contains(t, found, fmt.Sprintf("ISO_SOURCE=%s", expectedIsoPath))
 
-	expectedOutputImage := builder.generateOutputImageFilename()
+	expectedOutputImage := builder.context.OutputPath()
 	assert.Contains(t, found, fmt.Sprintf("OUTPUT_IMAGE=%s", expectedOutputImage))
 
 	expectedCombustionDir := ctx.CombustionDir

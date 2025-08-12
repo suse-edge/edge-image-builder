@@ -1,7 +1,6 @@
 package build
 
 import (
-	_ "embed"
 	"fmt"
 	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"go.uber.org/zap"
@@ -17,7 +16,7 @@ const (
 )
 
 func (g *Generator) generateCombustionISO() error {
-	if err := g.deleteExistingOutputFile(); err != nil {
+	if err := deleteFile(g.context.OutputPath()); err != nil {
 		return fmt.Errorf("deleting existing combustion image: %w", err)
 	}
 
@@ -45,14 +44,14 @@ func (g *Generator) createCombustionISO() error {
 	}
 
 	logFilename := filepath.Join(g.context.BuildDir, combustionScriptLogFile)
-	logFile, err := os.OpenFile(logFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, fileio.NonExecutablePerms)
+	logFile, err := os.Create(logFilename)
 	if err != nil {
-		return fmt.Errorf("opening mkisofs log file: %w", err)
+		return fmt.Errorf("opening log file: %w", err)
 	}
 
 	defer func() {
 		if err := logFile.Close(); err != nil {
-			zap.S().Warnf("Failed to close mkisofs log file properly: %v", err)
+			zap.S().Warnf("Failed to close log file properly: %v", err)
 		}
 	}()
 
@@ -64,7 +63,7 @@ func (g *Generator) createCombustionISO() error {
 }
 
 func (g *Generator) createISO(sourcePath string, logFile io.Writer) error {
-	outputPath := g.generateOutputFilename()
+	outputPath := g.context.OutputPath()
 
 	cmd := exec.Command("mkisofs", "-J", "-o", outputPath, "-V", "COMBUSTION", sourcePath)
 

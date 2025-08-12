@@ -15,6 +15,10 @@ func NewValidateCommand(action func(*cli.Context) error) *cli.Command {
 		Flags: []cli.Flag{
 			DefinitionFileFlag,
 			ConfigDirFlag,
+			&cli.BoolFlag{
+				Name:  "config-drive",
+				Usage: "If specified, validates the input definition for generating a config drive.",
+			},
 		},
 	}
 }

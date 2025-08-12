@@ -48,10 +48,10 @@ func Run(ctx *image.Context, rootBuildDir string) error {
 	if !ctx.IsConfigDrive {
 		builder := build.NewBuilder(ctx, c)
 		return builder.Build()
-	} else {
-		builder := build.NewGenerator(ctx, c)
-		return builder.Generate()
 	}
+
+	builder := build.NewGenerator(ctx, c)
+	return builder.Generate()
 }
 
 func appendKubernetesSELinuxRPMs(ctx *image.Context) error {

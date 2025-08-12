@@ -19,9 +19,9 @@ const (
 	checkValidationLogMessage = "Please check the log file under the validation directory for more information."
 )
 
-func Validate(_ *cli.Context) error {
+func Validate(c *cli.Context) error {
 	args := &cmd.BuildArgs
-	generateArgs := &cmd.GenerateArgs
+	isConfigDrive := c.Bool("config-drive")
 
 	validationDir := filepath.Join(args.ConfigDir, "_validation")
 	if err := os.MkdirAll(validationDir, os.ModePerm); err != nil {
@@ -43,7 +43,7 @@ func Validate(_ *cli.Context) error {
 
 	log.AuditInfo("Parsing definition...")
 
-	imageDefinition, err := ParseDefinitionFile(args.ConfigDir, args.DefinitionFile)
+	imageDefinition, err := parseDefinitionFile(args.ConfigDir, args.DefinitionFile)
 	if err != nil {
 		cmd.LogError(err, checkValidationLogMessage)
 		os.Exit(1)
@@ -52,10 +52,10 @@ func Validate(_ *cli.Context) error {
 	ctx := &image.Context{
 		ImageConfigDir:  args.ConfigDir,
 		ImageDefinition: imageDefinition,
+		IsConfigDrive:   isConfigDrive,
 	}
 
-	if generateArgs.GenerateArch != "" || generateArgs.GenerateOutput != "" || generateArgs.GenerateOutputType != "" {
-		ctx.IsConfigDrive = true
+	if isConfigDrive {
 		log.AuditInfo("Validating config drive definition...")
 	} else {
 		log.AuditInfo("Validating image definition...")

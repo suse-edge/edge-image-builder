@@ -60,21 +60,15 @@ func (b *Builder) generateBuildDirFilename(filename string) string {
 	return filepath.Join(b.context.BuildDir, filename)
 }
 
-func (b *Builder) generateOutputImageFilename() string {
-	filename := filepath.Join(b.context.ImageConfigDir, b.context.ImageDefinition.Image.OutputImageName)
-	return filename
-}
-
 func (b *Builder) generateBaseImageFilename() string {
 	filename := filepath.Join(b.context.ImageConfigDir, "base-images", b.context.ImageDefinition.Image.BaseImage)
 	return filename
 }
 
-func (b *Builder) deleteExistingOutputImage() error {
-	outputFilename := b.generateOutputImageFilename()
-	err := os.Remove(outputFilename)
+func deleteFile(fileName string) error {
+	err := os.Remove(fileName)
 	if err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("error deleting file %s: %w", outputFilename, err)
+		return fmt.Errorf("error deleting file %s: %w", fileName, err)
 	}
 	return nil
 }
