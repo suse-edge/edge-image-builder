@@ -2,21 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/urfave/cli/v2"
-	"strings"
 )
-
-type GenerateFlags struct {
-	GenerateDefinitionFile string
-	GenerateConfigDir      string
-	GenerateRootBuildDir   string
-	GenerateOutputType     string
-	GenerateArch           string
-	GenerateOutput         string
-}
-
-var GenerateArgs GenerateFlags
 
 func validateGenerateFlags(c *cli.Context) error {
 	outputType := strings.ToLower(c.String("output-type"))
@@ -40,15 +30,24 @@ func NewGenerateCommand(action func(*cli.Context) error) *cli.Command {
 		Action:    action,
 		Before:    validateGenerateFlags,
 		Flags: []cli.Flag{
-			GenerateDefinitionFileFlag,
-			GenerateConfigDirFlag,
-			GenerateOutputFlag,
-			GenerateOutputArch,
-			GenerateOutputTypeFlag,
+			DefinitionFileFlag,
+			ConfigDirFlag,
+			BuildDirFlag,
 			&cli.StringFlag{
-				Name:        "build-dir",
-				Usage:       "Full path to the directory to store build artifacts",
-				Destination: &GenerateArgs.GenerateRootBuildDir,
+				Name:     "output-type",
+				Usage:    "The desired output type",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "output",
+				Aliases:  []string{"o"},
+				Usage:    "The name of the file to generate",
+				Required: true,
+			},
+			&cli.StringFlag{
+				Name:     "arch",
+				Usage:    "The architecture of the generated artifacts",
+				Required: true,
 			},
 		},
 	}

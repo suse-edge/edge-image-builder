@@ -20,7 +20,8 @@ const (
 )
 
 func Validate(c *cli.Context) error {
-	args := &cmd.BuildArgs
+	args := &cmd.CommonArgs
+
 	isConfigDrive := c.Bool("config-drive")
 
 	validationDir := filepath.Join(args.ConfigDir, "_validation")
