@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -17,16 +18,21 @@ func validateOperatingSystem(ctx *image.Context) []FailedValidation {
 
 	var failures []FailedValidation
 
-	failures = append(failures, validateKernelArgs(&def.OperatingSystem)...)
 	failures = append(failures, validateSystemd(&def.OperatingSystem)...)
 	failures = append(failures, validateGroups(&def.OperatingSystem)...)
 	failures = append(failures, validateUsers(&def.OperatingSystem)...)
 	failures = append(failures, validateSuma(&def.OperatingSystem)...)
-	failures = append(failures, validatePackages(&def.OperatingSystem)...)
 	failures = append(failures, validateTimeSync(&def.OperatingSystem)...)
-	failures = append(failures, validateFIPS(&def.OperatingSystem)...)
-	failures = append(failures, validateIsoConfig(def)...)
-	failures = append(failures, validateRawConfig(def)...)
+
+	if !ctx.IsConfigDrive {
+		failures = append(failures, validateKernelArgs(&def.OperatingSystem)...)
+		failures = append(failures, validatePackages(&def.OperatingSystem)...)
+		failures = append(failures, validateFIPS(&def.OperatingSystem)...)
+		failures = append(failures, validateIsoConfig(def)...)
+		failures = append(failures, validateRawConfig(def)...)
+	} else {
+		failures = append(failures, validateOperatingSystemConfigDrive(def)...)
+	}
 
 	return failures
 }
@@ -317,6 +323,29 @@ func validateFIPS(os *image.OperatingSystem) []FailedValidation {
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
+	}
+
+	return failures
+}
+
+var configDriveInvalidFields = []imageDefinitionField{
+	{Key: "operatingSystem.rawConfiguration", Chain: []string{"OperatingSystem", "RawConfiguration"}},
+	{Key: "operatingSystem.isoConfiguration", Chain: []string{"OperatingSystem", "IsoConfiguration"}},
+	{Key: "operatingSystem.enableFIPS", Chain: []string{"OperatingSystem", "EnableFIPS"}},
+	{Key: "operatingSystem.packages", Chain: []string{"OperatingSystem", "Packages"}},
+	{Key: "operatingSystem.kernelArgs", Chain: []string{"OperatingSystem", "KernelArgs"}},
+}
+
+func validateOperatingSystemConfigDrive(def *image.Definition) []FailedValidation {
+	var failures []FailedValidation
+	var rootValue = reflect.ValueOf(def).Elem()
+
+	for _, field := range configDriveInvalidFields {
+		if isValueNonZero(rootValue, field.Chain) {
+			failures = append(failures, FailedValidation{
+				UserMessage: fmt.Sprintf("The '%s' field is not valid for generating config drives.", field.Key),
+			})
+		}
 	}
 
 	return failures

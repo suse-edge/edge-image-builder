@@ -24,7 +24,7 @@ const (
 )
 
 func Run(_ *cli.Context) error {
-	args := &cmd.BuildArgs
+	args := &cmd.CommonArgs
 
 	rootBuildDir := args.RootBuildDir
 	if rootBuildDir == "" {
@@ -51,7 +51,7 @@ func Run(_ *cli.Context) error {
 		os.Exit(1)
 	}
 
-	imageDefinition, cmdErr := parseImageDefinition(args.ConfigDir, args.DefinitionFile)
+	imageDefinition, cmdErr := parseDefinitionFile(args.ConfigDir, args.DefinitionFile)
 	if cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
 		os.Exit(1)
@@ -109,7 +109,7 @@ func imageConfigDirExists(configDir string) *cmd.Error {
 	}
 }
 
-func parseImageDefinition(configDir, definitionFile string) (*image.Definition, *cmd.Error) {
+func parseDefinitionFile(configDir, definitionFile string) (*image.Definition, *cmd.Error) {
 	definitionFilePath := filepath.Join(configDir, definitionFile)
 
 	configData, err := os.ReadFile(definitionFilePath)

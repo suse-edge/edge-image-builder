@@ -28,6 +28,7 @@ func TestValidateImage(t *testing.T) {
 	tests := map[string]struct {
 		ImageDefinition        image.Definition
 		ExpectedFailedMessages []string
+		IsConfigDrive          bool
 	}{
 		`complete valid definition`: {
 			ImageDefinition: image.Definition{
@@ -77,6 +78,29 @@ func TestValidateImage(t *testing.T) {
 				"The specified base image 'not-there' cannot be found.",
 			},
 		},
+		`invalid config drive definition`: {
+			IsConfigDrive: true,
+			ImageDefinition: image.Definition{
+				Image: image.Image{
+					ImageType:       image.TypeISO,
+					Arch:            image.ArchTypeX86,
+					BaseImage:       "base-image.iso",
+					OutputImageName: "eib-created.iso",
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"The 'image.outputImageName' field is not valid for generating config drives. The name of the output file should be defined through the '--output' argument.",
+				"The 'image.imageType' field is not valid for generating config drives. The output type should be defined through the '--output-type' argument.",
+				"The 'image.arch' field is not valid for generating config drives. The architecture of the generated config drive should be defined through the '--arch' argument.",
+				"The 'image.baseImage' field is not valid for generating config drives.",
+			},
+		},
+		`valid config drive definition`: {
+			IsConfigDrive: true,
+			ImageDefinition: image.Definition{
+				Image: image.Image{},
+			},
+		},
 	}
 
 	for name, test := range tests {
@@ -85,6 +109,7 @@ func TestValidateImage(t *testing.T) {
 			ctx := image.Context{
 				ImageConfigDir:  imageConfigDir,
 				ImageDefinition: &imageDef,
+				IsConfigDrive:   test.IsConfigDrive,
 			}
 			failedValidations := validateImage(&ctx)
 			assert.Len(t, failedValidations, len(test.ExpectedFailedMessages))

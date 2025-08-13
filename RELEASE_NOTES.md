@@ -6,8 +6,11 @@
 
 * Added support for prime/upstream kubernetes artifacts using the `config/artifacts.yaml` file
 * Added mounting for `/usr/local` for Operating System file handling
+* Added ability to generate independent combustion drive
 
 ## API
+
+* Introduced `generate` command for generating combustion drives
 
 ### Image Definition Changes
 
