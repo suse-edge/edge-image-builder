@@ -4,6 +4,8 @@
 
 ## General
 
+* Added support for prime/upstream kubernetes artifacts using the `config/artifacts.yaml` file
+* Added mounting for `/usr/local` for Operating System file handling
 * Improved validation and handling for the image definition API Version
 * Added ability to generate independent combustion drive
 
@@ -16,6 +18,14 @@
 ### Image Configuration Directory Changes
 
 ## Bug Fixes
+
+---
+
+# v1.2.1
+
+## General
+
+* Improved validation and handling for the image definition API Version
 
 ---
 
