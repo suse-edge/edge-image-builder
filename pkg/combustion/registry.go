@@ -247,6 +247,7 @@ func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error
 
 	arch := ctx.ImageDefinition.Image.Arch.Short()
 
+	var imagesWithDigest []string
 	for _, img := range images {
 		cacheImage := true
 		convertedImage := strings.ReplaceAll(img, "/", "_")
@@ -260,6 +261,8 @@ func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error
 			} else {
 				convertedImageName = fmt.Sprintf("%s-%s-%s", convertedImage, digest, registryTarSuffix)
 			}
+		} else if strings.Contains(img, "sha256:") {
+			imagesWithDigest = append(imagesWithDigest, img)
 		}
 
 		imageCacheLocation := filepath.Join(imageCacheDir, convertedImageName)
@@ -287,6 +290,17 @@ func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error
 		if err = bar.Add(1); err != nil {
 			zap.S().Debugf("Error incrementing the progress bar: %s", err)
 		}
+	}
+
+	if len(imagesWithDigest) != 0 {
+		log.Audit("WARNING: Container image(s) with digest detected, please be sure that each digest is a manifest " +
+			"digest (the digest of the container image) and NOT an index digest (the digest of the " +
+			"image platform). The embedded artifact registry will fail at boot time if an index/platform specific digest is provided." +
+			" Please check the logs for the list of container images with digests.")
+		zap.S().Warnf("Container image(s) with digests detected:\n%s\nPlease be sure that each digest is a manifest "+
+			"digest (the digest of the container image) and NOT an index digest (the digest of the "+
+			"image platform). The embedded artifact registry will fail at boot time if an index/platform specific digest is provided.",
+			strings.Join(imagesWithDigest, "\n"))
 	}
 
 	return nil
