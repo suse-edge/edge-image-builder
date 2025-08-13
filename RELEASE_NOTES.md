@@ -5,9 +5,11 @@
 ## General
 
 * Improved validation and handling for the image definition API Version
-* Add ability to generate independent combustion drive
+* Added ability to generate independent combustion drive
 
 ## API
+
+* Introduced `generate` command for generating combustion drives
 
 ### Image Definition Changes
 
