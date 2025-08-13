@@ -90,7 +90,7 @@ func Generate(c *cli.Context) error {
 
 	if err = eib.Run(ctx, rootBuildDir); err != nil {
 		log.Audit(checkBuildLogMessage)
-		zap.S().Fatalf("An error occurred building the image: %s", err)
+		zap.S().Fatalf("An error occurred generating the config drive: %s", err)
 	}
 
 	return nil
