@@ -19,8 +19,9 @@ const (
 	checkValidationLogMessage = "Please check the log file under the validation directory for more information."
 )
 
-func Validate(_ *cli.Context) error {
-	args := &cmd.BuildArgs
+func Validate(c *cli.Context) error {
+	args := &cmd.CommonArgs
+	isConfigDrive := c.Bool("config-drive")
 
 	validationDir := filepath.Join(args.ConfigDir, "_validation")
 	if err := os.MkdirAll(validationDir, os.ModePerm); err != nil {
@@ -33,16 +34,16 @@ func Validate(_ *cli.Context) error {
 	logFilename := filepath.Join(validationDir, fmt.Sprintf("eib-validate-%s.log", timestamp))
 	log.ConfigureGlobalLogger(logFilename)
 
-	log.AuditInfo("Checking image config dir...")
+	log.AuditInfo("Checking config dir...")
 
 	if err := imageConfigDirExists(args.ConfigDir); err != nil {
 		cmd.LogError(err, checkValidationLogMessage)
 		os.Exit(1)
 	}
 
-	log.AuditInfo("Parsing image definition...")
+	log.AuditInfo("Parsing definition...")
 
-	imageDefinition, err := parseImageDefinition(args.ConfigDir, args.DefinitionFile)
+	imageDefinition, err := parseDefinitionFile(args.ConfigDir, args.DefinitionFile)
 	if err != nil {
 		cmd.LogError(err, checkValidationLogMessage)
 		os.Exit(1)
@@ -51,9 +52,14 @@ func Validate(_ *cli.Context) error {
 	ctx := &image.Context{
 		ImageConfigDir:  args.ConfigDir,
 		ImageDefinition: imageDefinition,
+		IsConfigDrive:   isConfigDrive,
 	}
 
-	log.AuditInfo("Validating image definition...")
+	if isConfigDrive {
+		log.AuditInfo("Validating config drive definition...")
+	} else {
+		log.AuditInfo("Validating image definition...")
+	}
 
 	if err = validateImageDefinition(ctx); err != nil {
 		cmd.LogError(err, checkValidationLogMessage)

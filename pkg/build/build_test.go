@@ -52,7 +52,7 @@ func TestDeleteNoExistingImage(t *testing.T) {
 	}
 
 	// Test
-	err = builder.deleteExistingOutputImage()
+	err = deleteFile(builder.context.OutputPath())
 
 	// Verify
 	require.NoError(t, err)
@@ -75,16 +75,16 @@ func TestDeleteExistingImage(t *testing.T) {
 		},
 	}
 
-	_, err = os.Create(builder.generateOutputImageFilename())
+	_, err = os.Create(builder.context.OutputPath())
 	require.NoError(t, err)
 
 	// Test
-	err = builder.deleteExistingOutputImage()
+	err = deleteFile(builder.context.OutputPath())
 
 	// Verify
 	require.NoError(t, err)
 
-	_, err = os.Stat(builder.generateOutputImageFilename())
+	_, err = os.Stat(builder.context.OutputPath())
 	require.Error(t, err)
 	require.True(t, os.IsNotExist(err))
 }

@@ -42,17 +42,17 @@ func (b *Builder) buildRawImage() error {
 		return fmt.Errorf("insufficient available disk space on the RAW image")
 	}
 
-	if err = b.deleteExistingOutputImage(); err != nil {
+	if err = deleteFile(b.context.OutputPath()); err != nil {
 		return fmt.Errorf("deleting existing RAW image: %w", err)
 	}
 
 	cmd := b.createRawImageCopyCommand()
 	if err = cmd.Run(); err != nil {
 		return fmt.Errorf("copying the base image %s to the output image location %s: %w",
-			b.context.ImageDefinition.Image.BaseImage, b.generateOutputImageFilename(), err)
+			b.context.ImageDefinition.Image.BaseImage, b.context.OutputPath(), err)
 	}
 
-	return b.modifyRawImage(b.generateOutputImageFilename(), true, true)
+	return b.modifyRawImage(b.context.OutputPath(), true, true)
 }
 
 func (b *Builder) modifyRawImage(imagePath string, includeCombustion, renameFilesystem bool) error {
@@ -83,7 +83,7 @@ func (b *Builder) modifyRawImage(imagePath string, includeCombustion, renameFile
 
 func (b *Builder) createRawImageCopyCommand() *exec.Cmd {
 	baseImagePath := b.generateBaseImageFilename()
-	outputImagePath := b.generateOutputImageFilename()
+	outputImagePath := b.context.OutputPath()
 
 	cmd := exec.Command(copyExec, baseImagePath, outputImagePath)
 	return cmd

@@ -37,7 +37,7 @@ func TestCreateRawImageCopyCommand(t *testing.T) {
 	expectedArgs := []string{
 		copyExec,
 		builder.generateBaseImageFilename(),
-		builder.generateOutputImageFilename(),
+		builder.context.OutputPath(),
 	}
 	assert.Equal(t, expectedArgs, cmd.Args)
 }
@@ -54,7 +54,7 @@ func TestWriteModifyScript(t *testing.T) {
 	}
 
 	builder := Builder{context: ctx}
-	outputImageFilename := builder.generateOutputImageFilename()
+	outputImageFilename := builder.context.OutputPath()
 
 	raw := image.OperatingSystem{
 		KernelArgs: []string{"alpha", "beta"},
