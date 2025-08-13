@@ -6,7 +6,7 @@
 
 * Added support for prime/upstream kubernetes artifacts using the `config/artifacts.yaml` file
 * Added mounting for `/usr/local` for Operating System file 
-* Add warning about providing container images with index digests
+* Added warning about providing container images with index digests
 
 ## API
 
