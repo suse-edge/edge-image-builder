@@ -297,7 +297,7 @@ func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error
 			"digest (the digest of the container image) and NOT an index digest (the digest of the " +
 			"image platform). The embedded artifact registry will fail at boot time if an index/platform specific digest is provided." +
 			" Please check the logs for the list of container images with digests.")
-		zap.S().Warnf("WARNING: Container image(s) with digests detected:\n%s\nPlease be sure that each digest is a manifest "+
+		zap.S().Warnf("Container image(s) with digests detected:\n%s\nPlease be sure that each digest is a manifest "+
 			"digest (the digest of the container image) and NOT an index digest (the digest of the "+
 			"image platform). The embedded artifact registry will fail at boot time if an index/platform specific digest is provided.",
 			strings.Join(imagesWithDigest, "\n"))
