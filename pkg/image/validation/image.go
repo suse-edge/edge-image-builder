@@ -26,6 +26,7 @@ func validateImage(ctx *image.Context) []FailedValidation {
 
 	// Omit checking everything if it's a config drive build
 	if ctx.IsConfigDrive {
+		failures = append(failures, validateImageConfigDrive(def)...)
 		return failures
 	}
 
@@ -96,6 +97,39 @@ func validateArch(def *image.Definition) []FailedValidation {
 	if runtime.GOARCH != def.Image.Arch.Short() {
 		log.Auditf("Image build may fail as host architecture does not match the defined architecture of the "+
 			"output image.\nDetected: %s, Defined: %s", runtime.GOARCH, def.Image.Arch.Short())
+	}
+
+	return failures
+}
+
+func validateImageConfigDrive(def *image.Definition) []FailedValidation {
+	var failures []FailedValidation
+
+	if def.Image.OutputImageName != "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: "The 'image.outputImageName' field is not valid for generating config drives. The name of the output " +
+				"file should be defined through the '--output' argument.",
+		})
+	}
+
+	if def.Image.ImageType != "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: "The 'image.imageType' field is not valid for generating config drives. The output type " +
+				"should be defined through the '--output-type' argument.",
+		})
+	}
+
+	if def.Image.Arch != "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: "The 'image.arch' field is not valid for generating config drives. The architecture of the generated " +
+				"config drive should be defined through the '--arch' argument.",
+		})
+	}
+
+	if def.Image.BaseImage != "" {
+		failures = append(failures, FailedValidation{
+			UserMessage: "The 'image.baseImage' field is not valid for generating config drives.",
+		})
 	}
 
 	return failures

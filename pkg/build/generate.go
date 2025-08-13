@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 )
@@ -19,11 +20,11 @@ func NewGenerator(ctx *image.Context, imageConfigurator imageConfigurator) *Gene
 }
 
 func (g *Generator) Generate() error {
-	log.Audit("Generating image customization components...")
+	log.Audit("Generating combustion customization components...")
 
 	if err := g.imageConfigurator.Configure(g.context); err != nil {
 		log.Audit("Error configuring customization components.")
-		return fmt.Errorf("configuring image: %w", err)
+		return fmt.Errorf("configuring combustion drive: %w", err)
 	}
 
 	switch g.context.ImageDefinition.Image.ImageType {

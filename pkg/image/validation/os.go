@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -29,6 +30,8 @@ func validateOperatingSystem(ctx *image.Context) []FailedValidation {
 		failures = append(failures, validateFIPS(&def.OperatingSystem)...)
 		failures = append(failures, validateIsoConfig(def)...)
 		failures = append(failures, validateRawConfig(def)...)
+	} else {
+		failures = append(failures, validateOperatingSystemConfigDrive(def)...)
 	}
 
 	return failures
@@ -320,6 +323,33 @@ func validateFIPS(os *image.OperatingSystem) []FailedValidation {
 		failures = append(failures, FailedValidation{
 			UserMessage: msg,
 		})
+	}
+
+	return failures
+}
+
+var configDriveInvalidFields = []imageDefinitionField{
+	{Key: "operatingSystem.rawConfiguration", Chain: []string{"OperatingSystem", "RawConfiguration"}},
+	{Key: "operatingSystem.isoConfiguration.installDevice", Chain: []string{"OperatingSystem", "IsoConfiguration", "InstallDevice"}},
+	{Key: "operatingSystem.enableFIPS", Chain: []string{"OperatingSystem", "EnableFIPS"}},
+	{Key: "operatingSystem.packages.pkgList", Chain: []string{"OperatingSystem", "Packages", "PKGList"}},
+	{Key: "operatingSystem.packages.enableExtras", Chain: []string{"OperatingSystem", "Packages", "EnableExtras"}},
+	{Key: "operatingSystem.packages.regCode", Chain: []string{"OperatingSystem", "Packages", "RegCode"}},
+	{Key: "operatingSystem.packages.additionalRepos", Chain: []string{"OperatingSystem", "Packages", "AdditionalRepos"}},
+	{Key: "operatingSystem.packages.noGPGCheck", Chain: []string{"OperatingSystem", "Packages", "NoGPGCheck"}},
+	{Key: "operatingSystem.kernelArgs", Chain: []string{"OperatingSystem", "KernelArgs"}},
+}
+
+func validateOperatingSystemConfigDrive(def *image.Definition) []FailedValidation {
+	var failures []FailedValidation
+	var rootValue = reflect.ValueOf(def).Elem()
+
+	for _, field := range configDriveInvalidFields {
+		if isValueNonZero(rootValue, field.Chain) {
+			failures = append(failures, FailedValidation{
+				UserMessage: fmt.Sprintf("The '%s' field is not valid for generating config drives.", field.Key),
+			})
+		}
 	}
 
 	return failures

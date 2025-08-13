@@ -11,7 +11,7 @@ import (
 
 func (g *Generator) generateTarball() error {
 	if err := deleteFile(g.context.OutputPath()); err != nil {
-		return fmt.Errorf("deleting existing tarball: %w", err)
+		return fmt.Errorf("deleting existing combustion tarball: %w", err)
 	}
 
 	return g.createCompressedTarball()
@@ -27,7 +27,7 @@ func (g *Generator) createCompressedTarball() error {
 
 	file, err := os.Create(outputPath)
 	if err != nil {
-		return fmt.Errorf("could not create tarball: %w", err)
+		return fmt.Errorf("could not create combustion tarball: %w", err)
 	}
 	defer file.Close()
 
@@ -41,7 +41,7 @@ func (g *Generator) createCompressedTarball() error {
 		baseDir := filepath.Dir(dir)
 		err = addDirectoryToTar(tw, dir, baseDir)
 		if err != nil {
-			return fmt.Errorf("could not add '%s' directory to tarball: %w", dir, err)
+			return fmt.Errorf("could not add '%s' directory to combustion tarball: %w", dir, err)
 		}
 	}
 	return nil

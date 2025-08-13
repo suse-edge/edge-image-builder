@@ -1,10 +1,11 @@
 package build
 
 import (
-	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 
 	"github.com/suse-edge/edge-image-builder/pkg/cli/cmd"
 	"github.com/suse-edge/edge-image-builder/pkg/eib"
@@ -86,7 +87,7 @@ func Generate(_ *cli.Context) error {
 
 	if err = eib.Run(ctx, rootBuildDir); err != nil {
 		log.Audit(checkBuildLogMessage)
-		zap.S().Fatalf("An error occurred building the image: %s", err)
+		zap.S().Fatalf("An error occurred generating the config drive: %s", err)
 	}
 
 	return nil

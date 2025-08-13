@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/urfave/cli/v2"
-	"strings"
 )
 
 type GenerateFlags struct {

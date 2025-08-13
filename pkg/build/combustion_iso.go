@@ -2,12 +2,13 @@ package build
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/fileio"
-	"go.uber.org/zap"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
+	"go.uber.org/zap"
 )
 
 const (
@@ -17,7 +18,7 @@ const (
 
 func (g *Generator) generateCombustionISO() error {
 	if err := deleteFile(g.context.OutputPath()); err != nil {
-		return fmt.Errorf("deleting existing combustion image: %w", err)
+		return fmt.Errorf("deleting existing combustion iso: %w", err)
 	}
 
 	if err := g.createCombustionISO(); err != nil {
@@ -29,7 +30,7 @@ func (g *Generator) generateCombustionISO() error {
 
 func (g *Generator) createCombustionISO() error {
 	combustionPath := filepath.Join(g.context.BuildDir, combustionTmpDir)
-	if err := os.MkdirAll(combustionPath, 0755); err != nil {
+	if err := os.MkdirAll(combustionPath, 0o755); err != nil {
 		return fmt.Errorf("creating temp directory %s: %w", combustionPath, err)
 	}
 
