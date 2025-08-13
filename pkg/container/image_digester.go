@@ -2,8 +2,9 @@ package container
 
 import (
 	"fmt"
-	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"strings"
+
+	"github.com/suse-edge/edge-image-builder/pkg/log"
 
 	"github.com/containers/image/v5/manifest"
 )
