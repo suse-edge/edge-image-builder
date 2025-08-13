@@ -12,6 +12,7 @@ func TestValidateOperatingSystem(t *testing.T) {
 	tests := map[string]struct {
 		Definition             image.Definition
 		ExpectedFailedMessages []string
+		IsConfigDrive          bool
 	}{
 		`no os defined`: {
 			Definition: image.Definition{},
@@ -22,7 +23,22 @@ func TestValidateOperatingSystem(t *testing.T) {
 					ImageType: image.TypeISO,
 				},
 				OperatingSystem: image.OperatingSystem{
+					EnableFIPS: true,
 					KernelArgs: []string{"foo=bar", "baz"},
+					Time: image.Time{
+						Timezone: "Europe/London",
+						NtpConfiguration: image.NtpConfiguration{
+							ForceWait: true,
+							Pools:     []string{"2.suse.pool.ntp.org"},
+							Servers:   []string{"10.0.0.1"},
+						},
+					},
+					Keymap: "us",
+					Proxy: image.Proxy{
+						HTTPProxy:  "http://10.0.0.1:3128",
+						HTTPSProxy: "http://10.0.0.1:3128",
+						NoProxy:    []string{"localhost"},
+					},
 					Systemd: image.Systemd{
 						Enable:  []string{"runMe"},
 						Disable: []string{"dontRunMe"},
@@ -107,6 +123,87 @@ func TestValidateOperatingSystem(t *testing.T) {
 				"The 'diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
 			},
 		},
+		`all invalid config drive`: {
+			IsConfigDrive: true,
+			Definition: image.Definition{
+				Image: image.Image{
+					ImageType: image.TypeRAW,
+				},
+				OperatingSystem: image.OperatingSystem{
+					EnableFIPS: true,
+					KernelArgs: []string{"foo="},
+					Packages: image.Packages{
+						NoGPGCheck:   true,
+						EnableExtras: true,
+						PKGList:      []string{"zsh", "git"},
+						AdditionalRepos: []image.AddRepo{
+							{
+								URL:      "test.url",
+								Unsigned: true,
+							},
+						},
+						RegCode: "code",
+					},
+					IsoConfiguration: image.IsoConfiguration{
+						InstallDevice: "/dev/sda",
+					},
+					RawConfiguration: image.RawConfiguration{
+						DiskSize:                 "64",
+						ExpandEncryptedPartition: true,
+						LUKSKey:                  "1234",
+					},
+				},
+			},
+			ExpectedFailedMessages: []string{
+				"The 'operatingSystem.rawConfiguration' field is not valid for generating config drives.",
+				"The 'operatingSystem.isoConfiguration' field is not valid for generating config drives.",
+				"The 'operatingSystem.enableFIPS' field is not valid for generating config drives.",
+				"The 'operatingSystem.packages' field is not valid for generating config drives.",
+				"The 'operatingSystem.kernelArgs' field is not valid for generating config drives.",
+			},
+		},
+		`all valid config drive`: {
+			IsConfigDrive: true,
+			Definition: image.Definition{
+				OperatingSystem: image.OperatingSystem{
+					Time: image.Time{
+						Timezone: "Europe/London",
+						NtpConfiguration: image.NtpConfiguration{
+							ForceWait: true,
+							Pools:     []string{"2.suse.pool.ntp.org"},
+							Servers:   []string{"10.0.0.1"},
+						},
+					},
+					Proxy: image.Proxy{
+						HTTPProxy:  "http://10.0.0.1:3128",
+						HTTPSProxy: "http://10.0.0.1:3128",
+						NoProxy:    []string{"localhost"},
+					},
+					Systemd: image.Systemd{
+						Enable:  []string{"runMe"},
+						Disable: []string{"dontRunMe"},
+					},
+					Keymap: "us",
+					Groups: []image.OperatingSystemGroup{
+						{
+							Name: "eibTeam",
+						},
+					},
+					Users: []image.OperatingSystemUser{
+						{
+							Username:          "danny",
+							CreateHomeDir:     true,
+							EncryptedPassword: "InternNoMore",
+							SSHKeys:           []string{"asdf"},
+						},
+					},
+					Suma: image.Suma{
+						Host:          "example.com",
+						ActivationKey: "please?",
+					},
+				},
+			},
+		},
 	}
 
 	for name, test := range tests {
@@ -114,6 +211,7 @@ func TestValidateOperatingSystem(t *testing.T) {
 			def := test.Definition
 			ctx := image.Context{
 				ImageDefinition: &def,
+				IsConfigDrive:   test.IsConfigDrive,
 			}
 			failures := validateOperatingSystem(&ctx)
 			assert.Len(t, failures, len(test.ExpectedFailedMessages))

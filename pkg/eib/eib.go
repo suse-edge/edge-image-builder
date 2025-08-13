@@ -33,9 +33,11 @@ func Run(ctx *image.Context, rootBuildDir string) error {
 		return fmt.Errorf("configuring kubernetes selinux policy: %w", err)
 	}
 
-	appendElementalRPMs(ctx)
-	appendFIPS(ctx)
 	appendHelm(ctx)
+	if !ctx.IsConfigDrive {
+		appendElementalRPMs(ctx)
+		appendFIPS(ctx)
+	}
 
 	c, err := buildCombustion(ctx, rootBuildDir)
 	if err != nil {
@@ -43,8 +45,13 @@ func Run(ctx *image.Context, rootBuildDir string) error {
 		return fmt.Errorf("building combustion: %w", err)
 	}
 
-	builder := build.NewBuilder(ctx, c)
-	return builder.Build()
+	if !ctx.IsConfigDrive {
+		builder := build.NewBuilder(ctx, c)
+		return builder.Build()
+	}
+
+	builder := build.NewGenerator(ctx, c)
+	return builder.Generate()
 }
 
 func appendKubernetesSELinuxRPMs(ctx *image.Context) error {

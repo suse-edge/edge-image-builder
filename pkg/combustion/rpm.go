@@ -85,6 +85,10 @@ func (c *Combustion) configureRPMs(ctx *image.Context) ([]string, error) {
 func SkipRPMComponent(ctx *image.Context) bool {
 	pkg := ctx.ImageDefinition.OperatingSystem.Packages
 
+	if ctx.IsConfigDrive {
+		return true
+	}
+
 	if isComponentConfigured(ctx, rpmDir) {
 		// isComponentConfigured will indicate if the directory exists, but not
 		// if there are RPMs in there. If there aren't any, it is still possible to

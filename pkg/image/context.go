@@ -1,5 +1,7 @@
 package image
 
+import "path/filepath"
+
 type LocalRPMConfig struct {
 	// RPMPath is the path to the directory holding RPMs that will be side-loaded
 	RPMPath string
@@ -22,6 +24,8 @@ type Context struct {
 	ArtifactSources *ArtifactSources
 	// CacheDir contains all of the artifacts that are cached for the build process.
 	CacheDir string
+	// IsConfigDrive defines whether this is an image or config drive build
+	IsConfigDrive bool
 }
 
 type ArtifactSources struct {
@@ -47,4 +51,9 @@ type ArtifactSources struct {
 			ReleaseURL        string `yaml:"releaseURL"`
 		} `yaml:"rke2"`
 	} `yaml:"kubernetes"`
+}
+
+func (c *Context) OutputPath() string {
+	filename := filepath.Join(c.ImageConfigDir, c.ImageDefinition.Image.OutputImageName)
+	return filename
 }
