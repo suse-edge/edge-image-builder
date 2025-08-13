@@ -38,19 +38,25 @@ func (g *Generator) createCompressedTarball() error {
 	defer tw.Close()
 
 	for _, dir := range directories {
-		baseDir := filepath.Dir(dir)
-		err = addDirectoryToTar(tw, dir, baseDir)
+		err = addDirectoryToTar(tw, dir)
 		if err != nil {
-			return fmt.Errorf("could not add '%s' directory to combustion tarball: %w", dir, err)
+			return fmt.Errorf("could not add '%s' directory to tarball: %w", dir, err)
 		}
 	}
 	return nil
 }
 
-func addDirectoryToTar(tw *tar.Writer, basePath string, stripPrefix string) error {
+func addDirectoryToTar(tw *tar.Writer, basePath string) error {
+	baseDir := filepath.Dir(basePath)
+
 	return filepath.Walk(basePath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return fmt.Errorf("walking '%s': %w", path, err)
+		}
+
+		relPath, err := filepath.Rel(baseDir, path)
+		if err != nil {
+			return fmt.Errorf("getting relative path for '%s': %w", path, err)
 		}
 
 		header, err := tar.FileInfoHeader(info, info.Name())
@@ -58,10 +64,6 @@ func addDirectoryToTar(tw *tar.Writer, basePath string, stripPrefix string) erro
 			return fmt.Errorf("creating tar header for '%s': %w", path, err)
 		}
 
-		relPath, err := filepath.Rel(stripPrefix, path)
-		if err != nil {
-			return fmt.Errorf("getting relative path for '%s': %w", path, err)
-		}
 		header.Name = relPath
 
 		if info.Mode()&os.ModeSymlink != 0 {

@@ -330,13 +330,9 @@ func validateFIPS(os *image.OperatingSystem) []FailedValidation {
 
 var configDriveInvalidFields = []imageDefinitionField{
 	{Key: "operatingSystem.rawConfiguration", Chain: []string{"OperatingSystem", "RawConfiguration"}},
-	{Key: "operatingSystem.isoConfiguration.installDevice", Chain: []string{"OperatingSystem", "IsoConfiguration", "InstallDevice"}},
+	{Key: "operatingSystem.isoConfiguration", Chain: []string{"OperatingSystem", "IsoConfiguration"}},
 	{Key: "operatingSystem.enableFIPS", Chain: []string{"OperatingSystem", "EnableFIPS"}},
-	{Key: "operatingSystem.packages.pkgList", Chain: []string{"OperatingSystem", "Packages", "PKGList"}},
-	{Key: "operatingSystem.packages.enableExtras", Chain: []string{"OperatingSystem", "Packages", "EnableExtras"}},
-	{Key: "operatingSystem.packages.regCode", Chain: []string{"OperatingSystem", "Packages", "RegCode"}},
-	{Key: "operatingSystem.packages.additionalRepos", Chain: []string{"OperatingSystem", "Packages", "AdditionalRepos"}},
-	{Key: "operatingSystem.packages.noGPGCheck", Chain: []string{"OperatingSystem", "Packages", "NoGPGCheck"}},
+	{Key: "operatingSystem.packages", Chain: []string{"OperatingSystem", "Packages"}},
 	{Key: "operatingSystem.kernelArgs", Chain: []string{"OperatingSystem", "KernelArgs"}},
 }
 

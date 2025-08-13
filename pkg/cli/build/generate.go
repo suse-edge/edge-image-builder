@@ -5,25 +5,28 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/suse-edge/edge-image-builder/pkg/image"
-
 	"github.com/suse-edge/edge-image-builder/pkg/cli/cmd"
 	"github.com/suse-edge/edge-image-builder/pkg/eib"
+	"github.com/suse-edge/edge-image-builder/pkg/image"
 	"github.com/suse-edge/edge-image-builder/pkg/log"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 )
 
-func Generate(_ *cli.Context) error {
-	generateArgs := &cmd.GenerateArgs
+func Generate(c *cli.Context) error {
+	args := &cmd.CommonArgs
 
-	rootBuildDir := generateArgs.GenerateRootBuildDir
+	outputType := c.String("output-type")
+	output := c.String("output")
+	arch := c.String("arch")
+
+	rootBuildDir := args.RootBuildDir
 	if rootBuildDir == "" {
 		const defaultBuildDir = "_build"
 
-		rootBuildDir = filepath.Join(generateArgs.GenerateConfigDir, defaultBuildDir)
+		rootBuildDir = filepath.Join(args.ConfigDir, defaultBuildDir)
 		if err := os.MkdirAll(rootBuildDir, os.ModePerm); err != nil {
-			log.Auditf("The root build directory could not be set up under the configuration directory '%s'.", generateArgs.GenerateConfigDir)
+			log.Auditf("The root build directory could not be set up under the configuration directory '%s'.", args.ConfigDir)
 			return err
 		}
 	}
@@ -37,12 +40,12 @@ func Generate(_ *cli.Context) error {
 	// This needs to occur as early as possible so that the subsequent calls can use the log
 	log.ConfigureGlobalLogger(filepath.Join(buildDir, buildLogFilename))
 
-	if cmdErr := imageConfigDirExists(generateArgs.GenerateConfigDir); cmdErr != nil {
+	if cmdErr := imageConfigDirExists(args.ConfigDir); cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
 		os.Exit(1)
 	}
 
-	configDriveDefinition, cmdErr := parseDefinitionFile(generateArgs.GenerateConfigDir, generateArgs.GenerateDefinitionFile)
+	configDriveDefinition, cmdErr := parseDefinitionFile(args.ConfigDir, args.DefinitionFile)
 	if cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
 		os.Exit(1)
@@ -60,7 +63,7 @@ func Generate(_ *cli.Context) error {
 		zap.S().Fatalf("Parsing artifact sources failed: %v", err)
 	}
 
-	ctx := buildContext(buildDir, combustionDir, artefactsDir, generateArgs.GenerateConfigDir, configDriveDefinition, artifactSources)
+	ctx := buildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, configDriveDefinition, artifactSources)
 	ctx.IsConfigDrive = true
 
 	if cmdErr = validateImageDefinition(ctx); cmdErr != nil {
@@ -69,12 +72,12 @@ func Generate(_ *cli.Context) error {
 	}
 
 	// Set the necessary flags for combustion
-	ctx.ImageDefinition.Image.ImageType = generateArgs.GenerateOutputType
-	ctx.ImageDefinition.Image.OutputImageName = generateArgs.GenerateOutput
+	ctx.ImageDefinition.Image.ImageType = outputType
+	ctx.ImageDefinition.Image.OutputImageName = output
 
-	if strings.EqualFold(generateArgs.GenerateArch, string(image.ArchTypeARM)) {
+	if strings.EqualFold(arch, string(image.ArchTypeARM)) {
 		ctx.ImageDefinition.Image.Arch = image.ArchTypeARM
-	} else if strings.EqualFold(generateArgs.GenerateArch, string(image.ArchTypeX86)) {
+	} else if strings.EqualFold(arch, string(image.ArchTypeX86)) {
 		ctx.ImageDefinition.Image.Arch = image.ArchTypeX86
 	}
 
@@ -87,7 +90,7 @@ func Generate(_ *cli.Context) error {
 
 	if err = eib.Run(ctx, rootBuildDir); err != nil {
 		log.Audit(checkBuildLogMessage)
-		zap.S().Fatalf("An error occurred generating the config drive: %s", err)
+		zap.S().Fatalf("An error occurred building the image: %s", err)
 	}
 
 	return nil

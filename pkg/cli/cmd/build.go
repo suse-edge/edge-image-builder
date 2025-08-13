@@ -6,14 +6,6 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-type BuildFlags struct {
-	DefinitionFile string
-	ConfigDir      string
-	RootBuildDir   string
-}
-
-var BuildArgs BuildFlags
-
 func NewBuildCommand(action func(*cli.Context) error) *cli.Command {
 	return &cli.Command{
 		Name:      "build",
@@ -23,11 +15,7 @@ func NewBuildCommand(action func(*cli.Context) error) *cli.Command {
 		Flags: []cli.Flag{
 			DefinitionFileFlag,
 			ConfigDirFlag,
-			&cli.StringFlag{
-				Name:        "build-dir",
-				Usage:       "Full path to the directory to store build artifacts",
-				Destination: &BuildArgs.RootBuildDir,
-			},
+			BuildDirFlag,
 		},
 	}
 }

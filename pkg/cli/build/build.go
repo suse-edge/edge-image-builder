@@ -24,7 +24,7 @@ const (
 )
 
 func Run(_ *cli.Context) error {
-	args := &cmd.BuildArgs
+	args := &cmd.CommonArgs
 
 	rootBuildDir := args.RootBuildDir
 	if rootBuildDir == "" {
