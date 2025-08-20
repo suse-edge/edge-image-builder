@@ -8,6 +8,7 @@
 * Added mounting for `/usr/local` for Operating System file handling
 * Added ability to generate independent combustion drive
 * Added warning about providing container images with index digests
+* Updated documentation to specify that `os-files` should be used for `HelmChartConfigs` instead of kubernetes manifest handling 
 
 ## API
 
