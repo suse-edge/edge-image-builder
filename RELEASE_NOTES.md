@@ -5,6 +5,7 @@
 ## General
 
 * Improved validation and handling for the image definition API Version
+* Updated documentation to specify that `os-files` should be used for `HelmChartConfigs` instead of using the respective `/kubernetes/manifests` directory
 
 ---
 

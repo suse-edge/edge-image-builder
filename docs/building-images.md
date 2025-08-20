@@ -502,6 +502,9 @@ defined by the Kubernetes cluster being installed.
     * `certs` - Contains certificate files/bundles for TLS verification. Untrusted HTTPS-enabled Helm repositories and
     registries must be provided with a certificate file/bundle or require `skipTLSVerify` to be true.
 
+> **_NOTE_**: `HelmChartConfigs` manifests may fail if they are put in the `/kubernetes/manifests` section in the configuration directory. The
+> best practice is to place any `HelmChartConfigs` in `/var/lib/rancher/{rke2/k3s}/server/manifests/` using [os-files](#operating-system-files).
+
 > **_NOTE:_** For dual-stack clusters, a Kubernetes `server.yaml` file is required and it must contain a
 > valid dual-stack `service-cidr` and `cluster-cidr` values according to the official [K3s](https://docs.k3s.io/networking/basic-network-options#dual-stack-ipv4--ipv6-networking) and [RKE2](https://docs.rke2.io/networking/basic_network_options#dual-stack-configuration) documentation.
 ## Elemental
