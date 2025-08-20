@@ -465,6 +465,9 @@ defined by the Kubernetes cluster being installed.
     * `certs` - Contains certificate files/bundles for TLS verification. Untrusted HTTPS-enabled Helm repositories and
     registries must be provided with a certificate file/bundle or require `skipTLSVerify` to be true.
 
+> **_NOTE_**: `HelmChartConfigs` manifests may fail if they are put in the `/kubernetes/manifests` section in the configuration directory. The
+> best practice is to place any `HelmChartConfigs` in `/var/lib/rancher/{rke2/k3s}/server/manifests/` using [os-files](#operating-system-files).
+
 ## Elemental
 
 Automatic Elemental registration may be configured for the image. The Elemental registration configuration file,

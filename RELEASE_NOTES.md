@@ -2,6 +2,8 @@
 
 # v1.1.2
 
+* Updated documentation to specify that `os-files` should be used for `HelmChartConfigs` instead of using the respective `/kubernetes/manifests` directory
+
 ## Bug Fixes
 
 * [#593](https://github.com/suse-edge/edge-image-builder/issues/593) - OS files script should mount /var
