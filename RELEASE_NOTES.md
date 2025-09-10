@@ -24,6 +24,7 @@
 
 ## Bug Fixes
 
+* [#767](https://github.com/suse-edge/edge-image-builder/issues/767) - Node IP detection for IPv6/Dualstack will fail if the default network does not have a metric
 * [#718](https://github.com/suse-edge/edge-image-builder/issues/718) - Kubernetes SELinux RPMs can come from wrong repositories
 * [#777](https://github.com/suse-edge/edge-image-builder/issues/777) - Make "eib-embedded-registry.service" restarts less noisy/aggressive
 * [#740](https://github.com/suse-edge/edge-image-builder/issues/740) - Embedded artifact registry fails with timeout, cannot recover
