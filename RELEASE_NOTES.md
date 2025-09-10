@@ -24,6 +24,8 @@
 
 ## Bug Fixes
 
+* [#718](https://github.com/suse-edge/edge-image-builder/issues/718) - Kubernetes SELinux RPMs can come from wrong repositories
+
 ---
 
 # v1.2.1
