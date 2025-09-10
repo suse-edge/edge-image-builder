@@ -64,7 +64,9 @@ func TestValidateOperatingSystem(t *testing.T) {
 						PKGList: []string{"zsh", "git"},
 						AdditionalRepos: []image.AddRepo{
 							{
-								URL: "myrepo.com",
+								URL:      "myrepo.com",
+								Priority: 50,
+								Unsigned: true,
 							},
 						},
 						RegCode: "letMeIn",
@@ -104,6 +106,12 @@ func TestValidateOperatingSystem(t *testing.T) {
 					},
 					Packages: image.Packages{
 						PKGList: []string{"zsh", "git"},
+						AdditionalRepos: []image.AddRepo{
+							{
+								URL:      "myrepo.com",
+								Priority: 100,
+							},
+						},
 					},
 					IsoConfiguration: image.IsoConfiguration{
 						InstallDevice: "/dev/sda",
@@ -121,6 +129,7 @@ func TestValidateOperatingSystem(t *testing.T) {
 				"The 'host' field is required for the 'suma' section.",
 				fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
 				"The 'diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
+				"The 'priority' field must be greater than or equal to 0 and less than or equal to 99 for 'additionalRepos'.",
 			},
 		},
 		`all invalid config drive`: {

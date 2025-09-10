@@ -136,6 +136,7 @@ type Packages struct {
 type AddRepo struct {
 	URL      string `yaml:"url"`
 	Unsigned bool   `yaml:"unsigned"`
+	Priority int    `yaml:"priority"`
 }
 
 type OperatingSystemUser struct {
