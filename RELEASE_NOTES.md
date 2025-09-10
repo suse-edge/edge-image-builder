@@ -9,6 +9,7 @@
 * Added ability to generate independent combustion drive
 * Added warning about providing container images with index digests
 * Updated documentation to specify that `os-files` should be used for `HelmChartConfigs` instead of using the respective `/kubernetes/manifests` directory 
+* Improved embedded artifact registry service
 
 ## API
 
