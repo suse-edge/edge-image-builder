@@ -13,9 +13,12 @@
 ## API
 
 * Introduced `generate` command for generating combustion drives
-* Added support for customizing RPM repository priority
 
 ### Image Definition Changes
+
+* The current version of the image definition has been incremented to `1.3` to include the changes below
+  * Existing definitions using the `1.0`, `1.1`, and `1.2` versions of the schema will continue to work with EIB
+* Added `operatingSystem.packages.additionalRepos.priority` field to enable customizing the priority of RPM repositories
 
 ### Image Configuration Directory Changes
 

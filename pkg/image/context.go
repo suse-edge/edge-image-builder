@@ -43,13 +43,13 @@ type ArtifactSources struct {
 		K3s struct {
 			SELinuxPackage            string `yaml:"selinuxPackage"`
 			SELinuxRepository         string `yaml:"selinuxRepository"`
-			SELinuxRepositoryPriority int    `yaml:"seLinuxRepositoryPriority"`
+			SELinuxRepositoryPriority int    `yaml:"selinuxRepositoryPriority"`
 			ReleaseURL                string `yaml:"releaseURL"`
 		} `yaml:"k3s"`
 		Rke2 struct {
 			SELinuxPackage            string `yaml:"selinuxPackage"`
 			SELinuxRepository         string `yaml:"selinuxRepository"`
-			SELinuxRepositoryPriority int    `yaml:"seLinuxRepositoryPriority"`
+			SELinuxRepositoryPriority int    `yaml:"selinuxRepositoryPriority"`
 			ReleaseURL                string `yaml:"releaseURL"`
 		} `yaml:"rke2"`
 	} `yaml:"kubernetes"`

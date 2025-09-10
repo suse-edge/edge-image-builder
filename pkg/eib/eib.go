@@ -83,13 +83,6 @@ func appendKubernetesSELinuxRPMs(ctx *image.Context) error {
 		return fmt.Errorf("identifying selinux repository: %w", err)
 	}
 
-	priority, err := kubernetes.SELinuxRepositoryPriority(ctx.ImageDefinition.Kubernetes.Version, ctx.ArtifactSources)
-	if err != nil {
-		return fmt.Errorf("identifying selinux repository priority: %w", err)
-	}
-
-	repository.Priority = priority
-
 	appendRPMs(ctx, []image.AddRepo{repository}, selinuxPackage)
 
 	gpgKeysDir := combustion.GPGKeysPath(ctx)
