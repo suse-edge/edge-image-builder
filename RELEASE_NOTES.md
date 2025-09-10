@@ -9,7 +9,7 @@
 * Added ability to generate independent combustion drive
 * Added warning about providing container images with index digests
 * Updated documentation to specify that `os-files` should be used for `HelmChartConfigs` instead of using the respective `/kubernetes/manifests` directory 
-* Improved embedded artifact registry service
+
 
 ## API
 
@@ -20,6 +20,9 @@
 ### Image Configuration Directory Changes
 
 ## Bug Fixes
+
+* [#777](https://github.com/suse-edge/edge-image-builder/issues/777) - Make "eib-embedded-registry.service" restarts less noisy/aggressive
+* [#740](https://github.com/suse-edge/edge-image-builder/issues/740) - Embedded artifact registry fails with timeout, cannot recover
 
 ---
 
