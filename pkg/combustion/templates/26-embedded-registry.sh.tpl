@@ -5,6 +5,31 @@ mkdir -p /opt/hauler
 cp {{ .RegistryDir }}/hauler /opt/hauler/hauler
 cp {{ .RegistryDir }}/*-{{ .RegistryTarSuffix }} /opt/hauler/
 
+cat <<- 'EOF' > /opt/hauler/start-registry.sh
+#!/bin/bash
+set -euo pipefail
+
+if [ -d "/opt/hauler/store" ]; then
+    echo "Removing existing hauler store directory"
+    rm -rf /opt/hauler/store
+fi
+
+if [ -d "/opt/hauler/registry" ]; then
+    echo "Removing existing hauler registry directory"
+    rm -rf /opt/hauler/registry
+fi
+
+# Load all registry tar files
+for file in /opt/hauler/*-{{ .RegistryTarSuffix }}; do
+    [ -f "$file" ] && /opt/hauler/hauler store load -f "$file" --tempdir /opt/hauler
+done
+
+# Start the registry server
+exec /opt/hauler/hauler store serve registry -p {{ .RegistryPort }}
+EOF
+
+chmod +x /opt/hauler/start-registry.sh
+
 cat <<- EOF > /etc/systemd/system/eib-embedded-registry.service
 [Unit]
 Description=Load and Serve Embedded Registry
@@ -14,9 +39,10 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=/opt/hauler
-ExecStartPre=/bin/bash -c "for file in /opt/hauler/*-{{ .RegistryTarSuffix }}; do [ -f \"\$file\" ] && /opt/hauler/hauler store load -f \"\$file\" --tempdir /opt/hauler; done"
-ExecStart=/opt/hauler/hauler store serve registry -p {{ .RegistryPort }}
+ExecStart=/opt/hauler/start-registry.sh
+TimeoutStartSec=300
 Restart=on-failure
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target

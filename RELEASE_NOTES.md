@@ -25,6 +25,8 @@
 ## Bug Fixes
 
 * [#718](https://github.com/suse-edge/edge-image-builder/issues/718) - Kubernetes SELinux RPMs can come from wrong repositories
+* [#777](https://github.com/suse-edge/edge-image-builder/issues/777) - Make "eib-embedded-registry.service" restarts less noisy/aggressive
+* [#740](https://github.com/suse-edge/edge-image-builder/issues/740) - Embedded artifact registry fails with timeout, cannot recover
 
 ---
 
