@@ -20,6 +20,9 @@
 
 ## Bug Fixes
 
+* [#777](https://github.com/suse-edge/edge-image-builder/issues/777) - Make "eib-embedded-registry.service" restarts less noisy/aggressive
+* [#740](https://github.com/suse-edge/edge-image-builder/issues/740) - Embedded artifact registry fails with timeout, cannot recover
+
 ---
 
 # v1.2.1
