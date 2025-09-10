@@ -9,6 +9,16 @@ cat <<- 'EOF' > /opt/hauler/start-registry.sh
 #!/bin/bash
 set -euo pipefail
 
+if [ -d "/opt/hauler/store" ]; then
+    echo "Removing existing hauler store directory"
+    rm -rf /opt/hauler/store
+fi
+
+if [ -d "/opt/hauler/registry" ]; then
+    echo "Removing existing hauler registry directory"
+    rm -rf /opt/hauler/registry
+fi
+
 # Load all registry tar files
 for file in /opt/hauler/*-{{ .RegistryTarSuffix }}; do
     [ -f "$file" ] && /opt/hauler/hauler store load -f "$file" --tempdir /opt/hauler
