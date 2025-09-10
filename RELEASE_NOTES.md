@@ -8,7 +8,7 @@
 * Added mounting for `/usr/local` for Operating System file handling
 * Added ability to generate independent combustion drive
 * Added warning about providing container images with index digests
-* Updated documentation to specify that `os-files` should be used for `HelmChartConfigs` instead of using the respective `/kubernetes/manifests` directory 
+* Updated documentation to specify that `os-files` should be used for `HelmChartConfigs` instead of using the respective `/kubernetes/manifests` directory
 
 ## API
 
@@ -16,11 +16,16 @@
 
 ### Image Definition Changes
 
+* The current version of the image definition has been incremented to `1.3` to include the changes below
+  * Existing definitions using the `1.0`, `1.1`, and `1.2` versions of the schema will continue to work with EIB
+* Added `operatingSystem.packages.additionalRepos.priority` field to enable customizing the priority of RPM repositories
+
 ### Image Configuration Directory Changes
 
 ## Bug Fixes
 
 * [#767](https://github.com/suse-edge/edge-image-builder/issues/767) - Node IP detection for IPv6/Dualstack will fail if the default network does not have a metric
+* [#718](https://github.com/suse-edge/edge-image-builder/issues/718) - Kubernetes SELinux RPMs can come from wrong repositories
 * [#777](https://github.com/suse-edge/edge-image-builder/issues/777) - Make "eib-embedded-registry.service" restarts less noisy/aggressive
 * [#740](https://github.com/suse-edge/edge-image-builder/issues/740) - Embedded artifact registry fails with timeout, cannot recover
 

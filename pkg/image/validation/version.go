@@ -33,6 +33,7 @@ var definitionFields = map[string][]imageDefinitionField{
 		{Key: "operatingSystem.packages.enableExtras", Chain: []string{"OperatingSystem", "Packages", "EnableExtras"}},
 		{Key: "embeddedArtifactRegistry.registries", Chain: []string{"EmbeddedArtifactRegistry", "Registries"}},
 	},
+	"1.3": {{Key: "operatingSystem.packages.additionalRepos.priority", Chain: []string{"OperatingSystem", "Packages", "AdditionalRepos", "Priority"}}},
 }
 
 func validateVersion(ctx *image.Context) []FailedValidation {

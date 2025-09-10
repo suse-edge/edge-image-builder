@@ -31,7 +31,7 @@ trap "suseconnect -d" EXIT
 {{ $gpgCheck = "--gpgcheck-allow-unsigned-repo" }}
 {{- end -}}
 
-zypper ar {{ $gpgCheck }} -f {{ .URL }} addrepo {{- $index }}
+zypper ar {{ $gpgCheck }} -f --priority {{ .Priority }} {{ .URL }} addrepo {{- $index }}
 
 {{ end -}}
 

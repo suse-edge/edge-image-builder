@@ -10,9 +10,10 @@ const (
 	version10 = "1.0"
 	version11 = "1.1"
 	version12 = "1.2"
+	version13 = "1.3"
 )
 
-var SupportedSchemaVersions = []string{version10, version11, version12}
+var SupportedSchemaVersions = []string{version10, version11, version12, version13}
 
 var version string
 

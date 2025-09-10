@@ -221,6 +221,13 @@ func validatePackages(os *image.OperatingSystem) []FailedValidation {
 				})
 			}
 
+			if repo.Priority < 0 || repo.Priority > 99 {
+				msg := "The 'priority' field for 'additionalRepos' must be a value between 0 and 99."
+				failures = append(failures, FailedValidation{
+					UserMessage: msg,
+				})
+			}
+
 			repoURLs = append(repoURLs, repo.URL)
 		}
 
