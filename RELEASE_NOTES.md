@@ -20,6 +20,8 @@
 
 ## Bug Fixes
 
+* [#767](https://github.com/suse-edge/edge-image-builder/issues/767) - Node IP detection for IPv6/Dualstack will fail if the default network does not have a metric
+
 ---
 
 # v1.2.1

@@ -2,12 +2,14 @@
 
 get_default_ipv4_address() {
     local default_route=$(ip -4 route show default | awk '{
+        metric_val = 0  # Default metric if none specified
         for(i=1;i<=NF;i++) {
             if($i=="metric") {
-                print $0, "METRICVAL=" $(i+1)
-                exit
+                metric_val = $(i+1)
+                break
             }
         }
+        print $0, "METRICVAL=" metric_val
     }' | sort -t= -k2,2n | head -n1)
 
     if [ -z "$default_route" ]; then
@@ -29,17 +31,20 @@ get_default_ipv4_address() {
         echo "No IPv4 address found for interface $interface" >&2
         return 1
     fi
+
     echo "$ip_address"
 }
 
 get_default_ipv6_address() {
     local default_route=$(ip -6 route show default | awk '{
+        metric_val = 0  # Default metric if none specified
         for(i=1;i<=NF;i++) {
             if($i=="metric") {
-                print $0, "METRICVAL=" $(i+1)
-                exit
+                metric_val = $(i+1)
+                break
             }
         }
+        print $0, "METRICVAL=" metric_val
     }' | sort -t= -k2,2n | head -n1)
 
     if [ -z "$default_route" ]; then
