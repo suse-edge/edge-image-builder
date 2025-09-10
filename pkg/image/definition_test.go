@@ -108,7 +108,8 @@ func TestParse(t *testing.T) {
 	assert.Equal(t, expectedPKGList, pkgConfig.PKGList)
 	expectedAddRepos := []AddRepo{
 		{
-			URL: "https://download.nvidia.com/suse/sle15sp5/",
+			URL:      "https://download.nvidia.com/suse/sle15sp5/",
+			Priority: 25,
 		},
 		{
 			URL:      "https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/",

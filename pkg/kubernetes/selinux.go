@@ -24,12 +24,15 @@ func SELinuxPackage(version string, sources *image.ArtifactSources) (string, err
 
 func SELinuxRepository(version string, sources *image.ArtifactSources) (image.AddRepo, error) {
 	var url string
+	var priority int
 
 	switch {
 	case strings.Contains(version, image.KubernetesDistroK3S):
 		url = sources.Kubernetes.K3s.SELinuxRepository
+		priority = sources.Kubernetes.K3s.SELinuxRepositoryPriority
 	case strings.Contains(version, image.KubernetesDistroRKE2):
 		url = sources.Kubernetes.Rke2.SELinuxRepository
+		priority = sources.Kubernetes.Rke2.SELinuxRepositoryPriority
 	default:
 		return image.AddRepo{}, fmt.Errorf("invalid kubernetes version: %s", version)
 	}
@@ -37,6 +40,7 @@ func SELinuxRepository(version string, sources *image.ArtifactSources) (image.Ad
 	return image.AddRepo{
 		URL:      url,
 		Unsigned: true,
+		Priority: priority,
 	}, nil
 }
 
