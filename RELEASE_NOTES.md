@@ -1,5 +1,13 @@
 # Edge Image Builder Releases
 
+# v1.2.2
+
+## Bug Fixes
+
+* [#777](https://github.com/suse-edge/edge-image-builder/issues/777) - Make "eib-embedded-registry.service" restarts less noisy/aggressive
+
+---
+
 # v1.2.1
 
 ## General
