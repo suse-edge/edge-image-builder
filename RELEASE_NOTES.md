@@ -10,7 +10,6 @@
 * Added warning about providing container images with index digests
 * Updated documentation to specify that `os-files` should be used for `HelmChartConfigs` instead of using the respective `/kubernetes/manifests` directory 
 
-
 ## API
 
 * Introduced `generate` command for generating combustion drives
