@@ -180,13 +180,6 @@ func (r *Resolver) prepareLocalRPMs(localRPMConfig *image.LocalRPMConfig) error 
 }
 
 func (r *Resolver) writeRPMResolutionScript(localRPMConfig *image.LocalRPMConfig, packages *image.Packages) error {
-	// For any repository that doesn't have a user specified priority we set it to a middle priority.
-	for i := range packages.AdditionalRepos {
-		if packages.AdditionalRepos[i].Priority == 0 {
-			packages.AdditionalRepos[i].Priority = 50
-		}
-	}
-
 	values := struct {
 		RegCode      string
 		AddRepo      []image.AddRepo

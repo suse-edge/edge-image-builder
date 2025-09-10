@@ -8,12 +8,12 @@
 * Added mounting for `/usr/local` for Operating System file handling
 * Added ability to generate independent combustion drive
 * Added warning about providing container images with index digests
-* Updated documentation to specify that `os-files` should be used for `HelmChartConfigs` instead of using the respective `/kubernetes/manifests` directory 
-* Added support for customizing RPM repository priority
+* Updated documentation to specify that `os-files` should be used for `HelmChartConfigs` instead of using the respective `/kubernetes/manifests` directory
 
 ## API
 
 * Introduced `generate` command for generating combustion drives
+* Added support for customizing RPM repository priority
 
 ### Image Definition Changes
 

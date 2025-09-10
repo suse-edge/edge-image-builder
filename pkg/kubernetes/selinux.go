@@ -40,6 +40,21 @@ func SELinuxRepository(version string, sources *image.ArtifactSources) (image.Ad
 	}, nil
 }
 
+func SELinuxRepositoryPriority(version string, sources *image.ArtifactSources) (int, error) {
+	var priority int
+
+	switch {
+	case strings.Contains(version, image.KubernetesDistroK3S):
+		priority = sources.Kubernetes.K3s.SELinuxRepositoryPriority
+	case strings.Contains(version, image.KubernetesDistroRKE2):
+		priority = sources.Kubernetes.Rke2.SELinuxRepositoryPriority
+	default:
+		return 0, fmt.Errorf("invalid kubernetes version: %s", version)
+	}
+
+	return priority, nil
+}
+
 func DownloadSELinuxRPMsSigningKey(gpgKeysDir string) error {
 	const rancherSigningKeyURL = "https://rpm.rancher.io/public.key"
 	var signingKeyPath = filepath.Join(gpgKeysDir, "rancher-public.key")

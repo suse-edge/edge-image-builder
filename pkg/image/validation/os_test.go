@@ -129,7 +129,7 @@ func TestValidateOperatingSystem(t *testing.T) {
 				"The 'host' field is required for the 'suma' section.",
 				fmt.Sprintf("The 'isoConfiguration/installDevice' field can only be used when 'imageType' is '%s'.", image.TypeISO),
 				"The 'diskSize' field must be an integer followed by a suffix of either 'M', 'G', or 'T'.",
-				"The 'priority' field must be greater than or equal to 0 and less than or equal to 99 for 'additionalRepos'.",
+				"The 'priority' field for 'additionalRepos' must be a value between 0 and 99.",
 			},
 		},
 		`all invalid config drive`: {
