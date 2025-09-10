@@ -210,7 +210,7 @@ see the [Installing packages](./installing-packages.md) guide.
   the node. Each entry is made up of the following:
     * `url` - Required; Specifies the URL of the repository.
     * `priority` - Optional; Specifies the priority of the specified repository between 0 and 99. Lower number means 
-    * higher priority.
+    higher priority.
     * `unsigned` - This must be set to `true` if the repository is unsigned. 
   * `sccRegistrationCode` - Specifies the SUSE Customer Center registration code in plain text, which is used to
   connect to SUSE's internal RPM repositories.
