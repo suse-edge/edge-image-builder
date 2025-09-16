@@ -1,6 +1,6 @@
 # Edge Image Builder Releases
 
-# Next
+# v1.3.0
 
 ## General
 

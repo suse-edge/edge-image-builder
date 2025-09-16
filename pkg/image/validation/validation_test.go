@@ -31,7 +31,7 @@ func TestValidateDefinition(t *testing.T) {
 	}{
 		`minimal valid`: {
 			Definition: image.Definition{
-				APIVersion: "1.2",
+				APIVersion: "1.3",
 				Image: image.Image{
 					ImageType:       "iso",
 					Arch:            image.ArchTypeX86,
@@ -42,7 +42,7 @@ func TestValidateDefinition(t *testing.T) {
 		},
 		`invalid in each`: {
 			Definition: image.Definition{
-				APIVersion: "1.2",
+				APIVersion: "1.3",
 				Image: image.Image{
 					Arch:            image.ArchTypeX86,
 					BaseImage:       fakeBaseImageName,
