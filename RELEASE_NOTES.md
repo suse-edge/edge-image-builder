@@ -22,8 +22,6 @@
   * Existing definitions using the `1.0`, `1.1`, and `1.2` versions of the schema will continue to work with EIB
 * Added `operatingSystem.packages.additionalRepos.priority` field to enable customizing the priority of RPM repositories
 
-### Image Configuration Directory Changes
-
 ## Bug Fixes
 
 * [#767](https://github.com/suse-edge/edge-image-builder/issues/767) - Node IP detection for IPv6/Dualstack will fail if the default network does not have a metric
@@ -71,8 +69,6 @@
 * Added `operatingSystem.rawConfiguration.expandEncryptedPartition` field to specify if the LUKS encrypted partition should be expanded during build time
 * Added `kubernetes.helm.charts.releaseName` field to allow for deploying multiple instances of the same Helm chart
 * Added `embeddedArtifactRegistry.registries` field to allow providing credentials for authenticated registries
-
-### Image Configuration Directory Changes
 
 ## Bug Fixes
 
