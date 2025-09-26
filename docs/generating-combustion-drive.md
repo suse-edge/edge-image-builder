@@ -289,7 +289,7 @@ The following items **must** be defined in the configuration file under the `sum
 * `activationKey` - Specifies the activation key that the node uses to register.
 
 Additionally, the appropriate `venv-salt-minion` RPM package must either be pre-installed as an RPM through a KIWI built 
-image or be supplied as a [custom](#custom) file. Then a custom script must be created to install the RPM at boot time. 
+image or be supplied as a [custom](#custom) file, then a custom script must be created to install the RPM at boot time. 
 This RPM is required at boot time prior to SUSE Manager registration taking place. This RPM can usually be found on the 
 SUSE Manager host itself at `https://<suma-host>/pub/repositories/slemicro/5/5/bootstrap/x86_64/`.
 
