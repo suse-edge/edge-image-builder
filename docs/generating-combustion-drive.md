@@ -55,7 +55,6 @@ customizations are being applied.
 The following describes the possible options for the operating system section:
 ```yaml
 operatingSystem:
-  <TYPE SPECIFIC CONFIGURATION (see below)>
   time:
     timezone: Europe/London
     ntp:
