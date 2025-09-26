@@ -7,7 +7,11 @@ EIB runs as a container. Some form of container runtime is needed, such as [Podm
 The latest version of EIB (1.3.0) can be downloaded from the official OCI registry using the following command:
 
 ```bash
+<<<<<<< HEAD
 podman pull registry.suse.com/edge/3.5/edge-image-builder:1.3.2
+=======
+podman pull registry.suse.com/edge/3.4/edge-image-builder:1.3.0
+>>>>>>> 85949e0 (Combustion drive docs and 1.3 updates (#786))
 ```
 
 Alternatively, EIB can be built from this repository. See the [Building from Source](#building-from-source)
