@@ -1,6 +1,6 @@
 # Edge Image Builder Releases
 
-# Next
+# v1.3.0
 
 ## General
 
@@ -21,8 +21,6 @@
 * The current version of the image definition has been incremented to `1.3` to include the changes below
   * Existing definitions using the `1.0`, `1.1`, and `1.2` versions of the schema will continue to work with EIB
 * Added `operatingSystem.packages.additionalRepos.priority` field to enable customizing the priority of RPM repositories
-
-### Image Configuration Directory Changes
 
 ## Bug Fixes
 
@@ -71,8 +69,6 @@
 * Added `operatingSystem.rawConfiguration.expandEncryptedPartition` field to specify if the LUKS encrypted partition should be expanded during build time
 * Added `kubernetes.helm.charts.releaseName` field to allow for deploying multiple instances of the same Helm chart
 * Added `embeddedArtifactRegistry.registries` field to allow providing credentials for authenticated registries
-
-### Image Configuration Directory Changes
 
 ## Bug Fixes
 
