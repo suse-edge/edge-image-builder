@@ -152,6 +152,21 @@ func TestValidateVersion(t *testing.T) {
 				},
 			},
 		},
+		`valid new fields for 1.3`: {
+			ImageDefinition: image.Definition{
+				APIVersion: "1.3",
+				OperatingSystem: image.OperatingSystem{
+					Packages: image.Packages{
+						AdditionalRepos: []image.AddRepo{
+							{
+								URL:      "https://developer.download.nvidia.com/compute/cuda/repos/sles15/x86_64/",
+								Priority: 50,
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for name, test := range tests {

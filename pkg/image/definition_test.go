@@ -21,7 +21,7 @@ func TestParse(t *testing.T) {
 	require.NoError(t, err)
 
 	// - Definition
-	assert.Equal(t, "1.2", definition.APIVersion)
+	assert.Equal(t, "1.3", definition.APIVersion)
 	assert.EqualValues(t, "x86_64", definition.Image.Arch)
 	assert.Equal(t, "iso", definition.Image.ImageType)
 
@@ -253,7 +253,7 @@ func TestParseBadConfig_InvalidFormat(t *testing.T) {
 
 func TestParseBadConfig_UnknownFields(t *testing.T) {
 	badConfig := `
-apiVersion: 1.2
+apiVersion: 1.3
 image:
   type: iso
 operatingSystem:
