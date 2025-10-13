@@ -1,5 +1,21 @@
 # Edge Image Builder Releases
 
+# Next
+
+## General
+
+## API
+
+### Image Definition Changes
+
+### Image Configuration Directory Changes
+
+## Bug Fixes
+
+* [#784](https://github.com/suse-edge/edge-image-builder/issues/784) - Dbus and elemental-system-agent Race Condition Causes Elemental Downstream Cluster Deployment Failures
+
+---
+
 # v1.3.0
 
 ## General
