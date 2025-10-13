@@ -65,10 +65,7 @@ chmod +x /opt/eib-k8s/create_manifests.sh
 cat <<- EOF > /etc/systemd/system/kubernetes-resources-install.service
 [Unit]
 Description=Kubernetes Resources Install
-Requires=k3s.service
 After=k3s.service
-ConditionPathExists=/opt/bin/kubectl
-ConditionPathExists=/etc/rancher/k3s/k3s.yaml
 
 [Install]
 WantedBy=multi-user.target

@@ -39,10 +39,7 @@ chmod +x /opt/eib-k8s/create_manifests.sh
 cat <<- EOF > /etc/systemd/system/kubernetes-resources-install.service
 [Unit]
 Description=Kubernetes Resources Install
-Requires=rke2-server.service
 After=rke2-server.service
-ConditionPathExists=/var/lib/rancher/rke2/bin/kubectl
-ConditionPathExists=/etc/rancher/rke2/rke2.yaml
 
 [Install]
 WantedBy=multi-user.target
