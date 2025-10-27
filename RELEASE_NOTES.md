@@ -1,5 +1,21 @@
 # Edge Image Builder Releases
 
+# Next
+
+## General
+
+## API
+
+### Image Definition Changes
+
+### Image Configuration Directory Changes
+
+## Bug Fixes
+
+* [#761](https://github.com/suse-edge/edge-image-builder/issues/761) - Kubernetes Resource install one-shot-service does not restart in case of failures
+
+---
+
 # v1.3.0
 
 ## General
