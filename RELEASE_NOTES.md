@@ -12,6 +12,7 @@
 
 ## Bug Fixes
 
+* [#784](https://github.com/suse-edge/edge-image-builder/issues/784) - Dbus and elemental-system-agent Race Condition Causes Elemental Downstream Cluster Deployment Failures
 * [#761](https://github.com/suse-edge/edge-image-builder/issues/761) - Kubernetes Resource install one-shot-service does not restart in case of failures
 
 ---

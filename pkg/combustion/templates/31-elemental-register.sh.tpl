@@ -31,8 +31,8 @@ cat <<- EOF > /etc/systemd/system/elemental-system-agent.service
 [Unit]
 Description=Elemental System Agent
 Documentation=https://github.com/rancher/system-agent
-Wants=network-online.target
-After=network-online.target
+Wants=network-online.target dbus-broker.service
+After=network-online.target dbus-broker.service
 After=time-sync.target
 
 [Install]
@@ -45,6 +45,7 @@ RestartSec=5s
 StandardOutput=journal
 StandardError=journal
 Environment="CATTLE_AGENT_CONFIG=/etc/rancher/elemental/agent/config.yaml"
+ExecStartPre=/bin/bash -c 'echo "Waiting for dbus to become active..." | systemd-cat -p info -t elemental-system-agent; sleep 15; timeout 150 bash -c "while ! systemctl is-active --quiet dbus.service; do sleep 15; done"'
 ExecStart=/usr/sbin/elemental-system-agent sentinel
 EOF
 
