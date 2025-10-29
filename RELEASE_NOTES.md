@@ -3,6 +3,7 @@
 # v1.1.2
 
 * Updated documentation to specify that `os-files` should be used for `HelmChartConfigs` instead of using the respective `/kubernetes/manifests` directory
+* Added support for prime/upstream kubernetes artifacts using the `config/artifacts.yaml` file
 
 ## Bug Fixes
 
