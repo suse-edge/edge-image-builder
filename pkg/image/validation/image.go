@@ -96,7 +96,7 @@ func validateArch(def *image.Definition) []FailedValidation {
 
 	if runtime.GOARCH != def.Image.Arch.Short() {
 		log.Auditf("Image build may fail as host architecture does not match the defined architecture of the "+
-			"output image.\nDetected: %s, Defined: %s", runtime.GOARCH, def.Image.Arch.Short())
+			"output image.\nDetected: %s, Defined: %s", runtime.GOARCH, def.Image.Arch)
 	}
 
 	return failures
