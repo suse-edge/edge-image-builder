@@ -69,7 +69,7 @@ which require it (e.g. Elemental, Kubernetes SELinux, etc.).
 
 For details on how to test the built images, see the [Testing Guide](docs/testing-guide.md).
 
-#### Generating a Combustion Drive
+#### Generating a Combustion Drive 
 
 The following example command attaches the configuration directory and generates a combustion drive:
 ```shell
