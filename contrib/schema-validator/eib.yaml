@@ -1,0 +1,68 @@
+apiVersion: 1.1
+image:
+  imageType: raw
+  arch: aarch64
+  baseImage: SL-Micro.aarch64-6.0-Default-GM2.raw
+  outputImageName: rke2-cluster-image.raw
+operatingSystem:
+  rawConfiguration:
+    diskSize: 30G
+  packages:
+    additionalRepos:
+      - url: http://download.nue.suse.com/ibs/SUSE:/CA/SLE_15/
+    packageList:
+      - jq
+      - ca-certificates-suse
+      - qemu-guest-agent
+    sccRegistrationCode: XXXX
+  systemd:
+    disable:
+      - rebootmgr.service
+      - transactional-update.timer
+      - transactional-update-cleanup.timer
+    enable:
+      - qemu-guest-agent
+  users:
+    - username: root
+      createHomeDir: true
+      encryptedPassword: XXXX
+      sshKeys:
+        - ssh-rsa XXXX
+kubernetes:
+  network:
+    apiVIP: 192.168.205.100
+    apiHost: 192-168-205-100.sslip.io
+  nodes:
+    - hostname: vm1
+      initializer: true
+      type: server
+    - hostname: vm2
+      type: server
+    - hostname: vm3
+      type: server
+  helm:
+    charts:
+      - createNamespace: true
+        installationNamespace: kube-system
+        name: rancher
+        repositoryName: rancher-prime
+        targetNamespace: cattle-system
+        valuesFile: rancher.yaml
+        version: 2.10.3
+      - createNamespace: true
+        installationNamespace: kube-system
+        name: cert-manager
+        repositoryName: jetstack
+        targetNamespace: cert-manager
+        valuesFile: certmanager.yaml
+        version: 1.14.2
+    repositories:
+      - name: rancher-prime
+        plainHTTP: false
+        skipTLSVerify: true
+        url: https://charts.rancher.com/server-charts/prime
+      - name: jetstack
+        plainHTTP: false
+        skipTLSVerify: true
+        url: https://charts.jetstack.io
+  version: v1.31.6+rke2r1
