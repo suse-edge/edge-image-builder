@@ -2,6 +2,11 @@
 
 # v1.3.1
 
+## General
+
+* Dependency upgrades
+    * Network customizations are now utilizing nmc v0.3.5 (upgraded from v0.3.3)
+
 ## Bug Fixes
 
 * [#808](https://github.com/suse-edge/edge-image-builder/issues/808) - elemental-register-systemd fails because /etc/rancher is gone
