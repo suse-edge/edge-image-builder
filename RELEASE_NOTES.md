@@ -1,5 +1,13 @@
 # Edge Image Builder Releases
 
+# v1.3.1
+
+## Bug Fixes
+
+* [#808](https://github.com/suse-edge/edge-image-builder/issues/808) - elemental-register-systemd fails because /etc/rancher is gone
+
+---
+
 # v1.3.0
 
 ## General
