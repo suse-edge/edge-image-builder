@@ -28,6 +28,7 @@ const (
 	disableKey      = "disable"
 	clusterInitKey  = "cluster-init"
 	selinuxKey      = "selinux"
+	ingressKey      = "ingress-controller"
 )
 
 type Cluster struct {

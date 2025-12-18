@@ -61,3 +61,15 @@ func parseCNIs(cnis []string) (cni string, multusEnabled bool, err error) {
 
 	return cni, multusEnabled, nil
 }
+
+func (c *Cluster) ExtractIngress() (ingressController string, err error) {
+	switch configuredIngress := c.ServerConfig[ingressKey].(type) {
+	case string:
+		if configuredIngress == "" {
+			return "", nil
+		}
+		return configuredIngress, nil
+	default:
+		return "", fmt.Errorf("invalid cni: %v", configuredIngress)
+	}
+}
