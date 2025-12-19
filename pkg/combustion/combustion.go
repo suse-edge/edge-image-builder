@@ -36,7 +36,7 @@ type kubernetesScriptDownloader interface {
 }
 
 type kubernetesArtefactDownloader interface {
-	DownloadRKE2Artefacts(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error
+	DownloadRKE2Artefacts(arch image.Arch, version, cni string, multusEnabled bool, ingressController string, installPath, imagesPath string) error
 	DownloadK3sArtefacts(arch image.Arch, version, installPath, imagesPath string) error
 }
 

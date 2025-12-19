@@ -22,6 +22,7 @@ func TestRKE2ImageArtefacts(t *testing.T) {
 		cni               string
 		multusEnabled     bool
 		arch              image.Arch
+		ingressController string
 		expectedArtefacts []string
 		expectedError     string
 	}{
@@ -128,11 +129,49 @@ func TestRKE2ImageArtefacts(t *testing.T) {
 				"rke2-images-multus.linux-arm64.tar.zst",
 			},
 		},
+		{
+			name:              "x86_64 artefacts with traefik",
+			cni:               image.CNITypeNone,
+			ingressController: image.IngressTypeTraefik,
+			arch:              image.ArchTypeX86,
+			expectedArtefacts: []string{
+				"rke2-images-core.linux-amd64.tar.zst",
+				"rke2-images-traefik.linux-amd64.tar.zst",
+			},
+		},
+		{
+			name:              "aarch64 artefacts with traefik",
+			cni:               image.CNITypeNone,
+			ingressController: image.IngressTypeTraefik,
+			arch:              image.ArchTypeARM,
+			expectedArtefacts: []string{
+				"rke2-images-core.linux-arm64.tar.zst",
+				"rke2-images-traefik.linux-arm64.tar.zst",
+			},
+		},
+		{
+			name:              "x86_64 artefacts with non-traefik ingress",
+			cni:               image.CNITypeNone,
+			ingressController: "nginx",
+			arch:              image.ArchTypeX86,
+			expectedArtefacts: []string{
+				"rke2-images-core.linux-amd64.tar.zst",
+			},
+		},
+		{
+			name:              "aarch64 artefacts with non-traefik ingress",
+			cni:               image.CNITypeNone,
+			ingressController: "nginx",
+			arch:              image.ArchTypeARM,
+			expectedArtefacts: []string{
+				"rke2-images-core.linux-arm64.tar.zst",
+			},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			artefacts, err := rke2ImageArtefacts(test.cni, test.multusEnabled, test.arch)
+			artefacts, err := rke2ImageArtefacts(test.cni, test.multusEnabled, test.ingressController, test.arch)
 
 			if test.expectedError != "" {
 				require.EqualError(t, err, test.expectedError)
