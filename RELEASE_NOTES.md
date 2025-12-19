@@ -10,6 +10,7 @@
 ## Bug Fixes
 
 * [#808](https://github.com/suse-edge/edge-image-builder/issues/808) - elemental-register-systemd fails because /etc/rancher is gone
+* [#820](https://github.com/suse-edge/edge-image-builder/issues/820) - EIB build doesn't include Traefik
 
 ---
 

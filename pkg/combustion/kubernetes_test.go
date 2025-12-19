@@ -29,7 +29,7 @@ func (m mockKubernetesScriptDownloader) DownloadInstallScript(distribution, dest
 }
 
 type mockKubernetesArtefactDownloader struct {
-	downloadRKE2Artefacts func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error
+	downloadRKE2Artefacts func(arch image.Arch, version, cni string, multusEnabled bool, ingressController string, installPath, imagesPath string) error
 	downloadK3sArtefacts  func(arch image.Arch, version, installPath, imagesPath string) error
 }
 
@@ -38,11 +38,12 @@ func (m mockKubernetesArtefactDownloader) DownloadRKE2Artefacts(
 	version string,
 	cni string,
 	multusEnabled bool,
+	ingressController string,
 	installPath string,
 	imagesPath string,
 ) error {
 	if m.downloadRKE2Artefacts != nil {
-		return m.downloadRKE2Artefacts(arch, version, cni, multusEnabled, installPath, imagesPath)
+		return m.downloadRKE2Artefacts(arch, version, cni, multusEnabled, ingressController, installPath, imagesPath)
 	}
 
 	panic("not implemented")
@@ -201,7 +202,7 @@ func TestConfigureKubernetes_ArtefactDownloaderErrorRKE2(t *testing.T) {
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+			downloadRKE2Artefacts: func(_ image.Arch, _, _ string, _ bool, _ string, _, _ string) error {
 				return fmt.Errorf("some error")
 			},
 		},
@@ -989,7 +990,7 @@ func TestConfigureKubernetes_Successful_SingleNode_RKE2_IPv4(t *testing.T) {
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+			downloadRKE2Artefacts: func(_ image.Arch, _, _ string, _ bool, _ string, _, _ string) error {
 				return nil
 			},
 		},
@@ -1069,7 +1070,7 @@ func TestConfigureKubernetes_Successful_MultiNode_RKE2_Dualstack_PrioIPv6_WithSi
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+			downloadRKE2Artefacts: func(_ image.Arch, _, _ string, _ bool, _ string, _, _ string) error {
 				return nil
 			},
 		},
@@ -1199,7 +1200,7 @@ func TestConfigureKubernetes_Successful_MultiNode_RKE2_Dualstack_PrioIPv6_WithDu
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+			downloadRKE2Artefacts: func(_ image.Arch, _, _ string, _ bool, _ string, _, _ string) error {
 				return nil
 			},
 		},
@@ -1437,7 +1438,7 @@ func TestConfigureKubernetes_Successful_RKE2Server_WithManifests(t *testing.T) {
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+			downloadRKE2Artefacts: func(_ image.Arch, _, _ string, _ bool, _ string, _, _ string) error {
 				return nil
 			},
 		},

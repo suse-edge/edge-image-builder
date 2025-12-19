@@ -23,10 +23,11 @@ const (
 	rke2CoreImages = "rke2-images-core.linux-%s.tar.zst"
 	rke2Checksums  = "sha256sum-%s.txt"
 
-	rke2CalicoImages = "rke2-images-calico.linux-%s.tar.zst"
-	rke2CanalImages  = "rke2-images-canal.linux-%s.tar.zst"
-	rke2CiliumImages = "rke2-images-cilium.linux-%s.tar.zst"
-	rke2MultusImages = "rke2-images-multus.linux-%s.tar.zst"
+	rke2CalicoImages  = "rke2-images-calico.linux-%s.tar.zst"
+	rke2CanalImages   = "rke2-images-canal.linux-%s.tar.zst"
+	rke2CiliumImages  = "rke2-images-cilium.linux-%s.tar.zst"
+	rke2MultusImages  = "rke2-images-multus.linux-%s.tar.zst"
+	rke2TraefikImages = "rke2-images-traefik.linux-%s.tar.zst"
 
 	k3sBinary = "k3s"
 	k3sImages = "k3s-airgap-images-%s.tar.zst"
@@ -43,7 +44,7 @@ type ArtefactDownloader struct {
 	K3sReleaseURL  string
 }
 
-func (d ArtefactDownloader) DownloadRKE2Artefacts(arch image.Arch, version, cni string, multusEnabled bool, installPath, imagesPath string) error {
+func (d ArtefactDownloader) DownloadRKE2Artefacts(arch image.Arch, version, cni string, multusEnabled bool, ingressController string, installPath, imagesPath string) error {
 	if !strings.Contains(version, image.KubernetesDistroRKE2) {
 		return fmt.Errorf("invalid RKE2 version: '%s'", version)
 	}
@@ -52,7 +53,7 @@ func (d ArtefactDownloader) DownloadRKE2Artefacts(arch image.Arch, version, cni 
 		log.Audit("WARNING: RKE2 support for aarch64 platforms is limited and experimental")
 	}
 
-	artefacts, err := rke2ImageArtefacts(cni, multusEnabled, arch)
+	artefacts, err := rke2ImageArtefacts(cni, multusEnabled, ingressController, arch)
 	if err != nil {
 		return fmt.Errorf("gathering RKE2 image artefacts: %w", err)
 	}
@@ -78,7 +79,7 @@ func rke2InstallerArtefacts(arch image.Arch) []string {
 	}
 }
 
-func rke2ImageArtefacts(cni string, multusEnabled bool, arch image.Arch) ([]string, error) {
+func rke2ImageArtefacts(cni string, multusEnabled bool, ingressController string, arch image.Arch) ([]string, error) {
 	artefactArch := arch.Short()
 
 	var artefacts []string
@@ -101,6 +102,10 @@ func rke2ImageArtefacts(cni string, multusEnabled bool, arch image.Arch) ([]stri
 
 	if multusEnabled {
 		artefacts = append(artefacts, fmt.Sprintf(rke2MultusImages, artefactArch))
+	}
+
+	if ingressController == image.IngressTypeTraefik {
+		artefacts = append(artefacts, fmt.Sprintf(rke2TraefikImages, artefactArch))
 	}
 
 	return artefacts, nil

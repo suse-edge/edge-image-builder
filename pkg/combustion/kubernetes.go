@@ -308,6 +308,11 @@ func (c *Combustion) downloadRKE2Artefacts(ctx *image.Context, cluster *kubernet
 		return "", "", fmt.Errorf("extracting CNI from cluster config: %w", err)
 	}
 
+	ingressController, err := cluster.ExtractIngress()
+	if err != nil {
+		return "", "", fmt.Errorf("extracting ingress-controller from cluster config: %w", err)
+	}
+
 	imagesPath = filepath.Join(k8sDir, k8sImagesDir)
 	imagesDestination := filepath.Join(ctx.ArtefactsDir, imagesPath)
 	if err = os.MkdirAll(imagesDestination, os.ModePerm); err != nil {
@@ -325,6 +330,7 @@ func (c *Combustion) downloadRKE2Artefacts(ctx *image.Context, cluster *kubernet
 		ctx.ImageDefinition.Kubernetes.Version,
 		cni,
 		multusEnabled,
+		ingressController,
 		installDestination,
 		imagesDestination,
 	); err != nil {

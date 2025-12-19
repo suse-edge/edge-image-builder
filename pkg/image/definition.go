@@ -30,6 +30,7 @@ const (
 	CNITypeCilium = "cilium"
 	CNITypeCanal  = "canal"
 	CNITypeCalico = "calico"
+	IngressTypeTraefik = "traefik"
 )
 
 var (
