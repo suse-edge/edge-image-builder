@@ -202,7 +202,7 @@ func TestConfigureKubernetes_ArtefactDownloaderErrorRKE2(t *testing.T) {
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, ingressController string, installPath, imagesPath string) error {
+			downloadRKE2Artefacts: func(_ image.Arch, _, _ string, _ bool, _ string, _, _ string) error {
 				return fmt.Errorf("some error")
 			},
 		},
@@ -990,7 +990,7 @@ func TestConfigureKubernetes_Successful_SingleNode_RKE2_IPv4(t *testing.T) {
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, ingressController string, installPath, imagesPath string) error {
+			downloadRKE2Artefacts: func(_ image.Arch, _, _ string, _ bool, _ string, _, _ string) error {
 				return nil
 			},
 		},
@@ -1070,7 +1070,7 @@ func TestConfigureKubernetes_Successful_MultiNode_RKE2_Dualstack_PrioIPv6_WithSi
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, ingressController string, installPath, imagesPath string) error {
+			downloadRKE2Artefacts: func(_ image.Arch, _, _ string, _ bool, _ string, _, _ string) error {
 				return nil
 			},
 		},
@@ -1200,7 +1200,7 @@ func TestConfigureKubernetes_Successful_MultiNode_RKE2_Dualstack_PrioIPv6_WithDu
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, ingressController string, installPath, imagesPath string) error {
+			downloadRKE2Artefacts: func(_ image.Arch, _, _ string, _ bool, _ string, _, _ string) error {
 				return nil
 			},
 		},
@@ -1438,7 +1438,7 @@ func TestConfigureKubernetes_Successful_RKE2Server_WithManifests(t *testing.T) {
 			},
 		},
 		KubernetesArtefactDownloader: mockKubernetesArtefactDownloader{
-			downloadRKE2Artefacts: func(arch image.Arch, version, cni string, multusEnabled bool, ingressController string, installPath, imagesPath string) error {
+			downloadRKE2Artefacts: func(_ image.Arch, _, _ string, _ bool, _ string, _, _ string) error {
 				return nil
 			},
 		},
