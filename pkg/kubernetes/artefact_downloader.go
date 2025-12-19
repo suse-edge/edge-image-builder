@@ -23,10 +23,10 @@ const (
 	rke2CoreImages = "rke2-images-core.linux-%s.tar.zst"
 	rke2Checksums  = "sha256sum-%s.txt"
 
-	rke2CalicoImages = "rke2-images-calico.linux-%s.tar.zst"
-	rke2CanalImages  = "rke2-images-canal.linux-%s.tar.zst"
-	rke2CiliumImages = "rke2-images-cilium.linux-%s.tar.zst"
-	rke2MultusImages = "rke2-images-multus.linux-%s.tar.zst"
+	rke2CalicoImages  = "rke2-images-calico.linux-%s.tar.zst"
+	rke2CanalImages   = "rke2-images-canal.linux-%s.tar.zst"
+	rke2CiliumImages  = "rke2-images-cilium.linux-%s.tar.zst"
+	rke2MultusImages  = "rke2-images-multus.linux-%s.tar.zst"
 	rke2TraefikImages = "rke2-images-traefik.linux-%s.tar.zst"
 
 	k3sBinary = "k3s"

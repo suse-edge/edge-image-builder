@@ -342,3 +342,17 @@ func IsNodeIPSet(serverConfig map[string]any) bool {
 	_, ok := serverConfig["node-ip"].(string)
 	return ok
 }
+
+func (c *Cluster) ExtractIngress() (ingressController string, err error) {
+	switch configuredIngress := c.ServerConfig[ingressKey].(type) {
+	case string:
+		if configuredIngress == "" {
+			return "", nil
+		}
+		return configuredIngress, nil
+	case nil:
+		return "", nil
+	default:
+		return "", fmt.Errorf("invalid ingress-controller value: %v", configuredIngress)
+	}
+}

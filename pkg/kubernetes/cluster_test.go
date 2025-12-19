@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"gopkg.in/yaml.v3"
 )
 
 func TestNewCluster_SingleNodeRKE2_MissingConfig(t *testing.T) {
@@ -638,4 +639,70 @@ func TestServersCount(t *testing.T) {
 
 	assert.Equal(t, 2, ServersCount(nodes))
 	assert.Equal(t, 0, ServersCount([]image.Node{}))
+}
+
+func TestExtractIngress(t *testing.T) {
+	tests := map[string]struct {
+		input           map[string]any
+		expectedIngress string
+		expectedErr     string
+	}{
+		"ingress not configured": {
+			input: map[string]any{},
+		},
+		"Empty ingress string": {
+			input: map[string]any{
+				"ingress-controller": "",
+			},
+		},
+		"Empty ingress list": {
+			input: map[string]any{
+				"ingress-controller": []string{},
+			},
+			expectedErr: "invalid ingress-controller value: []",
+		},
+		"Multiple ingress list": {
+			input: map[string]any{
+				"ingress-controller": []string{"canal", "calico", "cilium"},
+			},
+			expectedErr: "invalid ingress-controller value: [canal calico cilium]",
+		},
+		"Valid ingress string": {
+			input: map[string]any{
+				"ingress-controller": "traefik",
+			},
+			expectedIngress: "traefik",
+		},
+		"Invalid ingress format": {
+			input: map[string]any{
+				"ingress-controller": 6,
+			},
+			expectedErr: "invalid ingress-controller value: 6",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			b, err := yaml.Marshal(test.input)
+			require.NoError(t, err)
+
+			var config map[string]any
+			require.NoError(t, yaml.Unmarshal(b, &config))
+
+			cluster := Cluster{
+				ServerConfig: config,
+			}
+
+			ingress, err := cluster.ExtractIngress()
+
+			if test.expectedErr != "" {
+				require.Error(t, err)
+				assert.EqualError(t, err, test.expectedErr)
+				assert.Empty(t, ingress)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, test.expectedIngress, ingress)
+			}
+		})
+	}
 }
