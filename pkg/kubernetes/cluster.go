@@ -346,9 +346,6 @@ func IsNodeIPSet(serverConfig map[string]any) bool {
 func (c *Cluster) ExtractIngress() (ingressController string, err error) {
 	switch configuredIngress := c.ServerConfig[ingressKey].(type) {
 	case string:
-		if configuredIngress == "" {
-			return "", nil
-		}
 		return configuredIngress, nil
 	case nil:
 		return "", nil
