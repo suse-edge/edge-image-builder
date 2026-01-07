@@ -90,6 +90,9 @@ func (p *Podman) Build(imageContext, imageName string) error {
 			Output:           imageName,
 			Out:              logFile,
 			Err:              logFile,
+			CommonBuildOpts: &define.CommonBuildOptions{
+				HTTPProxy: true,
+			},
 		},
 	}
 
