@@ -1,5 +1,11 @@
 # Edge Image Builder Releases
 
+# v1.3.2
+
+## Bug Fixes
+
+* [#820](https://github.com/suse-edge/edge-image-builder/issues/820) - EIB build doesn't include Traefik
+
 # v1.3.1
 
 ## General
