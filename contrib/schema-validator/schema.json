@@ -1,0 +1,807 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/suse-edge/edge-image-builder/pkg/image/definition",
+  "$defs": {
+    "AddRepo": {
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "unsigned": {
+          "type": "boolean"
+        },
+        "priority": {
+          "type": "integer",
+          "maximum": 99,
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "url"
+      ]
+    },
+    "ContainerImage": {
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Definition": {
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "image": {
+                "properties": {
+                  "imageType": {
+                    "const": "iso"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "operatingSystem": {
+                "properties": {
+                  "isoConfiguration": {
+                    "required": [
+                      "installDevice"
+                    ],
+                    "description": "Configuration specific to ISO image builds. Required when imageType is 'iso'. MUST contain 'installDevice'."
+                  },
+                  "rawConfiguration": {
+                    "not": true,
+                    "description": "Configuration specific to RAW image builds. Forbidden when imageType is 'iso'."
+                  }
+                },
+                "required": [
+                  "isoConfiguration"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "image": {
+                "properties": {
+                  "imageType": {
+                    "const": "raw"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "operatingSystem": {
+                "properties": {
+                  "isoConfiguration": {
+                    "not": true,
+                    "description": "Configuration specific to ISO image builds. Forbidden when imageType is 'raw'."
+                  },
+                  "rawConfiguration": {
+                    "description": "Configuration specific to RAW image builds. Required when imageType is 'raw'. MUST contain 'diskSize' and optional 'luksKey'."
+                  }
+                },
+                "required": [
+                  "rawConfiguration"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "apiVersion": {
+          "type": "string",
+          "enum": [
+            "1.0",
+            "1.1",
+            "1.2",
+            "1.3"
+          ]
+        },
+        "image": {
+          "$ref": "#/$defs/Image"
+        },
+        "operatingSystem": {
+          "$ref": "#/$defs/OperatingSystem"
+        },
+        "embeddedArtifactRegistry": {
+          "$ref": "#/$defs/EmbeddedArtifactRegistry"
+        },
+        "kubernetes": {
+          "$ref": "#/$defs/Kubernetes"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "image",
+        "operatingSystem",
+        "apiVersion"
+      ],
+      "description": "Edge Image Builder Configuration.\nROOT OBJECT. All other configurations must be nested within this object.\n\nExample:\n{\n  \"apiVersion\": \"1.0\",\n  \"image\": {\n    \"imageType\": \"iso\",\n    \"arch\": \"x86_64\",\n    \"baseImage\": \"sles15sp5.iso\",\n    \"outputImageName\": \"my-image\"\n  },\n  \"operatingSystem\": {\n    \"users\": [{\"username\": \"root\", \"encryptedPassword\": \"...\"}],\n    \"isoConfiguration\": { \"installDevice\": \"/dev/sda\" }\n  }\n}"
+    },
+    "EmbeddedArtifactRegistry": {
+      "properties": {
+        "images": {
+          "items": {
+            "$ref": "#/$defs/ContainerImage"
+          },
+          "type": "array"
+        },
+        "registries": {
+          "items": {
+            "$ref": "#/$defs/Registry"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Helm": {
+      "properties": {
+        "charts": {
+          "items": {
+            "$ref": "#/$defs/HelmChart"
+          },
+          "type": "array"
+        },
+        "repositories": {
+          "items": {
+            "$ref": "#/$defs/HelmRepository"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "HelmAuthentication": {
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "HelmChart": {
+      "if": {
+        "properties": {
+          "createNamespace": {
+            "const": true
+          }
+        },
+        "required": [
+          "createNamespace"
+        ]
+      },
+      "then": {
+        "required": [
+          "targetNamespace"
+        ]
+      },
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "releaseName": {
+          "type": "string"
+        },
+        "repositoryName": {
+          "type": "string",
+          "description": "Name of the repository to use. Must match a repository defined in 'repositories'. Required. DO NOT use 'repoUrl'."
+        },
+        "version": {
+          "type": "string"
+        },
+        "targetNamespace": {
+          "type": "string"
+        },
+        "createNamespace": {
+          "type": "boolean"
+        },
+        "installationNamespace": {
+          "type": "string"
+        },
+        "valuesFile": {
+          "type": "string"
+        },
+        "apiVersions": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "repositoryName",
+        "version"
+      ],
+      "description": "Helm chart configuration.\nExample:\n{\n  \"name\": \"rancher\",\n  \"repositoryName\": \"rancher-prime\",\n  \"version\": \"2.10.0\",\n  \"targetNamespace\": \"cattle-system\",\n  \"createNamespace\": true,\n  \"installationNamespace\": \"kube-system\",\n  \"valuesFile\": \"rancher-values.yaml\"\n}"
+    },
+    "HelmRepository": {
+      "allOf": [
+        {
+          "not": {
+            "properties": {
+              "plainHTTP": {
+                "const": true
+              },
+              "skipTLSVerify": {
+                "const": true
+              }
+            },
+            "required": [
+              "plainHTTP",
+              "skipTLSVerify"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^(oci|http|https)://"
+        },
+        "authentication": {
+          "$ref": "#/$defs/HelmAuthentication"
+        },
+        "plainHTTP": {
+          "type": "boolean"
+        },
+        "skipTLSVerify": {
+          "type": "boolean"
+        },
+        "caFile": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "url"
+      ],
+      "description": "Helm repository configuration.\nExample:\n{\n  \"name\": \"rancher-prime\",\n  \"url\": \"https://charts.rancher.com/server-charts/prime\"\n}"
+    },
+    "Image": {
+      "properties": {
+        "imageType": {
+          "type": "string",
+          "enum": [
+            "iso",
+            "raw"
+          ],
+          "description": "Type of image to build. Must be 'iso' or 'raw'."
+        },
+        "arch": {
+          "type": "string",
+          "enum": [
+            "x86_64",
+            "aarch64"
+          ],
+          "description": "Target architecture. Must be 'x86_64' or 'aarch64'."
+        },
+        "baseImage": {
+          "type": "string",
+          "description": "Name of the base image to use (e.g., 'sles15sp5-x86_64'). Required."
+        },
+        "outputImageName": {
+          "type": "string",
+          "description": "Name of the output image file. Required."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "imageType",
+        "arch",
+        "baseImage",
+        "outputImageName"
+      ]
+    },
+    "IsoConfiguration": {
+      "properties": {
+        "installDevice": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Kubernetes": {
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "network": {
+          "$ref": "#/$defs/Network",
+          "description": "Network config. Example: { 'apiVIP': '1.2.3.4' }"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/Node"
+          },
+          "type": "array",
+          "description": "List of nodes. Required for multi-node. Example: [{ 'hostname': 'n1', 'type': 'server' }]"
+        },
+        "manifests": {
+          "$ref": "#/$defs/Manifests"
+        },
+        "helm": {
+          "$ref": "#/$defs/Helm"
+        }
+      },
+      "additionalProperties": true,
+      "type": "object",
+      "description": "Kubernetes configuration.\nExample:\n{\n  \"version\": \"1.29.0\",\n  \"network\": { \"apiVIP\": \"1.2.3.4\" },\n  \"nodes\": [\n    { \"hostname\": \"node1\", \"type\": \"server\", \"initializer\": true },\n    { \"hostname\": \"node2\", \"type\": \"server\" }\n  ]\n}"
+    },
+    "Manifests": {
+      "properties": {
+        "urls": {
+          "items": {
+            "type": "string",
+            "pattern": "^http(s)?://"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Network": {
+      "properties": {
+        "apiHost": {
+          "type": "string"
+        },
+        "apiVIP": {
+          "type": "string",
+          "format": "ipv4"
+        },
+        "apiVIP6": {
+          "type": "string",
+          "format": "ipv6"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Node": {
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "initializer": {
+                "const": true
+              }
+            },
+            "required": [
+              "initializer"
+            ]
+          },
+          "then": {
+            "properties": {
+              "type": {
+                "const": "server"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "hostname": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "server",
+            "agent"
+          ]
+        },
+        "initializer": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "hostname"
+      ],
+      "description": "Node configuration. DO NOT include IP addresses here (they are not supported)."
+    },
+    "NtpConfiguration": {
+      "oneOf": [
+        {
+          "properties": {
+            "pools": {
+              "minItems": 1
+            }
+          },
+          "required": [
+            "pools"
+          ]
+        },
+        {
+          "properties": {
+            "servers": {
+              "minItems": 1
+            }
+          },
+          "required": [
+            "servers"
+          ]
+        }
+      ],
+      "if": {
+        "properties": {
+          "forceWait": {
+            "const": true
+          }
+        },
+        "required": [
+          "forceWait"
+        ]
+      },
+      "then": {
+        "anyOf": [
+          {
+            "required": [
+              "pools"
+            ]
+          },
+          {
+            "required": [
+              "servers"
+            ]
+          }
+        ]
+      },
+      "properties": {
+        "forceWait": {
+          "type": "boolean"
+        },
+        "pools": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "List of NTP pool addresses. Must be a list of strings."
+        },
+        "servers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "List of NTP server addresses (e.g., ['pool.ntp.org']). Must be a list of strings."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "OperatingSystem": {
+      "properties": {
+        "kernelArgs": {
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": "array"
+        },
+        "groups": {
+          "items": {
+            "$ref": "#/$defs/OperatingSystemGroup"
+          },
+          "type": "array"
+        },
+        "users": {
+          "items": {
+            "$ref": "#/$defs/OperatingSystemUser"
+          },
+          "type": "array",
+          "description": "List of users. Example: [{ 'username': 'user', 'password': '...' }]"
+        },
+        "systemd": {
+          "$ref": "#/$defs/Systemd"
+        },
+        "suma": {
+          "$ref": "#/$defs/Suma"
+        },
+        "packages": {
+          "$ref": "#/$defs/Packages"
+        },
+        "isoConfiguration": {
+          "$ref": "#/$defs/IsoConfiguration",
+          "description": "ISO configuration object. MUST be nested here. Example: { 'installDevice': '/dev/sda' }"
+        },
+        "rawConfiguration": {
+          "$ref": "#/$defs/RawConfiguration",
+          "description": "RAW configuration object. MUST be nested here. Example: { 'diskSize': '10G' }"
+        },
+        "time": {
+          "$ref": "#/$defs/Time",
+          "description": "Time configuration. Example: { 'timezone': 'UTC', 'ntp': { 'servers': ['pool.ntp.org'] } }"
+        },
+        "proxy": {
+          "$ref": "#/$defs/Proxy"
+        },
+        "keymap": {
+          "type": "string"
+        },
+        "enableFIPS": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "Operating System configuration.\nExample (ISO):\n{\n  \"users\": [{\"username\": \"root\", \"encryptedPassword\": \"...\"}],\n  \"isoConfiguration\": { \"installDevice\": \"/dev/sda\" },\n  \"time\": { \"timezone\": \"UTC\", \"ntp\": { \"servers\": [\"pool.ntp.org\"] } }\n}"
+    },
+    "OperatingSystemGroup": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "gid": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "OperatingSystemUser": {
+      "oneOf": [
+        {
+          "required": [
+            "encryptedPassword"
+          ]
+        },
+        {
+          "required": [
+            "sshKeys"
+          ]
+        }
+      ],
+      "properties": {
+        "username": {
+          "type": "string",
+          "description": "Username for the user. Required."
+        },
+        "uid": {
+          "type": "integer"
+        },
+        "encryptedPassword": {
+          "type": "string",
+          "description": "Encrypted password for the user. Required if sshKey is not provided."
+        },
+        "sshKeys": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "List of SSH keys for the user. Required if encryptedPassword is not provided."
+        },
+        "primaryGroup": {
+          "type": "string"
+        },
+        "secondaryGroups": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "createHomeDir": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "username"
+      ],
+      "description": "User configuration.\nAllowed fields: \"username\", \"uid\", \"encryptedPassword\", \"sshKeys\", \"primaryGroup\", \"secondaryGroups\", \"createHomeDir\".\nDO NOT use \"name\", \"password\", \"sshKey\" (singular)."
+    },
+    "Packages": {
+      "if": {
+        "properties": {
+          "packageList": {
+            "minItems": 1
+          }
+        },
+        "required": [
+          "packageList"
+        ]
+      },
+      "then": {
+        "anyOf": [
+          {
+            "required": [
+              "sccRegistrationCode"
+            ]
+          },
+          {
+            "required": [
+              "additionalRepos"
+            ]
+          }
+        ]
+      },
+      "properties": {
+        "noGPGCheck": {
+          "type": "boolean"
+        },
+        "enableExtras": {
+          "type": "boolean"
+        },
+        "packageList": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "additionalRepos": {
+          "items": {
+            "$ref": "#/$defs/AddRepo"
+          },
+          "type": "array"
+        },
+        "sccRegistrationCode": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Proxy": {
+      "properties": {
+        "httpProxy": {
+          "type": "string"
+        },
+        "httpsProxy": {
+          "type": "string"
+        },
+        "noProxy": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "RawConfiguration": {
+      "if": {
+        "properties": {
+          "expandEncryptedPartition": {
+            "const": true
+          }
+        },
+        "required": [
+          "expandEncryptedPartition"
+        ]
+      },
+      "then": {
+        "required": [
+          "luksKey"
+        ]
+      },
+      "properties": {
+        "diskSize": {
+          "type": "string",
+          "pattern": "^([1-9]\\d+|[1-9])+([MGT])$"
+        },
+        "luksKey": {
+          "type": "string"
+        },
+        "expandEncryptedPartition": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Registry": {
+      "properties": {
+        "uri": {
+          "type": "string"
+        },
+        "authentication": {
+          "$ref": "#/$defs/RegistryAuthentication"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "RegistryAuthentication": {
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Suma": {
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "activationKey": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "host",
+        "activationKey"
+      ]
+    },
+    "Systemd": {
+      "properties": {
+        "enable": {
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": "array"
+        },
+        "disable": {
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Time": {
+      "properties": {
+        "timezone": {
+          "type": "string",
+          "description": "Timezone (e.g., 'UTC'). Note: field name is lowercase 'timezone'."
+        },
+        "ntp": {
+          "$ref": "#/$defs/NtpConfiguration",
+          "description": "NTP config. 'servers' and 'pools' are lists of STRINGS. Example: { 'servers': ['1.2.3.4'] }"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "#/$defs/Definition"
+    }
+  ],
+  "type": "object",
+  "title": "Edge Image Builder Configuration",
+  "description": "Schema for the configuration file used by the SUSE Edge Image Builder."
+}
