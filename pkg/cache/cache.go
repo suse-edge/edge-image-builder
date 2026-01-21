@@ -15,13 +15,26 @@ import (
 
 type Cache struct {
 	cacheDir string
+	enabled  bool
 }
 
 func New(cacheDir string) (*Cache, error) {
-	return &Cache{cacheDir: cacheDir}, nil
+	if cacheDir == "" {
+		return &Cache{cacheDir: cacheDir, enabled: false}, nil
+	}
+
+	return &Cache{cacheDir: cacheDir, enabled: true}, nil
+}
+
+func (cache *Cache) CacheEnabled() bool {
+	return cache.enabled
 }
 
 func (cache *Cache) Get(fileIdentifier string) (path string, err error) {
+	if !cache.CacheEnabled() {
+		return "", nil
+	}
+
 	path, err = cache.identifierPath(fileIdentifier)
 	if err != nil {
 		return "", fmt.Errorf("searching for identifier '%s' in cache: %w", fileIdentifier, err)
@@ -35,6 +48,10 @@ func (cache *Cache) Get(fileIdentifier string) (path string, err error) {
 }
 
 func (cache *Cache) Put(fileIdentifier string, reader io.Reader) error {
+	if !cache.CacheEnabled() {
+		return nil
+	}
+
 	path, err := cache.identifierPath(fileIdentifier)
 	if err != nil {
 		return fmt.Errorf("searching for identifier '%s' in cache: %w", fileIdentifier, err)

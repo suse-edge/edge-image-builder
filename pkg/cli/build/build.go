@@ -43,6 +43,12 @@ func Run(_ *cli.Context) error {
 		return err
 	}
 
+	cacheDir, err := eib.SetupCacheDirectory(args.Cache, rootBuildDir, args.CacheDir)
+	if err != nil {
+		log.Audit("The cache directory could not be set up.")
+		return err
+	}
+
 	// This needs to occur as early as possible so that the subsequent calls can use the log
 	log.ConfigureGlobalLogger(filepath.Join(buildDir, buildLogFilename))
 
@@ -70,6 +76,7 @@ func Run(_ *cli.Context) error {
 	}
 
 	ctx := buildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, imageDefinition, artifactSources)
+	ctx.CacheDir = cacheDir
 
 	if cmdErr = validateImageDefinition(ctx); cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)

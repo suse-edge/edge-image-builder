@@ -36,6 +36,7 @@ const (
 type cache interface {
 	Get(artefact string) (filepath string, err error)
 	Put(artefact string, reader io.Reader) error
+	CacheEnabled() bool
 }
 
 type ArtefactDownloader struct {
@@ -172,6 +173,10 @@ func (d ArtefactDownloader) downloadArtefacts(artefacts []string, releaseURL, ve
 }
 
 func (d ArtefactDownloader) copyArtefactFromCache(cacheKey, destPath string) (bool, error) {
+	if !d.Cache.CacheEnabled() {
+		return false, nil
+	}
+
 	sourcePath, err := d.Cache.Get(cacheKey)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
@@ -191,32 +196,40 @@ func (d ArtefactDownloader) copyArtefactFromCache(cacheKey, destPath string) (bo
 }
 
 func (d ArtefactDownloader) downloadArtefact(url, path, cacheKey string) error {
-	reader, writer := io.Pipe()
+	var writer io.Writer
+	var errGroup *errgroup.Group
+	var ctx context.Context
 
-	errGroup, ctx := errgroup.WithContext(context.Background())
+	if d.Cache.CacheEnabled() {
+		reader, pipeWriter := io.Pipe()
+		writer = pipeWriter
+		errGroup, ctx = errgroup.WithContext(context.Background())
 
-	errGroup.Go(func() error {
-		defer func() {
-			if err := writer.Close(); err != nil {
-				zap.S().Warnf("Closing pipe writer failed unexpectedly: %v", err)
+		errGroup.Go(func() error {
+			defer func() {
+				if err := pipeWriter.Close(); err != nil {
+					zap.S().Warnf("Closing pipe writer failed unexpectedly: %v", err)
+				}
+			}()
+
+			if err := d.Cache.Put(cacheKey, reader); err != nil {
+				return fmt.Errorf("caching artefact: %w", err)
 			}
-		}()
+			return nil
+		})
+	} else {
+		ctx = context.Background()
+	}
 
-		if err := http.DownloadFile(ctx, url, path, writer); err != nil {
-			return fmt.Errorf("downloading artefact: %w", err)
-		}
-		return nil
-	})
+	if err := http.DownloadFile(ctx, url, path, writer); err != nil {
+		return fmt.Errorf("downloading artefact: %w", err)
+	}
 
-	errGroup.Go(func() error {
-		if err := d.Cache.Put(cacheKey, reader); err != nil {
-			return fmt.Errorf("caching artefact: %w", err)
-		}
+	if errGroup != nil {
+		return errGroup.Wait()
+	}
 
-		return nil
-	})
-
-	return errGroup.Wait()
+	return nil
 }
 
 func cacheIdentifier(version, artefact string) string {

@@ -16,6 +16,8 @@ func NewBuildCommand(action func(*cli.Context) error) *cli.Command {
 			DefinitionFileFlag,
 			ConfigDirFlag,
 			BuildDirFlag,
+			CacheDirFlag,
+			CacheFlag,
 		},
 	}
 }
