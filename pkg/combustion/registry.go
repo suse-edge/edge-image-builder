@@ -217,10 +217,7 @@ func registryArtefactsPath(ctx *image.Context) string {
 }
 
 func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error {
-	enableCache := true
-	if ctx.CacheDir == "" {
-		enableCache = false
-	}
+	enableCache := ctx.CacheDir != ""
 
 	var imageCacheDir string
 	if enableCache {

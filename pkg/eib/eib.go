@@ -240,12 +240,12 @@ func SetupCombustionDirectory(buildDir string) (combustionDir, artefactsDir stri
 }
 
 func SetupCacheDirectory(rootDir, userCacheDir string) (string, error) {
-	defaultMountedCacheDir := filepath.Join("/", "eib-cache")
+	defaultMountedCacheDir := "/eib-cache"
 
 	// If a user specifies a custom location for the cache directory, but it's not mounted or found, return an error.
 	// Otherwise, use the expected mount location.
 	if userCacheDir != defaultMountedCacheDir {
-		mountedCacheDir := filepath.Join("/", userCacheDir)
+		mountedCacheDir := filepath.Join("/", userCacheDir) //nolint:gocritic
 		if !fileio.DirExists(mountedCacheDir) {
 			return "", fmt.Errorf("custom mounted cache directory `%s` does not exist, please make sure that it is mounted", mountedCacheDir)
 		}

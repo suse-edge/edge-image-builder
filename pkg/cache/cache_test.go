@@ -10,8 +10,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setup(t *testing.T) (cache *Cache, teardown func()) {
-	cacheDir := "test-cache"
+var (
+	defaultCacheDir       = "test-cache"
+	defaultFileIdentifier = "some-cool-filename"
+	defaultFileContents   = "some-data"
+)
+
+func setup(t *testing.T, cacheDir string) (cache *Cache, teardown func()) {
+	if cacheDir == "" {
+		return &Cache{}, func() {}
+	}
+
 	assert.NoError(t, os.MkdirAll(cacheDir, os.ModePerm))
 
 	cache, err := New(cacheDir)
@@ -23,11 +32,11 @@ func setup(t *testing.T) (cache *Cache, teardown func()) {
 }
 
 func TestCache(t *testing.T) {
-	cache, teardown := setup(t)
+	cache, teardown := setup(t, defaultCacheDir)
 	defer teardown()
 
-	fileIdentifier := "some-cool-filename"
-	fileContents := "some-data"
+	fileIdentifier := defaultFileIdentifier
+	fileContents := defaultFileContents
 
 	require.NoError(t, cache.Put(fileIdentifier, strings.NewReader(fileContents)))
 
@@ -38,13 +47,34 @@ func TestCache(t *testing.T) {
 	b, err := os.ReadFile(path)
 	require.NoError(t, err)
 	assert.Equal(t, fileContents, string(b))
+
+	assert.True(t, cache.IsEnabled())
+}
+
+func TestCacheNoDir(t *testing.T) {
+	cache, teardown := setup(t, "")
+	defer teardown()
+
+	fileIdentifier := defaultFileIdentifier
+	fileContents := defaultFileContents
+
+	// No error because the Put function immediately returns nil when cache is disabled
+	require.NoError(t, cache.Put(fileIdentifier, strings.NewReader(fileContents)))
+
+	// No error because the Get function immediately returns nil when cache is disabled
+	// But we confirm that the File doesn't exist
+	path, err := cache.Get(fileIdentifier)
+	require.NoError(t, err)
+	require.NoFileExists(t, path)
+
+	assert.False(t, cache.IsEnabled())
 }
 
 func TestCache_MissingEntry(t *testing.T) {
-	cache, teardown := setup(t)
+	cache, teardown := setup(t, defaultCacheDir)
 	defer teardown()
 
-	fileIdentifier := "some-cool-filename"
+	fileIdentifier := defaultFileIdentifier
 
 	path, err := cache.Get(fileIdentifier)
 	require.Error(t, err)
@@ -54,11 +84,11 @@ func TestCache_MissingEntry(t *testing.T) {
 }
 
 func TestCache_DoubleInsert(t *testing.T) {
-	cache, teardown := setup(t)
+	cache, teardown := setup(t, defaultCacheDir)
 	defer teardown()
 
 	fileIdentifier := "https://raw.githubusercontent.com/suse-edge/edge-image-builder/main/README.md"
-	fileContents := "some-data"
+	fileContents := defaultFileContents
 
 	require.NoError(t, cache.Put(fileIdentifier, strings.NewReader(fileContents)))
 	assert.ErrorIs(t, cache.Put(fileIdentifier, strings.NewReader(fileContents)), fs.ErrExist)
