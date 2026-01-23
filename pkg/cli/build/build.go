@@ -43,10 +43,13 @@ func Run(_ *cli.Context) error {
 		return err
 	}
 
-	cacheDir, err := eib.SetupCacheDirectory(args.Cache, rootBuildDir, args.CacheDir)
-	if err != nil {
-		log.Audit("The cache directory could not be set up.")
-		return err
+	var cacheDir string
+	if args.Cache {
+		cacheDir, err = eib.SetupCacheDirectory(rootBuildDir, args.CacheDir)
+		if err != nil {
+			log.Audit("The cache directory could not be set up.")
+			return err
+		}
 	}
 
 	// This needs to occur as early as possible so that the subsequent calls can use the log
@@ -75,8 +78,7 @@ func Run(_ *cli.Context) error {
 		zap.S().Fatalf("Parsing artifact sources failed: %v", err)
 	}
 
-	ctx := buildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, imageDefinition, artifactSources)
-	ctx.CacheDir = cacheDir
+	ctx := buildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, cacheDir, imageDefinition, artifactSources)
 
 	if cmdErr = validateImageDefinition(ctx); cmdErr != nil {
 		cmd.LogError(cmdErr, checkBuildLogMessage)
@@ -174,12 +176,13 @@ func parseArtifactSources() (*image.ArtifactSources, error) {
 }
 
 // Assembles the image build context with user-provided values and implementation defaults.
-func buildContext(buildDir, combustionDir, artefactsDir, configDir string, imageDefinition *image.Definition, artifactSources *image.ArtifactSources) *image.Context {
+func buildContext(buildDir, combustionDir, artefactsDir, configDir, cacheDir string, imageDefinition *image.Definition, artifactSources *image.ArtifactSources) *image.Context {
 	ctx := &image.Context{
 		ImageConfigDir:  configDir,
 		BuildDir:        buildDir,
 		CombustionDir:   combustionDir,
 		ArtefactsDir:    artefactsDir,
+		CacheDir:        cacheDir,
 		ImageDefinition: imageDefinition,
 		ArtifactSources: artifactSources,
 	}

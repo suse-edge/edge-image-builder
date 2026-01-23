@@ -36,7 +36,7 @@ const (
 type cache interface {
 	Get(artefact string) (filepath string, err error)
 	Put(artefact string, reader io.Reader) error
-	CacheEnabled() bool
+	IsEnabled() bool
 }
 
 type ArtefactDownloader struct {
@@ -173,7 +173,7 @@ func (d ArtefactDownloader) downloadArtefacts(artefacts []string, releaseURL, ve
 }
 
 func (d ArtefactDownloader) copyArtefactFromCache(cacheKey, destPath string) (bool, error) {
-	if !d.Cache.CacheEnabled() {
+	if !d.Cache.IsEnabled() {
 		return false, nil
 	}
 
@@ -196,40 +196,41 @@ func (d ArtefactDownloader) copyArtefactFromCache(cacheKey, destPath string) (bo
 }
 
 func (d ArtefactDownloader) downloadArtefact(url, path, cacheKey string) error {
-	var writer io.Writer
-	var errGroup *errgroup.Group
-	var ctx context.Context
+	if !d.Cache.IsEnabled() {
+		if err := http.DownloadFile(context.Background(), url, path, nil); err != nil {
+			return fmt.Errorf("downloading artefact: %w", err)
+		}
+		return nil
+	}
 
-	if d.Cache.CacheEnabled() {
-		reader, pipeWriter := io.Pipe()
-		writer = pipeWriter
-		errGroup, ctx = errgroup.WithContext(context.Background())
-
-		errGroup.Go(func() error {
-			defer func() {
-				if err := pipeWriter.Close(); err != nil {
-					zap.S().Warnf("Closing pipe writer failed unexpectedly: %v", err)
-				}
-			}()
-
-			if err := d.Cache.Put(cacheKey, reader); err != nil {
-				return fmt.Errorf("caching artefact: %w", err)
+	reader, writer := io.Pipe()
+	errGroup, ctx := errgroup.WithContext(context.Background())
+	errGroup.Go(func() error {
+		defer func() {
+			if err := writer.Close(); err != nil {
+				zap.S().Warnf("Closing pipe writer failed unexpectedly: %v", err)
 			}
-			return nil
-		})
-	} else {
-		ctx = context.Background()
-	}
+		}()
 
-	if err := http.DownloadFile(ctx, url, path, writer); err != nil {
-		return fmt.Errorf("downloading artefact: %w", err)
-	}
+		if err := http.DownloadFile(ctx, url, path, writer); err != nil {
+			if closeErr := writer.CloseWithError(err); closeErr != nil {
+				zap.S().Warnf("Closing pipe writer with error failed unexpectedly: %v", closeErr)
+			}
+			return fmt.Errorf("downloading artefact: %w", err)
+		}
 
-	if errGroup != nil {
-		return errGroup.Wait()
-	}
+		return nil
+	})
 
-	return nil
+	errGroup.Go(func() error {
+		if err := d.Cache.Put(cacheKey, reader); err != nil {
+			return fmt.Errorf("caching artefact: %w", err)
+		}
+
+		return nil
+	})
+
+	return errGroup.Wait()
 }
 
 func cacheIdentifier(version, artefact string) string {

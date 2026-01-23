@@ -26,12 +26,12 @@ func New(cacheDir string) (*Cache, error) {
 	return &Cache{cacheDir: cacheDir, enabled: true}, nil
 }
 
-func (cache *Cache) CacheEnabled() bool {
+func (cache *Cache) IsEnabled() bool {
 	return cache.enabled
 }
 
 func (cache *Cache) Get(fileIdentifier string) (path string, err error) {
-	if !cache.CacheEnabled() {
+	if !cache.IsEnabled() {
 		return "", nil
 	}
 
@@ -48,7 +48,7 @@ func (cache *Cache) Get(fileIdentifier string) (path string, err error) {
 }
 
 func (cache *Cache) Put(fileIdentifier string, reader io.Reader) error {
-	if !cache.CacheEnabled() {
+	if !cache.IsEnabled() {
 		return nil
 	}
 
