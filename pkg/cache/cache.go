@@ -15,13 +15,26 @@ import (
 
 type Cache struct {
 	cacheDir string
+	enabled  bool
 }
 
 func New(cacheDir string) (*Cache, error) {
-	return &Cache{cacheDir: cacheDir}, nil
+	if cacheDir == "" {
+		return &Cache{cacheDir: cacheDir, enabled: false}, nil
+	}
+
+	return &Cache{cacheDir: cacheDir, enabled: true}, nil
+}
+
+func (cache *Cache) IsEnabled() bool {
+	return cache.enabled
 }
 
 func (cache *Cache) Get(fileIdentifier string) (path string, err error) {
+	if !cache.IsEnabled() {
+		return "", nil
+	}
+
 	path, err = cache.identifierPath(fileIdentifier)
 	if err != nil {
 		return "", fmt.Errorf("searching for identifier '%s' in cache: %w", fileIdentifier, err)
@@ -35,6 +48,10 @@ func (cache *Cache) Get(fileIdentifier string) (path string, err error) {
 }
 
 func (cache *Cache) Put(fileIdentifier string, reader io.Reader) error {
+	if !cache.IsEnabled() {
+		return nil
+	}
+
 	path, err := cache.identifierPath(fileIdentifier)
 	if err != nil {
 		return fmt.Errorf("searching for identifier '%s' in cache: %w", fileIdentifier, err)
@@ -51,13 +68,21 @@ func (cache *Cache) Put(fileIdentifier string, reader io.Reader) error {
 	if err != nil {
 		return fmt.Errorf("creating file: %w", err)
 	}
-	defer file.Close()
 
 	if _, err = io.Copy(file, reader); err != nil {
-		return fmt.Errorf("storing file: %w", err)
+		_ = file.Close()
+
+		err = fmt.Errorf("storing file: %w", err)
+		if removeErr := os.Remove(path); removeErr != nil && !errors.Is(err, fs.ErrNotExist) {
+			return errors.Join(
+				err,
+				fmt.Errorf("removing partially downloaded file '%s' from cache: %w", path, removeErr))
+		}
+
+		return err
 	}
 
-	return nil
+	return file.Close()
 }
 
 func (cache *Cache) identifierPath(fileIdentifier string) (string, error) {

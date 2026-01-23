@@ -19,6 +19,13 @@ func validateGenerateFlags(c *cli.Context) error {
 		return fmt.Errorf("invalid arch '%s': must be either '%s' or '%s'", generateArch, image.ArchTypeX86, image.ArchTypeARM)
 	}
 
+	cacheDirFlag := strings.ToLower(c.String("cache-dir"))
+	cacheEnabledFlag := c.Bool("cache")
+	err := validateCache(cacheDirFlag, cacheEnabledFlag)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -33,6 +40,8 @@ func NewGenerateCommand(action func(*cli.Context) error) *cli.Command {
 			DefinitionFileFlag,
 			ConfigDirFlag,
 			BuildDirFlag,
+			CacheDirFlag,
+			CacheFlag,
 			&cli.StringFlag{
 				Name:     "output-type",
 				Usage:    "The desired output type",

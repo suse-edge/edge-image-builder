@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/suse-edge/edge-image-builder/pkg/fileio"
 	"github.com/suse-edge/edge-image-builder/pkg/podman"
 	"github.com/suse-edge/edge-image-builder/pkg/rpm"
 	"github.com/suse-edge/edge-image-builder/pkg/rpm/resolver"
@@ -162,12 +163,6 @@ func appendKernelArgs(ctx *image.Context, kernelArgs ...string) {
 }
 
 func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion, error) {
-	cacheDir := filepath.Join(rootDir, "cache")
-	if err := os.MkdirAll(cacheDir, os.ModePerm); err != nil {
-		return nil, fmt.Errorf("creating a cache directory: %w", err)
-	}
-	ctx.CacheDir = cacheDir
-
 	combustionHandler := &combustion.Combustion{
 		NetworkConfigGenerator:       network.ConfigGenerator{},
 		NetworkConfiguratorInstaller: network.ConfiguratorInstaller{},
@@ -204,7 +199,7 @@ func buildCombustion(ctx *image.Context, rootDir string) (*combustion.Combustion
 	}
 
 	if ctx.ImageDefinition.Kubernetes.Version != "" {
-		c, err := cache.New(cacheDir)
+		c, err := cache.New(ctx.CacheDir)
 		if err != nil {
 			return nil, fmt.Errorf("initialising cache instance: %w", err)
 		}
@@ -242,4 +237,32 @@ func SetupCombustionDirectory(buildDir string) (combustionDir, artefactsDir stri
 	}
 
 	return combustionDir, artefactsDir, nil
+}
+
+func SetupCacheDirectory(rootDir, userCacheDir string) (string, error) {
+	defaultMountedCacheDir := "/eib-cache"
+
+	// If a user specifies a custom location for the cache directory, but it's not mounted or found, return an error.
+	// Otherwise, use the expected mount location.
+	if userCacheDir != defaultMountedCacheDir {
+		mountedCacheDir := filepath.Join("/", userCacheDir) //nolint:gocritic
+		if !fileio.DirExists(mountedCacheDir) {
+			return "", fmt.Errorf("custom mounted cache directory `%s` does not exist, please make sure that it is mounted", mountedCacheDir)
+		}
+
+		return mountedCacheDir, nil
+	}
+
+	// If the user has not mounted a cache directory at `/eib-cache` we will use the original cache location under the root directory.
+	if !fileio.DirExists(defaultMountedCacheDir) {
+		defaultCacheDir := filepath.Join(rootDir, "cache")
+		if err := os.MkdirAll(defaultCacheDir, os.ModePerm); err != nil {
+			return "", fmt.Errorf("creating cache directory in default location `%s`: %w", defaultCacheDir, err)
+		}
+		log.AuditInfof("No mounted cache directory detected, default cache directory at `%s` will be used.", defaultCacheDir)
+
+		return defaultCacheDir, nil
+	}
+
+	return defaultMountedCacheDir, nil
 }

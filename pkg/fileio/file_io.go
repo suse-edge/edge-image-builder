@@ -155,3 +155,17 @@ func FileExists(filePath string) bool {
 
 	return true
 }
+
+func DirExists(dirPath string) bool {
+	info, err := os.Stat(dirPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return false
+		}
+
+		zap.S().Warnf("Searching for directory at (%s) failed: %s", dirPath, err)
+		return false
+	}
+
+	return info.IsDir()
+}
