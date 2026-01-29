@@ -18,9 +18,10 @@ const (
 
 var (
 	//go:embed templates/15-fips-setup.sh
-	fipsScript     string
-	FIPSPackages   = []string{"patterns-base-fips"}
-	FIPSKernelArgs = []string{"fips=1"}
+	fipsScript              string
+	PatternBaseFipsPackage  = []string{"patterns-base-fips"}
+	PatternMicroFipsPackage = []string{"patterns-micro-fips"}
+	FIPSKernelArgs          = []string{"fips=1"}
 )
 
 func configureFIPS(ctx *image.Context) ([]string, error) {

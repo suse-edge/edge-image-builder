@@ -132,7 +132,12 @@ func appendFIPS(ctx *image.Context) {
 			zap.S().Warn("Detected FIPS for installation with no sccRegistrationCode provided")
 		}
 
-		appendRPMs(ctx, nil, combustion.FIPSPackages...)
+		if ctx.ImageDefinition.APIVersion == "1.4" {
+			appendRPMs(ctx, nil, combustion.PatternMicroFipsPackage...)
+		} else {
+			appendRPMs(ctx, nil, combustion.PatternBaseFipsPackage...)
+		}
+
 		appendKernelArgs(ctx, combustion.FIPSKernelArgs...)
 	}
 }
