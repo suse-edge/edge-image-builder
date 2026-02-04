@@ -19,7 +19,7 @@ const (
 var (
 	//go:embed templates/15-fips-setup.sh
 	fipsScript     string
-	FIPSPackages   = []string{"patterns-base-fips"}
+	FIPSPackages   = []string{"pattern:fips"}
 	FIPSKernelArgs = []string{"fips=1"}
 )
 
