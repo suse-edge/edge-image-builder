@@ -16,7 +16,7 @@
 * [#761](https://github.com/suse-edge/edge-image-builder/issues/761) - Kubernetes Resource install one-shot-service does not restart in case of failures
 * [#808](https://github.com/suse-edge/edge-image-builder/issues/808) - elemental-register-systemd fails because /etc/rancher is gone
 * [#820](https://github.com/suse-edge/edge-image-builder/issues/820) - EIB build doesn't include Traefik
-* [#843](https://github.com/suse-edge/edge-image-builder/issues/843) - Wrong FIPs package is installed for SL Micro 6.2
+* [#843](https://github.com/suse-edge/edge-image-builder/issues/843) - Wrong FIPS package is installed for SL Micro 6.2
 
 ---
 
