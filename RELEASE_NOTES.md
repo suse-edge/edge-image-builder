@@ -5,6 +5,7 @@
 ## Bug Fixes
 
 * [#820](https://github.com/suse-edge/edge-image-builder/issues/820) - EIB build doesn't include Traefik
+* [#843](https://github.com/suse-edge/edge-image-builder/issues/843) - Wrong FIPS package is installed for SL Micro 6.2
 
 # v1.3.1
 
