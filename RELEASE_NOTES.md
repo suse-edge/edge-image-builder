@@ -17,6 +17,7 @@
 
 * [#808](https://github.com/suse-edge/edge-image-builder/issues/808) - elemental-register-systemd fails because /etc/rancher is gone
 * [#820](https://github.com/suse-edge/edge-image-builder/issues/820) - EIB build doesn't include Traefik
+* [#843](https://github.com/suse-edge/edge-image-builder/issues/843) - Wrong FIPS package is installed for SL Micro 6.2
 
 ---
 
