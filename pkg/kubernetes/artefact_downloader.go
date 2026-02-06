@@ -36,7 +36,6 @@ const (
 type cache interface {
 	Get(artefact string) (filepath string, err error)
 	Put(artefact string, reader io.Reader) error
-	IsEnabled() bool
 }
 
 type ArtefactDownloader struct {
@@ -173,7 +172,7 @@ func (d ArtefactDownloader) downloadArtefacts(artefacts []string, releaseURL, ve
 }
 
 func (d ArtefactDownloader) copyArtefactFromCache(cacheKey, destPath string) (bool, error) {
-	if !d.Cache.IsEnabled() {
+	if d.Cache == nil {
 		return false, nil
 	}
 
@@ -196,7 +195,7 @@ func (d ArtefactDownloader) copyArtefactFromCache(cacheKey, destPath string) (bo
 }
 
 func (d ArtefactDownloader) downloadArtefact(url, path, cacheKey string) error {
-	if !d.Cache.IsEnabled() {
+	if d.Cache == nil {
 		if err := http.DownloadFile(context.Background(), url, path, nil); err != nil {
 			return fmt.Errorf("downloading artefact: %w", err)
 		}

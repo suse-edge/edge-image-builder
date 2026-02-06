@@ -18,7 +18,7 @@ var (
 
 func setup(t *testing.T, cacheDir string) (cache *Cache, teardown func()) {
 	if cacheDir == "" {
-		return &Cache{}, func() {}
+		return nil, func() {}
 	}
 
 	assert.NoError(t, os.MkdirAll(cacheDir, os.ModePerm))
@@ -48,7 +48,7 @@ func TestCache(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, fileContents, string(b))
 
-	assert.True(t, cache.IsEnabled())
+	assert.NotNil(t, cache)
 }
 
 func TestCacheNoDir(t *testing.T) {
@@ -67,7 +67,7 @@ func TestCacheNoDir(t *testing.T) {
 	require.NoError(t, err)
 	require.NoFileExists(t, path)
 
-	assert.False(t, cache.IsEnabled())
+	assert.Nil(t, cache)
 }
 
 func TestCache_MissingEntry(t *testing.T) {
