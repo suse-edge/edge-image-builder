@@ -172,6 +172,10 @@ func (d ArtefactDownloader) downloadArtefacts(artefacts []string, releaseURL, ve
 }
 
 func (d ArtefactDownloader) copyArtefactFromCache(cacheKey, destPath string) (bool, error) {
+	if d.Cache == nil {
+		return false, nil
+	}
+
 	sourcePath, err := d.Cache.Get(cacheKey)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
@@ -191,10 +195,15 @@ func (d ArtefactDownloader) copyArtefactFromCache(cacheKey, destPath string) (bo
 }
 
 func (d ArtefactDownloader) downloadArtefact(url, path, cacheKey string) error {
+	if d.Cache == nil {
+		if err := http.DownloadFile(context.Background(), url, path, nil); err != nil {
+			return fmt.Errorf("downloading artefact: %w", err)
+		}
+		return nil
+	}
+
 	reader, writer := io.Pipe()
-
 	errGroup, ctx := errgroup.WithContext(context.Background())
-
 	errGroup.Go(func() error {
 		defer func() {
 			if err := writer.Close(); err != nil {
@@ -203,8 +212,12 @@ func (d ArtefactDownloader) downloadArtefact(url, path, cacheKey string) error {
 		}()
 
 		if err := http.DownloadFile(ctx, url, path, writer); err != nil {
+			if closeErr := writer.CloseWithError(err); closeErr != nil {
+				zap.S().Warnf("Closing pipe writer with error failed unexpectedly: %v", closeErr)
+			}
 			return fmt.Errorf("downloading artefact: %w", err)
 		}
+
 		return nil
 	})
 

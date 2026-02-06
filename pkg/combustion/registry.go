@@ -217,9 +217,16 @@ func registryArtefactsPath(ctx *image.Context) string {
 }
 
 func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error {
-	imageCacheDir := filepath.Join(ctx.CacheDir, "images")
-	if err := os.MkdirAll(imageCacheDir, os.ModePerm); err != nil {
-		return fmt.Errorf("creating container image cache dir: %w", err)
+	enableCache := ctx.CacheDir != ""
+
+	var imageCacheDir string
+	if enableCache {
+		imageCacheDir = filepath.Join(ctx.CacheDir, "images")
+		if !fileio.DirExists(imageCacheDir) {
+			if err := os.Mkdir(imageCacheDir, os.ModePerm); err != nil {
+				return fmt.Errorf("creating container image cache dir: %w", err)
+			}
+		}
 	}
 
 	const registryLogFileName = "embedded-registry.log"
@@ -249,7 +256,7 @@ func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error
 
 	var imagesWithDigest []string
 	for _, img := range images {
-		cacheImage := true
+		cacheImage := enableCache
 		convertedImage := strings.ReplaceAll(img, "/", "_")
 		convertedImageName := fmt.Sprintf("%s-%s", convertedImage, registryTarSuffix)
 		if strings.Contains(img, ":latest") {
@@ -268,7 +275,12 @@ func (c *Combustion) populateRegistry(ctx *image.Context, images []string) error
 		imageCacheLocation := filepath.Join(imageCacheDir, convertedImageName)
 		imageTarDest := filepath.Join(registryArtefactsPath(ctx), convertedImageName)
 
-		if fileio.FileExists(imageCacheLocation) {
+		if fileio.FileExists(imageCacheLocation) && enableCache {
+			_, err = fmt.Fprintf(logFile, "%s found in cache, copying instead of downloading\n", img)
+			if err != nil {
+				return fmt.Errorf("writing to %s: %w", registryLogFileName, err)
+			}
+
 			if err = fileio.CopyFile(imageCacheLocation, imageTarDest, fileio.NonExecutablePerms); err != nil {
 				return fmt.Errorf("copying cached container image: %w", err)
 			}
