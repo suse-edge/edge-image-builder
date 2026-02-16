@@ -31,6 +31,16 @@ func Generate(c *cli.Context) error {
 		}
 	}
 
+	var cacheDir string
+	var err error
+	if args.Cache {
+		cacheDir, err = eib.SetupCacheDirectory(rootBuildDir, args.CacheDir)
+		if err != nil {
+			log.Audit("The cache directory could not be set up.")
+			return err
+		}
+	}
+
 	buildDir, err := eib.SetupBuildDirectory(rootBuildDir)
 	if err != nil {
 		log.Audit("The build directory could not be set up.")
@@ -63,7 +73,7 @@ func Generate(c *cli.Context) error {
 		zap.S().Fatalf("Parsing artifact sources failed: %v", err)
 	}
 
-	ctx := buildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, configDriveDefinition, artifactSources)
+	ctx := buildContext(buildDir, combustionDir, artefactsDir, args.ConfigDir, cacheDir, configDriveDefinition, artifactSources)
 	ctx.IsConfigDrive = true
 
 	if cmdErr = validateImageDefinition(ctx); cmdErr != nil {

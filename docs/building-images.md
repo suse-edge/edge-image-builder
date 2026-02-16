@@ -582,3 +582,39 @@ not begin with a number.
   * `scripts` - If present, all the files in this directory will be included in the built image and automatically
     executed during the combustion phase.
   * `files` - If present, all the files, directories, and subdirectories in this directory will be available at combustion time on the booted node.
+
+## Cache Configurations:
+
+Default build, cached artifacts will reside under `_build/cache` on the host machine:
+```shell
+podman run --rm -it -v $IMAGE_DIR:/eib \
+$EIB_IMAGE \
+build --definition-file $DEFINITION_FILE
+```
+
+Default build with mounted cache directory, cached objects will reside under `$CACHE_DIR` on host machine.
+Unless `--cache-dir` is specified, EIB expects the mounted cache to be at `/eib-cache`:
+```shell
+podman run --rm -it -v $IMAGE_DIR:/eib \
+-v $CACHE_DIR:/eib-cache \
+$EIB_IMAGE \
+build --definition-file $DEFINITION_FILE
+```
+
+Build with custom user mounted cache directory, cached artifacts will reside under `$CACHE_DIR` on host machine.
+EIB expects the mounted cache to be at `$MOUNTED_CACHE_DIR` specified by `--cache-dir`:
+```shell
+podman run --rm -it -v $IMAGE_DIR:/eib \
+-v $CACHE_DIR:/$MOUNTED_CACHE_DIR \
+$EIB_IMAGE \
+build --definition-file $DEFINITION_FILE \
+--cache-dir $MOUNTED_CACHE_DIR
+```
+
+No cache build. Specified with `--cache=false`. Artifacts will not be cached, and previously cached artifacts will be ignored:
+```shell
+podman run --rm -it -v $IMAGE_DIR:/eib \
+$EIB_IMAGE \
+build --definition-file $DEFINITION_FILE \
+--cache=false
+```

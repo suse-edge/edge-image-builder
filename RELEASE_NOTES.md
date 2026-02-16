@@ -1,5 +1,27 @@
 # Edge Image Builder Releases
 
+# Next
+
+## General
+
+* Added support for disabling cache
+* Added support for mounting a custom cache directory
+
+## API
+
+### Image Definition Changes
+
+### Image Configuration Directory Changes
+
+## Bug Fixes
+
+* [#784](https://github.com/suse-edge/edge-image-builder/issues/784) - Dbus and elemental-system-agent Race Condition Causes Elemental Downstream Cluster Deployment Failures
+* [#761](https://github.com/suse-edge/edge-image-builder/issues/761) - Kubernetes Resource install one-shot-service does not restart in case of failures
+* [#808](https://github.com/suse-edge/edge-image-builder/issues/808) - elemental-register-systemd fails because /etc/rancher is gone
+* [#785](https://github.com/suse-edge/edge-image-builder/issues/785) - Corrupted cache file is kept when download fails
+
+---
+
 # v1.3.2
 
 ## Bug Fixes

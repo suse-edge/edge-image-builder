@@ -26,10 +26,10 @@ const (
 	KubernetesNodeTypeServer = "server"
 	KubernetesNodeTypeAgent  = "agent"
 
-	CNITypeNone   = "none"
-	CNITypeCilium = "cilium"
-	CNITypeCanal  = "canal"
-	CNITypeCalico = "calico"
+	CNITypeNone        = "none"
+	CNITypeCilium      = "cilium"
+	CNITypeCanal       = "canal"
+	CNITypeCalico      = "calico"
 	IngressTypeTraefik = "traefik"
 )
 
