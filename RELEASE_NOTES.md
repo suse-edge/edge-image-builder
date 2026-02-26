@@ -19,6 +19,7 @@
 * [#761](https://github.com/suse-edge/edge-image-builder/issues/761) - Kubernetes Resource install one-shot-service does not restart in case of failures
 * [#808](https://github.com/suse-edge/edge-image-builder/issues/808) - elemental-register-systemd fails because /etc/rancher is gone
 * [#785](https://github.com/suse-edge/edge-image-builder/issues/785) - Corrupted cache file is kept when download fails
+* [#814](https://github.com/suse-edge/edge-image-builder/issues/814) - Allow proxy configuration for the RPM resolution inside EIB
 
 ---
 
