@@ -52,8 +52,8 @@ func preparePodmanCommand(out io.Writer) *exec.Cmd {
 
 func waitForPodmanSock() error {
 	const (
-		retries      = 45
-		sleepSeconds = 4
+		retries      = 12
+		sleepSeconds = 5
 	)
 
 	zap.S().Infof("Waiting for '%s' to be created", podmanSocketPath)
