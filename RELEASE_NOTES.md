@@ -1,5 +1,26 @@
 # Edge Image Builder Releases
 
+# v1.3.3
+
+## General
+
+* Added support for disabling cache
+* Added support for mounting a custom cache directory
+* Dependency upgrades
+  * Embedded registry is now utilizing Hauler v1.4.1 (upgraded from v1.2.5)
+
+## Bug Fixes
+
+* [#784](https://github.com/suse-edge/edge-image-builder/issues/784) - Dbus and elemental-system-agent Race Condition Causes Elemental Downstream Cluster Deployment Failures
+* [#761](https://github.com/suse-edge/edge-image-builder/issues/761) - Kubernetes Resource install one-shot-service does not restart in case of failures
+* [#808](https://github.com/suse-edge/edge-image-builder/issues/808) - elemental-register-systemd fails because /etc/rancher is gone
+* [#785](https://github.com/suse-edge/edge-image-builder/issues/785) - Corrupted cache file is kept when download fails
+* [#814](https://github.com/suse-edge/edge-image-builder/issues/814) - Allow proxy configuration for the RPM resolution inside EIB
+* [#851](https://github.com/suse-edge/edge-image-builder/issues/851) - Creating Podman API Socket times out
+* [#843](https://github.com/suse-edge/edge-image-builder/issues/843) - Wrong FIPS package is installed for SL Micro 6.2
+
+---
+
 # v1.3.2
 
 ## Bug Fixes
