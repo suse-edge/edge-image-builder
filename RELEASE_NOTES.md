@@ -1,6 +1,6 @@
 # Edge Image Builder Releases
 
-# Next
+# v1.3.3
 
 ## General
 
@@ -8,12 +8,6 @@
 * Added support for mounting a custom cache directory
 * Dependency upgrades
   * Embedded registry is now utilizing Hauler v1.4.1 (upgraded from v1.2.5)
-
-## API
-
-### Image Definition Changes
-
-### Image Configuration Directory Changes
 
 ## Bug Fixes
 
@@ -23,6 +17,7 @@
 * [#785](https://github.com/suse-edge/edge-image-builder/issues/785) - Corrupted cache file is kept when download fails
 * [#814](https://github.com/suse-edge/edge-image-builder/issues/814) - Allow proxy configuration for the RPM resolution inside EIB
 * [#851](https://github.com/suse-edge/edge-image-builder/issues/851) - Creating Podman API Socket times out
+* [#843](https://github.com/suse-edge/edge-image-builder/issues/843) - Wrong FIPS package is installed for SL Micro 6.2
 
 ---
 
@@ -31,7 +26,6 @@
 ## Bug Fixes
 
 * [#820](https://github.com/suse-edge/edge-image-builder/issues/820) - EIB build doesn't include Traefik
-* [#843](https://github.com/suse-edge/edge-image-builder/issues/843) - Wrong FIPS package is installed for SL Micro 6.2
 
 # v1.3.1
 
