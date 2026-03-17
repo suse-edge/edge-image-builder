@@ -4,9 +4,9 @@ This documentation covers the design implementation for the logic introduced as 
 ## Problem
 By default, when installing on a SLE OS, `podman` comes with a preconfigured `mounts.conf` file in both `/usr/share/containers/mounts.conf` and `/etc/containers/mounts.conf`. This `mounts.conf` file instructs `podman` to auto-mount any `/SRC:/DEST` that are present in the file to any containers created in the OS (more info in the [containers-mounts.conf.5.md](https://github.com/containers/common/blob/v0.57/docs/containers-mounts.conf.5.md) documentation). In the SLE OS case, the contents of the `mounts.conf` file point to the `/etc/SUSEConnect` and `/etc/zypp/credentials.d/SCCcredentials` files, which results in having the registration information mounted on any container that is created within the system. 
 
-This is not desired during the RPM resolution process. Mainly because the RPM resolver image will be doing the registation with the specified `sccRegistationCode` for the specified OS. Meaning that if the `/etc/SUSEConnect` and `/etc/zypp/credentials.d/SCCcredentials` files have been auto-mounted with a registation data for a different OS, the registation that the RPM resolver tries to do will fail.
+This is not desired during the RPM resolution process. Mainly because the RPM resolver image will be doing the registration with the specified `sccRegistrationCode` for the specified OS. Meaning that if the `/etc/SUSEConnect` and `/etc/zypp/credentials.d/SCCcredentials` files have been auto-mounted with a registration data for a different OS, the registration that the RPM resolver tries to do will fail.
 
-An example of a problem where the Resolver container cannot connect to the correct registation server, because an RMT server has been configured in the auto-mounted files can be seen below:
+An example of a problem where the Resolver container cannot connect to the correct registration server, because an RMT server has been configured in the auto-mounted files can be seen below:
 
 ```bash
 Registering system to registration proxy https://rmt.devlab.pgu1.suse.com/
@@ -15,7 +15,7 @@ Announcing system to https://rmt.devlab.pgu1.suse.com/ ...
 SUSEConnect error: Post "https://rmt.devlab.pgu1.suse.com/connect/subscriptions/systems": x509: certificate signed by unknown authority
 ```  
 
-The workflow of why this error occured can be seen below:
+The workflow of why this error occurred can be seen below:
 1. User runs a registered SLE OS as a host
 1. `podman` is installed on this host, meaning that a `mounts.conf` file is present on both the default (`/usr/share/containers/mounts.conf`) and override (`/etc/containers/mounts.conf`) container file paths of the system. The contents of the `mounts.conf` contain the registration information of the host OS.
 1. User builds the EIB image (using `bci-base` as the base image) or runs the provided EIB image. The build/run should be done as `root`, otherwise there will not be enough permissions to auto-mount the `mounts.conf` files and this use-case will not be hit
@@ -23,10 +23,10 @@ The workflow of why this error occured can be seen below:
 1. Because the EIB image runs on top of `bci-base` and has `podman` installed, it also has the `mounts.conf` configuration, resulting in the `/etc/SUSEConnect` and `/etc/zypp/credentials.d/SCCcredentials` files being auto-mounted on top of the Resolver image that is being built inside the EIB container
 1. Because the Resolver image attempts to register a different OS and does not have the needed permissions to the RTM server configured in the mounted `/etc/SUSEConnect` and `/etc/zypp/credentials.d/SCCcredentials` files, the RPM resolution process fails with the aforementioned error
 
-**_Note: The example above is done to illustrate the problem. This can also happen with a regular SCC registation._**
+**_Note: The example above is done to illustrate the problem. This can also happen with a regular SCC registration._**
 
 ## Solution
-The least invasive solution is to programatically create an empty `mounts.conf` file at the expected override file path, which is `/etc/containers/mounts.conf`. When a `mounts.conf` file is present here it automatically overrides any other existing auto-mounts configured at the default mount place (`/usr/share/containers/mounts.conf`). 
+The least invasive solution is to programmatically create an empty `mounts.conf` file at the expected override file path, which is `/etc/containers/mounts.conf`. When a `mounts.conf` file is present here it automatically overrides any other existing auto-mounts configured at the default mount place (`/usr/share/containers/mounts.conf`).
 
 The solution workflow is as follows:
 1. Do a check whether there is an existing `mounts.conf` under `/etc/containers/mounts.conf`
@@ -40,7 +40,7 @@ Since the `mounts.conf` file is not mounted, but present on each OS, we can safe
 ## Other approaches
 This section covers different approaches that were tried during the troubleshooting of the issue. It also explains the drawbacks of each approach.
 
-### Use `suseconnect --url` property to provide correct registation server
+### Use `suseconnect --url` property to provide correct registration server
 Specifying the `suseconnect --url <registration_server>` is enough to change the registration server, but because the `/etc/SUSEConnect` and `/etc/zypp/credentials.d/SCCcredentials` files are still there, `suseconnect` treats the system as registered and we get the following error:
 ```bash
 Error: Invalid system credentials, probably because the registered system was deleted in SUSE Customer Center. Check https://scc.suse.com whether your system appears there. If it does not, please call SUSEConnect --cleanup and re-register this system.
