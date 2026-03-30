@@ -4,10 +4,10 @@
 
 EIB runs as a container. Some form of container runtime is needed, such as [Podman](https://podman.io/).
 
-The latest version of EIB (1.3.2) can be downloaded from the official OCI registry using the following command:
+The latest version of EIB (1.3.3) can be downloaded from the official OCI registry using the following command:
 
 ```bash
-podman pull registry.suse.com/edge/3.5/edge-image-builder:1.3.2
+podman pull registry.suse.com/edge/3.5/edge-image-builder:1.3.3
 ```
 
 Alternatively, EIB can be built from this repository. See the [Building from Source](#building-from-source)
@@ -114,3 +114,38 @@ will be used in the Podman command examples above for the `$EIB_IMAGE` variable.
 ```shell
 podman build -t eib:dev .
 ```
+
+## Building images using a proxy or certificates
+
+If you need to use a proxy or certificates when building your EIB image, you can do so by creating a `containers.conf` 
+file containing your proxy details and path to your certificates like so:
+
+```
+[engine]
+env = [
+    "http_proxy=http://IP:PORT",
+    "https_proxy=http://IP:PORT",
+    "no_proxy=localhost,127.0.0.1,IP",
+]
+
+[containers]
+env = [
+    "http_proxy=http://IP:PORT",
+    "https_proxy=http://IP:PORT",
+    "no_proxy=localhost,127.0.0.1,IP",
+]
+volumes = [
+    "/var/lib/ca-certificates:/var/lib/ca-certificates:ro",
+]
+```
+
+Then, when you run EIB, you must map both the `containers.conf` file and the location of your certificates to volumes like so:
+```shell
+podman run --rm -it -v $IMAGE_DIR:/eib \
+$EIB_IMAGE \
+-v /var/lib/ca-certificates:/var/lib/ca-certificates:ro \
+-v $PATH/containers.conf:/etc/containers/containers.conf:ro \
+build --definition-file $DEFINITION_FILE
+```
+
+If you do not want to add any certificates you can omit them from `containers.conf` and omit attaching the volume as well.
