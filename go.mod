@@ -1,6 +1,6 @@
 module github.com/suse-edge/edge-image-builder
 
-go 1.24.0
+go 1.25.0
 
 require (
 	// version should match buildah version in the
@@ -9,7 +9,7 @@ require (
 	github.com/containers/common v0.57.5
 	github.com/containers/podman/v4 v4.9.5
 	github.com/google/uuid v1.6.0
-	github.com/schollz/progressbar/v3 v3.19.0
+	github.com/schollz/progressbar/v3 v3.19.1
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v2 v2.27.7
 	go.uber.org/zap v1.27.1
@@ -133,8 +133,8 @@ require (
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/mod v0.31.0 // indirect
 	golang.org/x/net v0.48.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/term v0.38.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/term v0.44.0 // indirect
 	golang.org/x/tools v0.40.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230920204549-e6e6cdab5c13 // indirect
 	google.golang.org/grpc v1.58.3 // indirect
