@@ -3,6 +3,6 @@ set -euo pipefail
 
 mount /var
 mount /usr/local
-cp -R ./os-files/* /
+cp -R {{ .FilesPath }}/* /
 umount /var
 umount /usr/local
