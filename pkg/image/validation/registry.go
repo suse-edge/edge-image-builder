@@ -3,8 +3,8 @@ package validation
 import (
 	"fmt"
 
-	"github.com/containers/image/v5/docker/reference"
 	"github.com/suse-edge/edge-image-builder/pkg/image"
+	"go.podman.io/image/v5/docker/reference"
 )
 
 const (

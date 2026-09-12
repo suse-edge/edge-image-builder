@@ -4,7 +4,9 @@
 
 ## General
 
-* Bumped Go version to 1.26
+* Dependency upgrades
+  * go.mod is now using Go 1.26 (upgraded from 1.24)
+  * Package resolution is now using Podman v6.1.1 (upgraded from v4.9.5)
 
 ## Bug Fixes
 
