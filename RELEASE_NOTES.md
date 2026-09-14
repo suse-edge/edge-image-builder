@@ -1,6 +1,6 @@
 # Edge Image Builder Releases
 
-# Next
+# v1.3.4
 
 ## Bug Fixes
 
@@ -14,12 +14,6 @@
 * Added support for mounting a custom cache directory
 * Dependency upgrades
   * Embedded registry is now utilizing Hauler v1.4.1 (upgraded from v1.2.5)
-
-## API
-
-### Image Definition Changes
-
-### Image Configuration Directory Changes
 
 ## Bug Fixes
 
