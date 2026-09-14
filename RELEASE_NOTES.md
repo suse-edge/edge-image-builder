@@ -1,5 +1,11 @@
 # Edge Image Builder Releases
 
+# v1.3.4
+
+## Bug Fixes
+
+* [#910](https://github.com/suse-edge/edge-image-builder/issues/910) - Prevent default libguestfs backend change from causing libvirt socket crash 
+
 # v1.3.3
 
 ## General

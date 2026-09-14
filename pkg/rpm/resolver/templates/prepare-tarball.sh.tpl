@@ -11,6 +11,11 @@ set -euo pipefail
 WORK_DIR={{.WorkDir}}
 IMG_PATH={{.ImgPath}}
 
+# libguestfs defaults to the libvirt backend which requires a running libvirt daemon.
+# No such daemon is available in the EIB container, so fall back to the direct backend
+# unless the user has explicitly requested a different one.
+export LIBGUESTFS_BACKEND="${LIBGUESTFS_BACKEND:-direct}"
+
 # Set the LUKS key flag for encrypted images
 LUKSFLAG=""
 {{ if .LUKSKey }}

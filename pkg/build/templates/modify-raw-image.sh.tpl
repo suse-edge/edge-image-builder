@@ -16,6 +16,11 @@ set -euo pipefail
 #
 # Guestfish Command Documentation: https://libguestfs.org/guestfish.1.html
 
+# libguestfs defaults to the libvirt backend which requires a running libvirt daemon.
+# No such daemon is available in the EIB container, so fall back to the direct backend
+# unless the user has explicitly requested a different one.
+export LIBGUESTFS_BACKEND="${LIBGUESTFS_BACKEND:-direct}"
+
 # In x86_64, the default root partition is the third partition
 ROOT_PART=/dev/sda3
 
