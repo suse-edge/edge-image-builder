@@ -1,0 +1,51 @@
+apiVersion: 1.1
+image:
+  imageType: iso 
+  arch: aarch64
+  baseImage: SL-Micro.aarch64-6.0-Base-SelfInstall-GM.install.iso
+  outputImageName: rancher-2node-aarch64-6.0.iso
+operatingSystem:
+  isoConfiguration:
+    installDevice: /dev/vda
+  users:
+  - username: root
+    encryptedPassword: "$6$DIL3SYTayoaM13GP$zAfXEofZd154Wuuj.fMqJXKd2p8fieu75zLgta6dWz7rCHsxw0x4CcFjLH3V5Dy4sQKN9/VotNS9E37RYRTeD."
+  packages:
+    packageList:
+    - jq
+    - wget
+    - openssh-server-config-rootlogin
+    sccRegistrationCode: REPLACE-ME-WITH-SCC-CODE
+    #additionalRepos:
+    #- url: https://dl.suse.com/SLE16
+kubernetes:
+  version: v1.28.8+rke2r1
+  network:
+    apiVIP: 192.168.64.11
+  nodes:
+    - hostname: node1.suse.com
+      type: server
+      initializer: true
+    - hostname: node2.suse.com
+      type: agent 
+  helm:
+    charts:
+      - name: cert-manager
+        repositoryName: jetstack
+        version: 1.14.2
+        targetNamespace: cert-manager
+        valuesFile: certmanager.yaml
+        createNamespace: true
+        installationNamespace: kube-system
+      - name: rancher
+        version: 2.9.1
+        repositoryName: rancher-prime
+        targetNamespace: cattle-system
+        createNamespace: true
+        installationNamespace: kube-system
+        valuesFile: rancher.yaml
+    repositories:
+      - name: jetstack
+        url: https://charts.jetstack.io
+      - name: rancher-prime
+        url: https://charts.rancher.com/server-charts/prime
