@@ -15,7 +15,43 @@ set -euo pipefail
 {{ if ne .RegCode "" }}
 suseconnect -r {{ .RegCode }}
 {{ if $.EnableExtras -}}
-VERSION=$(awk '/VERSION=/' /etc/os-release | cut -d'"' -f2)
+VERSION=$(
+
+ OS_RELEASE_FILE="${1:-/etc/os-release}"
+
+# Make sure the file actually exists before we try to read it.
+if [[ ! -f "$OS_RELEASE_FILE" ]]; then
+    echo "Error: file not found: $OS_RELEASE_FILE"
+    exit 1
+fi
+
+# Step 1: try to read the new field first (SL Micro 6.2+).
+new_version=$(grep '^SUSE_SUPPORT_PRODUCT_VERSION=' "$OS_RELEASE_FILE" | cut -d '=' -f2 | tr -d '"')
+
+# Step 2: if that field wasn't found, fall back to the old field.
+old_version=$(grep '^VERSION_ID=' "$OS_RELEASE_FILE" | cut -d '=' -f2 | tr -d '"')
+
+if [[ -n "$new_version" ]]; then
+    version="$new_version"
+else
+    version="$old_version"
+fi
+
+# Step 3: make sure we actually got something.
+if [[ -z "$version" ]]; then
+    echo "Error: could not find a version in $OS_RELEASE_FILE"
+    exit 1
+fi
+
+# Step 4: check that it looks like a real version number, e.g. "6.2".
+if [[ ! "$version" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+    echo "Error: found version '$version' but it doesn't look valid"
+    exit 1
+fi
+
+echo "Version is: $version"
+)
+
 suseconnect -p SL-Micro-Extras/$VERSION/{{ .Arch }}
 {{ end -}}
 zypper ref
