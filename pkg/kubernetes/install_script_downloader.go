@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	rke2InstallScriptURL = "https://get.rke2.io"
+	rke2InstallScriptURL = "https://raw.githubusercontent.com/rancher/rke2/master/install.sh" // https://get.rke2.io"
 	k3sInstallScriptURL  = "https://get.k3s.io"
 )
 
