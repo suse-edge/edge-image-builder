@@ -14,7 +14,7 @@ require (
 	go.podman.io/image/v5 v5.41.1
 	go.podman.io/podman/v6 v6.1.1
 	go.uber.org/zap v1.28.0
-	golang.org/x/sync v0.23.0
+	golang.org/x/sync v0.24.0
 	golang.org/x/text v0.42.0
 	gopkg.in/yaml.v3 v3.0.1
 )
