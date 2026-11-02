@@ -49,12 +49,48 @@ func TestConfigureOSFiles(t *testing.T) {
 	contents, err := os.ReadFile(expectedCombustionScript)
 	require.NoError(t, err)
 	assert.Contains(t, string(contents), "mount /var")
-	assert.Contains(t, string(contents), "cp -R")
+	assert.Contains(t, string(contents), "cp -R $ARTEFACTS_DIR/os-files/* /")
 	assert.Contains(t, string(contents), "umount /var")
 
 	// -- Files
+	expectedFile := filepath.Join(ctx.ArtefactsDir, osFilesConfigDir, "etc", "ssh", "test-config-file")
+	assert.FileExists(t, expectedFile)
+
+	// The files must not be staged in the combustion directory, as its contents
+	// are copied into a RAM disk before combustion runs.
+	unexpectedFile := filepath.Join(ctx.CombustionDir, osFilesConfigDir, "etc", "ssh", "test-config-file")
+	assert.NoFileExists(t, unexpectedFile)
+}
+
+func TestConfigureOSFiles_ConfigDrive(t *testing.T) {
+	// Setup
+	ctx, teardown := setupOsFilesConfigDir(t, false)
+	defer teardown()
+
+	ctx.IsConfigDrive = true
+
+	// Test
+	scriptNames, err := configureOSFiles(ctx)
+
+	// Verify
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{osFilesScriptName}, scriptNames)
+
+	// -- Combustion Script
+	expectedCombustionScript := filepath.Join(ctx.CombustionDir, osFilesScriptName)
+	contents, err := os.ReadFile(expectedCombustionScript)
+	require.NoError(t, err)
+	assert.Contains(t, string(contents), "cp -R ./os-files/* /")
+
+	// -- Files
+	// The artefacts directory of a generated config drive is not reachable at combustion
+	// time, so the files are staged in the combustion directory instead.
 	expectedFile := filepath.Join(ctx.CombustionDir, osFilesConfigDir, "etc", "ssh", "test-config-file")
 	assert.FileExists(t, expectedFile)
+
+	unexpectedFile := filepath.Join(ctx.ArtefactsDir, osFilesConfigDir, "etc", "ssh", "test-config-file")
+	assert.NoFileExists(t, unexpectedFile)
 }
 
 func TestConfigureOSFiles_EmptyDirectory(t *testing.T) {
