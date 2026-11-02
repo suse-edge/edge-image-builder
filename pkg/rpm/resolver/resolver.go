@@ -54,7 +54,7 @@ type Resolver struct {
 	// the RPM signatures in the resolver image
 	gpgKeyPaths []string
 	// path to the mounts.conf filepath that overrides the default mounts.conf configuration;
-	// if left empty the default override path will be used. For more info - https://github.com/containers/common/blob/v0.57/docs/containers-mounts.conf.5.md
+	// if left empty the default override path will be used. For more info - https://github.com/podman-container-tools/container-libs/blob/common/v0.69.1/common/docs/containers-mounts.conf.5.md
 	overrideMountsPath string
 	// architecture of the packages the resolver should pull
 	arch string
