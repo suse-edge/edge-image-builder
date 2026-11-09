@@ -19,6 +19,7 @@ func TestRKE2InstallerArtefacts(t *testing.T) {
 func TestRKE2ImageArtefacts(t *testing.T) {
 	tests := []struct {
 		name              string
+		version           string
 		cni               string
 		multusEnabled     bool
 		arch              image.Arch
@@ -167,11 +168,67 @@ func TestRKE2ImageArtefacts(t *testing.T) {
 				"rke2-images-core.linux-arm64.tar.zst",
 			},
 		},
+		{
+			name:              "x86_64 artefacts with ingress-nginx before v1.36",
+			version:           "v1.35.5+rke2r1",
+			cni:               image.CNITypeNone,
+			ingressController: image.IngressTypeNginx,
+			arch:              image.ArchTypeX86,
+			expectedArtefacts: []string{
+				"rke2-images-core.linux-amd64.tar.zst",
+			},
+		},
+		{
+			name:              "x86_64 artefacts with traefik from v1.36",
+			version:           "v1.36.3+rke2r1",
+			cni:               image.CNITypeCanal,
+			ingressController: image.IngressTypeTraefik,
+			arch:              image.ArchTypeX86,
+			expectedArtefacts: []string{
+				"rke2-images-core.linux-amd64.tar.zst",
+				"rke2-images-canal.linux-amd64.tar.zst",
+			},
+		},
+		{
+			name:              "x86_64 artefacts with ingress-nginx from v1.36",
+			version:           "v1.36.0+rke2r1",
+			cni:               image.CNITypeNone,
+			ingressController: image.IngressTypeNginx,
+			arch:              image.ArchTypeX86,
+			expectedArtefacts: []string{
+				"rke2-images-core.linux-amd64.tar.zst",
+				"rke2-images-ingress-nginx.linux-amd64.tar.zst",
+			},
+		},
+		{
+			name:              "aarch64 artefacts with ingress-nginx from v1.36",
+			version:           "v1.37.0+rke2r1",
+			cni:               image.CNITypeNone,
+			ingressController: image.IngressTypeNginx,
+			arch:              image.ArchTypeARM,
+			expectedArtefacts: []string{
+				"rke2-images-core.linux-arm64.tar.zst",
+				"rke2-images-ingress-nginx.linux-arm64.tar.zst",
+			},
+		},
+		{
+			name:              "invalid version with ingress controller",
+			version:           "latest",
+			cni:               image.CNITypeNone,
+			ingressController: image.IngressTypeTraefik,
+			arch:              image.ArchTypeX86,
+			expectedError:     "invalid RKE2 version: 'latest'",
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			artefacts, err := rke2ImageArtefacts(test.cni, test.multusEnabled, test.ingressController, test.arch)
+			version := test.version
+			if version == "" {
+				version = "v1.35.5+rke2r1"
+			}
+
+			artefacts, err := rke2ImageArtefacts(version, test.cni, test.multusEnabled, test.ingressController, test.arch)
 
 			if test.expectedError != "" {
 				require.EqualError(t, err, test.expectedError)

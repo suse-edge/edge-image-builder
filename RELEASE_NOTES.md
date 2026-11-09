@@ -1,5 +1,19 @@
 # Edge Image Builder Releases
 
+# Next
+
+## General
+
+* Dependency upgrades
+  * go.mod is now using Go 1.26 (upgraded from 1.24)
+  * Package resolution is now using Podman v6.1.1 (upgraded from v4.9.5)
+
+# v1.3.4
+
+## Bug Fixes
+
+* [#910](https://github.com/suse-edge/edge-image-builder/issues/910) - Prevent default libguestfs backend change from causing libvirt socket crash 
+
 # v1.3.3
 
 ## General
@@ -8,12 +22,6 @@
 * Added support for mounting a custom cache directory
 * Dependency upgrades
   * Embedded registry is now utilizing Hauler v1.4.1 (upgraded from v1.2.5)
-
-## API
-
-### Image Definition Changes
-
-### Image Configuration Directory Changes
 
 ## Bug Fixes
 

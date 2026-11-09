@@ -31,6 +31,7 @@ const (
 	CNITypeCanal       = "canal"
 	CNITypeCalico      = "calico"
 	IngressTypeTraefik = "traefik"
+	IngressTypeNginx   = "ingress-nginx"
 )
 
 var (

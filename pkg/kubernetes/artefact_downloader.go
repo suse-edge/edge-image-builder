@@ -28,6 +28,10 @@ const (
 	rke2CiliumImages  = "rke2-images-cilium.linux-%s.tar.zst"
 	rke2MultusImages  = "rke2-images-multus.linux-%s.tar.zst"
 	rke2TraefikImages = "rke2-images-traefik.linux-%s.tar.zst"
+	rke2NginxImages   = "rke2-images-ingress-nginx.linux-%s.tar.zst"
+
+	rke2TraefikDefaultMajor = 1
+	rke2TraefikDefaultMinor = 36
 
 	k3sBinary = "k3s"
 	k3sImages = "k3s-airgap-images-%s.tar.zst"
@@ -53,7 +57,7 @@ func (d ArtefactDownloader) DownloadRKE2Artefacts(arch image.Arch, version, cni 
 		log.Audit("WARNING: RKE2 support for aarch64 platforms is limited and experimental")
 	}
 
-	artefacts, err := rke2ImageArtefacts(cni, multusEnabled, ingressController, arch)
+	artefacts, err := rke2ImageArtefacts(version, cni, multusEnabled, ingressController, arch)
 	if err != nil {
 		return fmt.Errorf("gathering RKE2 image artefacts: %w", err)
 	}
@@ -79,7 +83,7 @@ func rke2InstallerArtefacts(arch image.Arch) []string {
 	}
 }
 
-func rke2ImageArtefacts(cni string, multusEnabled bool, ingressController string, arch image.Arch) ([]string, error) {
+func rke2ImageArtefacts(version, cni string, multusEnabled bool, ingressController string, arch image.Arch) ([]string, error) {
 	artefactArch := arch.Short()
 
 	var artefacts []string
@@ -104,11 +108,32 @@ func rke2ImageArtefacts(cni string, multusEnabled bool, ingressController string
 		artefacts = append(artefacts, fmt.Sprintf(rke2MultusImages, artefactArch))
 	}
 
-	if ingressController == image.IngressTypeTraefik {
+	if ingressController == "" {
+		return artefacts, nil
+	}
+
+	traefikInCore, err := rke2ShipsTraefikInCore(version)
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case ingressController == image.IngressTypeTraefik && !traefikInCore:
 		artefacts = append(artefacts, fmt.Sprintf(rke2TraefikImages, artefactArch))
+	case ingressController == image.IngressTypeNginx && traefikInCore:
+		artefacts = append(artefacts, fmt.Sprintf(rke2NginxImages, artefactArch))
 	}
 
 	return artefacts, nil
+}
+
+func rke2ShipsTraefikInCore(version string) (bool, error) {
+	var major, minor int
+	if _, err := fmt.Sscanf(version, "v%d.%d.", &major, &minor); err != nil {
+		return false, fmt.Errorf("invalid RKE2 version: '%s'", version)
+	}
+
+	return major > rke2TraefikDefaultMajor || (major == rke2TraefikDefaultMajor && minor >= rke2TraefikDefaultMinor), nil
 }
 
 func (d ArtefactDownloader) DownloadK3sArtefacts(arch image.Arch, version, installPath, imagesPath string) error {

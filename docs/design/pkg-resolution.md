@@ -32,7 +32,7 @@ During this phase, EIB prepares the user specified packages for installation. Th
 1. Validating that each provided package has a GPG signature or comes from a GPG signed RPM repository
 1. Resolving and downloading the dependencies for each specified package
 1. Creating a RPM repository that consists of the specified packages and their dependencies
-1. Configuring the usage of this repositry for package installation during the **combustion** phase of the EIB image boot
+1. Configuring the usage of this repository for package installation during the **combustion** phase of the EIB image boot
 
 ### RPM resolution process
 ![image](../images/rpm-resolver-architecture.png)
