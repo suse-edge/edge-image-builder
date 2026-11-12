@@ -15,7 +15,13 @@ set -euo pipefail
 {{ if ne .RegCode "" }}
 suseconnect -r {{ .RegCode }}
 {{ if $.EnableExtras -}}
-VERSION=$(awk '/VERSION=/' /etc/os-release | cut -d'"' -f2)
+read_os_release_version() {
+    . /etc/os-release 2>/dev/null
+    VERSION="${SUSE_SUPPORT_PRODUCT_VERSION:-${VERSION_ID:-}}"
+}
+
+read_os_release_version
+
 suseconnect -p SL-Micro-Extras/$VERSION/{{ .Arch }}
 {{ end -}}
 zypper ref
