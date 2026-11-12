@@ -553,6 +553,10 @@ If the `os-files` directory exists, it cannot be empty.
             └── sshd_config
 ```
 
+> **_NOTE:_** `os-files` is the recommended way to include large files in an image. Their contents are shipped
+> outside of the combustion directory and are therefore not subject to the memory constraints described in the
+> [Custom](#custom) section. For raw images, ensure that the `diskSize` field is large enough to accommodate them.
+
 ## Custom
 
 EIB has the ability to bundle in custom scripts that will be run during the combustion phase when a node is
@@ -582,6 +586,10 @@ not begin with a number.
   * `scripts` - If present, all the files in this directory will be included in the built image and automatically
     executed during the combustion phase.
   * `files` - If present, all the files, directories, and subdirectories in this directory will be available at combustion time on the booted node.
+
+> **_NOTE:_** Combustion copies the contents of the `custom/files` directory into a RAM disk before running,
+> which limits their total size to half of the booted node's memory. Use
+> [os-files](#operating-system-files) instead for any sizeable content.
 
 ## Cache Configurations:
 
