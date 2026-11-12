@@ -5,8 +5,14 @@
 ## General
 
 * Dependency upgrades
-  * go.mod is now using Go 1.26 (upgraded from 1.24)
-  * Package resolution is now using Podman v6.1.1 (upgraded from v4.9.5)
+  * go.mod is now using Go 1.27 (upgraded from 1.24)
+  * Package resolution is now using Podman v6.2.0 (upgraded from v4.9.5)
+  * Network customizations are now utilizing nmc v0.3.6 (upgraded from v0.3.5)
+  * Embedded registry is now utilizing Hauler v2.1.2 (upgraded from v1.4.1)
+
+## Bug Fixes
+
+* [#926](https://github.com/suse-edge/edge-image-builder/issues/926) - EIB should not try to pull "rke2-images-traefik" tarball at build time for RKE2 1.36+
 
 # v1.3.4
 
