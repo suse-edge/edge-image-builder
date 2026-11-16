@@ -9,7 +9,7 @@ require (
 	github.com/urfave/cli/v2 v2.27.7
 	// versions should match the ones in the podman mod file
 	// https://github.com/containers/podman/blob/v6.2.0/go.mod
-	go.podman.io/buildah v1.46.0
+	go.podman.io/buildah v1.46.1
 	go.podman.io/common v0.70.0
 	go.podman.io/image/v5 v5.42.1
 	go.podman.io/podman/v6 v6.2.0
