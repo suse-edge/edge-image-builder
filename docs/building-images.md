@@ -111,7 +111,7 @@ operatingSystem:
   keymap: us
   packages:
     noGPGCheck: false
-    enableExtras: true
+    enableExtras: false
     packageList:
       - pkg1
       - pkg2

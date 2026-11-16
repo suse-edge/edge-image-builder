@@ -16,7 +16,7 @@ set -euo pipefail
 suseconnect -r {{ .RegCode }}
 {{ if $.EnableExtras -}}
 read_os_release_version() {
-    . /etc/os-release 2>/dev/null
+    . /etc/os-release 
     VERSION="${SUSE_SUPPORT_PRODUCT_VERSION:-${VERSION_ID:-}}"
 }
 
