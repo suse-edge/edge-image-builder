@@ -22,7 +22,7 @@ var timeScript string
 
 func configureTime(ctx *image.Context) ([]string, error) {
 	time := ctx.ImageDefinition.OperatingSystem.Time
-	if time.Timezone == "" {
+	if time.Timezone == "" && len(time.NtpConfiguration.Pools) == 0 && len(time.NtpConfiguration.Servers) == 0 {
 		log.AuditComponentSkipped(timeComponentName)
 		return nil, nil
 	}

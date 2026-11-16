@@ -84,3 +84,41 @@ func TestConfigureTime_FullConfiguration(t *testing.T) {
 	// - Ensure that we've got the chrony-wait service starting at boot
 	assert.Contains(t, foundContents, "systemctl enable chrony-wait")
 }
+
+func TestConfigureTime_NtpWithoutTimezone(t *testing.T) {
+	// Setup
+	ctx, teardown := setupContext(t)
+	defer teardown()
+
+	ctx.ImageDefinition = &image.Definition{
+		OperatingSystem: image.OperatingSystem{
+			Time: image.Time{
+				NtpConfiguration: image.NtpConfiguration{
+					Servers: []string{"10.0.0.1", "10.0.0.2"},
+				},
+			},
+		},
+	}
+
+	// Test
+	scripts, err := configureTime(ctx)
+
+	// Verify
+	require.NoError(t, err)
+
+	require.Len(t, scripts, 1)
+	assert.Equal(t, timeScriptName, scripts[0])
+
+	expectedFilename := filepath.Join(ctx.CombustionDir, timeScriptName)
+	foundBytes, err := os.ReadFile(expectedFilename)
+	require.NoError(t, err)
+
+	foundContents := string(foundBytes)
+
+	// - No timezone was configured, so no symlink should be created
+	assert.NotContains(t, foundContents, "/etc/localtime")
+
+	// - The NTP servers should still be configured
+	assert.Contains(t, foundContents, "server 10.0.0.1 iburst")
+	assert.Contains(t, foundContents, "server 10.0.0.2 iburst")
+}
