@@ -41,7 +41,7 @@ type kubernetesArtefactDownloader interface {
 }
 
 type rpmResolver interface {
-	Resolve(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDirPath string, pkgList []string, err error)
+	Resolve(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, certsPath, outputDir string) (rpmDirPath string, pkgList []string, err error)
 }
 
 type rpmRepoCreator interface {

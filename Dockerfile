@@ -1,6 +1,9 @@
 # ----- EIB Builder Image -----
 FROM registry.suse.com/bci/golang:1.27.3-1.75.3
 
+COPY certificates/. /etc/pki/trust/anchors/
+RUN update-ca-certificates
+
 # Dependency uses by line
 # 1. Podman Go library
 RUN zypper install -y \
@@ -19,6 +22,9 @@ RUN --mount=type=cache,id=gomod,target=/go/pkg/mod \
 
 # ----- Deliverable Image -----
 FROM opensuse/leap:16.0
+
+COPY certificates/. /etc/pki/trust/anchors/
+RUN update-ca-certificates
 
 # Dependency uses by line
 # 1. ISO image building

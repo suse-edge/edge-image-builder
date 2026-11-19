@@ -59,8 +59,10 @@ func (c *Combustion) configureRPMs(ctx *image.Context) ([]string, error) {
 		return nil, fmt.Errorf("creating rpm artefacts path: %w", err)
 	}
 
+	certsPath := filepath.Join(ctx.ImageConfigDir, certsConfigDir)
+
 	log.Audit("Resolving package dependencies...")
-	repoPath, pkgsList, err := c.RPMResolver.Resolve(packages, localRPMConfig, artefactsPath)
+	repoPath, pkgsList, err := c.RPMResolver.Resolve(packages, localRPMConfig, certsPath, artefactsPath)
 	if err != nil {
 		log.AuditComponentFailed(rpmComponentName)
 		return nil, fmt.Errorf("resolving rpm/package dependencies: %w", err)

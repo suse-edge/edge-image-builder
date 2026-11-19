@@ -81,7 +81,7 @@ func New(workDir string, podman Podman, baseImageBuilder BaseResolverImageBuilde
 // - localRPMConfig - configuration for locally provided RPMs
 //
 // - outputDir - directory in which the resolver will create a directory containing the resolved rpms.
-func (r *Resolver) Resolve(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, outputDir string) (rpmDirPath string, pkgList []string, err error) {
+func (r *Resolver) Resolve(packages *image.Packages, localRPMConfig *image.LocalRPMConfig, certsPath, outputDir string) (rpmDirPath string, pkgList []string, err error) {
 	zap.L().Info("Resolving package dependencies...")
 
 	revert, err := mount.DisableDefaultMounts(r.overrideMountsPath)
@@ -98,7 +98,7 @@ func (r *Resolver) Resolve(packages *image.Packages, localRPMConfig *image.Local
 		return "", nil, fmt.Errorf("building base resolver image: %w", err)
 	}
 
-	if err = r.prepare(localRPMConfig, packages); err != nil {
+	if err = r.prepare(localRPMConfig, packages, certsPath); err != nil {
 		return "", nil, fmt.Errorf("generating context for the resolver image: %w", err)
 	}
 
@@ -122,7 +122,7 @@ func (r *Resolver) Resolve(packages *image.Packages, localRPMConfig *image.Local
 	return filepath.Join(outputDir, rpmRepoName), r.generatePKGInstallList(packages), nil
 }
 
-func (r *Resolver) prepare(localRPMConfig *image.LocalRPMConfig, packages *image.Packages) error {
+func (r *Resolver) prepare(localRPMConfig *image.LocalRPMConfig, packages *image.Packages, certsPath string) error {
 	zap.L().Info("Preparing resolver image context...")
 
 	buildContext := r.generateBuildContextPath()
@@ -136,6 +136,10 @@ func (r *Resolver) prepare(localRPMConfig *image.LocalRPMConfig, packages *image
 		}
 	}
 
+	if err := r.prepareCertificates(certsPath); err != nil {
+		return fmt.Errorf("preparing certificates for resolver image build: %w", err)
+	}
+
 	if err := r.writeRPMResolutionScript(localRPMConfig, packages); err != nil {
 		return fmt.Errorf("writing rpm resolution script: %w", err)
 	}
@@ -145,6 +149,29 @@ func (r *Resolver) prepare(localRPMConfig *image.LocalRPMConfig, packages *image
 	}
 
 	zap.L().Info("Resolver image context setup successful")
+	return nil
+}
+
+func (r *Resolver) prepareCertificates(certsPath string) error {
+	certsDest := r.generateCertificatePathInBuildContext()
+
+	if err := os.MkdirAll(certsDest, os.ModePerm); err != nil {
+		return fmt.Errorf("creating certificates dir %s: %w", certsDest, err)
+	}
+
+	if _, err := os.Stat(certsPath); os.IsNotExist(err) {
+		zap.S().Info("skipping certificates, no certificates provided")
+		return nil
+	}
+
+	if err := fileio.CopyFiles(certsPath, certsDest, ".crt", false, &fileio.NonExecutablePerms); err != nil {
+		return fmt.Errorf("copying crt files to %s: %w", certsDest, err)
+	}
+
+	if err := fileio.CopyFiles(certsPath, certsDest, ".pem", false, &fileio.NonExecutablePerms); err != nil {
+		return fmt.Errorf("copying pem files to %s: %w", certsDest, err)
+	}
+
 	return nil
 }
 
@@ -272,6 +299,11 @@ func (r *Resolver) generatePKGInstallList(packages *image.Packages) []string {
 // path to the build dir, as seen in the EIB image
 func (r *Resolver) generateBuildContextPath() string {
 	return filepath.Join(r.dir, "resolver-image-build")
+}
+
+// path to the certificates directory in the resolver build context, as seen in the EIB image
+func (r *Resolver) generateCertificatePathInBuildContext() string {
+	return filepath.Join(r.generateBuildContextPath(), "certificates")
 }
 
 // path to the rpms directory in the resolver build context, as seen in the EIB image

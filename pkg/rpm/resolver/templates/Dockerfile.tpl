@@ -16,6 +16,8 @@ COPY {{ .FromGPGPath }} {{ .ToGPGPath }}
 {{ end -}}
 {{ end }}
 
+COPY certificates/. /etc/pki/trust/anchors/
+
 RUN ./{{ .RPMResolutionScriptName }}
 
 CMD ["/bin/bash"]
